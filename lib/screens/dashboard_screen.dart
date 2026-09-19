@@ -1,0 +1,548 @@
+import 'package:flutter/material.dart';
+import '../models/transaction.dart';
+import '../services/state.dart';
+import '../utils/constants.dart';
+import '../widgets/transaction_tile.dart';
+import '../widgets/transaction_dialog.dart';
+import '../widgets/custom_painters.dart';
+import 'all_transactions_screen.dart';
+import 'login_screen.dart';
+
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
+    _animController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  void _showBudgetDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final budgets = Map<String, double>.from(AppState.budgetsNotifier.value);
+            return AlertDialog(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Manage Budgets', style: TextStyle(fontWeight: FontWeight.bold)),
+                  IconButton(
+                    icon: Icon(Icons.add_circle, color: Theme.of(context).colorScheme.primary),
+                    onPressed: () {
+                      String newCat = '';
+                      String newLimit = '';
+                      showDialog(
+                        context: context,
+                        builder: (innerCtx) => AlertDialog(
+                          backgroundColor: Theme.of(context).colorScheme.surface,
+                          title: const Text('Add Budget'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              DropdownButtonFormField<String>(
+                                initialValue: categoryIcons.keys.first,
+                                dropdownColor: Theme.of(context).colorScheme.surface,
+                                style: const TextStyle(color: Colors.white),
+                                items: categoryIcons.keys
+                                    .where((cat) => !budgets.containsKey(cat))
+                                    .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                                    .toList(),
+                                onChanged: (val) { if (val != null) newCat = val; },
+                                decoration: const InputDecoration(labelText: 'Category'),
+                              ),
+                              const SizedBox(height: 12),
+                              TextField(
+                                style: const TextStyle(color: Colors.white),
+                                decoration: const InputDecoration(labelText: 'Limit Amount'),
+                                keyboardType: TextInputType.number,
+                                onChanged: (v) => newLimit = v,
+                              ),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(innerCtx), child: const Text('Cancel')),
+                            TextButton(
+                              onPressed: () {
+                                final limit = double.tryParse(newLimit);
+                                if (newCat.isNotEmpty && limit != null && limit > 0) {
+                                  budgets[newCat] = limit;
+                                  AppState.budgetsNotifier.value = Map.from(budgets);
+                                  if (AppState.currentUser != null) AppState.saveBudgets(AppState.currentUser!, budgets);
+                                  Navigator.pop(innerCtx);
+                                  setDialogState(() {});
+                                }
+                              },
+                              child: const Text('Add'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: budgets.isEmpty
+                    ? const Center(child: Text('No budgets set', style: TextStyle(color: Colors.white54)))
+                    : ListView(
+                        shrinkWrap: true,
+                        children: budgets.entries.map((entry) {
+                          return ListTile(
+                            dense: true,
+                            leading: Icon(categoryIcons[entry.key] ?? Icons.category, color: Theme.of(context).colorScheme.primary, size: 20),
+                            title: Text(entry.key, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                            subtitle: Text('${AppState.currencyNotifier.value}${entry.value.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, size: 18, color: Colors.white54),
+                                  onPressed: () {
+                                    String newLimit = entry.value.toString();
+                                    showDialog(
+                                      context: context,
+                                      builder: (innerCtx) => AlertDialog(
+                                        backgroundColor: Theme.of(context).colorScheme.surface,
+                                        title: Text('Edit ${entry.key}'),
+                                        content: TextField(
+                                          controller: TextEditingController(text: entry.value.toStringAsFixed(0)),
+                                          style: const TextStyle(color: Colors.white),
+                                          decoration: const InputDecoration(labelText: 'New Limit'),
+                                          keyboardType: TextInputType.number,
+                                          onChanged: (v) => newLimit = v,
+                                        ),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(innerCtx), child: const Text('Cancel')),
+                                          TextButton(
+                                            onPressed: () {
+                                              final limit = double.tryParse(newLimit);
+                                              if (limit != null && limit > 0) {
+                                                budgets[entry.key] = limit;
+                                                AppState.budgetsNotifier.value = Map.from(budgets);
+                                                if (AppState.currentUser != null) AppState.saveBudgets(AppState.currentUser!, budgets);
+                                                Navigator.pop(innerCtx);
+                                                setDialogState(() {});
+                                              }
+                                            },
+                                            child: const Text('Save'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                                  onPressed: () {
+                                    budgets.remove(entry.key);
+                                    AppState.budgetsNotifier.value = Map.from(budgets);
+                                    if (AppState.currentUser != null) AppState.saveBudgets(AppState.currentUser!, budgets);
+                                    setDialogState(() {});
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Done')),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _resetData() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: const Text('Reset All?'),
+        content: const Text('This will clear all transactions and reset your balance to zero.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              AppState.transactionsNotifier.value = [];
+              if (AppState.currentUser != null) {
+                AppState.saveTransactions(AppState.currentUser!, []);
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Reset', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _logout() {
+    AppState.currentUser = null;
+    AppState.transactionsNotifier.value = [];
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+  }
+
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+         title: Row(
+          children: [
+            const CircleAvatar(
+              radius: 20,
+              backgroundColor: Color(0xFF232833),
+              child: Icon(Icons.person, color: Colors.white70),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Welcome back,', style: TextStyle(fontSize: 12, color: Colors.white54)),
+                Text(AppState.currentUser ?? 'Guest', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.currency_exchange, color: Colors.white70),
+            tooltip: 'Currency',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (ctx) => SimpleDialog(
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  title: const Text('Select Currency'),
+                  children: currencyOptions.entries.map((entry) {
+                    return SimpleDialogOption(
+                      onPressed: () {
+                        AppState.currencyNotifier.value = entry.value;
+                        setState(() {});
+                        Navigator.pop(ctx);
+                      },
+                      child: Text(entry.key, style: TextStyle(
+                        color: AppState.currencyNotifier.value == entry.value ? Theme.of(context).colorScheme.primary : Colors.white,
+                        fontWeight: AppState.currencyNotifier.value == entry.value ? FontWeight.bold : FontWeight.normal,
+                      )),
+                    );
+                  }).toList(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.redAccent),
+            tooltip: 'Reset All',
+            onPressed: _resetData,
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white70),
+            tooltip: 'Logout',
+            onPressed: _logout,
+          ),
+        ],
+      ),
+      body: ValueListenableBuilder<List<Transaction>>(
+        valueListenable: AppState.transactionsNotifier,
+        builder: (context, transactions, child) {
+          final totalBalance = transactions.fold(0.0, (sum, item) => item.isIncome ? sum + item.amount : sum - item.amount);
+          
+          return Stack(
+            children: [
+              Positioned(
+                top: -100,
+                right: -100,
+                child: Container(
+                  width: 300,
+                  height: 300,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.3, 1.0],
+                    )
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -50,
+                left: -100,
+                child: Container(
+                  width: 250,
+                  height: 250,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.3, 1.0],
+                    )
+                  ),
+                ),
+              ),
+              
+              SafeArea(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                    const SizedBox(height: 10),
+                    SlideTransition(
+                      position: Tween<Offset>(begin: const Offset(0, -0.1), end: Offset.zero)
+                          .animate(CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                right: -20,
+                                top: -20,
+                                child: Icon(Icons.account_balance_wallet, size: 120, color: Colors.white.withValues(alpha: 0.1)),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Total Balance',
+                                    style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w500),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '${AppState.currencyNotifier.value}${totalBalance.toStringAsFixed(2)}',
+                                    style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.bold, letterSpacing: -1),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  const Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text('**** **** **** 4812', style: TextStyle(color: Colors.white70, fontSize: 15, letterSpacing: 2)),
+                                      Icon(Icons.contactless, color: Colors.white70, size: 28),
+                                    ],
+                                  )
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Monthly Budgets',
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.edit, color: Theme.of(context).colorScheme.primary, size: 16),
+                                onPressed: () => _showBudgetDialog(context),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          ValueListenableBuilder<Map<String, double>>(
+                            valueListenable: AppState.budgetsNotifier,
+                            builder: (context, budgets, _) {
+                              final now = DateTime.now();
+                              final monthTx = transactions.where((t) => t.date.year == now.year && t.date.month == now.month && !t.isIncome).toList();
+                              
+                              return Column(
+                                children: budgets.entries.map((entry) {
+                                  final spent = monthTx.where((t) => t.category == entry.key).fold(0.0, (sum, t) => sum + t.amount);
+                                  final limit = entry.value;
+                                  final percent = (spent / limit).clamp(0.0, 1.0);
+                                  
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 12.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(entry.key, style: const TextStyle(color: Colors.white70)),
+                                            Text('${AppState.currencyNotifier.value}${spent.toStringAsFixed(0)} / ${AppState.currencyNotifier.value}${limit.toStringAsFixed(0)}', style: TextStyle(color: percent > 0.9 ? Colors.redAccent : Colors.white)),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        LinearProgressIndicator(
+                                          value: percent,
+                                          backgroundColor: Colors.white.withValues(alpha: 0.1),
+                                          valueColor: AlwaysStoppedAnimation<Color>(percent > 0.9 ? Colors.redAccent : Theme.of(context).colorScheme.secondary),
+                                          minHeight: 6,
+                                          borderRadius: BorderRadius.circular(3),
+                                        )
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              );
+                            }
+                          )
+                        ]
+                      )
+                    ),
+                    const SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Current Month Flow',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                          const SizedBox(height: 10),
+                          Container(
+                            height: 100,
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                            ),
+                            child: RepaintBoundary(
+                              child: CustomPaint(
+                                painter: MonthChartPainter(
+                                  transactions,
+                                  lineColor: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Recent Transactions',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const AllTransactionsScreen()));
+                            },
+                            child: Text('See All', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                          )
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 10),
+                    transactions.isEmpty 
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Center(child: Text("No transactions yet", style: TextStyle(color: Colors.white54))),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: transactions.length > 5 ? 5 : transactions.length, 
+                          itemBuilder: (ctx, index) {
+                            final tx = transactions[index];
+                            return TransactionTile(
+                              tx: tx,
+                              onTap: () => showTransactionDialog(context, existingTx: tx),
+                              onDelete: () {
+                                final currentList = List<Transaction>.from(AppState.transactionsNotifier.value);
+                                currentList.removeWhere((t) => t.id == tx.id);
+                                AppState.transactionsNotifier.value = currentList;
+                                if (AppState.currentUser != null) {
+                                  AppState.saveTransactions(AppState.currentUser!, currentList);
+                                }
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                  content: Text('${tx.title} deleted'),
+                                  action: SnackBarAction(
+                                    label: 'Undo',
+                                    onPressed: () {
+                                      final restoredList = List<Transaction>.from(AppState.transactionsNotifier.value);
+                                      restoredList.insert(index, tx);
+                                      AppState.transactionsNotifier.value = restoredList;
+                                      if (AppState.currentUser != null) {
+                                        AppState.saveTransactions(AppState.currentUser!, restoredList);
+                                      }
+                                    },
+                                  ),
+                                ));
+                              },
+                            );
+                          },
+                        ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+            ],
+          );
+        }
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => showTransactionDialog(context),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        elevation: 4, 
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
+      ),
+    );
+  }
+}
