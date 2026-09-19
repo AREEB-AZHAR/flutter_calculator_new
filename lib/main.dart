@@ -12,14 +12,19 @@ class BalanceTrackerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<String>(
-      valueListenable: AppState.themeNameNotifier,
-      builder: (context, themeName, _) {
-        return MaterialApp(
-          title: 'Balance Tracker',
-          theme: buildAppTheme(themeName),
-          home: const LoginScreen(),
-          debugShowCheckedModeBanner: false,
+    return ValueListenableBuilder<Color>(
+      valueListenable: AppState.customPrimaryColorNotifier,
+      builder: (context, primaryColor, _) {
+        return ValueListenableBuilder<Color>(
+          valueListenable: AppState.customSecondaryColorNotifier,
+          builder: (context, secondaryColor, _) {
+            return MaterialApp(
+              title: 'Balance Tracker',
+              theme: buildDynamicTheme(primary: primaryColor, secondary: secondaryColor),
+              home: const LoginScreen(),
+              debugShowCheckedModeBanner: false,
+            );
+          },
         );
       },
     );

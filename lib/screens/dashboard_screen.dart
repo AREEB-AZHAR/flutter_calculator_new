@@ -1,10 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../services/state.dart';
 import '../utils/constants.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/transaction_dialog.dart';
-import '../widgets/custom_painters.dart';
+import '../widgets/interactive_chart_card.dart';
 import 'all_transactions_screen.dart';
 import 'login_screen.dart';
 
@@ -214,20 +215,58 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-         title: Row(
+          title: Row(
           children: [
-            const CircleAvatar(
-              radius: 20,
-              backgroundColor: Color(0xFF232833),
-              child: Icon(Icons.person, color: Colors.white70),
+            GestureDetector(
+              onTap: () => AppState.activeTabNotifier.value = 4,
+              child: ValueListenableBuilder<String?>(
+                valueListenable: AppState.profilePhotoNotifier,
+                builder: (context, photoPath, _) {
+                  return ValueListenableBuilder<Color>(
+                    valueListenable: AppState.customPrimaryColorNotifier,
+                    builder: (context, primaryColor, _) {
+                      final hasValidFile = photoPath != null && photoPath.isNotEmpty && File(photoPath).existsSync();
+                      return CircleAvatar(
+                        radius: 20,
+                        backgroundColor: primaryColor.withValues(alpha: 0.3),
+                        backgroundImage: hasValidFile ? FileImage(File(photoPath)) : null,
+                        child: !hasValidFile
+                            ? ValueListenableBuilder<String>(
+                                valueListenable: AppState.displayNameNotifier,
+                                builder: (context, dispName, _) {
+                                  final name = dispName.isNotEmpty ? dispName : (AppState.currentUser ?? 'U');
+                                  return Text(
+                                    name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'U',
+                                    style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor),
+                                  );
+                                },
+                              )
+                            : null,
+                      );
+                    },
+                  );
+                },
+              ),
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Welcome back,', style: TextStyle(fontSize: 12, color: Colors.white54)),
-                Text(AppState.currentUser ?? 'Guest', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-              ],
+            GestureDetector(
+              onTap: () => AppState.activeTabNotifier.value = 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Welcome back,', style: TextStyle(fontSize: 12, color: Colors.white54)),
+                  ValueListenableBuilder<String>(
+                    valueListenable: AppState.displayNameNotifier,
+                    builder: (context, dispName, _) {
+                      final name = dispName.isNotEmpty ? dispName : (AppState.currentUser ?? 'Guest');
+                      return Text(
+                        name,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -436,33 +475,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                     const SizedBox(height: 20),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Current Month Flow',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                          ),
-                          const SizedBox(height: 10),
-                          Container(
-                            height: 100,
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                            ),
-                            child: RepaintBoundary(
-                              child: CustomPaint(
-                                painter: MonthChartPainter(
-                                  transactions,
-                                  lineColor: Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: InteractiveChartCard(
+                        transactions: transactions,
+                        title: 'Financial Flow & Analytics',
                       ),
                     ),
 

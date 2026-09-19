@@ -17,38 +17,38 @@ A modern, high-performance personal finance management app built with **Flutter*
 
 ## ✨ Features & Capabilities
 
-### 1. 🔐 User Authentication & Profile
-- **Scoped User Data**: Local account creation and multi-user login backed by persistent storage.
-- **Custom Profile Theming**: Dynamic theme switching (Violet Night, Emerald Green, Ocean Blue, Sunset Glow, Neon Cyberpunk) and custom avatar colors.
+### 1. 🎨 Graphic Theme Studio & Custom Identity
+- **Fine-Grained Graphic Color Control**: Fine-tune primary and secondary accent colors with interactive Hue, Saturation, and Lightness (HSV) sliders or direct Hex input (`#8B5CF6`).
+- **Curated Theme Palettes**: Quick-select from designer palettes (Violet Neon, Ocean Cyan, Emerald Matrix, Solar Amber, Rose Velvet, Cyberpunk Teal).
+- **Custom Profile Photo Uploads**: Upload profile pictures from the device gallery with automatic fallback to stylized initial avatars.
+- **Personal Bio & Display Name**: Edit custom profile text, displayed across the app header and profile dashboard.
 
-### 2. 📊 Real-Time Dashboard
-- **Total Balance & Net Worth**: Live calculation of income, expenses, and total liquidity.
-- **Current Month Flow Chart**: Custom bezier line chart tracking daily balance progress throughout the month.
-- **Monthly Budget Bars**: Progress tracking with visual threshold indicators (red warning above 90% allocation).
-- **Recent Activity**: Quick access to recent transactions with instant tap-to-edit and swipe-to-delete.
+### 2. 🛡️ Secure SQLite Database Vault & Cloud Architecture
+- **On-Device Encrypted SQL Ledger**: All user accounts, transactions, budgets, goals, and customized profiles are securely stored in an on-device SQLite database (`finance_vault.db`).
+- **Cryptographic Password Protection**: User passwords are protected using SHA-256 cryptographic hashing with unique random salts.
+- **Strict User Isolation**: Foreign-key scoped queries guarantee that no account can ever access another user's financial records.
+- **Full `.sql` Script Export**: One-tap generation and export of your complete SQL database dump for backups or offline inspection.
+- **Firebase Ready (Hybrid Architecture)**: Abstracted database repository ready for instant multi-device cloud synchronization with Firebase Firestore & Firebase Auth.
 
-### 3. 💳 Comprehensive Transaction Management
-- Categorize by Food & Dining, Salary, Rent, Healthcare, Entertainment, Utilities, and more.
-- Tag transactions to specific accounts: **Main**, **Cash**, **Credit Card**, or **Digital Wallet**.
-- Recurrence flags (None, Daily, Weekly, Monthly).
-- Multi-currency support (USD, EUR, GBP, PKR, INR, JPY, CNY, AED, SAR, CAD, AUD, etc.).
-- Swipe-to-delete with one-tap Undo SnackBar.
+### 3. 📈 Interactive Multi-Month Analytics Charts
+- **Multi-Month Navigation**: Browse previous and future months seamlessly with `<` and `>` arrow selectors.
+- **Chart Style Toggle**: Switch instantly between a **Smooth Line Flow** (daily balance and cumulative progression) and a **Segmented Donut Breakdown** (category distribution).
+- **Metric Filter Selectors**: Toggle focus between **Spend (Expenses)**, **Income (Received)**, and **All (Net)**.
+- **Dual-Screen Availability**: Embedded on both the **Home Dashboard** and the **Accounts & Wallets** screen (where it automatically filters by the active wallet/account).
 
-### 4. 📈 Smart Insights & Spending Trends
-- Daily average expenditure.
-- Savings rate percentage.
-- Month-over-month trend comparisons (with intelligent calendar-year rollback).
-- Top monthly expense detector.
-- Category spending percentage distribution.
+### 4. 🧠 Executive Spending Behavior Summary
+- **Dynamic Spending Persona**: Real-time behavioral badges based on cumulative savings velocity:
+  - 🌟 *Master Wealth Builder* (Savings rate ≥ 40%)
+  - 💎 *Balanced Strategist* (Savings rate 20% – 40%)
+  - ⚡ *Active Cashflower* (Savings rate 5% – 20%)
+  - 🔥 *Lifestyle Maximizer* (High expenditure burn rate)
+- **Financial Vital Signs**: Track Lifetime Inflow, Lifetime Outflow, Accumulated Retained Wealth, and the **Needs vs Wants** essential allocation ratio.
+- **Top Spending Drivers Leaderboard**: Interactive progress indicators displaying your top 4 expense categories by volume and percentage.
+- **Peak Outflow Detector**: Real-time callout identifying the single largest expense recorded.
 
-### 5. 🎯 Savings Goals Tracker
-- Create specific savings targets with target dollar amounts.
-- Circular progress rings with completion celebrations (`🎉 Goal Reached!`).
-- Add funds incrementally with instant progress updates.
-
-### 6. 👛 Multi-Account & Wallet Management
-- Independent wallet balance calculations and total spending tracking per account.
-- Filter transactions specifically for a selected wallet.
+### 5. ⚙️ Dedicated Profile Settings Modal
+- Access theme customizers, image uploaders, display name editors, currency switchers, password managers, and SQL data export from a central modal sheet.
+- **One-Tap Home Redirection**: Tapping the user avatar in the Home page AppBar instantly navigates directly to the Profile tab.
 
 ---
 
@@ -59,22 +59,28 @@ lib/
 ├── main.dart                       # App entrypoint & dynamic theme listening
 ├── models/                         # Domain data models
 │   ├── transaction.dart            # Transaction schema & serialization
-│   └── savings_goal.dart           # SavingsGoal schema & progress logic
+│   ├── savings_goal.dart           # SavingsGoal schema & progress logic
+│   └── user_profile.dart           # User profile, custom colors & photo model
 ├── screens/                        # Application screens
-│   ├── login_screen.dart           # Authentication & sign-in
+│   ├── login_screen.dart           # SQLite authentication & sign-in
 │   ├── main_nav_screen.dart        # IndexedStack zero-lag tab shell
-│   ├── dashboard_screen.dart       # Home overview, balance & budgets
+│   ├── dashboard_screen.dart       # Interactive multi-month chart & quick stats
 │   ├── all_transactions_screen.dart# Search, filter, and pie chart analytics
 │   ├── insights_screen.dart        # Spending trends & category breakdown
 │   ├── goals_screen.dart           # Goal progress & fund allocations
-│   ├── accounts_screen.dart        # Multi-wallet & card balances
-│   └── profile_screen.dart         # Multi-theme selector & user avatar
+│   ├── accounts_screen.dart        # Multi-wallet cards & account analytics
+│   └── profile_screen.dart         # Financial behavior summary & settings popup
 ├── services/                       # State & Persistence
-│   └── state.dart                  # AppState ValueNotifiers & SharedPreferences I/O
+│   ├── state.dart                  # AppState ValueNotifiers & reactive state
+│   └── database/                   # SQLite database engine & security
+│       ├── app_database.dart       # SQLite tables, migrations, CRUD & SQL export
+│       └── security_helper.dart    # SHA-256 password salting & verification
 ├── utils/                          # Styling & Design Tokens
-│   └── constants.dart              # Theme definitions, icons & currencies
+│   └── constants.dart              # Dynamic theme generator, icons & currencies
 └── widgets/                        # Reusable UI & Custom Painters
-    ├── custom_painters.dart        # Repaint-bounded Month & Pie chart painters
+    ├── custom_painters.dart        # Repaint-bounded Month line & Donut painters
+    ├── interactive_chart_card.dart # Multi-month navigator & line/donut card
+    ├── color_picker_dialog.dart    # Graphic Theme Studio (HSV sliders & hex)
     ├── transaction_tile.dart       # Dismissible transaction list item
     └── transaction_dialog.dart     # Memory-safe modal for add/edit transactions
 ```
@@ -170,19 +176,16 @@ The output executable will be generated at `build/windows/x64/runner/Release/bal
 ---
 
 ## 📝 Recent Changelog
-- **v1.1.1 (Current)**:
-  - **Profile Tab Bugfix**: Fixed assertion crash in `ProfileScreen` currency picker by replacing restrictive dropdown with full `SimpleDialog` supporting all currencies (including PKR `₨`, INR `₹`, etc.).
-  - **Avatar Empty Guard**: Added safety fallback for empty/whitespace usernames in profile avatar generation.
-  - **Login Crash Protection**: Wrapped authentication and JSON storage deserialization in robust `try / catch` blocks to eliminate crash on invalid credentials or corrupt storage.
-  - **Loading Indicator Stabilization**: Replaced jittery button swap with fixed-geometry `ElevatedButton` maintaining consistent 55px height and inline centered progress spinner.
-  - **Android Keyboard Lag Elimination**: Removed hardcoded Windows font (`Segoe UI`) on mobile devices to prevent native font-fallback lookups during keystrokes; disabled heavy IME suggestions on credential fields; added automatic keyboard dismissal on submission.
-  - **Currency State Persistence**: Integrated currency selection with user-scoped persistence across app sessions and transactions modal.
+- **v1.2.0 (Current)**:
+  - **Graphic Theme Studio**: Added fine-grained graphic color controls with interactive HSV sliders, Hex code input, curated presets, and live theme updates.
+  - **Profile Photo & Text Customization**: Added photo upload capability via image picker and custom display name / bio editing.
+  - **Secure SQLite Database Engine**: Built robust on-device SQLite database (`finance_vault.db`) with SHA-256 password hashing, strict user data isolation, legacy migration, and `.sql` script export.
+  - **Firebase Cloud Sync Ready**: Designed an offline-first hybrid architecture ready for Firebase Firestore and Auth multi-device synchronization.
+  - **Multi-Month Interactive Analytics Charts**: Added month navigation (`<` and `>`), Line Flow vs. Donut Breakdown toggles, and Spend vs. Income vs. Net filters on both Dashboard and Accounts screens.
+  - **Executive Spending Behavior Summary**: Redesigned Profile page with dynamic spending persona badges, financial vitals, needs-vs-wants breakdown, and top spending categories leaderboard.
+  - **Home Avatar Profile Redirection**: Tapping the user avatar or greeting on the Home screen instantly navigates to the Profile tab.
+- **v1.1.1**:
+  - Profile currency picker bugfix, login crash protection, inline loading spinner, and keyboard latency optimization.
 - **v1.1.0**:
-  - Synchronized complete modular architecture (`models`, `screens`, `services`, `utils`, `widgets`).
-  - Added **Multi-Theme Engine** with 5 custom color palettes and avatar personalizations.
-  - Implemented **Accounts & Wallets Screen** for multi-account balance tracking.
-  - Resolved mobile performance lag via `IndexedStack` and `RepaintBoundary`.
-  - Fixed `TextEditingController` memory leaks and Android keyboard cursor jumps.
-  - Fixed January rollback bug in month-over-month insight calculations.
-  - Fixed Gradle 8.14 compatibility by enforcing Java 21 LTS runtime.
+  - Synchronized complete modular architecture (`models`, `screens`, `services`, `utils`, `widgets`), added Accounts & Wallets screen, and implemented mobile performance optimizations.
 - **v1.0.0**: Initial release with authentication, transactions, and basic dashboard.

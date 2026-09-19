@@ -14,8 +14,6 @@ class MainNavScreen extends StatefulWidget {
 }
 
 class _MainNavScreenState extends State<MainNavScreen> {
-  int _currentIndex = 0;
-
   final List<Widget> _screens = const [
     DashboardScreen(),
     InsightsScreen(),
@@ -23,6 +21,24 @@ class _MainNavScreenState extends State<MainNavScreen> {
     AccountsScreen(),
     ProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    AppState.activeTabNotifier.addListener(_onTabChanged);
+  }
+
+  @override
+  void dispose() {
+    AppState.activeTabNotifier.removeListener(_onTabChanged);
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,14 +49,16 @@ class _MainNavScreenState extends State<MainNavScreen> {
       return const Scaffold();
     }
 
+    final currentIndex = AppState.activeTabNotifier.value;
+
     return Scaffold(
       body: IndexedStack(
-        index: _currentIndex,
+        index: currentIndex,
         children: _screens,
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (i) => setState(() => _currentIndex = i),
+        selectedIndex: currentIndex,
+        onDestinationSelected: (i) => AppState.activeTabNotifier.value = i,
         backgroundColor: Theme.of(context).colorScheme.surface,
         indicatorColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
         destinations: const [

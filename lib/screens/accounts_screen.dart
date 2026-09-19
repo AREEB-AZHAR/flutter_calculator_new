@@ -3,6 +3,7 @@ import '../models/transaction.dart';
 import '../services/state.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/transaction_dialog.dart';
+import '../widgets/interactive_chart_card.dart';
 
 class AccountsScreen extends StatefulWidget {
   const AccountsScreen({super.key});
@@ -187,6 +188,17 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     ),
                   ),
                   
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      child: InteractiveChartCard(
+                        transactions: transactions,
+                        accountFilter: _selectedAccount,
+                        title: 'Analytics: $_selectedAccount',
+                      ),
+                    ),
+                  ),
+
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),

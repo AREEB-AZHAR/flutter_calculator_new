@@ -5,92 +5,245 @@ import '../models/transaction.dart';
 class MonthChartPainter extends CustomPainter {
   final List<Transaction> transactions;
   final Color lineColor;
+  final int year;
+  final int month;
+  final String filter; // 'all', 'spend', 'income'
 
   // Pre-calculated values for performance
-  late final List<double> _dailyBalances;
-  late final double _minBal;
-  late final double _maxBal;
+  late final List<double> _dailyValues;
+  late final double _minVal;
+  late final double _maxVal;
   late final double _range;
   late final int _daysInMonth;
-  late final int _currentDay;
+  late final int _activeDays;
 
-  MonthChartPainter(this.transactions, {
+  MonthChartPainter({
+    required this.transactions,
+    required this.year,
+    required this.month,
+    this.filter = 'all',
     this.lineColor = const Color(0xFF8B5CF6),
   }) {
     final now = DateTime.now();
-    _currentDay = now.day;
-    _daysInMonth = DateTime(now.year, now.month + 1, 0).day;
-    _dailyBalances = List.filled(_daysInMonth, 0.0);
+    _daysInMonth = DateTime(year, month + 1, 0).day;
+    final isCurrentMonth = (now.year == year && now.month == month);
+    _activeDays = isCurrentMonth ? now.day : _daysInMonth;
+    _dailyValues = List.filled(_daysInMonth, 0.0);
 
-    final thisMonthTx = transactions.where((t) => 
-      t.date.year == now.year && t.date.month == now.month).toList();
+    final monthTxs = transactions.where((t) => t.date.year == year && t.date.month == month).toList();
 
-    for (var tx in thisMonthTx) {
-      int dayIndex = tx.date.day - 1;
+    for (var tx in monthTxs) {
+      final dayIndex = tx.date.day - 1;
       if (dayIndex >= 0 && dayIndex < _daysInMonth) {
-        _dailyBalances[dayIndex] += tx.isIncome ? tx.amount : -tx.amount;
+        if (filter == 'spend') {
+          if (!tx.isIncome) _dailyValues[dayIndex] += tx.amount;
+        } else if (filter == 'income') {
+          if (tx.isIncome) _dailyValues[dayIndex] += tx.amount;
+        } else {
+          _dailyValues[dayIndex] += tx.isIncome ? tx.amount : -tx.amount;
+        }
       }
     }
 
-    double current = 0;
+    // Cumulative progression
+    double running = 0;
     for (int i = 0; i < _daysInMonth; i++) {
-      current += _dailyBalances[i];
-      _dailyBalances[i] = current;
+      running += _dailyValues[i];
+      _dailyValues[i] = running;
     }
 
-    if (_dailyBalances.isEmpty) {
-      _maxBal = 0;
-      _minBal = 0;
+    if (_dailyValues.isEmpty) {
+      _maxVal = 0;
+      _minVal = 0;
       _range = 1;
     } else {
-      _maxBal = _dailyBalances.reduce(max);
-      _minBal = _dailyBalances.reduce(min);
-      final diff = _maxBal - _minBal;
+      _maxVal = _dailyValues.reduce(max);
+      _minVal = _dailyValues.reduce(min);
+      final diff = _maxVal - _minVal;
       _range = diff <= 0 ? 1.0 : diff;
     }
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (transactions.isEmpty || _currentDay == 0) {
+    if (transactions.isEmpty || _activeDays == 0) {
       final paint = Paint()
-        ..color = lineColor.withValues(alpha: 0.3)
-        ..strokeWidth = 3
+        ..color = lineColor.withValues(alpha: 0.2)
+        ..strokeWidth = 2
         ..style = PaintingStyle.stroke;
       canvas.drawLine(Offset(0, size.height / 2), Offset(size.width, size.height / 2), paint);
       return;
     }
 
-    final paint = Paint()
+    final strokePaint = Paint()
       ..color = lineColor
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          lineColor.withValues(alpha: 0.3),
+          lineColor.withValues(alpha: 0.0),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..style = PaintingStyle.fill;
 
     final path = Path();
+    final fillPath = Path();
     final widthStep = size.width / max(1, _daysInMonth - 1);
 
-    for (int i = 0; i < min(_currentDay, _dailyBalances.length); i++) {
+    Offset firstPoint = Offset.zero;
+    Offset lastPoint = Offset.zero;
+
+    for (int i = 0; i < min(_activeDays, _dailyValues.length); i++) {
       final x = i * widthStep;
-      final normalizedY = (_dailyBalances[i] - _minBal) / _range;
-      // Guard against NaN or Infinity from normalizedY
+      final normalizedY = (_dailyValues[i] - _minVal) / _range;
       if (normalizedY.isNaN || normalizedY.isInfinite) continue;
-      
-      final y = size.height - (normalizedY * size.height * 0.8) - (size.height * 0.1);
+
+      final y = size.height - (normalizedY * size.height * 0.75) - (size.height * 0.12);
 
       if (i == 0) {
+        firstPoint = Offset(x, y);
         path.moveTo(x, y);
+        fillPath.moveTo(x, size.height);
+        fillPath.lineTo(x, y);
       } else {
         path.lineTo(x, y);
+        fillPath.lineTo(x, y);
       }
+      lastPoint = Offset(x, y);
     }
 
-    canvas.drawPath(path, paint);
+    if (firstPoint != lastPoint) {
+      fillPath.lineTo(lastPoint.dx, size.height);
+      fillPath.close();
+      canvas.drawPath(fillPath, fillPaint);
+    }
+
+    canvas.drawPath(path, strokePaint);
+
+    // Draw active dot at latest point
+    final dotPaint = Paint()..color = lineColor;
+    final dotGlow = Paint()..color = lineColor.withValues(alpha: 0.4);
+    canvas.drawCircle(lastPoint, 6, dotGlow);
+    canvas.drawCircle(lastPoint, 3.5, dotPaint);
   }
 
   @override
   bool shouldRepaint(MonthChartPainter oldDelegate) {
-    return oldDelegate.transactions != transactions || oldDelegate.lineColor != lineColor;
+    return oldDelegate.transactions != transactions ||
+        oldDelegate.year != year ||
+        oldDelegate.month != month ||
+        oldDelegate.filter != filter ||
+        oldDelegate.lineColor != lineColor;
+  }
+}
+
+class DonutChartPainter extends CustomPainter {
+  final Map<String, double> segments;
+  final double total;
+  final String currencySymbol;
+  final String centerTitle;
+
+  static const List<Color> _palette = [
+    Color(0xFF8B5CF6),
+    Color(0xFF10B981),
+    Color(0xFF3B82F6),
+    Color(0xFFF59E0B),
+    Color(0xFFF43F5E),
+    Color(0xFF14B8A6),
+    Color(0xFFEC4899),
+    Color(0xFF6366F1),
+    Color(0xFF84CC16),
+    Color(0xFFEAB308),
+  ];
+
+  DonutChartPainter({
+    required this.segments,
+    required this.total,
+    required this.currencySymbol,
+    this.centerTitle = 'Total',
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = min(size.width, size.height) / 2 - 12;
+
+    if (total <= 0 || segments.isEmpty) {
+      final emptyPaint = Paint()
+        ..color = Colors.white10
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 16;
+      canvas.drawCircle(center, radius, emptyPaint);
+
+      final textPainter = TextPainter(
+        text: const TextSpan(
+          text: 'No Data',
+          style: TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(canvas, Offset(center.dx - textPainter.width / 2, center.dy - textPainter.height / 2));
+      return;
+    }
+
+    double startAngle = -pi / 2;
+    int colorIdx = 0;
+
+    for (var entry in segments.entries) {
+      final sweepAngle = (entry.value / total) * 2 * pi;
+      if (sweepAngle <= 0 || sweepAngle.isNaN) continue;
+
+      final color = _palette[colorIdx % _palette.length];
+      final paint = Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 18
+        ..strokeCap = StrokeCap.butt;
+
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        sweepAngle - 0.02, // slight separation gap
+        false,
+        paint,
+      );
+
+      startAngle += sweepAngle;
+      colorIdx++;
+    }
+
+    // Center Text
+    final titlePainter = TextPainter(
+      text: TextSpan(
+        text: centerTitle.toUpperCase(),
+        style: const TextStyle(color: Colors.white54, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    titlePainter.paint(canvas, Offset(center.dx - titlePainter.width / 2, center.dy - 12));
+
+    final amountPainter = TextPainter(
+      text: TextSpan(
+        text: '$currencySymbol${total.toStringAsFixed(0)}',
+        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    amountPainter.paint(canvas, Offset(center.dx - amountPainter.width / 2, center.dy + 2));
+  }
+
+  @override
+  bool shouldRepaint(DonutChartPainter oldDelegate) {
+    return oldDelegate.total != total ||
+        oldDelegate.segments != segments ||
+        oldDelegate.currencySymbol != currencySymbol;
   }
 }
 
@@ -158,45 +311,6 @@ class PieChartPainter extends CustomPainter {
         incomeAngle,
         false,
         paintIncome,
-      );
-    }
-
-    _drawLabels(canvas, center, radius, incomeAngle);
-  }
-
-  void _drawLabels(Canvas canvas, Offset center, double radius, double incomeAngle) {
-    void drawAmountLabel(String text, double angle, Color color) {
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: text,
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-            shadows: const [Shadow(blurRadius: 3, color: Colors.black)],
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
-      final labelRadius = radius + 32;
-      final x = center.dx + labelRadius * cos(angle) - textPainter.width / 2;
-      final y = center.dy + labelRadius * sin(angle) - textPainter.height / 2;
-      textPainter.paint(canvas, Offset(x, y));
-    }
-
-    if (income > 0 && !incomeAngle.isNaN && !incomeAngle.isInfinite) {
-      drawAmountLabel(
-        '+$currencySymbol${income.toStringAsFixed(0)}',
-        -pi / 2 + incomeAngle / 2,
-        incomeColor,
-      );
-    }
-    if (expense > 0 && !incomeAngle.isNaN && !incomeAngle.isInfinite) {
-      drawAmountLabel(
-        '-$currencySymbol${expense.toStringAsFixed(0)}',
-        -pi / 2 + incomeAngle + (2 * pi - incomeAngle) / 2,
-        expenseColor,
       );
     }
   }

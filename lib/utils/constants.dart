@@ -34,6 +34,22 @@ ThemeData buildAppTheme(String themeName) {
   );
 }
 
+ThemeData buildDynamicTheme({Color? primary, Color? secondary}) {
+  final primaryCol = primary ?? const Color(0xFF8B5CF6);
+  final secondaryCol = secondary ?? const Color(0xFF10B981);
+  return ThemeData(
+    brightness: Brightness.dark,
+    scaffoldBackgroundColor: const Color(0xFF0B0E14),
+    colorScheme: ColorScheme.dark(
+      primary: primaryCol,
+      secondary: secondaryCol,
+      surface: const Color(0xFF151A22),
+    ),
+    useMaterial3: true,
+    fontFamily: defaultTargetPlatform == TargetPlatform.windows ? 'Segoe UI' : null,
+  );
+}
+
 const Map<String, IconData> categoryIcons = {
   'Food & Dining': Icons.fastfood,
   'Housing & Rent': Icons.home,
