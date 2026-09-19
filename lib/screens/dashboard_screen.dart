@@ -277,22 +277,41 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             onPressed: () {
               showDialog(
                 context: context,
-                builder: (ctx) => SimpleDialog(
-                  backgroundColor: Theme.of(context).colorScheme.surface,
-                  title: const Text('Select Currency'),
-                  children: currencyOptions.entries.map((entry) {
-                    return SimpleDialogOption(
-                      onPressed: () {
-                        AppState.currencyNotifier.value = entry.value;
-                        setState(() {});
-                        Navigator.pop(ctx);
-                      },
-                      child: Text(entry.key, style: TextStyle(
-                        color: AppState.currencyNotifier.value == entry.value ? Theme.of(context).colorScheme.primary : Colors.white,
-                        fontWeight: AppState.currencyNotifier.value == entry.value ? FontWeight.bold : FontWeight.normal,
-                      )),
+                builder: (ctx) => ValueListenableBuilder<String>(
+                  valueListenable: AppState.currencyNotifier,
+                  builder: (context, activeCurrency, _) {
+                    return SimpleDialog(
+                      backgroundColor: Theme.of(context).colorScheme.surface,
+                      title: const Text('Select Currency'),
+                      children: currencyOptions.entries.map((entry) {
+                        final isSelected = activeCurrency == entry.value;
+                        return SimpleDialogOption(
+                          onPressed: () {
+                            if (AppState.currentUser != null) {
+                              AppState.saveCurrency(AppState.currentUser!, entry.value);
+                            } else {
+                              AppState.currencyNotifier.value = entry.value;
+                            }
+                            Navigator.pop(ctx);
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                entry.key,
+                                style: TextStyle(
+                                  color: isSelected ? Theme.of(context).colorScheme.primary : Colors.white,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(Icons.check, size: 18, color: Theme.of(context).colorScheme.primary),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                     );
-                  }).toList(),
+                  },
                 ),
               );
             },

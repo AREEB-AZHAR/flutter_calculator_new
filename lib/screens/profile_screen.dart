@@ -355,20 +355,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () {
                       showDialog(
                         context: context,
-                        builder: (inner) => SimpleDialog(
-                          backgroundColor: const Color(0xFF151A22),
-                          title: const Text('Select Currency'),
-                          children: currencyOptions.entries.map((e) {
-                            return SimpleDialogOption(
-                              onPressed: () {
-                                if (AppState.currentUser != null) {
-                                  AppState.saveCurrency(AppState.currentUser!, e.value);
-                                }
-                                Navigator.pop(inner);
-                              },
-                              child: Text(e.key, style: const TextStyle(color: Colors.white)),
+                        builder: (inner) => ValueListenableBuilder<String>(
+                          valueListenable: AppState.currencyNotifier,
+                          builder: (context, activeCurrency, _) {
+                            return SimpleDialog(
+                              backgroundColor: const Color(0xFF151A22),
+                              title: const Text('Select Currency'),
+                              children: currencyOptions.entries.map((e) {
+                                final isSelected = activeCurrency == e.value;
+                                return SimpleDialogOption(
+                                  onPressed: () {
+                                    if (AppState.currentUser != null) {
+                                      AppState.saveCurrency(AppState.currentUser!, e.value);
+                                    } else {
+                                      AppState.currencyNotifier.value = e.value;
+                                    }
+                                    Navigator.pop(inner);
+                                  },
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        e.key,
+                                        style: TextStyle(
+                                          color: isSelected ? Theme.of(context).colorScheme.primary : Colors.white,
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        ),
+                                      ),
+                                      if (isSelected)
+                                        Icon(Icons.check, size: 18, color: Theme.of(context).colorScheme.primary),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
                             );
-                          }).toList(),
+                          },
                         ),
                       );
                     },

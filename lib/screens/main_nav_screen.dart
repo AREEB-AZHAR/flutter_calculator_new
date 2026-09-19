@@ -22,10 +22,29 @@ class _MainNavScreenState extends State<MainNavScreen> {
     ProfileScreen(),
   ];
 
+  final Set<int> _loadedTabs = {0};
+
   @override
   void initState() {
     super.initState();
     AppState.activeTabNotifier.addListener(_onTabChanged);
+
+    // Warm up other tabs in the background during idle time without blocking login transition
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _idlePreWarm();
+    });
+  }
+
+  void _idlePreWarm() async {
+    for (int i = 1; i < _screens.length; i++) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (!mounted) return;
+      if (!_loadedTabs.contains(i)) {
+        setState(() {
+          _loadedTabs.add(i);
+        });
+      }
+    }
   }
 
   @override
@@ -36,6 +55,10 @@ class _MainNavScreenState extends State<MainNavScreen> {
 
   void _onTabChanged() {
     if (mounted) {
+      final current = AppState.activeTabNotifier.value;
+      if (!_loadedTabs.contains(current)) {
+        _loadedTabs.add(current);
+      }
       setState(() {});
     }
   }
@@ -50,11 +73,19 @@ class _MainNavScreenState extends State<MainNavScreen> {
     }
 
     final currentIndex = AppState.activeTabNotifier.value;
+    if (!_loadedTabs.contains(currentIndex)) {
+      _loadedTabs.add(currentIndex);
+    }
 
     return Scaffold(
       body: IndexedStack(
         index: currentIndex,
-        children: _screens,
+        children: List.generate(_screens.length, (index) {
+          if (_loadedTabs.contains(index)) {
+            return _screens[index];
+          }
+          return const SizedBox.shrink();
+        }),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,

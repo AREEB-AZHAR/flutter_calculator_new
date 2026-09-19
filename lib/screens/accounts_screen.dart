@@ -13,7 +13,7 @@ class AccountsScreen extends StatefulWidget {
 }
 
 class _AccountsScreenState extends State<AccountsScreen> {
-  String _selectedAccount = 'Main';
+  String _selectedAccount = 'Overall';
 
   void _showSettingsDialog() {
     showDialog(
@@ -44,7 +44,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                 AppState.accountsNotifier.value = List.from(accounts);
                                 if (AppState.currentUser != null) AppState.saveAccounts(AppState.currentUser!, accounts);
                                 if (_selectedAccount == removedAcc) {
-                                  setState(() => _selectedAccount = accounts[0]);
+                                  setState(() => _selectedAccount = 'Overall');
                                 }
                                 setDialogState(() {});
                               }
@@ -120,12 +120,25 @@ class _AccountsScreenState extends State<AccountsScreen> {
           return ValueListenableBuilder<List<Transaction>>(
             valueListenable: AppState.transactionsNotifier,
             builder: (context, transactions, _) {
-              if (!accounts.contains(_selectedAccount) && accounts.isNotEmpty) {
-                _selectedAccount = accounts.first;
+              final allDisplayAccounts = ['Overall', ...accounts];
+              if (!allDisplayAccounts.contains(_selectedAccount)) {
+                _selectedAccount = 'Overall';
               }
               
               final Map<String, double> balances = {};
               final Map<String, double> spentMap = {};
+
+              double overallIncome = 0;
+              double overallExpense = 0;
+              for (var t in transactions) {
+                if (t.isIncome) {
+                  overallIncome += t.amount;
+                } else {
+                  overallExpense += t.amount;
+                }
+              }
+              balances['Overall'] = overallIncome - overallExpense;
+              spentMap['Overall'] = overallExpense;
               
               for (var acc in accounts) {
                 final accTxs = transactions.where((t) => t.account == acc).toList();
@@ -135,7 +148,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
                 spentMap[acc] = expense;
               }
 
-              final filteredTxs = transactions.where((t) => t.account == _selectedAccount).toList();
+              final filteredTxs = _selectedAccount == 'Overall'
+                  ? transactions
+                  : transactions.where((t) => t.account == _selectedAccount).toList();
 
               return CustomScrollView(
                 slivers: [
@@ -150,10 +165,12 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (ctx, index) {
-                          final acc = accounts[index];
+                          final acc = allDisplayAccounts[index];
                           final isSelected = _selectedAccount == acc;
+                          final isOverall = acc == 'Overall';
                           final bal = balances[acc] ?? 0.0;
                           final sp = spentMap[acc] ?? 0.0;
+                          final primaryColor = Theme.of(context).colorScheme.primary;
                           
                           return GestureDetector(
                             onTap: () => setState(() => _selectedAccount = acc),
@@ -161,21 +178,52 @@ class _AccountsScreenState extends State<AccountsScreen> {
                               duration: const Duration(milliseconds: 300),
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2) : Theme.of(context).colorScheme.surface,
+                                color: isSelected 
+                                    ? primaryColor.withValues(alpha: 0.2) 
+                                    : Theme.of(context).colorScheme.surface,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: isSelected ? Theme.of(context).colorScheme.primary : Colors.white.withValues(alpha: 0.05)),
+                                border: Border.all(
+                                  color: isSelected 
+                                      ? primaryColor 
+                                      : (isOverall ? Colors.blueAccent.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.05)),
+                                  width: isSelected ? 2 : 1,
+                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(acc, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.white70), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          isOverall ? '🌐 All Accounts' : acc,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: isSelected ? Colors.white : (isOverall ? Colors.blueAccent : Colors.white70),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (isOverall)
+                                        const Icon(Icons.auto_graph, size: 14, color: Colors.blueAccent),
+                                    ],
+                                  ),
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text('${AppState.currencyNotifier.value}${bal.toStringAsFixed(0)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                                      Text(
+                                        '${AppState.currencyNotifier.value}${bal.toStringAsFixed(0)}',
+                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                      ),
                                       const SizedBox(height: 2),
-                                      Text('Spent: ${AppState.currencyNotifier.value}${sp.toStringAsFixed(0)}', style: const TextStyle(fontSize: 10, color: Colors.white54)),
+                                      Text(
+                                        'Spent: ${AppState.currencyNotifier.value}${sp.toStringAsFixed(0)}',
+                                        style: const TextStyle(fontSize: 10, color: Colors.white54),
+                                      ),
                                     ],
                                   ),
                                 ],
@@ -183,7 +231,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                             ),
                           );
                         },
-                        childCount: accounts.length,
+                        childCount: allDisplayAccounts.length,
                       ),
                     ),
                   ),
@@ -193,8 +241,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                       child: InteractiveChartCard(
                         transactions: transactions,
-                        accountFilter: _selectedAccount,
-                        title: 'Analytics: $_selectedAccount',
+                        accountFilter: _selectedAccount == 'Overall' ? null : _selectedAccount,
+                        title: _selectedAccount == 'Overall' ? 'Overall Analytics (All Wallets)' : 'Analytics: $_selectedAccount',
                       ),
                     ),
                   ),
@@ -202,7 +250,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      child: Text('Transactions: $_selectedAccount', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                      child: Text(
+                        _selectedAccount == 'Overall' ? 'All Transactions (Overall)' : 'Transactions: $_selectedAccount',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
                     ),
                   ),
                   

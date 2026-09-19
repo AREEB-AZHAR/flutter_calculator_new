@@ -1,42 +1,60 @@
-# 💰 Balance Tracker & Personal Finance Manager
+# 💰 Tally — Smart Personal Finance & Expense Tracker
 
-A modern, high-performance personal finance management app built with **Flutter** & **Material 3**. Designed with fluid micro-interactions, dark glassmorphism styling, multi-theme customization, and zero-lag mobile rendering.
+> *"Just tally it up!"* — A blazing-fast, modern personal finance manager built with **Flutter** & **Material 3**. Designed with fluid micro-interactions, dark glassmorphism styling, graphic theme customization, offline-first encrypted SQLite storage, and stutter-free 60/120fps mobile rendering.
 
 ---
 
 ## 📱 Visual Showcase & Screenshots
 
 > [!TIP]
-> **Screenshots Placeholder**: Capture and place your high-resolution screenshots in `assets/screenshots/` (e.g. `dashboard.png`, `insights.png`, `goals.png`, `theme_selector.png`).
+> **Screenshots Placeholder**: Capture and place your high-resolution screenshots in `assets/screenshots/` (e.g. `splash.png`, `dashboard.png`, `insights.png`, `accounts_overall.png`, `theme_studio.png`).
 
-| Home & Dashboard | Analytics & Insights | Savings Goals | Accounts & Theming |
+| Flowing Splash | Home & Dashboard | Consolidated Accounts | Theme Studio & Identity |
 | :---: | :---: | :---: | :---: |
-| *(Add Dashboard Screenshot)* | *(Add Insights Screenshot)* | *(Add Goals Screenshot)* | *(Add Profile/Theme Screenshot)* |
+| *(Add Splash Screenshot)* | *(Add Dashboard Screenshot)* | *(Add Accounts Overall)* | *(Add Profile/Theme Screenshot)* |
 
 ---
 
 ## ✨ Features & Capabilities
 
-### 1. 🎨 Graphic Theme Studio & Custom Identity
+### 1. 🌈 Flowing Colors Brand Splash & Cold-Boot Polish
+- **Dynamic Gradient Sweep**: Fluid linear gradient shader washing vibrant colors (electric violet, ocean cyan, emerald green, solar amber) through the text **"TALLY"**.
+- **Zero Black-Screen Startup**: Immediate rendering prevents the default blank/black frame cold-boot hitch on mobile devices.
+- **Glowing Ambient Pulse**: Breathing micro-animations and smooth cross-fade transition into the login or dashboard shell.
+
+### 2. ⚡ Zero-Lag Lazy-Loaded Tab Architecture
+- **Instant Login Rendering**: Only the active Home dashboard (Tab 0) is built upon authentication, completely eliminating the 5-frame hitch caused by mounting all 5 analytical screens simultaneously.
+- **Smart Idle Pre-Warming**: Sequentially warms up subsequent tabs (Insights, Goals, Accounts, Profile) in the background during idle frame windows (350ms staggered intervals), ensuring zero tab-switch stutter without loading all screens upfront.
+- **Debug-Safe Binding**: Integrated `WidgetsFlutterBinding.ensureInitialized()` and SQLite FFI guards to guarantee instant loading in both Debug and Release build modes.
+
+### 3. 🌐 "Overall" Consolidated Accounts & Wallet Intelligence
+- **Consolidated Multi-Wallet View**: Accounts screen includes an **"Overall" (🌐 All Accounts)** mode displaying cumulative balance, total expenditure across all cards/wallets, and unified transaction feeds.
+- **Multi-Month Wallet Analytics**: Chart dynamically filters for individual accounts or displays consolidated multi-month trend analysis when "Overall" is selected.
+
+### 4. 🔄 Unified Bidirectional Currency Synchronization
+- **Instant Dual-Location Sync**: Switching currencies from either the **Home Dashboard AppBar** or the **Profile Settings modal** immediately syncs across the entire application and updates the SQLite database persistently.
+- **Visual Feedback**: Active currency checkmarks and theme-tinted badges in both picker interfaces.
+
+### 5. 🎨 Graphic Theme Studio & Custom Identity
 - **Fine-Grained Graphic Color Control**: Fine-tune primary and secondary accent colors with interactive Hue, Saturation, and Lightness (HSV) sliders or direct Hex input (`#8B5CF6`).
 - **Curated Theme Palettes**: Quick-select from designer palettes (Violet Neon, Ocean Cyan, Emerald Matrix, Solar Amber, Rose Velvet, Cyberpunk Teal).
 - **Custom Profile Photo Uploads**: Upload profile pictures from the device gallery with automatic fallback to stylized initial avatars.
 - **Personal Bio & Display Name**: Edit custom profile text, displayed across the app header and profile dashboard.
 
-### 2. 🛡️ Secure SQLite Database Vault & Cloud Architecture
+### 6. 🛡️ Secure SQLite Database Vault & Cloud Architecture
 - **On-Device Encrypted SQL Ledger**: All user accounts, transactions, budgets, goals, and customized profiles are securely stored in an on-device SQLite database (`finance_vault.db`).
 - **Cryptographic Password Protection**: User passwords are protected using SHA-256 cryptographic hashing with unique random salts.
 - **Strict User Isolation**: Foreign-key scoped queries guarantee that no account can ever access another user's financial records.
 - **Full `.sql` Script Export**: One-tap generation and export of your complete SQL database dump for backups or offline inspection.
 - **Firebase Ready (Hybrid Architecture)**: Abstracted database repository ready for instant multi-device cloud synchronization with Firebase Firestore & Firebase Auth.
 
-### 3. 📈 Interactive Multi-Month Analytics Charts
+### 7. 📈 Interactive Multi-Month Analytics Charts
 - **Multi-Month Navigation**: Browse previous and future months seamlessly with `<` and `>` arrow selectors.
 - **Chart Style Toggle**: Switch instantly between a **Smooth Line Flow** (daily balance and cumulative progression) and a **Segmented Donut Breakdown** (category distribution).
 - **Metric Filter Selectors**: Toggle focus between **Spend (Expenses)**, **Income (Received)**, and **All (Net)**.
-- **Dual-Screen Availability**: Embedded on both the **Home Dashboard** and the **Accounts & Wallets** screen (where it automatically filters by the active wallet/account).
+- **Dual-Screen Availability**: Embedded on both the **Home Dashboard** and the **Accounts & Wallets** screen.
 
-### 4. 🧠 Executive Spending Behavior Summary
+### 8. 🧠 Executive Spending Behavior Summary
 - **Dynamic Spending Persona**: Real-time behavioral badges based on cumulative savings velocity:
   - 🌟 *Master Wealth Builder* (Savings rate ≥ 40%)
   - 💎 *Balanced Strategist* (Savings rate 20% – 40%)
@@ -46,7 +64,7 @@ A modern, high-performance personal finance management app built with **Flutter*
 - **Top Spending Drivers Leaderboard**: Interactive progress indicators displaying your top 4 expense categories by volume and percentage.
 - **Peak Outflow Detector**: Real-time callout identifying the single largest expense recorded.
 
-### 5. ⚙️ Dedicated Profile Settings Modal
+### 9. ⚙️ Dedicated Profile Settings Modal
 - Access theme customizers, image uploaders, display name editors, currency switchers, password managers, and SQL data export from a central modal sheet.
 - **One-Tap Home Redirection**: Tapping the user avatar in the Home page AppBar instantly navigates directly to the Profile tab.
 
@@ -62,13 +80,14 @@ lib/
 │   ├── savings_goal.dart           # SavingsGoal schema & progress logic
 │   └── user_profile.dart           # User profile, custom colors & photo model
 ├── screens/                        # Application screens
+│   ├── splash_screen.dart          # Flowing colors animated brand splash
 │   ├── login_screen.dart           # SQLite authentication & sign-in
-│   ├── main_nav_screen.dart        # IndexedStack zero-lag tab shell
+│   ├── main_nav_screen.dart        # Lazy-loaded tab shell with idle pre-warming
 │   ├── dashboard_screen.dart       # Interactive multi-month chart & quick stats
 │   ├── all_transactions_screen.dart# Search, filter, and pie chart analytics
 │   ├── insights_screen.dart        # Spending trends & category breakdown
 │   ├── goals_screen.dart           # Goal progress & fund allocations
-│   ├── accounts_screen.dart        # Multi-wallet cards & account analytics
+│   ├── accounts_screen.dart        # Multi-wallet & "Overall" consolidated view
 │   └── profile_screen.dart         # Financial behavior summary & settings popup
 ├── services/                       # State & Persistence
 │   ├── state.dart                  # AppState ValueNotifiers & reactive state
@@ -176,7 +195,13 @@ The output executable will be generated at `build/windows/x64/runner/Release/bal
 ---
 
 ## 📝 Recent Changelog
-- **v1.2.0 (Current)**:
+- **v1.3.0 (Current)**:
+  - **Flowing Colors Splash Screen**: Added a sweeping animated gradient (violet, ocean cyan, emerald, amber) washing through **"TALLY"** with glowing ambient pulse, preventing black-screen cold starts.
+  - **Zero-Lag Tab Architecture & Idle Pre-Warming**: Eliminated the login 5-frame hitch by lazy-loading Tab 0 (Home) upon login and staging background pre-warming for tabs 1..4 across idle frames, preventing any tab-switch stutter.
+  - **"Overall" Consolidated View (Accounts)**: Added unified "Overall" card to view aggregated balances, net spending, and consolidated transactions across all accounts/wallets.
+  - **Bidirectional Currency Sync**: Fully synchronized currency updates between Dashboard AppBar and Profile Settings with SQLite persistence.
+  - **Debug-Mode Fix**: Added `WidgetsFlutterBinding.ensureInitialized()` and desktop SQLite FFI initialization guards to prevent debugging mode attachment hangs.
+- **v1.2.0**:
   - **Graphic Theme Studio**: Added fine-grained graphic color controls with interactive HSV sliders, Hex code input, curated presets, and live theme updates.
   - **Profile Photo & Text Customization**: Added photo upload capability via image picker and custom display name / bio editing.
   - **Secure SQLite Database Engine**: Built robust on-device SQLite database (`finance_vault.db`) with SHA-256 password hashing, strict user data isolation, legacy migration, and `.sql` script export.
