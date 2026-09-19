@@ -98,4 +98,14 @@ class AppState {
     final val = prefs.getInt('avatar_$username');
     return val != null ? Color(val) : const Color(0xFF8B5CF6);
   }
+
+  static Future<void> saveCurrency(String username, String currency) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('currency_$username', currency);
+  }
+
+  static Future<String> loadCurrency(String username) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('currency_$username') ?? '\$';
+  }
 }

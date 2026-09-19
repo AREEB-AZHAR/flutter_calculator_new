@@ -19,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
     final username = _usernameCtrl.text.trim();
     final password = _passwordCtrl.text;
     
@@ -29,40 +30,59 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() { _isLoading = true; _error = ''; });
 
-    final prefs = await SharedPreferences.getInstance();
-    final String? usersStr = prefs.getString('users');
-    Map<String, dynamic> users = usersStr != null ? jsonDecode(usersStr) : {};
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? usersStr = prefs.getString('users');
+      Map<String, dynamic> users = {};
+      if (usersStr != null && usersStr.isNotEmpty) {
+        final decoded = jsonDecode(usersStr);
+        if (decoded is Map<String, dynamic>) {
+          users = decoded;
+        }
+      }
 
-    if (_isLogin) {
-      if (users.containsKey(username) && users[username] == password) {
-         AppState.currentUser = username;
-         AppState.transactionsNotifier.value = await AppState.loadTransactions(username);
-         AppState.goalsNotifier.value = await AppState.loadGoals(username);
-         AppState.budgetsNotifier.value = await AppState.loadBudgets(username);
-         AppState.accountsNotifier.value = await AppState.loadAccounts(username);
-         AppState.themeNameNotifier.value = await AppState.loadTheme(username);
-         AppState.avatarColorNotifier.value = await AppState.loadAvatarColor(username);
-         if (!mounted) return;
-         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainNavScreen()));
+      if (_isLogin) {
+        if (users.containsKey(username) && users[username].toString() == password) {
+           AppState.currentUser = username;
+           AppState.transactionsNotifier.value = await AppState.loadTransactions(username);
+           AppState.goalsNotifier.value = await AppState.loadGoals(username);
+           AppState.budgetsNotifier.value = await AppState.loadBudgets(username);
+           AppState.accountsNotifier.value = await AppState.loadAccounts(username);
+           AppState.themeNameNotifier.value = await AppState.loadTheme(username);
+           AppState.avatarColorNotifier.value = await AppState.loadAvatarColor(username);
+           AppState.currencyNotifier.value = await AppState.loadCurrency(username);
+           if (!mounted) return;
+           Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainNavScreen()));
+        } else {
+           if (!mounted) return;
+           setState(() { _error = 'Invalid username or password'; _isLoading = false; });
+        }
       } else {
-         setState(() { _error = 'Invalid credentials'; _isLoading = false; });
+        if (users.containsKey(username)) {
+           if (!mounted) return;
+           setState(() { _error = 'User already exists'; _isLoading = false; });
+        } else {
+           users[username] = password;
+           await prefs.setString('users', jsonEncode(users));
+           AppState.currentUser = username;
+           AppState.transactionsNotifier.value = [];
+           AppState.goalsNotifier.value = [];
+           AppState.budgetsNotifier.value = {'Food & Dining': 500.0, 'Housing & Rent': 1500.0, 'Transportation': 300.0, 'Entertainment': 200.0};
+           AppState.accountsNotifier.value = ['Main', 'Cash', 'Credit Card', 'Digital Wallet'];
+           AppState.themeNameNotifier.value = 'Violet Night';
+           AppState.avatarColorNotifier.value = const Color(0xFF8B5CF6);
+           AppState.currencyNotifier.value = '\$';
+           await AppState.saveCurrency(username, '\$');
+           if (!mounted) return;
+           Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainNavScreen()));
+        }
       }
-    } else {
-      if (users.containsKey(username)) {
-         setState(() { _error = 'User already exists'; _isLoading = false; });
-      } else {
-         users[username] = password;
-         await prefs.setString('users', jsonEncode(users));
-         AppState.currentUser = username;
-         AppState.transactionsNotifier.value = [];
-         AppState.goalsNotifier.value = [];
-         AppState.budgetsNotifier.value = {'Food & Dining': 500.0, 'Housing & Rent': 1500.0, 'Transportation': 300.0, 'Entertainment': 200.0};
-         AppState.accountsNotifier.value = ['Main', 'Cash', 'Credit Card', 'Digital Wallet'];
-         AppState.themeNameNotifier.value = 'Violet Night';
-         AppState.avatarColorNotifier.value = const Color(0xFF8B5CF6);
-         if (!mounted) return;
-         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainNavScreen()));
-      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'An error occurred during authentication. Please try again.';
+        _isLoading = false;
+      });
     }
   }
 
@@ -71,6 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
      return Scaffold(
        body: Center(
          child: SingleChildScrollView(
+           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
            padding: const EdgeInsets.all(32.0),
            child: ConstrainedBox(
              constraints: const BoxConstraints(maxWidth: 400),
@@ -92,6 +113,10 @@ class _LoginScreenState extends State<LoginScreen> {
                const SizedBox(height: 40),
                TextField(
                  controller: _usernameCtrl,
+                 keyboardType: TextInputType.text,
+                 autocorrect: false,
+                 enableSuggestions: false,
+                 textInputAction: TextInputAction.next,
                  style: const TextStyle(color: Colors.white),
                  decoration: InputDecoration(
                    labelText: 'Username', 
@@ -105,6 +130,10 @@ class _LoginScreenState extends State<LoginScreen> {
                TextField(
                  controller: _passwordCtrl,
                  obscureText: true,
+                 enableSuggestions: false,
+                 autocorrect: false,
+                 textInputAction: TextInputAction.done,
+                 onSubmitted: (_) => _submit(),
                  style: const TextStyle(color: Colors.white),
                  decoration: InputDecoration(
                    labelText: 'Password', 
@@ -116,23 +145,31 @@ class _LoginScreenState extends State<LoginScreen> {
                ),
                if (_error.isNotEmpty) ...[
                  const SizedBox(height: 15),
-                 Text(_error, style: const TextStyle(color: Colors.redAccent)),
+                 Text(_error, textAlign: TextAlign.center, style: const TextStyle(color: Colors.redAccent)),
                ],
                const SizedBox(height: 30),
-               _isLoading 
-                 ? const CircularProgressIndicator()
-                 : ElevatedButton(
-                     onPressed: _submit,
-                     style: ElevatedButton.styleFrom(
-                       minimumSize: const Size(double.infinity, 55), 
-                       backgroundColor: Theme.of(context).colorScheme.primary,
-                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
-                     ),
-                     child: Text(_isLogin ? 'Login' : 'Register', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                   ),
+               ElevatedButton(
+                 onPressed: _isLoading ? null : _submit,
+                 style: ElevatedButton.styleFrom(
+                   minimumSize: const Size(double.infinity, 55), 
+                   backgroundColor: Theme.of(context).colorScheme.primary,
+                   disabledBackgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
+                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
+                 ),
+                 child: _isLoading 
+                   ? const SizedBox(
+                       width: 24,
+                       height: 24,
+                       child: CircularProgressIndicator(
+                         strokeWidth: 2.5,
+                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                       ),
+                     )
+                   : Text(_isLogin ? 'Login' : 'Register', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+               ),
                const SizedBox(height: 15),
                TextButton(
-                 onPressed: () => setState(() { _isLogin = !_isLogin; _error = ''; }),
+                 onPressed: _isLoading ? null : () => setState(() { _isLogin = !_isLogin; _error = ''; }),
                  child: Text(
                    _isLogin ? 'Need an account? Register' : 'Already have an account? Login',
                    style: const TextStyle(color: Colors.white70),

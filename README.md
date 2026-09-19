@@ -85,6 +85,9 @@ lib/
 
 - **Zero-Lag Tab Switching**: Uses `IndexedStack` to maintain screen states and scroll offsets offstage, eliminating frame drops when navigating between tabs.
 - **GPU Repaint Isolation**: Charts are wrapped with `RepaintBoundary` and employ smart equality checks in `shouldRepaint` to avoid redundant CPU/GPU canvas repainting during scroll.
+- **Native Typography Fallback**: Automatically adopts platform-native fonts (Roboto on Android, San Francisco on iOS) to eliminate font-fallback lookups during keyboard input while retaining Segoe UI on Windows.
+- **Optimized Mobile Text Inputs**: Soft keyboards on login and modal forms disable unnecessary IME dictionary suggestions and autocorrect, preventing keypress stutter and rendering lag.
+- **Resilient Error Guards & Fixed-Height Actions**: Authentication and dialogs feature crash-proof try/catch handlers and fixed-dimension button layouts that prevent UI jumping during loading states.
 - **Memory-Safe Dialogs**: Controller allocations are decoupled from dialog rebuild lifecycles and safely disposed to prevent memory leaks and keyboard glitches on Android/iOS virtual keyboards.
 - **Precomputed Data Aggregations**: Chart coordinate normalization and cumulative balances are calculated ahead of rendering rather than on every frame.
 
@@ -167,7 +170,14 @@ The output executable will be generated at `build/windows/x64/runner/Release/bal
 ---
 
 ## 📝 Recent Changelog
-- **v1.1.0 (Current)**:
+- **v1.1.1 (Current)**:
+  - **Profile Tab Bugfix**: Fixed assertion crash in `ProfileScreen` currency picker by replacing restrictive dropdown with full `SimpleDialog` supporting all currencies (including PKR `₨`, INR `₹`, etc.).
+  - **Avatar Empty Guard**: Added safety fallback for empty/whitespace usernames in profile avatar generation.
+  - **Login Crash Protection**: Wrapped authentication and JSON storage deserialization in robust `try / catch` blocks to eliminate crash on invalid credentials or corrupt storage.
+  - **Loading Indicator Stabilization**: Replaced jittery button swap with fixed-geometry `ElevatedButton` maintaining consistent 55px height and inline centered progress spinner.
+  - **Android Keyboard Lag Elimination**: Removed hardcoded Windows font (`Segoe UI`) on mobile devices to prevent native font-fallback lookups during keystrokes; disabled heavy IME suggestions on credential fields; added automatic keyboard dismissal on submission.
+  - **Currency State Persistence**: Integrated currency selection with user-scoped persistence across app sessions and transactions modal.
+- **v1.1.0**:
   - Synchronized complete modular architecture (`models`, `screens`, `services`, `utils`, `widgets`).
   - Added **Multi-Theme Engine** with 5 custom color palettes and avatar personalizations.
   - Implemented **Accounts & Wallets Screen** for multi-account balance tracking.

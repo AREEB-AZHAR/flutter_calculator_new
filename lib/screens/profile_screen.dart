@@ -130,7 +130,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     radius: 40,
                     backgroundColor: avatarColor,
                     child: Text(
-                      AppState.currentUser?.substring(0, 1).toUpperCase() ?? 'U',
+                      (AppState.currentUser != null && AppState.currentUser!.trim().isNotEmpty)
+                          ? AppState.currentUser!.trim()[0].toUpperCase()
+                          : 'U',
                       style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
@@ -220,23 +222,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ListTile(
                   leading: Icon(Icons.currency_exchange, color: Theme.of(context).colorScheme.primary),
                   title: const Text('Currency', style: TextStyle(color: Colors.white)),
-                  trailing: ValueListenableBuilder<String>(
+                  subtitle: ValueListenableBuilder<String>(
                     valueListenable: AppState.currencyNotifier,
                     builder: (context, curr, _) {
-                      return DropdownButton<String>(
-                        value: curr,
-                        dropdownColor: Theme.of(context).colorScheme.surface,
-                        style: const TextStyle(color: Colors.white),
-                        underline: const SizedBox(),
-                        items: ['\$', '€', '£', '¥', '₹'].map((String c) {
-                          return DropdownMenuItem<String>(value: c, child: Text(c));
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) AppState.currencyNotifier.value = val;
-                        },
+                      final match = currencyOptions.entries.firstWhere(
+                        (e) => e.value == curr,
+                        orElse: () => MapEntry(curr, curr),
                       );
-                    }
+                      return Text(match.key, style: const TextStyle(color: Colors.white54, fontSize: 13));
+                    },
                   ),
+                  trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => SimpleDialog(
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        title: const Text('Select Currency'),
+                        children: currencyOptions.entries.map((entry) {
+                          return SimpleDialogOption(
+                            onPressed: () {
+                              AppState.currencyNotifier.value = entry.value;
+                              if (AppState.currentUser != null) {
+                                AppState.saveCurrency(AppState.currentUser!, entry.value);
+                              }
+                              Navigator.pop(ctx);
+                            },
+                            child: Text(entry.key, style: TextStyle(
+                              color: AppState.currencyNotifier.value == entry.value ? Theme.of(context).colorScheme.primary : Colors.white,
+                              fontWeight: AppState.currencyNotifier.value == entry.value ? FontWeight.bold : FontWeight.normal,
+                            )),
+                          );
+                        }).toList(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

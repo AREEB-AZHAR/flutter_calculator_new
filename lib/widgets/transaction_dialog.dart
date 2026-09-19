@@ -53,7 +53,7 @@ Future<void> showTransactionDialog(BuildContext context, {Transaction? existingT
                       controller: amountCtrl,
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
-                        labelText: 'Amount (\$)',
+                        labelText: 'Amount (${AppState.currencyNotifier.value})',
                         labelStyle: const TextStyle(color: Colors.white54),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AppThemePreset {
@@ -29,7 +30,7 @@ ThemeData buildAppTheme(String themeName) {
       surface: preset.surface,
     ),
     useMaterial3: true,
-    fontFamily: 'Segoe UI',
+    fontFamily: defaultTargetPlatform == TargetPlatform.windows ? 'Segoe UI' : null,
   );
 }
 
