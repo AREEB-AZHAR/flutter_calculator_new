@@ -16,13 +16,13 @@ class AppState {
     'Entertainment': 200.0,
   });
   static final ValueNotifier<List<String>> accountsNotifier = ValueNotifier(['Main', 'Cash', 'Credit Card', 'Digital Wallet']);
-  static final ValueNotifier<Color> avatarColorNotifier = ValueNotifier(const Color(0xFF17493B));
+  static final ValueNotifier<Color> avatarColorNotifier = ValueNotifier(const Color(0xFFE4572E));
   static final ValueNotifier<String> themeNameNotifier = ValueNotifier('Ledger');
   static final ValueNotifier<List<SavingsGoal>> goalsNotifier = ValueNotifier([]);
 
   // Graphic Theme & Profile Customization Notifiers
-  static final ValueNotifier<Color> customPrimaryColorNotifier = ValueNotifier(const Color(0xFF17493B));
-  static final ValueNotifier<Color> customSecondaryColorNotifier = ValueNotifier(const Color(0xFFE4572E));
+  static final ValueNotifier<Color> customPrimaryColorNotifier = ValueNotifier(const Color(0xFFE4572E));
+  static final ValueNotifier<Color> customSecondaryColorNotifier = ValueNotifier(const Color(0xFFF6F0E1));
   static final ValueNotifier<String?> profilePhotoNotifier = ValueNotifier(null);
   static final ValueNotifier<String> displayNameNotifier = ValueNotifier('');
   static final ValueNotifier<String> bioNotifier = ValueNotifier('');
@@ -37,9 +37,17 @@ class AppState {
     displayNameNotifier.value = profile.displayName;
     bioNotifier.value = profile.bio;
     profilePhotoNotifier.value = profile.photoPath;
-    customPrimaryColorNotifier.value = profile.primaryColor;
-    customSecondaryColorNotifier.value = profile.secondaryColor;
-    avatarColorNotifier.value = profile.primaryColor;
+
+    // Heal legacy default if primaryColor matches background (e.g. 0xFF17493B) or old default (0xFF8B5CF6)
+    Color pCol = profile.primaryColor;
+    Color sCol = profile.secondaryColor;
+    if (pCol.toARGB32() == 0xFF17493B || pCol.toARGB32() == 0xFF8B5CF6) {
+      pCol = const Color(0xFFE4572E);
+      sCol = const Color(0xFFF6F0E1);
+    }
+    customPrimaryColorNotifier.value = pCol;
+    customSecondaryColorNotifier.value = sCol;
+    avatarColorNotifier.value = pCol;
     currencyNotifier.value = profile.currency;
 
     transactionsNotifier.value = await db.loadTransactions(username);

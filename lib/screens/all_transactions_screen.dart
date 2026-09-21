@@ -63,7 +63,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
                   ),
                 ),
                 child: Column(
@@ -96,10 +96,10 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Text(
+                            Text(
                               'Total Income',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -117,10 +117,10 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Text(
+                            Text(
                               'Total Expense',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -135,16 +135,16 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: TextField(
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                   decoration: InputDecoration(
                     hintText: 'Search transactions...',
-                    hintStyle: const TextStyle(color: Colors.white54),
-                    prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                    hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
+                    prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.surface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
+                      borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12)),
                     ),
                   ),
                   onChanged: (val) => setState(() => _searchQuery = val),
@@ -164,7 +164,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                         label: Text(
                           type,
                           style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.white70,
+                            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                         ),
                         selected: isSelected,
@@ -184,10 +184,10 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
 
               Expanded(
                 child: filtered.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           "No transactions found",
-                          style: TextStyle(color: Colors.white54),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                         ),
                       )
                     : ListView.builder(

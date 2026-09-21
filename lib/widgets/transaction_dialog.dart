@@ -21,221 +21,233 @@ Future<void> showTransactionDialog(BuildContext context, {Transaction? existingT
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final theme = Theme.of(context);
+            final onSurface = theme.colorScheme.onSurface;
+            final surface = theme.colorScheme.surface;
+            final primary = theme.colorScheme.primary;
+
             return AlertDialog(
-              backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
+              backgroundColor: surface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
-                side: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
+                side: BorderSide(color: onSurface.withValues(alpha: 0.12), width: 1),
               ),
-              title: Text(existingTx == null ? 'New Transaction' : 'Edit Transaction', style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(existingTx == null ? 'New Transaction' : 'Edit Transaction', style: TextStyle(fontWeight: FontWeight.bold, color: onSurface)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
                       controller: titleCtrl,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: onSurface),
                       decoration: InputDecoration(
                         labelText: 'Title',
-                        labelStyle: const TextStyle(color: Colors.white54),
+                        labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                          borderSide: BorderSide(color: onSurface.withValues(alpha: 0.15)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+                          borderSide: BorderSide(color: primary, width: 2),
                         ),
                       ),
                     ),
                     const SizedBox(height: 15),
                     TextField(
                       controller: amountCtrl,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: onSurface),
                       decoration: InputDecoration(
                         labelText: 'Amount (${AppState.currencyNotifier.value})',
-                        labelStyle: const TextStyle(color: Colors.white54),
+                        labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                          borderSide: BorderSide(color: onSurface.withValues(alpha: 0.15)),
                         ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-                      ),
-                    ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  ),
-                  const SizedBox(height: 15),
-                  DropdownButtonFormField<String>(
-                    initialValue: category,
-                    dropdownColor: Theme.of(context).colorScheme.surface,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Category',
-                      labelStyle: const TextStyle(color: Colors.white54),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-                      ),
-                    ),
-                    items: categoryIcons.keys.map((String cat) {
-                      return DropdownMenuItem<String>(
-                        value: cat,
-                        child: Row(
-                          children: [
-                            Icon(categoryIcons[cat], size: 16, color: Colors.white70),
-                            const SizedBox(width: 8),
-                            Text(cat),
-                          ],
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: primary, width: 2),
                         ),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) setDialogState(() => category = val);
-                    },
-                  ),
-                  const SizedBox(height: 15),
-                  DropdownButtonFormField<String>(
-                    initialValue: account,
-                    dropdownColor: Theme.of(context).colorScheme.surface,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Account',
-                      labelStyle: const TextStyle(color: Colors.white54),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-                      ),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     ),
-                    items: accountsList.map((String acc) {
-                      return DropdownMenuItem<String>(value: acc, child: Text(acc));
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) setDialogState(() => account = val);
-                    },
-                  ),
-                  const SizedBox(height: 15),
-                  DropdownButtonFormField<String>(
-                    initialValue: recurrence,
-                    dropdownColor: Theme.of(context).colorScheme.surface,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Recurrence',
-                      labelStyle: const TextStyle(color: Colors.white54),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                    const SizedBox(height: 15),
+                    DropdownButtonFormField<String>(
+                      initialValue: category,
+                      dropdownColor: surface,
+                      style: TextStyle(color: onSurface),
+                      decoration: InputDecoration(
+                        labelText: 'Category',
+                        labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: onSurface.withValues(alpha: 0.15)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: primary, width: 2),
+                        ),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-                      ),
+                      items: categoryIcons.keys.map((String cat) {
+                        return DropdownMenuItem<String>(
+                          value: cat,
+                          child: Row(
+                            children: [
+                              Icon(categoryIcons[cat], size: 16, color: primary),
+                              const SizedBox(width: 8),
+                              Text(cat, style: TextStyle(color: onSurface)),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) setDialogState(() => category = val);
+                      },
                     ),
-                    items: ['None', 'Daily', 'Weekly', 'Monthly'].map((String rec) {
-                      return DropdownMenuItem<String>(value: rec, child: Text(rec));
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) setDialogState(() => recurrence = val);
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setDialogState(() => isIncome = false),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: !isIncome ? Colors.redAccent.withValues(alpha: 0.2) : Colors.transparent,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: !isIncome ? Colors.redAccent : Colors.white24,
+                    const SizedBox(height: 15),
+                    DropdownButtonFormField<String>(
+                      initialValue: account,
+                      dropdownColor: surface,
+                      style: TextStyle(color: onSurface),
+                      decoration: InputDecoration(
+                        labelText: 'Account',
+                        labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: onSurface.withValues(alpha: 0.15)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: primary, width: 2),
+                        ),
+                      ),
+                      items: accountsList.map((String acc) {
+                        return DropdownMenuItem<String>(
+                          value: acc,
+                          child: Text(acc, style: TextStyle(color: onSurface)),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) setDialogState(() => account = val);
+                      },
+                    ),
+                    const SizedBox(height: 15),
+                    DropdownButtonFormField<String>(
+                      initialValue: recurrence,
+                      dropdownColor: surface,
+                      style: TextStyle(color: onSurface),
+                      decoration: InputDecoration(
+                        labelText: 'Recurrence',
+                        labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: onSurface.withValues(alpha: 0.15)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: primary, width: 2),
+                        ),
+                      ),
+                      items: ['None', 'Daily', 'Weekly', 'Monthly'].map((String rec) {
+                        return DropdownMenuItem<String>(
+                          value: rec,
+                          child: Text(rec, style: TextStyle(color: onSurface)),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) setDialogState(() => recurrence = val);
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setDialogState(() => isIncome = false),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: !isIncome ? Colors.redAccent.withValues(alpha: 0.2) : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: !isIncome ? Colors.redAccent : onSurface.withValues(alpha: 0.2),
+                                ),
                               ),
+                              child: Text('Expense', style: TextStyle(color: !isIncome ? Colors.redAccent : onSurface.withValues(alpha: 0.7))),
                             ),
-                            child: Text('Expense', style: TextStyle(color: !isIncome ? Colors.redAccent : Colors.white70)),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setDialogState(() => isIncome = true),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: isIncome ? Colors.greenAccent.withValues(alpha: 0.2) : Colors.transparent,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isIncome ? Colors.greenAccent : Colors.white24,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setDialogState(() => isIncome = true),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: isIncome ? Colors.greenAccent.withValues(alpha: 0.2) : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isIncome ? Colors.greenAccent : onSurface.withValues(alpha: 0.2),
+                                ),
                               ),
+                              child: Text('Income', style: TextStyle(color: isIncome ? Colors.greenAccent : onSurface.withValues(alpha: 0.7))),
                             ),
-                            child: Text('Income', style: TextStyle(color: isIncome ? Colors.greenAccent : Colors.white70)),
                           ),
                         ),
-                      ),
-                    ],
-                  )
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  final title = titleCtrl.text.trim();
-                  final amount = double.tryParse(amountCtrl.text.trim());
-                  if (title.isNotEmpty && amount != null && amount > 0) {
-                    final newTx = Transaction(
-                      id: existingTx?.id,
-                      title: title,
-                      amount: amount,
-                      date: existingTx?.date ?? DateTime.now(),
-                      isIncome: isIncome,
-                      category: category,
-                      account: account,
-                      recurrence: recurrence,
-                    );
-                    
-                    final currentList = List<Transaction>.from(AppState.transactionsNotifier.value);
-                    if (existingTx != null) {
-                      final index = currentList.indexWhere((t) => t.id == existingTx.id);
-                      if (index != -1) currentList[index] = newTx;
-                    } else {
-                      currentList.insert(0, newTx);
-                    }
-                    
-                    AppState.transactionsNotifier.value = currentList;
-                    if (AppState.currentUser != null) {
-                      AppState.saveTransactions(AppState.currentUser!, currentList);
-                    }
-                    Navigator.of(ctx).pop();
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ],
+                    )
+                  ],
                 ),
-                child: Text(existingTx == null ? 'Add' : 'Save', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
-            ],
-          );
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text('Cancel', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final title = titleCtrl.text.trim();
+                    final amount = double.tryParse(amountCtrl.text.trim());
+                    if (title.isNotEmpty && amount != null && amount > 0) {
+                      final newTx = Transaction(
+                        id: existingTx?.id,
+                        title: title,
+                        amount: amount,
+                        date: existingTx?.date ?? DateTime.now(),
+                        isIncome: isIncome,
+                        category: category,
+                        account: account,
+                        recurrence: recurrence,
+                      );
+                      
+                      final currentList = List<Transaction>.from(AppState.transactionsNotifier.value);
+                      if (existingTx != null) {
+                        final index = currentList.indexWhere((t) => t.id == existingTx.id);
+                        if (index != -1) currentList[index] = newTx;
+                      } else {
+                        currentList.insert(0, newTx);
+                      }
+                      
+                      AppState.transactionsNotifier.value = currentList;
+                      if (AppState.currentUser != null) {
+                        AppState.saveTransactions(AppState.currentUser!, currentList);
+                      }
+                      Navigator.of(ctx).pop();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text(existingTx == null ? 'Add' : 'Save', style: const TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
         },
       );
     },

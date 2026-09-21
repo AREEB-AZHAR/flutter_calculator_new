@@ -11,9 +11,9 @@ class AppThemePreset {
 }
 
 const List<AppThemePreset> themePresets = [
-  AppThemePreset('Ledger',        Color(0xFF17493B), Color(0xFFE4572E), Color(0xFFFFFFFF), Color(0xFFFBF9F5)),
-  AppThemePreset('Paper',         Color(0xFF17493B), Color(0xFFE4572E), Color(0xFFF0EAE1), Color(0xFFF6F0E1)),
-  AppThemePreset('Ink',           Color(0xFFE8A13C), Color(0xFFE4572E), Color(0xFF20201A), Color(0xFF191915)),
+  AppThemePreset('Ledger',        Color(0xFFE4572E), Color(0xFFF6F0E1), Color(0xFF103A2E), Color(0xFF17493B)),
+  AppThemePreset('Paper',         Color(0xFFE4572E), Color(0xFF17493B), Color(0xFFFFFFFF), Color(0xFFF6F0E1)),
+  AppThemePreset('Ink',           Color(0xFFE8A13C), Color(0xFFE4572E), Color(0xFF23231D), Color(0xFF191915)),
   AppThemePreset('Violet Night',  Color(0xFF8B5CF6), Color(0xFF10B981), Color(0xFF151A22), Color(0xFF0B0E14)),
   AppThemePreset('Ocean Blue',    Color(0xFF3B82F6), Color(0xFF06B6D4), Color(0xFF0F172A), Color(0xFF020617)),
   AppThemePreset('Emerald Dark',  Color(0xFF10B981), Color(0xFFA78BFA), Color(0xFF0D1B1E), Color(0xFF060F11)),
@@ -33,29 +33,41 @@ ThemeData buildAppTheme(String themeName) {
 
 ThemeData buildDynamicTheme({Color? primary, Color? secondary, String? themeName}) {
   final name = themeName ?? 'Ledger';
-  final isDark = name == 'Ink' ||
-      name == 'Violet Night' ||
-      name == 'Ocean Blue' ||
-      name == 'Emerald Dark' ||
-      name == 'Rose Gold' ||
-      name == 'Sunset Orange' ||
-      name == 'Midnight Teal';
+  final preset = themePresets.firstWhere((p) => p.name == name, orElse: () => themePresets.first);
+  final isLight = name == 'Paper';
 
-  final primaryCol = primary ?? const Color(0xFF17493B);
-  final secondaryCol = secondary ?? const Color(0xFFE4572E);
+  // Protect against primary or secondary matching background color (e.g. from legacy database profiles)
+  var primaryCol = primary ?? preset.primary;
+  var secondaryCol = secondary ?? preset.secondary;
+  if (primaryCol.toARGB32() == preset.background.toARGB32()) {
+    primaryCol = preset.primary;
+  }
+  if (secondaryCol.toARGB32() == preset.background.toARGB32()) {
+    secondaryCol = preset.secondary;
+  }
 
-  final brightness = isDark ? Brightness.dark : Brightness.light;
-  final bg = isDark
-      ? (name == 'Ink' ? const Color(0xFF191915) : const Color(0xFF0B0E14))
-      : (name == 'Paper' ? const Color(0xFFF6F0E1) : const Color(0xFFFBF9F5));
+  // Background matches the icon background across all themes
+  final bg = preset.background;
 
-  final surface = isDark
-      ? (name == 'Ink' ? const Color(0xFF20201A) : const Color(0xFF151A22))
-      : (name == 'Paper' ? const Color(0xFFF0EAE1) : Colors.white);
+  // Surface/card color
+  final surface = preset.surface;
 
-  final onSurface = isDark
-      ? (name == 'Ink' ? const Color(0xFFF3EDE0) : Colors.white)
-      : const Color(0xFF152A22);
+  // Text colors:
+  // Ink: uses amber slash color (#E8A13C) for text per user request
+  // Paper: uses forest green stroke mark (#17493B) for crisp contrast on cream paper
+  // Ledger: uses chalk cream stroke mark (#F6F0E1) for high-contrast on forest green
+  final onSurface = name == 'Paper'
+      ? const Color(0xFF17493B)
+      : (name == 'Ink'
+          ? const Color(0xFFE8A13C)
+          : (name == 'Ledger'
+              ? const Color(0xFFF6F0E1)
+              : Colors.white));
+
+  final onSurfaceVariant = name == 'Ink'
+      ? const Color(0xFFF3EDE0).withValues(alpha: 0.8)
+      : onSurface.withValues(alpha: 0.7);
+  final brightness = isLight ? Brightness.light : Brightness.dark;
 
   return ThemeData(
     brightness: brightness,
@@ -63,27 +75,80 @@ ThemeData buildDynamicTheme({Color? primary, Color? secondary, String? themeName
     colorScheme: ColorScheme(
       brightness: brightness,
       primary: primaryCol,
-      onPrimary: const Color(0xFFF6F0E1),
+      onPrimary: Colors.white,
       secondary: secondaryCol,
       onSecondary: Colors.white,
       surface: surface,
       onSurface: onSurface,
+      onSurfaceVariant: onSurfaceVariant,
       error: Colors.redAccent,
       onError: Colors.white,
     ),
     useMaterial3: true,
     fontFamily: defaultTargetPlatform == TargetPlatform.windows ? 'Segoe UI' : null,
+    textTheme: TextTheme(
+      headlineLarge: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
+      headlineMedium: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
+      headlineSmall: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
+      titleLarge: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
+      titleMedium: TextStyle(color: onSurface, fontWeight: FontWeight.w600),
+      titleSmall: TextStyle(color: onSurface, fontWeight: FontWeight.w600),
+      bodyLarge: TextStyle(color: onSurface),
+      bodyMedium: TextStyle(color: onSurface),
+      bodySmall: TextStyle(color: onSurfaceVariant),
+      labelLarge: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
+      labelMedium: TextStyle(color: onSurfaceVariant),
+      labelSmall: TextStyle(color: onSurfaceVariant),
+    ),
     appBarTheme: AppBarTheme(
       backgroundColor: bg,
       foregroundColor: onSurface,
       elevation: 0,
+      titleTextStyle: TextStyle(color: onSurface, fontSize: 18, fontWeight: FontWeight.bold),
     ),
     cardTheme: CardThemeData(
       color: surface,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: onSurface.withValues(alpha: 0.08)),
+        side: BorderSide(color: onSurface.withValues(alpha: 0.12)),
+      ),
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: surface,
+      titleTextStyle: TextStyle(color: onSurface, fontSize: 18, fontWeight: FontWeight.bold),
+      contentTextStyle: TextStyle(color: onSurfaceVariant, fontSize: 14),
+    ),
+    listTileTheme: ListTileThemeData(
+      textColor: onSurface,
+      iconColor: primaryCol,
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primaryCol,
+        foregroundColor: Colors.white,
+      ),
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: surface,
+      indicatorColor: primaryCol.withValues(alpha: 0.2),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      fillColor: surface,
+      filled: true,
+      labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
+      hintStyle: TextStyle(color: onSurface.withValues(alpha: 0.4)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: onSurface.withValues(alpha: 0.15)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: onSurface.withValues(alpha: 0.15)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: primaryCol, width: 2),
       ),
     ),
   );

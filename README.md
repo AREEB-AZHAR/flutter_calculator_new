@@ -75,14 +75,19 @@
 - **🕵️ Secret Dev Mode (10-Toggle Easter Egg)**: Flipping the reminder toggle switch in Settings 10 times in a row unlocks instant test reminder dispatching with a secret confirmation snackbar.
 - **Cross-Platform Scheduling**: Uses `flutter_local_notifications` and `timezone` with Android `POST_NOTIFICATIONS` and `SCHEDULE_EXACT_ALARM` permissions to ensure alarms persist across device reboots.
 
-### 11. 🎨 Ledger Brand Identity, Animated Startup & White Paper Theme
+### 11. 🎨 Ledger Brand Identity, Animated Startup & Dynamic Contrast System
 - **Official Ledger Brand Mark**: Hand-crafted four vertical strokes and diagonal slash — the oldest counting system, built into high-resolution launcher icons and vector assets (`assets/icons/`).
 - **Native 60fps Multi-Stage Animated Startup**:
   - **Stage 1 (Icon Drawing)**: Mathematical Bezier path rendering of the 4 vertical marks in cream (`#F6F0E1`) and slash in coral (`#E4572E`) on `#17493B` forest green.
   - **Stage 2 (Responsive Shrink & Wordmark)**: Icon shrinks smoothly (130px → 80px) and glides upward; the "TALLY" wordmark types in letter-by-letter with the exact uwash swoosh sweeping underneath. Guaranteed vertical and horizontal centering across all screen dimensions.
   - **Stage 3 (Continuous Hero Glide)**: The "TALLY" wordmark glides seamlessly into the top of the Login screen, while login inputs fly up from the bottom of the screen.
-- **Default White Paper Theme**: Crisp `#FBF9F5` / `#FFFFFF` background with deep `#152A22` ink typography, forest green primary buttons, and slash orange highlights.
-- **Selectable Brand Palettes**: Choose between **Ledger** (Classic), **Paper** (Cream vintage), and **Ink** (Carbon black & amber) directly in Settings.
+- **Strict Icon-to-Background Theme Alignment**:
+  - **Ledger**: Background matches the official icon `#17493B` (deep forest green), surface `#103A2E`, text `#F6F0E1` (mark cream), and primary/slash accents `#E4572E`.
+  - **Paper**: Background matches `#F6F0E1` (vintage paper), surface `#FFFFFF`, text `#17493B` (ink forest green), and primary/slash accents `#E4572E`.
+  - **Ink**: Background matches `#191915` (deep charcoal/carbon), surface `#23231D`, text `#E8A13C` (amber slash font) & `#F3EDE0` (chalk), and across-slash accents `#E4572E`.
+- **Background-Collision Protection & Dynamic Text System**:
+  - Automatically heals legacy profiles and prevents custom primary colors from ever colliding with background colors.
+  - Eliminates hardcoded white/black text across all screens, ensuring pristine contrast and readability regardless of chosen theme.
 
 ---
 
@@ -220,7 +225,15 @@ The output executable will be generated at `build/windows/x64/runner/Release/bal
 ---
 
 ## 📝 Recent Changelog
-- **v1.4.0 (Current)**:
+- **v1.5.0 (Current)**:
+  - **Theme Contrast & Icon Matching Overhaul**:
+    - **Ink Theme**: Carbon `#191915` icon background with amber `#E8A13C` slash font color and `#E4572E` across-slash accents.
+    - **Ledger Theme**: Forest green `#17493B` icon background with `#F6F0E1` mark typography and `#E4572E` slash accents.
+    - **Paper Theme**: Vintage cream `#F6F0E1` icon background with `#17493B` forest green typography and `#E4572E` slash accents.
+    - **Background-Collision Protection**: `buildDynamicTheme` now detects if `primaryColor` or `secondaryColor` matches `preset.background` (e.g. from legacy user profile saves) and safely falls back to high-contrast mark/slash pairings.
+    - **Comprehensive Text Readability**: Replaced over 200 hardcoded `Colors.white`, `Colors.white70`, `Colors.white54`, `0xFF0B0E14`, and `0xFF151A22` references across all screens, cards, tiles, charts, and dialogs with dynamic `Theme.of(context).colorScheme.onSurface`, `surface`, and `scaffoldBackgroundColor`.
+    - **Auto-Healing Migration**: `AppState.loadAllUserData` automatically migrates legacy profiles that had low-contrast or identical primary-to-background color settings.
+- **v1.4.0**:
   - **Official Ledger Brand Identity**: Integrated official vector assets (`tally.svg`, `tally-uwash.svg`, `tally-icon-anim.svg`, `tally-wordmark-anim.svg`) and high-res launcher icons.
   - **Native 60fps Multi-Stage Animated Startup**:
     - *Stage 1*: Mathematical Bezier stroke drawing of the 4 vertical marks (`#F6F0E1`) and diagonal slash (`#E4572E`) on `#17493B` forest green.
@@ -245,6 +258,4 @@ The output executable will be generated at `build/windows/x64/runner/Release/bal
   - **Home Avatar Profile Redirection**: Tapping the user avatar or greeting on the Home screen instantly navigates to the Profile tab.
 - **v1.1.1**:
   - Profile currency picker bugfix, login crash protection, inline loading spinner, and keyboard latency optimization.
-- **v1.1.0**:
-  - Synchronized complete modular architecture (`models`, `screens`, `services`, `utils`, `widgets`), added Accounts & Wallets screen, and implemented mobile performance optimizations.
 - **v1.0.0**: Initial release with authentication, transactions, and basic dashboard.

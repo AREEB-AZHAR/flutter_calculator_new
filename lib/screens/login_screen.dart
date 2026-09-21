@@ -102,9 +102,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final inkColor = isDark ? const Color(0xFFF3EDE0) : const Color(0xFF152A22);
-    final cardBg = isDark ? const Color(0xFF20201A) : Colors.white;
+    final inkColor = theme.colorScheme.onSurface;
+    final cardBg = theme.colorScheme.surface;
+    final inputBg = theme.scaffoldBackgroundColor;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -126,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       child: TallyWordmarkWidget(
                         fontSize: 40,
                         textColor: inkColor,
-                        uwashColor: theme.colorScheme.secondary,
+                        uwashColor: theme.colorScheme.primary,
                       ),
                     ),
                   ),
@@ -144,12 +144,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           color: cardBg,
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                            color: inkColor.withValues(alpha: isDark ? 0.15 : 0.08),
+                            color: inkColor.withValues(alpha: 0.12),
                             width: 1,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: inkColor.withValues(alpha: isDark ? 0.25 : 0.05),
+                              color: Colors.black.withValues(alpha: 0.15),
                               blurRadius: 24,
                               offset: const Offset(0, 10),
                             ),
@@ -190,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 labelText: 'Username',
                                 labelStyle: TextStyle(color: inkColor.withValues(alpha: 0.6)),
                                 filled: true,
-                                fillColor: isDark ? const Color(0xFF151512) : const Color(0xFFF9F7F2),
+                                fillColor: inputBg,
                                 prefixIcon: Icon(Icons.person_outline, color: theme.colorScheme.primary),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
@@ -221,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 labelText: 'Password',
                                 labelStyle: TextStyle(color: inkColor.withValues(alpha: 0.6)),
                                 filled: true,
-                                fillColor: isDark ? const Color(0xFF151512) : const Color(0xFFF9F7F2),
+                                fillColor: inputBg,
                                 prefixIcon: Icon(Icons.lock_outline, color: theme.colorScheme.primary),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),

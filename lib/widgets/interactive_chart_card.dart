@@ -110,13 +110,17 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
       donutTitle = 'Activity';
     }
 
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+    final controlBg = theme.scaffoldBackgroundColor;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: onSurface.withValues(alpha: 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,30 +132,30 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
               Expanded(
                 child: Text(
                   widget.title,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0B0E14),
+                  color: controlBg,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.chevron_left, color: Colors.white70, size: 20),
+                      icon: Icon(Icons.chevron_left, color: onSurface.withValues(alpha: 0.7), size: 20),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                       onPressed: _prevMonth,
                     ),
                     Text(
                       '${_months[_month - 1].substring(0, 3)} $_year',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                      style: TextStyle(color: onSurface, fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.chevron_right, color: Colors.white70, size: 20),
+                      icon: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.7), size: 20),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                       onPressed: _nextMonth,
@@ -172,15 +176,15 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
               Container(
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0B0E14),
+                  color: controlBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _filterButton('all', 'All (Net)'),
-                    _filterButton('spend', 'Spend'),
-                    _filterButton('income', 'Income'),
+                    _filterButton('all', 'All (Net)', onSurface),
+                    _filterButton('spend', 'Spend', onSurface),
+                    _filterButton('income', 'Income', onSurface),
                   ],
                 ),
               ),
@@ -188,21 +192,21 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
               // View Mode Toggle (Line vs Donut)
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0B0E14),
+                  color: controlBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: Icon(Icons.show_chart, size: 18, color: !_isDonutView ? primaryColor : Colors.white38),
+                      icon: Icon(Icons.show_chart, size: 18, color: !_isDonutView ? primaryColor : onSurface.withValues(alpha: 0.38)),
                       tooltip: 'Line Flow',
                       constraints: const BoxConstraints(minWidth: 36, minHeight: 32),
                       padding: EdgeInsets.zero,
                       onPressed: () => setState(() => _isDonutView = false),
                     ),
                     IconButton(
-                      icon: Icon(Icons.pie_chart_outline, size: 18, color: _isDonutView ? primaryColor : Colors.white38),
+                      icon: Icon(Icons.pie_chart_outline, size: 18, color: _isDonutView ? primaryColor : onSurface.withValues(alpha: 0.38)),
                       tooltip: 'Donut Breakdown',
                       constraints: const BoxConstraints(minWidth: 36, minHeight: 32),
                       padding: EdgeInsets.zero,
@@ -252,17 +256,17 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF0B0E14),
+              color: controlBg,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _statItem('Received', '+$currency${income.toStringAsFixed(0)}', Colors.greenAccent),
-                Container(height: 24, width: 1, color: Colors.white10),
-                _statItem('Spent', '-$currency${expense.toStringAsFixed(0)}', Colors.redAccent),
-                Container(height: 24, width: 1, color: Colors.white10),
-                _statItem('Net Balance', '$currency${net.toStringAsFixed(0)}', net >= 0 ? Colors.white : Colors.redAccent),
+                _statItem('Received', '+$currency${income.toStringAsFixed(0)}', Colors.greenAccent, onSurface),
+                Container(height: 24, width: 1, color: onSurface.withValues(alpha: 0.12)),
+                _statItem('Spent', '-$currency${expense.toStringAsFixed(0)}', Colors.redAccent, onSurface),
+                Container(height: 24, width: 1, color: onSurface.withValues(alpha: 0.12)),
+                _statItem('Net Balance', '$currency${net.toStringAsFixed(0)}', net >= 0 ? onSurface : Colors.redAccent, onSurface),
               ],
             ),
           ),
@@ -271,7 +275,7 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
     );
   }
 
-  Widget _filterButton(String key, String label) {
+  Widget _filterButton(String key, String label, Color onSurface) {
     final isSelected = _filter == key;
     return GestureDetector(
       onTap: () => setState(() => _filter = key),
@@ -287,18 +291,18 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.white60,
+            color: isSelected ? Theme.of(context).colorScheme.primary : onSurface.withValues(alpha: 0.6),
           ),
         ),
       ),
     );
   }
 
-  Widget _statItem(String label, String value, Color color) {
+  Widget _statItem(String label, String value, Color color, Color onSurface) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.white54)),
+        Text(label, style: TextStyle(fontSize: 10, color: onSurface.withValues(alpha: 0.6))),
         const SizedBox(height: 2),
         Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
       ],

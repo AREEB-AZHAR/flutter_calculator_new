@@ -15,8 +15,8 @@ class UserProfile {
     required this.displayName,
     this.bio = '',
     this.photoPath,
-    this.primaryColor = const Color(0xFF8B5CF6),
-    this.secondaryColor = const Color(0xFF10B981),
+    this.primaryColor = const Color(0xFFE4572E),
+    this.secondaryColor = const Color(0xFFF6F0E1),
     this.currency = '\$',
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
@@ -44,10 +44,10 @@ class UserProfile {
       photoPath: map['photo_path'] as String?,
       primaryColor: map['primary_color'] != null
           ? Color(map['primary_color'] as int)
-          : const Color(0xFF8B5CF6),
+          : const Color(0xFFE4572E),
       secondaryColor: map['secondary_color'] != null
           ? Color(map['secondary_color'] as int)
-          : const Color(0xFF10B981),
+          : const Color(0xFFF6F0E1),
       currency: (map['currency'] as String?) ?? '\$',
       createdAt: map['created_at'] != null
           ? DateTime.tryParse(map['created_at'] as String) ?? DateTime.now()

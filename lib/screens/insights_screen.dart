@@ -8,17 +8,20 @@ class InsightsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Smart Insights', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
       ),
       body: ValueListenableBuilder<List<Transaction>>(
         valueListenable: AppState.transactionsNotifier,
         builder: (context, transactions, _) {
           if (transactions.isEmpty) {
-            return const Center(child: Text('Add some transactions to see insights!', style: TextStyle(color: Colors.white54)));
+            return Center(child: Text('Add some transactions to see insights!', style: TextStyle(color: onSurface.withValues(alpha: 0.6))));
           }
 
           final now = DateTime.now();
@@ -70,15 +73,16 @@ class InsightsScreen extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 24),
-                const Text('Top Expense', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                Text('Top Expense', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: onSurface)),
                 const SizedBox(height: 10),
                 if (biggestExpense.isNotEmpty)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFF1E1B4B), Color(0xFF312E81)]),
+                      color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: onSurface.withValues(alpha: 0.08)),
                     ),
                     child: Row(
                       children: [
@@ -88,8 +92,8 @@ class InsightsScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(biggestExpense.first.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                              Text(biggestExpense.first.category, style: const TextStyle(color: Colors.white54)),
+                              Text(biggestExpense.first.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface)),
+                              Text(biggestExpense.first.category, style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
                             ],
                           ),
                         ),
@@ -99,7 +103,7 @@ class InsightsScreen extends StatelessWidget {
                   ),
 
                 const SizedBox(height: 24),
-                const Text('Category Breakdown', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                Text('Category Breakdown', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: onSurface)),
                 const SizedBox(height: 10),
                 ...sortedCats.map((entry) {
                   final pct = thisMonthExpense > 0 ? entry.value / thisMonthExpense : 0.0;
@@ -112,18 +116,18 @@ class InsightsScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Row(children: [
-                              Icon(categoryIcons[entry.key] ?? Icons.category, size: 16, color: Colors.white70),
+                              Icon(categoryIcons[entry.key] ?? Icons.category, size: 16, color: theme.colorScheme.primary),
                               const SizedBox(width: 8),
-                              Text(entry.key, style: const TextStyle(color: Colors.white70)),
+                              Text(entry.key, style: TextStyle(color: onSurface.withValues(alpha: 0.7))),
                             ]),
-                            Text('${AppState.currencyNotifier.value}${entry.value.toStringAsFixed(0)} (${(pct * 100).toStringAsFixed(0)}%)', style: const TextStyle(color: Colors.white)),
+                            Text('${AppState.currencyNotifier.value}${entry.value.toStringAsFixed(0)} (${(pct * 100).toStringAsFixed(0)}%)', style: TextStyle(color: onSurface)),
                           ],
                         ),
                         const SizedBox(height: 6),
                         LinearProgressIndicator(
                           value: pct,
-                          backgroundColor: Colors.white.withValues(alpha: 0.1),
-                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                          backgroundColor: onSurface.withValues(alpha: 0.12),
+                          valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
                           minHeight: 6,
                           borderRadius: BorderRadius.circular(3),
                         ),
@@ -140,6 +144,7 @@ class InsightsScreen extends StatelessWidget {
   }
 
   Widget _insightCard(BuildContext context, String label, String value, IconData icon, Color accent) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -154,7 +159,7 @@ class InsightsScreen extends StatelessWidget {
           const SizedBox(height: 10),
           Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: accent)),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+          Text(label, style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 13)),
         ],
       ),
     );

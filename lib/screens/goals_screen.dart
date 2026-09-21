@@ -8,23 +8,26 @@ class GoalsScreen extends StatelessWidget {
   void _showAddGoalDialog(BuildContext context) {
     String title = '';
     String targetStr = '';
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        title: const Text('New Savings Goal'),
+        backgroundColor: theme.colorScheme.surface,
+        title: Text('New Savings Goal', style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(labelText: 'Goal Name'),
+              style: TextStyle(color: onSurface),
+              decoration: InputDecoration(labelText: 'Goal Name', labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6))),
               onChanged: (v) => title = v,
             ),
             const SizedBox(height: 15),
             TextField(
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(labelText: 'Target Amount (\$)'),
+              style: TextStyle(color: onSurface),
+              decoration: InputDecoration(labelText: 'Target Amount (${AppState.currencyNotifier.value})', labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6))),
               keyboardType: TextInputType.number,
               onChanged: (v) => targetStr = v,
             ),
@@ -52,14 +55,17 @@ class GoalsScreen extends StatelessWidget {
 
   void _showAddFundsDialog(BuildContext context, SavingsGoal goal) {
     String amountStr = '';
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        title: Text('Add to "${goal.title}"'),
+        backgroundColor: theme.colorScheme.surface,
+        title: Text('Add to "${goal.title}"', style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
         content: TextField(
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(labelText: 'Amount (\$)'),
+          style: TextStyle(color: onSurface),
+          decoration: InputDecoration(labelText: 'Amount (${AppState.currencyNotifier.value})', labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6))),
           keyboardType: TextInputType.number,
           onChanged: (v) => amountStr = v,
         ),
@@ -88,17 +94,21 @@ class GoalsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+    final primary = theme.colorScheme.primary;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Savings Goals', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
       ),
       body: ValueListenableBuilder<List<SavingsGoal>>(
         valueListenable: AppState.goalsNotifier,
         builder: (context, goals, _) {
           if (goals.isEmpty) {
-            return const Center(child: Text('No goals yet. Tap + to create one!', style: TextStyle(color: Colors.white54)));
+            return Center(child: Text('No goals yet. Tap + to create one!', style: TextStyle(color: onSurface.withValues(alpha: 0.6))));
           }
           return ListView.builder(
             padding: const EdgeInsets.all(20),
@@ -109,9 +119,9 @@ class GoalsScreen extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
+                  color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                  border: Border.all(color: onSurface.withValues(alpha: 0.08)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,9 +130,9 @@ class GoalsScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(children: [
-                          const Icon(Icons.flag, color: Color(0xFF8B5CF6)),
+                          Icon(Icons.flag, color: primary),
                           const SizedBox(width: 10),
-                          Text(goal.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                          Text(goal.title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: onSurface)),
                         ]),
                         IconButton(
                           icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
@@ -148,11 +158,11 @@ class GoalsScreen extends StatelessWidget {
                               child: CircularProgressIndicator(
                                 value: goal.progress,
                                 strokeWidth: 10,
-                                backgroundColor: Colors.white.withValues(alpha: 0.1),
-                                valueColor: AlwaysStoppedAnimation<Color>(goal.progress >= 1.0 ? Colors.greenAccent : const Color(0xFF8B5CF6)),
+                                backgroundColor: onSurface.withValues(alpha: 0.12),
+                                valueColor: AlwaysStoppedAnimation<Color>(goal.progress >= 1.0 ? Colors.greenAccent : primary),
                               ),
                             ),
-                            Text('${(goal.progress * 100).toStringAsFixed(0)}%', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                            Text('${(goal.progress * 100).toStringAsFixed(0)}%', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: onSurface)),
                           ],
                         ),
                       ),
@@ -162,7 +172,7 @@ class GoalsScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('${AppState.currencyNotifier.value}${goal.saved.toStringAsFixed(0)} saved', style: const TextStyle(color: Colors.greenAccent)),
-                        Text('${AppState.currencyNotifier.value}${goal.target.toStringAsFixed(0)} target', style: const TextStyle(color: Colors.white54)),
+                        Text('${AppState.currencyNotifier.value}${goal.target.toStringAsFixed(0)} target', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -171,7 +181,7 @@ class GoalsScreen extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: goal.progress >= 1.0 ? null : () => _showAddFundsDialog(context, goal),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: goal.progress >= 1.0 ? Colors.greenAccent : const Color(0xFF8B5CF6),
+                          backgroundColor: goal.progress >= 1.0 ? Colors.greenAccent : primary,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         child: Text(goal.progress >= 1.0 ? '🎉 Goal Reached!' : 'Add Funds', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),

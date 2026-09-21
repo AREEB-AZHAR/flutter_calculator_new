@@ -17,7 +17,10 @@ class TransactionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = tx.isIncome ? Theme.of(context).colorScheme.secondary : Colors.white;
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+    final color = tx.isIncome ? const Color(0xFF10B981) : onSurface;
+
     return Dismissible(
       key: Key(tx.id),
       direction: DismissDirection.endToStart,
@@ -34,28 +37,28 @@ class TransactionTile extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
+            color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            border: Border.all(color: onSurface.withValues(alpha: 0.08)),
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(categoryIcons[tx.category] ?? Icons.category, color: Theme.of(context).colorScheme.primary),
+                child: Icon(categoryIcons[tx.category] ?? Icons.category, color: theme.colorScheme.primary),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(tx.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text(tx.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface)),
                     const SizedBox(height: 4),
-                    Text('${formatDate(tx.date)} • ${tx.account}', style: const TextStyle(fontSize: 12, color: Colors.white54)),
+                    Text('${formatDate(tx.date)} • ${tx.account}', style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.6))),
                   ],
                 ),
               ),

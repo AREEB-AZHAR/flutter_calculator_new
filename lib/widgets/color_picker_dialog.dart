@@ -38,6 +38,16 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
 
   final List<Map<String, dynamic>> _quickPalettes = [
     {
+      'name': 'Tally Ledger',
+      'primary': const Color(0xFFE4572E),
+      'secondary': const Color(0xFFF6F0E1),
+    },
+    {
+      'name': 'Tally Ink',
+      'primary': const Color(0xFFE8A13C),
+      'secondary': const Color(0xFFE4572E),
+    },
+    {
       'name': 'Violet Neon',
       'primary': const Color(0xFF8B5CF6),
       'secondary': const Color(0xFF10B981),
@@ -145,26 +155,35 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
     final activeColor = _isEditingPrimary ? _primary : _secondary;
 
     return AlertDialog(
-      backgroundColor: const Color(0xFF151A22),
+      backgroundColor: theme.colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        side: BorderSide(color: onSurface.withValues(alpha: 0.1)),
       ),
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.palette_outlined, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Theme Studio', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
+              Icon(Icons.palette_outlined, color: onSurface),
+              const SizedBox(width: 8),
+              Text(
+                'Theme Studio',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: onSurface,
+                ),
+              ),
             ],
           ),
           IconButton(
-            icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+            icon: Icon(Icons.close, color: onSurface.withValues(alpha: 0.54), size: 20),
             onPressed: () => Navigator.pop(context),
           ),
         ],
@@ -180,7 +199,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0B0E14),
+                  color: theme.scaffoldBackgroundColor,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Row(
@@ -206,7 +225,9 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
-                              color: _isEditingPrimary ? Colors.white : Colors.white60,
+                              color: _isEditingPrimary
+                                  ? (_primary.computeLuminance() > 0.5 ? Colors.black : Colors.white)
+                                  : onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                         ),
@@ -233,7 +254,9 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
-                              color: !_isEditingPrimary ? Colors.white : Colors.white60,
+                              color: !_isEditingPrimary
+                                  ? (_secondary.computeLuminance() > 0.5 ? Colors.black : Colors.white)
+                                  : onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                         ),
@@ -272,10 +295,13 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                         children: [
                           Text(
                             _isEditingPrimary ? 'Primary: ${_hexController.text}' : 'Accent: ${_hexController.text}',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            style: TextStyle(color: onSurface, fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                           const SizedBox(height: 2),
-                          const Text('Live components will reflect these colors.', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                          Text(
+                            'Live components will reflect these colors.',
+                            style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 11),
+                          ),
                         ],
                       ),
                     ),
@@ -286,12 +312,20 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
               const SizedBox(height: 18),
 
               // Graphic Sliders (Hue, Saturation, Lightness)
-              const Text('HUE (COLOR SPECTRUM)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white54, letterSpacing: 1)),
+              Text(
+                'HUE (COLOR SPECTRUM)',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: onSurface.withValues(alpha: 0.54),
+                  letterSpacing: 1,
+                ),
+              ),
               SliderTheme(
                 data: SliderTheme.of(context).copyWith(
                   thumbColor: activeColor,
                   activeTrackColor: activeColor,
-                  inactiveTrackColor: Colors.white12,
+                  inactiveTrackColor: onSurface.withValues(alpha: 0.12),
                 ),
                 child: Slider(
                   value: _hue,
@@ -304,12 +338,20 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                 ),
               ),
 
-              const Text('SATURATION (VIBRANCY)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white54, letterSpacing: 1)),
+              Text(
+                'SATURATION (VIBRANCY)',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: onSurface.withValues(alpha: 0.54),
+                  letterSpacing: 1,
+                ),
+              ),
               SliderTheme(
                 data: SliderTheme.of(context).copyWith(
                   thumbColor: activeColor,
                   activeTrackColor: activeColor,
-                  inactiveTrackColor: Colors.white12,
+                  inactiveTrackColor: onSurface.withValues(alpha: 0.12),
                 ),
                 child: Slider(
                   value: _saturation,
@@ -322,12 +364,20 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                 ),
               ),
 
-              const Text('BRIGHTNESS (LIGHTNESS)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white54, letterSpacing: 1)),
+              Text(
+                'BRIGHTNESS (LIGHTNESS)',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: onSurface.withValues(alpha: 0.54),
+                  letterSpacing: 1,
+                ),
+              ),
               SliderTheme(
                 data: SliderTheme.of(context).copyWith(
                   thumbColor: activeColor,
                   activeTrackColor: activeColor,
-                  inactiveTrackColor: Colors.white12,
+                  inactiveTrackColor: onSurface.withValues(alpha: 0.12),
                 ),
                 child: Slider(
                   value: _value,
@@ -345,20 +395,23 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
               // Hex Input
               Row(
                 children: [
-                  const Text('HEX: ', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+                  Text(
+                    'HEX: ',
+                    style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontWeight: FontWeight.bold),
+                  ),
                   Expanded(
                     child: Container(
                       height: 38,
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0B0E14),
+                        color: theme.scaffoldBackgroundColor,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.white12),
+                        border: Border.all(color: onSurface.withValues(alpha: 0.12)),
                       ),
                       alignment: Alignment.centerLeft,
                       child: TextField(
                         controller: _hexController,
-                        style: const TextStyle(color: Colors.white, fontSize: 13, fontFamily: 'monospace'),
+                        style: TextStyle(color: onSurface, fontSize: 13, fontFamily: 'monospace'),
                         decoration: const InputDecoration(border: InputBorder.none, isDense: true),
                         onSubmitted: _onHexSubmitted,
                       ),
@@ -370,7 +423,15 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
               const SizedBox(height: 20),
 
               // Quick Curated Palettes
-              const Text('CURATED PALETTES', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white54, letterSpacing: 1)),
+              Text(
+                'CURATED PALETTES',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: onSurface.withValues(alpha: 0.54),
+                  letterSpacing: 1,
+                ),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -389,9 +450,9 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0B0E14),
+                        color: theme.scaffoldBackgroundColor,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white12),
+                        border: Border.all(color: onSurface.withValues(alpha: 0.12)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -400,7 +461,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                           const SizedBox(width: 4),
                           Container(width: 12, height: 12, decoration: BoxDecoration(color: sec, shape: BoxShape.circle)),
                           const SizedBox(width: 6),
-                          Text(p['name'] as String, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                          Text(p['name'] as String, style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontSize: 11)),
                         ],
                       ),
                     ),
@@ -414,7 +475,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+          child: Text('Cancel', style: TextStyle(color: onSurface.withValues(alpha: 0.54))),
         ),
         ElevatedButton(
           onPressed: _applyTheme,
@@ -423,7 +484,13 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           ),
-          child: const Text('Apply Theme', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          child: Text(
+            'Apply Theme',
+            style: TextStyle(
+              color: _primary.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
       ],
     );

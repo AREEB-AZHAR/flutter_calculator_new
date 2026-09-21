@@ -66,14 +66,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             TextField(
               controller: nameCtrl,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               decoration: const InputDecoration(labelText: 'Display Name'),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: bioCtrl,
               maxLines: 2,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               decoration: const InputDecoration(labelText: 'Bio / Personal Motto'),
             ),
           ],
@@ -118,14 +118,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             TextField(
               obscureText: true,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               decoration: const InputDecoration(labelText: 'Current Password'),
               onChanged: (v) => currentPassword = v,
             ),
             const SizedBox(height: 12),
             TextField(
               obscureText: true,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               decoration: const InputDecoration(labelText: 'New Password'),
               onChanged: (v) => newPassword = v,
             ),
@@ -190,18 +190,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Complete SQLite dump of your accounts, transactions, and settings. Only accessible by your credentials.',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 12),
               ),
               const SizedBox(height: 12),
               Container(
                 height: 180,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0B0E14),
+                  color: Theme.of(context).scaffoldBackgroundColor,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white12),
+                  border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12)),
                 ),
                 child: SingleChildScrollView(
                   child: SelectableText(
@@ -219,8 +219,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: const Text('Close'),
           ),
           ElevatedButton.icon(
-            icon: const Icon(Icons.copy, size: 16, color: Colors.white),
-            label: const Text('Copy SQL Script', style: TextStyle(color: Colors.white)),
+            icon: Icon(Icons.copy, size: 16, color: Theme.of(context).colorScheme.onPrimary),
+            label: Text('Copy SQL Script', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
             style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: sqlContent));
@@ -236,10 +236,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showSettingsPopup() {
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+    final surface = theme.colorScheme.surface;
+    final cardBg = theme.scaffoldBackgroundColor;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF151A22),
+      backgroundColor: surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -257,22 +262,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: onSurface.withValues(alpha: 0.24),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'App & Account Settings',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: onSurface),
             ),
             const SizedBox(height: 20),
 
             // Brand Palettes & App Icon Styles
             _settingsSectionTitle('BRAND PALETTES & APP ICON STYLES'),
             Card(
-              color: const Color(0xFF0B0E14),
+              color: cardBg,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Column(
                 children: [
@@ -284,7 +289,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     slashColor: const Color(0xFFE4572E),
                     preset: themePresets[0],
                   ),
-                  const Divider(height: 1, color: Colors.white10),
+                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
                   _brandPaletteTile(
                     name: 'Paper',
                     tagline: 'Cream Paper & Forest Green (Vintage Editorial)',
@@ -293,10 +298,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     slashColor: const Color(0xFFE4572E),
                     preset: themePresets[1],
                   ),
-                  const Divider(height: 1, color: Colors.white10),
+                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
                   _brandPaletteTile(
                     name: 'Ink',
-                    tagline: 'Carbon Black & Chalk Text (Amber Slash)',
+                    tagline: 'Carbon Black & Amber Slash (Ink Typography)',
                     bgColor: const Color(0xFF191915),
                     strokeColor: const Color(0xFFF3EDE0),
                     slashColor: const Color(0xFFE8A13C),
@@ -311,12 +316,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // Theme Studio Tile
             _settingsSectionTitle('CUSTOM PALETTES & STUDIO'),
             Card(
-              color: const Color(0xFF0B0E14),
+              color: cardBg,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: ListTile(
                 leading: const Icon(Icons.palette, color: Colors.purpleAccent),
-                title: const Text('Graphic Theme Studio', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                subtitle: const Text('Custom RGB/HSV color picker & live preview', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                title: Text('Graphic Theme Studio', style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
+                subtitle: Text('Custom RGB/HSV color picker & live preview', style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -331,7 +336,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       height: 18,
                       decoration: BoxDecoration(color: AppState.customSecondaryColorNotifier.value, shape: BoxShape.circle),
                     ),
-                    const Icon(Icons.chevron_right, color: Colors.white54),
+                    Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
                   ],
                 ),
                 onTap: () {
@@ -346,25 +351,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // Profile Customization
             _settingsSectionTitle('PROFILE & IDENTITY'),
             Card(
-              color: const Color(0xFF0B0E14),
+              color: cardBg,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Column(
                 children: [
                   ListTile(
                     leading: const Icon(Icons.add_a_photo, color: Colors.blueAccent),
-                    title: const Text('Upload Profile Photo', style: TextStyle(color: Colors.white)),
-                    subtitle: const Text('Select an image from device gallery', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+                    title: Text('Upload Profile Photo', style: TextStyle(color: onSurface)),
+                    subtitle: Text('Select an image from device gallery', style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                    trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
                     onTap: () {
                       Navigator.pop(ctx);
                       _pickProfilePhoto();
                     },
                   ),
-                  const Divider(height: 1, color: Colors.white10),
+                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
                   ListTile(
                     leading: const Icon(Icons.badge_outlined, color: Colors.tealAccent),
-                    title: const Text('Edit Display Name & Bio', style: TextStyle(color: Colors.white)),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+                    title: Text('Edit Display Name & Bio', style: TextStyle(color: onSurface)),
+                    trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
                     onTap: () {
                       Navigator.pop(ctx);
                       _editProfileText();
@@ -379,7 +384,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // Notifications & Reminders
             _settingsSectionTitle('NOTIFICATIONS & REMINDERS'),
             Card(
-              color: const Color(0xFF0B0E14),
+              color: cardBg,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: StatefulBuilder(
                 builder: (context, setCardState) {
@@ -389,8 +394,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       final isEnabled = snapshot.data ?? true;
                       return SwitchListTile(
                         secondary: const Icon(Icons.notifications_active, color: Colors.indigoAccent),
-                        title: const Text('3-Hour Tally Reminders', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        subtitle: const Text('Active 9:00 AM – 11:00 PM (Quiet hours at night)', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                        title: Text('3-Hour Tally Reminders', style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
+                        subtitle: Text('Active 9:00 AM – 11:00 PM (Quiet hours at night)', style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
                         activeThumbColor: Theme.of(context).colorScheme.primary,
                         value: isEnabled,
                         onChanged: (val) async {
@@ -421,23 +426,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 20),
 
             // Preferences & Security
-            _settingsSectionTitle('PREFERENCES & DATA VAULT'),
+            _settingsSectionTitle('LEDGER ARCHITECTURE & DATA'),
             Card(
-              color: const Color(0xFF0B0E14),
+              color: cardBg,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Column(
                 children: [
                   ListTile(
                     leading: const Icon(Icons.currency_exchange, color: Colors.amberAccent),
-                    title: const Text('Currency Symbol', style: TextStyle(color: Colors.white)),
+                    title: Text('Currency Symbol', style: TextStyle(color: onSurface)),
                     subtitle: ValueListenableBuilder<String>(
                       valueListenable: AppState.currencyNotifier,
-                      builder: (context, curr, _) {
-                        final match = currencyOptions.entries.firstWhere((e) => e.value == curr, orElse: () => MapEntry(curr, curr));
-                        return Text(match.key, style: const TextStyle(color: Colors.white54, fontSize: 12));
+                      builder: (context, cur, _) {
+                        final match = currencyOptions.entries.firstWhere((e) => e.value == cur, orElse: () => currencyOptions.entries.first);
+                        return Text(match.key, style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12));
                       },
                     ),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+                    trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
                     onTap: () {
                       showDialog(
                         context: context,
@@ -445,7 +450,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           valueListenable: AppState.currencyNotifier,
                           builder: (context, activeCurrency, _) {
                             return SimpleDialog(
-                              backgroundColor: const Color(0xFF151A22),
+                              backgroundColor: surface,
                               title: const Text('Select Currency'),
                               children: currencyOptions.entries.map((e) {
                                 final isSelected = activeCurrency == e.value;
@@ -464,7 +469,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       Text(
                                         e.key,
                                         style: TextStyle(
-                                          color: isSelected ? Theme.of(context).colorScheme.primary : Colors.white,
+                                          color: isSelected ? Theme.of(context).colorScheme.primary : onSurface,
                                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                         ),
                                       ),
@@ -480,32 +485,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
-                  const Divider(height: 1, color: Colors.white10),
+                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
                   ListTile(
                     leading: const Icon(Icons.lock_reset, color: Colors.orangeAccent),
-                    title: const Text('Change Password', style: TextStyle(color: Colors.white)),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+                    title: Text('Change Password', style: TextStyle(color: onSurface)),
+                    trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
                     onTap: () {
                       Navigator.pop(ctx);
                       _changePassword();
                     },
                   ),
-                  const Divider(height: 1, color: Colors.white10),
+                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
                   ListTile(
                     leading: const Icon(Icons.download_for_offline, color: Colors.greenAccent),
-                    title: const Text('Export SQL Ledger (.sql)', style: TextStyle(color: Colors.white)),
-                    subtitle: const Text('Local SQLite backup with strict user isolation', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+                    title: Text('Export SQL Ledger (.sql)', style: TextStyle(color: onSurface)),
+                    subtitle: Text('Local SQLite backup with strict user isolation', style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                    trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
                     onTap: () {
                       Navigator.pop(ctx);
                       _exportSqlBackup();
                     },
                   ),
-                  const Divider(height: 1, color: Colors.white10),
+                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
                   ListTile(
                     leading: const Icon(Icons.cloud_sync, color: Colors.blue),
-                    title: const Text('Cloud Sync (Firebase Ready)', style: TextStyle(color: Colors.white)),
-                    subtitle: const Text('Hybrid offline-first architecture', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                    title: Text('Cloud Sync (Firebase Ready)', style: TextStyle(color: onSurface)),
+                    subtitle: Text('Hybrid offline-first architecture', style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
@@ -515,7 +520,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       showDialog(
                         context: context,
                         builder: (c) => AlertDialog(
-                          backgroundColor: const Color(0xFF151A22),
+                          backgroundColor: surface,
                           title: const Row(
                             children: [
                               Icon(Icons.cloud_done, color: Colors.blue),
@@ -523,10 +528,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Text('Firebase Sync Architecture'),
                             ],
                           ),
-                          content: const Text(
+                          content: Text(
                             'Your data is safely stored in a local SQLite file isolated per user.\n\n'
                             'To enable multi-device real-time sync, run "flutterfire configure" and link your Firebase project credentials. The repository layer is fully wired to sync SQLite with Firestore automatically.',
-                            style: TextStyle(color: Colors.white70, fontSize: 13),
+                            style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontSize: 13),
                           ),
                           actions: [
                             TextButton(onPressed: () => Navigator.pop(c), child: const Text('Got it')),
@@ -568,7 +573,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
         title,
-        style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
       ),
     );
   }
@@ -584,7 +589,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings, color: Colors.white),
+            icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.onSurface),
             tooltip: 'Settings & Theming',
             onPressed: _showSettingsPopup,
           ),
@@ -708,9 +713,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         decoration: BoxDecoration(
                           color: primaryColor,
                           shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFF151A22), width: 2),
+                          border: Border.all(color: Theme.of(context).scaffoldBackgroundColor, width: 2),
                         ),
-                        child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                        child: Icon(Icons.camera_alt, size: 14, color: Theme.of(context).colorScheme.onPrimary),
                       ),
                     ),
                   ],
@@ -722,7 +727,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 builder: (context, name, _) {
                   return Text(
                     name.isNotEmpty ? name : (AppState.currentUser ?? 'User'),
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                   );
                 },
               ),
@@ -733,7 +738,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   return Text(
                     bio.isNotEmpty ? bio : 'Managing wealth with style and precision.',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 13, color: Colors.white60),
+                    style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                   );
                 },
               ),
@@ -747,14 +752,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                personaColor.withValues(alpha: 0.25),
-                const Color(0xFF151A22),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: personaColor.withValues(alpha: 0.4)),
           ),
@@ -775,14 +773,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Row(
                       children: [
-                        const Text('SPENDING PERSONA: ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white54, letterSpacing: 0.8)),
+                        Text('SPENDING PERSONA: ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), letterSpacing: 0.8)),
                         Text('${savingsRate.toStringAsFixed(0)}% Savings Rate', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: personaColor)),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(personaTitle, style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: personaColor)),
                     const SizedBox(height: 4),
-                    Text(personaDescription, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                    Text(personaDescription, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                   ],
                 ),
               ),
@@ -793,7 +791,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 24),
 
         // Financial Vital Signs Grid
-        const Text('EXECUTIVE FINANCIAL VITALS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white54, letterSpacing: 1)),
+        Text('EXECUTIVE FINANCIAL VITALS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), letterSpacing: 1)),
         const SizedBox(height: 12),
 
         GridView.count(
@@ -822,7 +820,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: 'Retained Wealth',
               value: '$currency${netSavings.toStringAsFixed(0)}',
               subtitle: 'Accumulated net surplus',
-              color: netSavings >= 0 ? Colors.white : Colors.redAccent,
+              color: netSavings >= 0 ? Theme.of(context).colorScheme.onSurface : Colors.redAccent,
               icon: Icons.account_balance,
             ),
             _vitalCard(
@@ -838,7 +836,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 24),
 
         // Top Spending Drivers Leaderboard
-        const Text('TOP SPENDING DRIVERS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white54, letterSpacing: 1)),
+        Text('TOP SPENDING DRIVERS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), letterSpacing: 1)),
         const SizedBox(height: 12),
 
         if (topCategories.isEmpty)
@@ -849,7 +847,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               borderRadius: BorderRadius.circular(16),
             ),
             alignment: Alignment.center,
-            child: const Text('No expense transactions recorded yet.', style: TextStyle(color: Colors.white54, fontSize: 13)),
+            child: Text('No expense transactions recorded yet.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13)),
           )
         else
           Container(
@@ -857,7 +855,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+              border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08)),
             ),
             child: Column(
               children: topCategories.map((cat) {
@@ -873,11 +871,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Icon(icon, size: 18, color: primaryColor),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: Text(cat.key, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13)),
+                            child: Text(cat.key, style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface, fontSize: 13)),
                           ),
                           Text(
                             '$currency${cat.value.toStringAsFixed(0)} (${(pct * 100).toStringAsFixed(0)}%)',
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12),
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 12),
                           ),
                         ],
                       ),
@@ -886,7 +884,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: pct,
-                          backgroundColor: Colors.white10,
+                          backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
                           valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
                           minHeight: 6,
                         ),
@@ -905,9 +903,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFF0B0E14),
+              color: Theme.of(context).scaffoldBackgroundColor,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white10),
+              border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12)),
             ),
             child: Row(
               children: [
@@ -917,9 +915,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Peak Single Outflow', style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold)),
+                      Text('Peak Single Outflow', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 11, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 2),
-                      Text(largestExpenseTitle, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                      Text(largestExpenseTitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -932,8 +930,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         // Quick Settings Button
         OutlinedButton.icon(
-          icon: const Icon(Icons.tune, color: Colors.white),
-          label: const Text('Open Customization & App Settings', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          icon: Icon(Icons.tune, color: Theme.of(context).colorScheme.onSurface),
+          label: Text('Open Customization & App Settings', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -954,12 +952,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required Color color,
     required IconData icon,
   }) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: onSurface.withValues(alpha: 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -968,7 +967,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: const TextStyle(fontSize: 11, color: Colors.white54, fontWeight: FontWeight.bold)),
+              Text(title, style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6), fontWeight: FontWeight.bold)),
               Icon(icon, size: 16, color: color),
             ],
           ),
@@ -977,7 +976,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
               const SizedBox(height: 2),
-              Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.white38), maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(subtitle, style: TextStyle(fontSize: 10, color: onSurface.withValues(alpha: 0.4)), maxLines: 1, overflow: TextOverflow.ellipsis),
             ],
           ),
         ],
@@ -998,6 +997,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context, currentTheme, _) {
         final isSelected = currentTheme == name;
         final primary = Theme.of(context).colorScheme.primary;
+        final onSurface = Theme.of(context).colorScheme.onSurface;
 
         return ListTile(
           leading: Container(
@@ -1007,7 +1007,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(9),
               border: Border.all(
-                color: isSelected ? primary : Colors.white24,
+                color: isSelected ? primary : onSurface.withValues(alpha: 0.24),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -1022,11 +1022,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           title: Text(
             name,
             style: TextStyle(
-              color: isSelected ? primary : Colors.white,
+              color: isSelected ? primary : onSurface,
               fontWeight: FontWeight.bold,
             ),
           ),
-          subtitle: Text(tagline, style: const TextStyle(color: Colors.white54, fontSize: 11.5)),
+          subtitle: Text(tagline, style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 11.5)),
           trailing: isSelected
               ? Icon(Icons.check_circle, color: primary, size: 20)
               : null,

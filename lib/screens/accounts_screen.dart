@@ -35,7 +35,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         shrinkWrap: true,
                         itemCount: accounts.length,
                         itemBuilder: (c, i) => ListTile(
-                          title: Text(accounts[i], style: const TextStyle(color: Colors.white)),
+                          title: Text(accounts[i], style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
                           trailing: IconButton(
                             icon: const Icon(Icons.delete, color: Colors.redAccent),
                             onPressed: () {
@@ -65,7 +65,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                             title: const Text('New Account'),
                             content: TextField(
                               autofocus: true,
-                              style: const TextStyle(color: Colors.white),
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                               onChanged: (v) => newAcc = v,
                             ),
                             actions: [
@@ -185,7 +185,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                 border: Border.all(
                                   color: isSelected 
                                       ? primaryColor 
-                                      : (isOverall ? Colors.blueAccent.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.05)),
+                                      : (isOverall ? Colors.blueAccent.withValues(alpha: 0.3) : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08)),
                                   width: isSelected ? 2 : 1,
                                 ),
                               ),
@@ -202,7 +202,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.bold,
-                                            color: isSelected ? Colors.white : (isOverall ? Colors.blueAccent : Colors.white70),
+                                            color: isSelected ? Theme.of(context).colorScheme.onSurface : (isOverall ? Colors.blueAccent : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -217,12 +217,12 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                     children: [
                                       Text(
                                         '${AppState.currencyNotifier.value}${bal.toStringAsFixed(0)}',
-                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
                                         'Spent: ${AppState.currencyNotifier.value}${sp.toStringAsFixed(0)}',
-                                        style: const TextStyle(fontSize: 10, color: Colors.white54),
+                                        style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                                       ),
                                     ],
                                   ),
@@ -252,15 +252,15 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       child: Text(
                         _selectedAccount == 'Overall' ? 'All Transactions (Overall)' : 'Transactions: $_selectedAccount',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                       ),
                     ),
                   ),
                   
                   if (filteredTxs.isEmpty)
-                    const SliverFillRemaining(
+                    SliverFillRemaining(
                       hasScrollBody: false,
-                      child: Center(child: Text("No transactions for this account", style: TextStyle(color: Colors.white54))),
+                      child: Center(child: Text("No transactions for this account", style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)))),
                     )
                   else
                     SliverPadding(

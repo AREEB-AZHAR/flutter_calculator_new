@@ -61,7 +61,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                               DropdownButtonFormField<String>(
                                 initialValue: categoryIcons.keys.first,
                                 dropdownColor: Theme.of(context).colorScheme.surface,
-                                style: const TextStyle(color: Colors.white),
+                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                                 items: categoryIcons.keys
                                     .where((cat) => !budgets.containsKey(cat))
                                     .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
@@ -71,7 +71,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                               ),
                               const SizedBox(height: 12),
                               TextField(
-                                style: const TextStyle(color: Colors.white),
+                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                                 decoration: const InputDecoration(labelText: 'Limit Amount'),
                                 keyboardType: TextInputType.number,
                                 onChanged: (v) => newLimit = v,
@@ -103,20 +103,20 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               content: SizedBox(
                 width: double.maxFinite,
                 child: budgets.isEmpty
-                    ? const Center(child: Text('No budgets set', style: TextStyle(color: Colors.white54)))
+                    ? Center(child: Text('No budgets set', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))))
                     : ListView(
                         shrinkWrap: true,
                         children: budgets.entries.map((entry) {
                           return ListTile(
                             dense: true,
                             leading: Icon(categoryIcons[entry.key] ?? Icons.category, color: Theme.of(context).colorScheme.primary, size: 20),
-                            title: Text(entry.key, style: const TextStyle(color: Colors.white, fontSize: 14)),
-                            subtitle: Text('${AppState.currencyNotifier.value}${entry.value.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                            title: Text(entry.key, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14)),
+                            subtitle: Text('${AppState.currencyNotifier.value}${entry.value.toStringAsFixed(0)}', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 12)),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
-                                  icon: const Icon(Icons.edit, size: 18, color: Colors.white54),
+                                  icon: Icon(Icons.edit, size: 18, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                                   onPressed: () {
                                     String newLimit = entry.value.toString();
                                     showDialog(
@@ -126,7 +126,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                         title: Text('Edit ${entry.key}'),
                                         content: TextField(
                                           controller: TextEditingController(text: entry.value.toStringAsFixed(0)),
-                                          style: const TextStyle(color: Colors.white),
+                                          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                                           decoration: const InputDecoration(labelText: 'New Limit'),
                                           keyboardType: TextInputType.number,
                                           onChanged: (v) => newLimit = v,
@@ -254,14 +254,14 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Welcome back,', style: TextStyle(fontSize: 12, color: Colors.white54)),
+                  Text('Welcome back,', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
                   ValueListenableBuilder<String>(
                     valueListenable: AppState.displayNameNotifier,
                     builder: (context, dispName, _) {
                       final name = dispName.isNotEmpty ? dispName : (AppState.currentUser ?? 'Guest');
                       return Text(
                         name,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                       );
                     },
                   ),
@@ -272,7 +272,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.currency_exchange, color: Colors.white70),
+            icon: Icon(Icons.currency_exchange, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
             tooltip: 'Currency',
             onPressed: () {
               showDialog(
@@ -300,7 +300,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                               Text(
                                 entry.key,
                                 style: TextStyle(
-                                  color: isSelected ? Theme.of(context).colorScheme.primary : Colors.white,
+                                  color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                 ),
                               ),
@@ -322,7 +322,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             onPressed: _resetData,
           ),
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white70),
+            icon: Icon(Icons.logout, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
             tooltip: 'Logout',
             onPressed: _logout,
           ),
@@ -438,9 +438,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
+                              Text(
                                 'Monthly Budgets',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                               ),
                               IconButton(
                                 icon: Icon(Icons.edit, color: Theme.of(context).colorScheme.primary, size: 16),
@@ -469,14 +469,14 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text(entry.key, style: const TextStyle(color: Colors.white70)),
-                                            Text('${AppState.currencyNotifier.value}${spent.toStringAsFixed(0)} / ${AppState.currencyNotifier.value}${limit.toStringAsFixed(0)}', style: TextStyle(color: percent > 0.9 ? Colors.redAccent : Colors.white)),
+                                            Text(entry.key, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
+                                            Text('${AppState.currencyNotifier.value}${spent.toStringAsFixed(0)} / ${AppState.currencyNotifier.value}${limit.toStringAsFixed(0)}', style: TextStyle(color: percent > 0.9 ? Colors.redAccent : Theme.of(context).colorScheme.onSurface)),
                                           ],
                                         ),
                                         const SizedBox(height: 6),
                                         LinearProgressIndicator(
                                           value: percent,
-                                          backgroundColor: Colors.white.withValues(alpha: 0.1),
+                                          backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
                                           valueColor: AlwaysStoppedAnimation<Color>(percent > 0.9 ? Colors.redAccent : Theme.of(context).colorScheme.secondary),
                                           minHeight: 6,
                                           borderRadius: BorderRadius.circular(3),
@@ -506,9 +506,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Recent Transactions',
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                           ),
                           TextButton(
                             onPressed: () {
@@ -522,9 +522,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                     
                     const SizedBox(height: 10),
                     transactions.isEmpty 
-                      ? const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: Center(child: Text("No transactions yet", style: TextStyle(color: Colors.white54))),
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: Center(child: Text("No transactions yet", style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)))),
                         )
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
