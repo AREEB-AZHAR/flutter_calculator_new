@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../models/transaction.dart';
 import '../services/state.dart';
 import '../services/database/app_database.dart';
+import '../services/notification_service.dart';
 import '../utils/constants.dart';
 import '../widgets/color_picker_dialog.dart';
 import 'login_screen.dart';
@@ -18,6 +19,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final ImagePicker _picker = ImagePicker();
+  int _devToggleCount = 0;
 
   void _logout() {
     AppState.currentUser = null;
@@ -329,6 +331,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                 ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Notifications & Reminders
+            _settingsSectionTitle('NOTIFICATIONS & REMINDERS'),
+            Card(
+              color: const Color(0xFF0B0E14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: StatefulBuilder(
+                builder: (context, setCardState) {
+                  return FutureBuilder<bool>(
+                    future: NotificationService.instance.areRemindersEnabled(),
+                    builder: (context, snapshot) {
+                      final isEnabled = snapshot.data ?? true;
+                      return SwitchListTile(
+                        secondary: const Icon(Icons.notifications_active, color: Colors.indigoAccent),
+                        title: const Text('3-Hour Tally Reminders', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        subtitle: const Text('Active 9:00 AM – 11:00 PM (Quiet hours at night)', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                        activeThumbColor: Theme.of(context).colorScheme.primary,
+                        value: isEnabled,
+                        onChanged: (val) async {
+                          _devToggleCount++;
+                          await NotificationService.instance.setRemindersEnabled(val);
+                          setCardState(() {});
+                          if (_devToggleCount >= 10) {
+                            _devToggleCount = 0;
+                            await NotificationService.instance.showInstantFriendlyReminder();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('🕵️ Secret Dev Mode Unlocked! Test reminder sent.'),
+                                  backgroundColor: Colors.indigoAccent,
+                                  duration: Duration(seconds: 3),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                      );
+                    },
+                  );
+                },
               ),
             ),
 

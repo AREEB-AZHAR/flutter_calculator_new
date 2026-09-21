@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'screens/splash_screen.dart';
+import 'services/notification_service.dart';
 import 'services/state.dart';
 import 'utils/constants.dart';
 
@@ -14,6 +15,9 @@ void main() async {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
+
+  // Initialize notifications & schedule reminders
+  await NotificationService.instance.init();
 
   runApp(const BalanceTrackerApp());
 }
