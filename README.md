@@ -7,11 +7,11 @@
 ## 📱 Visual Showcase & Screenshots
 
 > [!TIP]
-> **Screenshots Placeholder**: Capture and place your high-resolution screenshots in `assets/screenshots/` (e.g. `splash.png`, `dashboard.png`, `insights.png`, `accounts_overall.png`, `theme_studio.png`).
+> **Screenshots Placeholder**: Capture and place your high-resolution screenshots in `assets/screenshots/` (e.g. `splash.png`, `dashboard.png`, `insights.png`, `accounts_overall.png`, `theme_studio.png`, `reminders_settings.png`).
 
-| Flowing Splash | Home & Dashboard | Consolidated Accounts | Theme Studio & Identity |
-| :---: | :---: | :---: | :---: |
-| *(Add Splash Screenshot)* | *(Add Dashboard Screenshot)* | *(Add Accounts Overall)* | *(Add Profile/Theme Screenshot)* |
+| Flowing Splash | Home & Dashboard | Consolidated Accounts | Theme Studio & Identity | Reminders & Easter Egg |
+| :---: | :---: | :---: | :---: | :---: |
+| *(Add Splash Screenshot)* | *(Add Dashboard Screenshot)* | *(Add Accounts Overall)* | *(Add Profile/Theme Screenshot)* | *(Add Reminders Screenshot)* |
 
 ---
 
@@ -68,6 +68,13 @@
 - Access theme customizers, image uploaders, display name editors, currency switchers, password managers, and SQL data export from a central modal sheet.
 - **One-Tap Home Redirection**: Tapping the user avatar in the Home page AppBar instantly navigates directly to the Profile tab.
 
+### 10. ⏰ 3-Hour Expense Tally Reminders & Secret Dev Easter Egg
+- **Offline-First Periodic Reminders**: Scheduled notifications reminding you to tally up recent expenses every 3 hours across active daytime hours (**9:00 AM, 12:00 PM, 3:00 PM, 6:00 PM, and 9:00 PM**).
+- **Quiet Hours at Night**: Completely silent between **11:00 PM and 9:00 AM** to respect your sleep.
+- **20 Friendly Conversational Prompts**: Rotates between 20 warm, casual check-ins that feel like a friend asking about coffee, snacks, impulse buys, or savings goals.
+- **🕵️ Secret Dev Mode (10-Toggle Easter Egg)**: Flipping the reminder toggle switch in Settings 10 times in a row unlocks instant test reminder dispatching with a secret confirmation snackbar.
+- **Cross-Platform Scheduling**: Uses `flutter_local_notifications` and `timezone` with Android `POST_NOTIFICATIONS` and `SCHEDULE_EXACT_ALARM` permissions to ensure alarms persist across device reboots.
+
 ---
 
 ## 🏗️ Clean Modular Architecture
@@ -90,6 +97,7 @@ lib/
 │   ├── accounts_screen.dart        # Multi-wallet & "Overall" consolidated view
 │   └── profile_screen.dart         # Financial behavior summary & settings popup
 ├── services/                       # State & Persistence
+│   ├── notification_service.dart   # 3-hour scheduled reminders & easter egg
 │   ├── state.dart                  # AppState ValueNotifiers & reactive state
 │   └── database/                   # SQLite database engine & security
 │       ├── app_database.dart       # SQLite tables, migrations, CRUD & SQL export
