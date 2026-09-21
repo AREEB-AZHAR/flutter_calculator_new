@@ -409,7 +409,7 @@ class AppDatabase {
         target: (r['target_amount'] as num).toDouble(),
         saved: (r['current_amount'] as num).toDouble(),
         color: Color(r['color'] as int),
-        icon: IconData(r['icon'] as int, fontFamily: 'MaterialIcons'),
+        icon: resolveGoalIconByCodePoint(r['icon'] as int?),
       );
     }).toList();
   }

@@ -18,6 +18,14 @@ IconData resolveGoalIcon(String? name) {
   return _goalIconMap[name] ?? Icons.savings;
 }
 
+IconData resolveGoalIconByCodePoint(int? codePoint) {
+  if (codePoint == null) return Icons.savings;
+  for (final icon in _goalIconMap.values) {
+    if (icon.codePoint == codePoint) return icon;
+  }
+  return Icons.savings;
+}
+
 String goalIconName(IconData icon) {
   for (final entry in _goalIconMap.entries) {
     if (entry.value.codePoint == icon.codePoint) return entry.key;
