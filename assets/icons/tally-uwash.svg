@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -4 300 30" width="300" height="30" role="img" aria-label="Tally — uwash underline">
+<path pathLength="1" fill="none" stroke="#E4572E" stroke-width="7" stroke-linecap="round" stroke-dasharray="1" stroke-dashoffset="1" d="M6 14 C84 20 208 3 294 9">
+  <animate attributeName="stroke-dashoffset" from="1" to="0" begin="0.1s" dur="0.5s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.7 0 0.3 1"/>
+</path>
+</svg>

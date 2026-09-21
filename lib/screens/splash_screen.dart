@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/state.dart';
+import '../widgets/tally_brand_painters.dart';
 import 'login_screen.dart';
 import 'main_nav_screen.dart';
 
@@ -11,42 +12,87 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _animController;
-  late Animation<double> _flowAnimation;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
+  late AnimationController _controller;
+
+  // Stage 1: Icon strokes drawing
+  late Animation<double> _s1Anim;
+  late Animation<double> _s2Anim;
+  late Animation<double> _s3Anim;
+  late Animation<double> _s4Anim;
+  late Animation<double> _slashAnim;
+
+  // Stage 2: Icon shrink & Wordmark typing + uwash
+  late Animation<double> _iconSizeAnim;
+  late Animation<double> _spacingAnim;
+  late Animation<double> _wordmarkOpacityAnim;
+  late Animation<double> _typeProgressAnim;
+  late Animation<double> _uwashProgressAnim;
 
   @override
   void initState() {
     super.initState();
-    _animController = AnimationController(
+
+    _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2200),
+      duration: const Duration(milliseconds: 2700),
     );
 
-    // Sweeping gradient animation for flowing colors
-    _flowAnimation = Tween<double>(begin: -1.0, end: 2.0).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeInOutSine),
+    // Stage 1 (0.00 - 0.44): Draw the 4 strokes and the slash
+    _s1Anim = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.00, 0.15, curve: Curves.easeOut),
+    );
+    _s2Anim = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.08, 0.23, curve: Curves.easeOut),
+    );
+    _s3Anim = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.16, 0.31, curve: Curves.easeOut),
+    );
+    _s4Anim = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.24, 0.38, curve: Curves.easeOut),
+    );
+    _slashAnim = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.32, 0.48, curve: Curves.easeOutCubic),
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    // Stage 2 (0.46 - 0.85): Shrink icon from 130 to 80, expand spacing, and reveal wordmark
+    _iconSizeAnim = Tween<double>(begin: 130.0, end: 80.0).animate(
       CurvedAnimation(
-        parent: _animController,
-        curve: const Interval(0.0, 0.4, curve: Curves.easeIn),
+        parent: _controller,
+        curve: const Interval(0.46, 0.65, curve: Curves.easeInOutCubic),
       ),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
+    _spacingAnim = Tween<double>(begin: 0.0, end: 24.0).animate(
       CurvedAnimation(
-        parent: _animController,
-        curve: const Interval(0.0, 0.5, curve: Curves.easeOutBack),
+        parent: _controller,
+        curve: const Interval(0.46, 0.65, curve: Curves.easeInOutCubic),
       ),
     );
 
-    _animController.forward();
+    _wordmarkOpacityAnim = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.50, 0.62, curve: Curves.easeIn),
+    );
 
-    // Smooth navigation after animation completes
-    _animController.addStatusListener((status) {
+    _typeProgressAnim = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.52, 0.72, curve: Curves.easeOut),
+    );
+
+    _uwashProgressAnim = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.70, 0.88, curve: Curves.easeInOutCubic),
+    );
+
+    _controller.forward();
+
+    // Stage 3: Smooth navigation to LoginScreen with Hero transition
+    _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         _navigateNext();
       }
@@ -60,139 +106,76 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => destination,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
+          return FadeTransition(
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+            child: child,
+          );
         },
-        transitionDuration: const Duration(milliseconds: 500),
+        transitionDuration: const Duration(milliseconds: 650),
       ),
     );
   }
 
   @override
   void dispose() {
-    _animController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Default theme background: clean paper cream/white
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0E14),
-      body: AnimatedBuilder(
-        animation: _animController,
-        builder: (context, child) {
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              // Subtle background ambient light glow
-              Positioned(
-                top: MediaQuery.of(context).size.height * 0.35,
-                left: MediaQuery.of(context).size.width * 0.5 - 120,
-                child: Container(
-                  width: 240,
-                  height: 240,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.18 * _fadeAnimation.value),
-                        blurRadius: 120,
-                        spreadRadius: 40,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Center Brand & Animated Flowing Colors
-              Center(
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Pulsing Brand Icon with Gradient Glow
-                        Container(
-                          width: 86,
-                          height: 86,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFF8B5CF6), Color(0xFF10B981)],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF8B5CF6).withValues(alpha: 0.35),
-                                blurRadius: 28,
-                                spreadRadius: 4,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.account_balance_wallet_rounded,
-                            size: 46,
-                            color: Colors.white,
-                          ),
-                        ),
-
-                        const SizedBox(height: 28),
-
-                        // Flowing Colors ShaderMask across app name: TALLY
-                        ShaderMask(
-                          shaderCallback: (bounds) {
-                            return LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: const [
-                                Color(0xFF8B5CF6), // Violet
-                                Color(0xFF3B82F6), // Ocean Cyan
-                                Color(0xFF10B981), // Emerald
-                                Color(0xFFF59E0B), // Solar Amber
-                                Color(0xFF8B5CF6), // Violet
-                              ],
-                              stops: [
-                                (_flowAnimation.value - 0.4).clamp(0.0, 1.0),
-                                (_flowAnimation.value - 0.2).clamp(0.0, 1.0),
-                                (_flowAnimation.value).clamp(0.0, 1.0),
-                                (_flowAnimation.value + 0.2).clamp(0.0, 1.0),
-                                (_flowAnimation.value + 0.4).clamp(0.0, 1.0),
-                              ],
-                            ).createShader(bounds);
-                          },
-                          child: const Text(
-                            'TALLY',
-                            style: TextStyle(
-                              fontSize: 38,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 6,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        // Subtitle with smooth fade
-                        Text(
-                          'SMART WEALTH & CASH FLOW',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 3.5,
-                            color: Colors.white.withValues(alpha: 0.5 * _fadeAnimation.value),
-                          ),
-                        ),
-                      ],
+      backgroundColor: const Color(0xFFFBF9F5),
+      body: Center(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Animated App Icon (draws, then shrinks smoothly)
+                SizedBox(
+                  width: _iconSizeAnim.value,
+                  height: _iconSizeAnim.value,
+                  child: CustomPaint(
+                    painter: TallyIconPainter(
+                      stroke1Progress: _s1Anim.value,
+                      stroke2Progress: _s2Anim.value,
+                      stroke3Progress: _s3Anim.value,
+                      stroke4Progress: _s4Anim.value,
+                      slashProgress: _slashAnim.value,
+                      bgColor: const Color(0xFF17493B),
+                      strokeColor: const Color(0xFFF6F0E1),
+                      slashColor: const Color(0xFFE4572E),
                     ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+
+                SizedBox(height: _spacingAnim.value),
+
+                // Wordmark with Hero for seamless glide to LoginScreen
+                Opacity(
+                  opacity: _wordmarkOpacityAnim.value,
+                  child: Hero(
+                    tag: 'tally_wordmark',
+                    child: Material(
+                      color: Colors.transparent,
+                      child: TallyWordmarkWidget(
+                        fontSize: 38,
+                        textColor: const Color(0xFF152A22),
+                        uwashColor: const Color(0xFFE4572E),
+                        typeProgress: _typeProgressAnim.value,
+                        uwashProgress: _uwashProgressAnim.value,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

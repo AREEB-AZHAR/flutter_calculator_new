@@ -75,11 +75,27 @@
 - **🕵️ Secret Dev Mode (10-Toggle Easter Egg)**: Flipping the reminder toggle switch in Settings 10 times in a row unlocks instant test reminder dispatching with a secret confirmation snackbar.
 - **Cross-Platform Scheduling**: Uses `flutter_local_notifications` and `timezone` with Android `POST_NOTIFICATIONS` and `SCHEDULE_EXACT_ALARM` permissions to ensure alarms persist across device reboots.
 
+### 11. 🎨 Ledger Brand Identity, Animated Startup & White Paper Theme
+- **Official Ledger Brand Mark**: Hand-crafted four vertical strokes and diagonal slash — the oldest counting system, built into high-resolution launcher icons and vector assets (`assets/icons/`).
+- **Native 60fps Multi-Stage Animated Startup**:
+  - **Stage 1 (Icon Drawing)**: Mathematical Bezier path rendering of the 4 vertical marks in cream (`#F6F0E1`) and slash in coral (`#E4572E`) on `#17493B` forest green.
+  - **Stage 2 (Responsive Shrink & Wordmark)**: Icon shrinks smoothly (130px → 80px) and glides upward; the "TALLY" wordmark types in letter-by-letter with the exact uwash swoosh sweeping underneath. Guaranteed vertical and horizontal centering across all screen dimensions.
+  - **Stage 3 (Continuous Hero Glide)**: The "TALLY" wordmark glides seamlessly into the top of the Login screen, while login inputs fly up from the bottom of the screen.
+- **Default White Paper Theme**: Crisp `#FBF9F5` / `#FFFFFF` background with deep `#152A22` ink typography, forest green primary buttons, and slash orange highlights.
+- **Selectable Brand Palettes**: Choose between **Ledger** (Classic), **Paper** (Cream vintage), and **Ink** (Carbon black & amber) directly in Settings.
+
 ---
 
 ## 🏗️ Clean Modular Architecture
 
 ```
+assets/
+└── icons/                          # Official vector & raster brand assets
+    ├── tally.svg                   # Master 512x512 Ledger vector
+    ├── tally-uwash.svg             # Signature hand-drawn underline
+    ├── tally-icon-anim.svg         # Self-animating SMIL icon
+    ├── tally-wordmark-anim.svg     # Animated typography & uwash
+    └── tally-512.png               # High-res 512px raster icon
 lib/
 ├── main.dart                       # App entrypoint & dynamic theme listening
 ├── models/                         # Domain data models
@@ -87,8 +103,8 @@ lib/
 │   ├── savings_goal.dart           # SavingsGoal schema & progress logic
 │   └── user_profile.dart           # User profile, custom colors & photo model
 ├── screens/                        # Application screens
-│   ├── splash_screen.dart          # Flowing colors animated brand splash
-│   ├── login_screen.dart           # SQLite authentication & sign-in
+│   ├── splash_screen.dart          # Multi-stage Bezier animated brand startup
+│   ├── login_screen.dart           # Hero wordmark & bottom-sliding authentication
 │   ├── main_nav_screen.dart        # Lazy-loaded tab shell with idle pre-warming
 │   ├── dashboard_screen.dart       # Interactive multi-month chart & quick stats
 │   ├── all_transactions_screen.dart# Search, filter, and pie chart analytics
@@ -105,6 +121,7 @@ lib/
 ├── utils/                          # Styling & Design Tokens
 │   └── constants.dart              # Dynamic theme generator, icons & currencies
 └── widgets/                        # Reusable UI & Custom Painters
+    ├── tally_brand_painters.dart   # TallyIconPainter, UwashPainter & Wordmark
     ├── custom_painters.dart        # Repaint-bounded Month line & Donut painters
     ├── interactive_chart_card.dart # Multi-month navigator & line/donut card
     ├── color_picker_dialog.dart    # Graphic Theme Studio (HSV sliders & hex)
@@ -203,7 +220,16 @@ The output executable will be generated at `build/windows/x64/runner/Release/bal
 ---
 
 ## 📝 Recent Changelog
-- **v1.3.0 (Current)**:
+- **v1.4.0 (Current)**:
+  - **Official Ledger Brand Identity**: Integrated official vector assets (`tally.svg`, `tally-uwash.svg`, `tally-icon-anim.svg`, `tally-wordmark-anim.svg`) and high-res launcher icons.
+  - **Native 60fps Multi-Stage Animated Startup**:
+    - *Stage 1*: Mathematical Bezier stroke drawing of the 4 vertical marks (`#F6F0E1`) and diagonal slash (`#E4572E`) on `#17493B` forest green.
+    - *Stage 2*: Smooth icon shrink (130px → 80px) and upward glide, typing "TALLY" in Fraunces/Serif italic with the signature uwash sweeping underneath. Responsively centered across all screens.
+    - *Stage 3*: Continuous `Hero` wordmark glide to `LoginScreen` with the login card and input fields flying up from the bottom.
+  - **Default White Paper Theme**: Defaulted to crisp `#FBF9F5` white/cream background with `#152A22` ink typography, `#17493B` primary buttons, and `#E4572E` slash orange accents.
+  - **Brand Palettes in Settings**: Added **Ledger**, **Paper**, and **Ink** brand style selectors to App & Account Settings.
+  - **3-Hour Expense Tally Reminders & Secret Dev Easter Egg**: Added scheduled reminders with quiet hours and 10-toggle easter egg.
+- **v1.3.0**:
   - **Flowing Colors Splash Screen**: Added a sweeping animated gradient (violet, ocean cyan, emerald, amber) washing through **"TALLY"** with glowing ambient pulse, preventing black-screen cold starts.
   - **Zero-Lag Tab Architecture & Idle Pre-Warming**: Eliminated the login 5-frame hitch by lazy-loading Tab 0 (Home) upon login and staging background pre-warming for tabs 1..4 across idle frames, preventing any tab-switch stutter.
   - **"Overall" Consolidated View (Accounts)**: Added unified "Overall" card to view aggregated balances, net spending, and consolidated transactions across all accounts/wallets.

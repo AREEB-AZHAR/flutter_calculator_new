@@ -8,6 +8,7 @@ import '../services/database/app_database.dart';
 import '../services/notification_service.dart';
 import '../utils/constants.dart';
 import '../widgets/color_picker_dialog.dart';
+import '../widgets/tally_brand_painters.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -268,8 +269,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 20),
 
+            // Brand Palettes & App Icon Styles
+            _settingsSectionTitle('BRAND PALETTES & APP ICON STYLES'),
+            Card(
+              color: const Color(0xFF0B0E14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Column(
+                children: [
+                  _brandPaletteTile(
+                    name: 'Ledger',
+                    tagline: 'Forest Green & Slash Coral (Classic White Paper)',
+                    bgColor: const Color(0xFF17493B),
+                    strokeColor: const Color(0xFFF6F0E1),
+                    slashColor: const Color(0xFFE4572E),
+                    preset: themePresets[0],
+                  ),
+                  const Divider(height: 1, color: Colors.white10),
+                  _brandPaletteTile(
+                    name: 'Paper',
+                    tagline: 'Cream Paper & Forest Green (Vintage Editorial)',
+                    bgColor: const Color(0xFFF6F0E1),
+                    strokeColor: const Color(0xFF17493B),
+                    slashColor: const Color(0xFFE4572E),
+                    preset: themePresets[1],
+                  ),
+                  const Divider(height: 1, color: Colors.white10),
+                  _brandPaletteTile(
+                    name: 'Ink',
+                    tagline: 'Carbon Black & Chalk Text (Amber Slash)',
+                    bgColor: const Color(0xFF191915),
+                    strokeColor: const Color(0xFFF3EDE0),
+                    slashColor: const Color(0xFFE8A13C),
+                    preset: themePresets[2],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
             // Theme Studio Tile
-            _settingsSectionTitle('APPEARANCE & THEME'),
+            _settingsSectionTitle('CUSTOM PALETTES & STUDIO'),
             Card(
               color: const Color(0xFF0B0E14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -942,6 +982,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _brandPaletteTile({
+    required String name,
+    required String tagline,
+    required Color bgColor,
+    required Color strokeColor,
+    required Color slashColor,
+    required AppThemePreset preset,
+  }) {
+    return ValueListenableBuilder<String>(
+      valueListenable: AppState.themeNameNotifier,
+      builder: (context, currentTheme, _) {
+        final isSelected = currentTheme == name;
+        final primary = Theme.of(context).colorScheme.primary;
+
+        return ListTile(
+          leading: Container(
+            width: 38,
+            height: 38,
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(9),
+              border: Border.all(
+                color: isSelected ? primary : Colors.white24,
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            child: CustomPaint(
+              painter: TallyIconPainter(
+                bgColor: bgColor,
+                strokeColor: strokeColor,
+                slashColor: slashColor,
+              ),
+            ),
+          ),
+          title: Text(
+            name,
+            style: TextStyle(
+              color: isSelected ? primary : Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          subtitle: Text(tagline, style: const TextStyle(color: Colors.white54, fontSize: 11.5)),
+          trailing: isSelected
+              ? Icon(Icons.check_circle, color: primary, size: 20)
+              : null,
+          onTap: () async {
+            AppState.themeNameNotifier.value = preset.name;
+            AppState.customPrimaryColorNotifier.value = preset.primary;
+            AppState.customSecondaryColorNotifier.value = preset.secondary;
+            AppState.avatarColorNotifier.value = preset.primary;
+
+            if (AppState.currentUser != null) {
+              final username = AppState.currentUser!;
+              final profile = await AppDatabase.instance.loadProfile(username);
+              await AppState.saveProfile(profile.copyWith(
+                primaryColor: preset.primary,
+                secondaryColor: preset.secondary,
+              ));
+              await AppState.saveTheme(username, preset.name);
+            }
+
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Switched to $name theme style & palette')),
+              );
+            }
+          },
+        );
+      },
     );
   }
 }

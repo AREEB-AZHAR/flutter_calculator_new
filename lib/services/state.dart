@@ -16,13 +16,13 @@ class AppState {
     'Entertainment': 200.0,
   });
   static final ValueNotifier<List<String>> accountsNotifier = ValueNotifier(['Main', 'Cash', 'Credit Card', 'Digital Wallet']);
-  static final ValueNotifier<Color> avatarColorNotifier = ValueNotifier(const Color(0xFF8B5CF6));
-  static final ValueNotifier<String> themeNameNotifier = ValueNotifier('Violet Night');
+  static final ValueNotifier<Color> avatarColorNotifier = ValueNotifier(const Color(0xFF17493B));
+  static final ValueNotifier<String> themeNameNotifier = ValueNotifier('Ledger');
   static final ValueNotifier<List<SavingsGoal>> goalsNotifier = ValueNotifier([]);
 
   // Graphic Theme & Profile Customization Notifiers
-  static final ValueNotifier<Color> customPrimaryColorNotifier = ValueNotifier(const Color(0xFF8B5CF6));
-  static final ValueNotifier<Color> customSecondaryColorNotifier = ValueNotifier(const Color(0xFF10B981));
+  static final ValueNotifier<Color> customPrimaryColorNotifier = ValueNotifier(const Color(0xFF17493B));
+  static final ValueNotifier<Color> customSecondaryColorNotifier = ValueNotifier(const Color(0xFFE4572E));
   static final ValueNotifier<String?> profilePhotoNotifier = ValueNotifier(null);
   static final ValueNotifier<String> displayNameNotifier = ValueNotifier('');
   static final ValueNotifier<String> bioNotifier = ValueNotifier('');
