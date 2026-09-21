@@ -19,11 +19,11 @@ void main() async {
   // Initialize notifications & schedule reminders
   await NotificationService.instance.init();
 
-  runApp(const BalanceTrackerApp());
+  runApp(const TallyApp());
 }
 
-class BalanceTrackerApp extends StatelessWidget {
-  const BalanceTrackerApp({super.key});
+class TallyApp extends StatelessWidget {
+  const TallyApp({super.key});
 
   @override
   Widget build(BuildContext context) {

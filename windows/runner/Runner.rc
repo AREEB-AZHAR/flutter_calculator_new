@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.areeb" "\0"
-            VALUE "FileDescription", "balance_tracker" "\0"
+            VALUE "FileDescription", "Tally" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "balance_tracker" "\0"
+            VALUE "InternalName", "Tally" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.areeb. All rights reserved." "\0"
-            VALUE "OriginalFilename", "balance_tracker.exe" "\0"
-            VALUE "ProductName", "balance_tracker" "\0"
+            VALUE "OriginalFilename", "tally.exe" "\0"
+            VALUE "ProductName", "Tally" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

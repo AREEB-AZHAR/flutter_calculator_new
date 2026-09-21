@@ -12,9 +12,9 @@ import 'package:balance_tracker/main.dart';
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const BalanceTrackerApp());
+    await tester.pumpWidget(const TallyApp());
 
     // Verify that the title or login screen renders.
-    expect(find.byType(BalanceTrackerApp), findsOneWidget);
+    expect(find.byType(TallyApp), findsOneWidget);
   });
 }

@@ -214,18 +214,27 @@ flutter run -d chrome
 ```bash
 flutter build apk --release
 ```
-The output APK will be generated at `build/app/outputs/flutter-apk/app-release.apk`.
+The output APK will be generated at:
+- `build/app/outputs/flutter-apk/tally.apk`
+- `build/app/outputs/flutter-apk/tally-release.apk`
+- `build/app/outputs/flutter-apk/app-release.apk`
 
 ### Windows Executable
 ```bash
 flutter build windows --release
 ```
-The output executable will be generated at `build/windows/x64/runner/Release/balance_tracker.exe`.
+The output executable will be generated at `build/windows/x64/runner/Release/tally.exe`.
 
 ---
 
 ## 📝 Recent Changelog
-- **v1.5.0 (Current)**:
+- **v1.5.1 (Current)**:
+  - **Tally Branding Across All Platforms**:
+    - **Android App Label**: Updated `android:label="Tally"` in `AndroidManifest.xml` so the installed app displays as **Tally** on device launchers and home screens instead of `balance_tracker`.
+    - **Automatic Tally APK Generation**: Configured Gradle (`android/app/build.gradle.kts`) with an automated `copyTallyApk` post-build task so `flutter build apk` produces `tally.apk` and `tally-release.apk` in `build/app/outputs/flutter-apk/`.
+    - **Web & Desktop Identity**: Renamed web manifest name/short_name to **Tally** with brand theme colors (`#17493B`), and updated Windows runner window title, executable name (`tally.exe`), and file metadata.
+    - **Main App Class**: Renamed `BalanceTrackerApp` to `TallyApp`.
+- **v1.5.0**:
   - **Theme Contrast & Icon Matching Overhaul**:
     - **Ink Theme**: Carbon `#191915` icon background with amber `#E8A13C` slash font color and `#E4572E` across-slash accents.
     - **Ledger Theme**: Forest green `#17493B` icon background with `#F6F0E1` mark typography and `#E4572E` slash accents.

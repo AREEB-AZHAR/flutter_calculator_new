@@ -48,3 +48,20 @@ dependencies {
 flutter {
     source = "../.."
 }
+
+tasks.register("copyTallyApk") {
+    doLast {
+        val outputDir = file("${project.layout.buildDirectory.get()}/outputs/flutter-apk")
+        val releaseApk = file("$outputDir/app-release.apk")
+        if (releaseApk.exists()) {
+            releaseApk.copyTo(file("$outputDir/tally.apk"), overwrite = true)
+            releaseApk.copyTo(file("$outputDir/tally-release.apk"), overwrite = true)
+        }
+    }
+}
+
+tasks.configureEach {
+    if (name == "assembleRelease" || name == "assemble") {
+        finalizedBy("copyTallyApk")
+    }
+}
