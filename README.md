@@ -228,7 +228,15 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 ---
 
 ## 📝 Recent Changelog
-- **v1.6.0 (Current)**:
+- **v1.6.1 (Current)**:
+  - **Notification App Icon Display**:
+    - Configured `AndroidNotificationDetails` with `largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher')` and `color: const Color(0xFF17493B)` (Tally forest green brand accent) so the notification card displays the official Tally app icon preview on Android devices.
+    - Added launcher drawables to `android/app/src/main/res/drawable/` (`ic_notification.png` & `ic_launcher.png`) for robust notification icon resolution across Android versions.
+  - **Instant Settings Popup Theme Reactivity**:
+    - Refactored `_showSettingsPopup` bottom sheet with reactive `ValueListenableBuilder`s listening to theme preset, primary, secondary, and text color notifiers.
+    - Dynamically rebuilds the bottom sheet container and cards with `Theme(data: activeTheme)` and `color: activeTheme.colorScheme.surface`, providing instantaneous live transitions of the modal background, card colors, borders, and typography upon selecting Ledger, Paper, Ink, or Theme Studio palettes.
+    - Selecting a brand preset automatically clears any custom text color override (`clearTextColor: true`), ensuring the preset's carefully tuned high-contrast typography immediately shines.
+- **v1.6.0**:
   - **Total Balance Card Theme Match & Brand Identity**:
     - Replaced hardcoded violet-to-blue gradient with a theme-matching surface gradient (`theme.colorScheme.surface` with `primary.withValues(alpha: 0.15)`).
     - Removed random credit card numbers (`**** **** **** 4812`) and contactless icon.
