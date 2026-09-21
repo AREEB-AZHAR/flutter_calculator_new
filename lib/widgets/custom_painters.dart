@@ -144,11 +144,35 @@ class MonthChartPainter extends CustomPainter {
   }
 }
 
+List<Color> getThemeChartPalette(ThemeData theme) {
+  final primary = theme.colorScheme.primary;
+  final secondary = theme.colorScheme.secondary;
+  final hsv = HSVColor.fromColor(primary);
+  final isLight = theme.brightness == Brightness.light;
+  final baseVal = isLight ? 0.75 : 0.9;
+  final baseSat = isLight ? 0.8 : 0.75;
+
+  return [
+    primary,
+    secondary,
+    HSVColor.fromAHSV(1.0, (hsv.hue + 40) % 360, baseSat, baseVal).toColor(),
+    HSVColor.fromAHSV(1.0, (hsv.hue + 85) % 360, baseSat, baseVal).toColor(),
+    HSVColor.fromAHSV(1.0, (hsv.hue + 135) % 360, baseSat, baseVal).toColor(),
+    HSVColor.fromAHSV(1.0, (hsv.hue + 190) % 360, baseSat, baseVal).toColor(),
+    HSVColor.fromAHSV(1.0, (hsv.hue + 245) % 360, baseSat, baseVal).toColor(),
+    HSVColor.fromAHSV(1.0, (hsv.hue + 300) % 360, baseSat, baseVal).toColor(),
+  ];
+}
+
 class DonutChartPainter extends CustomPainter {
   final Map<String, double> segments;
   final double total;
   final String currencySymbol;
   final String centerTitle;
+  final List<Color>? palette;
+  final Color? textColor;
+  final Color? subtextColor;
+  final Color? emptyColor;
 
   static const List<Color> _palette = [
     Color(0xFF8B5CF6),
@@ -168,24 +192,29 @@ class DonutChartPainter extends CustomPainter {
     required this.total,
     required this.currencySymbol,
     this.centerTitle = 'Total',
+    this.palette,
+    this.textColor,
+    this.subtextColor,
+    this.emptyColor,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = min(size.width, size.height) / 2 - 12;
+    final effectivePalette = palette != null && palette!.isNotEmpty ? palette! : _palette;
 
     if (total <= 0 || segments.isEmpty) {
       final emptyPaint = Paint()
-        ..color = Colors.white10
+        ..color = emptyColor ?? Colors.white10
         ..style = PaintingStyle.stroke
         ..strokeWidth = 16;
       canvas.drawCircle(center, radius, emptyPaint);
 
       final textPainter = TextPainter(
-        text: const TextSpan(
+        text: TextSpan(
           text: 'No Data',
-          style: TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.bold),
+          style: TextStyle(color: subtextColor ?? Colors.white38, fontSize: 12, fontWeight: FontWeight.bold),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -200,7 +229,7 @@ class DonutChartPainter extends CustomPainter {
       final sweepAngle = (entry.value / total) * 2 * pi;
       if (sweepAngle <= 0 || sweepAngle.isNaN) continue;
 
-      final color = _palette[colorIdx % _palette.length];
+      final color = effectivePalette[colorIdx % effectivePalette.length];
       final paint = Paint()
         ..color = color
         ..style = PaintingStyle.stroke
@@ -223,7 +252,7 @@ class DonutChartPainter extends CustomPainter {
     final titlePainter = TextPainter(
       text: TextSpan(
         text: centerTitle.toUpperCase(),
-        style: const TextStyle(color: Colors.white54, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+        style: TextStyle(color: subtextColor ?? Colors.white54, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.8),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
@@ -232,7 +261,7 @@ class DonutChartPainter extends CustomPainter {
     final amountPainter = TextPainter(
       text: TextSpan(
         text: '$currencySymbol${total.toStringAsFixed(0)}',
-        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+        style: TextStyle(color: textColor ?? Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
@@ -243,7 +272,11 @@ class DonutChartPainter extends CustomPainter {
   bool shouldRepaint(DonutChartPainter oldDelegate) {
     return oldDelegate.total != total ||
         oldDelegate.segments != segments ||
-        oldDelegate.currencySymbol != currencySymbol;
+        oldDelegate.currencySymbol != currencySymbol ||
+        oldDelegate.textColor != textColor ||
+        oldDelegate.subtextColor != subtextColor ||
+        oldDelegate.palette != palette ||
+        oldDelegate.emptyColor != emptyColor;
   }
 }
 
@@ -253,6 +286,7 @@ class PieChartPainter extends CustomPainter {
   final String currencySymbol;
   final Color incomeColor;
   final Color expenseColor;
+  final Color? emptyColor;
 
   PieChartPainter(
     this.income, 
@@ -260,6 +294,7 @@ class PieChartPainter extends CustomPainter {
     this.currencySymbol = '\$',
     this.incomeColor = Colors.greenAccent,
     this.expenseColor = Colors.redAccent,
+    this.emptyColor,
   });
 
   @override
@@ -273,7 +308,7 @@ class PieChartPainter extends CustomPainter {
         center,
         radius,
         Paint()
-          ..color = Colors.white10
+          ..color = emptyColor ?? Colors.white10
           ..style = PaintingStyle.stroke
           ..strokeWidth = 20,
       );
@@ -321,6 +356,7 @@ class PieChartPainter extends CustomPainter {
         oldDelegate.expense != expense ||
         oldDelegate.currencySymbol != currencySymbol ||
         oldDelegate.incomeColor != incomeColor ||
-        oldDelegate.expenseColor != expenseColor;
+        oldDelegate.expenseColor != expenseColor ||
+        oldDelegate.emptyColor != emptyColor;
   }
 }

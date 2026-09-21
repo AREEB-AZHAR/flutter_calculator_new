@@ -23,6 +23,7 @@ class AppState {
   // Graphic Theme & Profile Customization Notifiers
   static final ValueNotifier<Color> customPrimaryColorNotifier = ValueNotifier(const Color(0xFFE4572E));
   static final ValueNotifier<Color> customSecondaryColorNotifier = ValueNotifier(const Color(0xFFF6F0E1));
+  static final ValueNotifier<Color?> customTextColorNotifier = ValueNotifier(null);
   static final ValueNotifier<String?> profilePhotoNotifier = ValueNotifier(null);
   static final ValueNotifier<String> displayNameNotifier = ValueNotifier('');
   static final ValueNotifier<String> bioNotifier = ValueNotifier('');
@@ -47,6 +48,7 @@ class AppState {
     }
     customPrimaryColorNotifier.value = pCol;
     customSecondaryColorNotifier.value = sCol;
+    customTextColorNotifier.value = profile.textColor;
     avatarColorNotifier.value = pCol;
     currencyNotifier.value = profile.currency;
 
@@ -63,6 +65,7 @@ class AppState {
     profilePhotoNotifier.value = profile.photoPath;
     customPrimaryColorNotifier.value = profile.primaryColor;
     customSecondaryColorNotifier.value = profile.secondaryColor;
+    customTextColorNotifier.value = profile.textColor;
     avatarColorNotifier.value = profile.primaryColor;
     currencyNotifier.value = profile.currency;
   }

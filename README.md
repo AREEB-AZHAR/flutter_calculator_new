@@ -228,7 +228,20 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 ---
 
 ## 📝 Recent Changelog
-- **v1.5.1 (Current)**:
+- **v1.6.0 (Current)**:
+  - **Total Balance Card Theme Match & Brand Identity**:
+    - Replaced hardcoded violet-to-blue gradient with a theme-matching surface gradient (`theme.colorScheme.surface` with `primary.withValues(alpha: 0.15)`).
+    - Removed random credit card numbers (`**** **** **** 4812`) and contactless icon.
+    - Integrated official Tally logo badge in the card header and large watermark Tally logo (`TallyIconPainter`) in the card background.
+    - Added 'Tally Encrypted Vault' indicator and 'ACTIVE' status pill.
+  - **Dynamic Theme-Responsive Pie & Donut Charts**:
+    - Updated `DonutChartPainter` and `PieChartPainter` to use dynamically generated theme palettes (`getThemeChartPalette(theme)`) across Home, Accounts, and All Transactions screens.
+    - Fixed center text in Donut chart and legend text to use `theme.colorScheme.onSurface` and `subtextColor` so they are 100% readable across all themes.
+  - **User-Configurable Text Tone in Theme Studio**:
+    - Added a third "Text Tone" tab in `ColorPickerDialog` allowing users to customize text/font color via interactive HSV sliders or Hex input.
+    - Integrated text color into `UserProfile`, `AppState.customTextColorNotifier`, and SQLite database persistence.
+    - Added live text preview in Theme Studio.
+- **v1.5.1**:
   - **Tally Branding Across All Platforms**:
     - **Android App Label**: Updated `android:label="Tally"` in `AndroidManifest.xml` so the installed app displays as **Tally** on device launchers and home screens instead of `balance_tracker`.
     - **Automatic Tally APK Generation**: Configured Gradle (`android/app/build.gradle.kts`) with an automated `copyTallyApk` post-build task so `flutter build apk` produces `tally.apk` and `tally-release.apk` in `build/app/outputs/flutter-apk/`.

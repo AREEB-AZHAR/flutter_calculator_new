@@ -31,7 +31,7 @@ ThemeData buildAppTheme(String themeName) {
   );
 }
 
-ThemeData buildDynamicTheme({Color? primary, Color? secondary, String? themeName}) {
+ThemeData buildDynamicTheme({Color? primary, Color? secondary, Color? textColor, String? themeName}) {
   final name = themeName ?? 'Ledger';
   final preset = themePresets.firstWhere((p) => p.name == name, orElse: () => themePresets.first);
   final isLight = name == 'Paper';
@@ -53,18 +53,19 @@ ThemeData buildDynamicTheme({Color? primary, Color? secondary, String? themeName
   final surface = preset.surface;
 
   // Text colors:
+  // If user explicitly set textColor, use it! Otherwise:
   // Ink: uses amber slash color (#E8A13C) for text per user request
   // Paper: uses forest green stroke mark (#17493B) for crisp contrast on cream paper
   // Ledger: uses chalk cream stroke mark (#F6F0E1) for high-contrast on forest green
-  final onSurface = name == 'Paper'
+  final onSurface = textColor ?? (name == 'Paper'
       ? const Color(0xFF17493B)
       : (name == 'Ink'
           ? const Color(0xFFE8A13C)
           : (name == 'Ledger'
               ? const Color(0xFFF6F0E1)
-              : Colors.white));
+              : Colors.white)));
 
-  final onSurfaceVariant = name == 'Ink'
+  final onSurfaceVariant = (name == 'Ink' && textColor == null)
       ? const Color(0xFFF3EDE0).withValues(alpha: 0.8)
       : onSurface.withValues(alpha: 0.7);
   final brightness = isLight ? Brightness.light : Brightness.dark;

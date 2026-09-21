@@ -232,6 +232,10 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
                         total: donutTotal,
                         currencySymbol: currency,
                         centerTitle: donutTitle,
+                        palette: getThemeChartPalette(theme),
+                        textColor: onSurface,
+                        subtextColor: onSurface.withValues(alpha: 0.6),
+                        emptyColor: onSurface.withValues(alpha: 0.12),
                       ),
                     ),
                   )

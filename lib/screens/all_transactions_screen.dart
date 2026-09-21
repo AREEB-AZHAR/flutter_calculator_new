@@ -5,7 +5,6 @@ import '../widgets/transaction_tile.dart';
 import '../widgets/transaction_dialog.dart';
 import '../widgets/custom_painters.dart';
 
-
 class AllTransactionsScreen extends StatefulWidget {
   const AllTransactionsScreen({super.key});
 
@@ -31,6 +30,14 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
       body: ValueListenableBuilder<List<Transaction>>(
         valueListenable: AppState.transactionsNotifier,
         builder: (context, transactions, child) {
+          final theme = Theme.of(context);
+          final onSurface = theme.colorScheme.onSurface;
+          final isLight = theme.brightness == Brightness.light;
+          final incomeColor = isLight
+              ? const Color(0xFF0F766E)
+              : const Color(0xFF10B981);
+          final expenseColor = theme.colorScheme.primary;
+
           final double totalIncome = transactions
               .where((t) => t.isIncome)
               .fold(0, (sum, t) => sum + t.amount);
@@ -60,11 +67,9 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                 ),
                 margin: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
+                  color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
-                  ),
+                  border: Border.all(color: onSurface.withValues(alpha: 0.08)),
                 ),
                 child: Column(
                   children: [
@@ -77,6 +82,9 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                             totalIncome,
                             totalExpense,
                             currencySymbol: AppState.currencyNotifier.value,
+                            incomeColor: incomeColor,
+                            expenseColor: expenseColor,
+                            emptyColor: onSurface.withValues(alpha: 0.12),
                           ),
                         ),
                       ),
@@ -90,8 +98,8 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                             Container(
                               width: 12,
                               height: 12,
-                              decoration: const BoxDecoration(
-                                color: Colors.greenAccent,
+                              decoration: BoxDecoration(
+                                color: incomeColor,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -99,7 +107,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                             Text(
                               'Total Income',
                               style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: onSurface,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -111,8 +119,8 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                             Container(
                               width: 12,
                               height: 12,
-                              decoration: const BoxDecoration(
-                                color: Colors.redAccent,
+                              decoration: BoxDecoration(
+                                color: expenseColor,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -120,7 +128,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                             Text(
                               'Total Expense',
                               style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: onSurface,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -135,16 +143,31 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: TextField(
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'Search transactions...',
-                    hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
-                    prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
+                    hintStyle: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.54),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.54),
+                    ),
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.surface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12)),
+                      borderSide: BorderSide(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.12),
+                      ),
                     ),
                   ),
                   onChanged: (val) => setState(() => _searchQuery = val),
@@ -164,7 +187,10 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                         label: Text(
                           type,
                           style: TextStyle(
-                            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                            color: isSelected
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.7),
                           ),
                         ),
                         selected: isSelected,
@@ -187,7 +213,11 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                     ? Center(
                         child: Text(
                           "No transactions found",
-                          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
                         ),
                       )
                     : ListView.builder(

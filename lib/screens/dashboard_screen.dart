@@ -8,6 +8,7 @@ import '../widgets/transaction_dialog.dart';
 import '../widgets/interactive_chart_card.dart';
 import 'all_transactions_screen.dart';
 import 'login_screen.dart';
+import '../widgets/tally_brand_painters.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -388,39 +389,153 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(30),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6)],
+                            gradient: LinearGradient(
+                              colors: [
+                                Theme.of(context).colorScheme.surface,
+                                Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                              ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
                           ),
                           child: Stack(
                             children: [
+                              // Background Brand Watermark Logo
                               Positioned(
-                                right: -20,
-                                top: -20,
-                                child: Icon(Icons.account_balance_wallet, size: 120, color: Colors.white.withValues(alpha: 0.1)),
+                                right: -15,
+                                top: -15,
+                                child: IgnorePointer(
+                                  child: Opacity(
+                                    opacity: 0.12,
+                                    child: CustomPaint(
+                                      size: const Size(130, 130),
+                                      painter: TallyIconPainter(
+                                        bgColor: Colors.transparent,
+                                        strokeColor: Theme.of(context).colorScheme.onSurface,
+                                        slashColor: Theme.of(context).colorScheme.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Total Balance',
-                                    style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w500),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Total Balance',
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      // Official Tally Logo Badge on Card
+                                      Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(10),
+                                          color: Theme.of(context).scaffoldBackgroundColor,
+                                          border: Border.all(
+                                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.15),
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.1),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(10),
+                                          child: CustomPaint(
+                                            painter: TallyIconPainter(
+                                              bgColor: Theme.of(context).scaffoldBackgroundColor,
+                                              strokeColor: Theme.of(context).colorScheme.secondary,
+                                              slashColor: Theme.of(context).colorScheme.primary,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
                                     '${AppState.currencyNotifier.value}${totalBalance.toStringAsFixed(2)}',
-                                    style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.bold, letterSpacing: -1),
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onSurface,
+                                      fontSize: 42,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: -1,
+                                    ),
                                   ),
                                   const SizedBox(height: 20),
-                                  const Row(
+                                  Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text('**** **** **** 4812', style: TextStyle(color: Colors.white70, fontSize: 15, letterSpacing: 2)),
-                                      Icon(Icons.contactless, color: Colors.white70, size: 28),
+                                      Row(
+                                        children: [
+                                          Icon(Icons.shield_outlined, size: 15, color: Theme.of(context).colorScheme.primary),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Tally Encrypted Vault',
+                                            style: TextStyle(
+                                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              letterSpacing: 0.4,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              width: 6,
+                                              height: 6,
+                                              decoration: BoxDecoration(
+                                                color: Theme.of(context).colorScheme.primary,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              'ACTIVE',
+                                              style: TextStyle(
+                                                color: Theme.of(context).colorScheme.primary,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 1,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ],
-                                  )
+                                  ),
                                 ],
                               ),
                             ],

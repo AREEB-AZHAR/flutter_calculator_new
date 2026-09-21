@@ -36,15 +36,21 @@ class TallyApp extends StatelessWidget {
             return ValueListenableBuilder<Color>(
               valueListenable: AppState.customSecondaryColorNotifier,
               builder: (context, secondaryColor, _) {
-                return MaterialApp(
-                  title: 'Tally',
-                  theme: buildDynamicTheme(
-                    primary: primaryColor,
-                    secondary: secondaryColor,
-                    themeName: themeName,
-                  ),
-                  home: const SplashScreen(),
-                  debugShowCheckedModeBanner: false,
+                return ValueListenableBuilder<Color?>(
+                  valueListenable: AppState.customTextColorNotifier,
+                  builder: (context, textColor, _) {
+                    return MaterialApp(
+                      title: 'Tally',
+                      theme: buildDynamicTheme(
+                        primary: primaryColor,
+                        secondary: secondaryColor,
+                        textColor: textColor,
+                        themeName: themeName,
+                      ),
+                      home: const SplashScreen(),
+                      debugShowCheckedModeBanner: false,
+                    );
+                  },
                 );
               },
             );

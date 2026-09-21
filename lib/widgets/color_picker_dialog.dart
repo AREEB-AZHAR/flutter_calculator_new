@@ -5,19 +5,23 @@ import '../services/database/app_database.dart';
 class ColorPickerDialog extends StatefulWidget {
   final Color initialPrimary;
   final Color initialSecondary;
+  final Color? initialTextColor;
 
   const ColorPickerDialog({
     super.key,
     required this.initialPrimary,
     required this.initialSecondary,
+    this.initialTextColor,
   });
 
   static Future<void> show(BuildContext context) async {
+    final theme = Theme.of(context);
     await showDialog(
       context: context,
       builder: (ctx) => ColorPickerDialog(
         initialPrimary: AppState.customPrimaryColorNotifier.value,
         initialSecondary: AppState.customSecondaryColorNotifier.value,
+        initialTextColor: AppState.customTextColorNotifier.value ?? theme.colorScheme.onSurface,
       ),
     );
   }
@@ -29,7 +33,8 @@ class ColorPickerDialog extends StatefulWidget {
 class _ColorPickerDialogState extends State<ColorPickerDialog> {
   late Color _primary;
   late Color _secondary;
-  bool _isEditingPrimary = true;
+  late Color _textColor;
+  int _editTarget = 0; // 0: Primary, 1: Accent, 2: Text
 
   late double _hue;
   late double _saturation;
@@ -41,46 +46,61 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
       'name': 'Tally Ledger',
       'primary': const Color(0xFFE4572E),
       'secondary': const Color(0xFFF6F0E1),
+      'text': const Color(0xFFF6F0E1),
     },
     {
       'name': 'Tally Ink',
       'primary': const Color(0xFFE8A13C),
       'secondary': const Color(0xFFE4572E),
+      'text': const Color(0xFFE8A13C),
+    },
+    {
+      'name': 'Tally Paper',
+      'primary': const Color(0xFFE4572E),
+      'secondary': const Color(0xFF17493B),
+      'text': const Color(0xFF17493B),
     },
     {
       'name': 'Violet Neon',
       'primary': const Color(0xFF8B5CF6),
       'secondary': const Color(0xFF10B981),
+      'text': Colors.white,
     },
     {
       'name': 'Ocean Cyan',
       'primary': const Color(0xFF3B82F6),
       'secondary': const Color(0xFF06B6D4),
+      'text': Colors.white,
     },
     {
       'name': 'Emerald Matrix',
       'primary': const Color(0xFF10B981),
       'secondary': const Color(0xFFA78BFA),
+      'text': Colors.white,
     },
     {
       'name': 'Solar Amber',
       'primary': const Color(0xFFF59E0B),
       'secondary': const Color(0xFFEF4444),
+      'text': Colors.white,
     },
     {
       'name': 'Rose Velvet',
       'primary': const Color(0xFFF43F5E),
       'secondary': const Color(0xFF8B5CF6),
+      'text': Colors.white,
     },
     {
       'name': 'Cyberpunk Teal',
       'primary': const Color(0xFF14B8A6),
       'secondary': const Color(0xFFE879F9),
+      'text': Colors.white,
     },
     {
       'name': 'Midnight Gold',
       'primary': const Color(0xFFD97706),
       'secondary': const Color(0xFF3B82F6),
+      'text': Colors.white,
     },
   ];
 
@@ -89,7 +109,14 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
     super.initState();
     _primary = widget.initialPrimary;
     _secondary = widget.initialSecondary;
+    _textColor = widget.initialTextColor ?? const Color(0xFFF6F0E1);
     _syncHsvFromColor(_primary);
+  }
+
+  Color get _activeColor {
+    if (_editTarget == 0) return _primary;
+    if (_editTarget == 1) return _secondary;
+    return _textColor;
   }
 
   void _syncHsvFromColor(Color color) {
@@ -103,10 +130,12 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
   void _updateActiveColor() {
     final newColor = HSVColor.fromAHSV(1.0, _hue, _saturation, _value).toColor();
     setState(() {
-      if (_isEditingPrimary) {
+      if (_editTarget == 0) {
         _primary = newColor;
-      } else {
+      } else if (_editTarget == 1) {
         _secondary = newColor;
+      } else {
+        _textColor = newColor;
       }
       _hexController.text = '#${newColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
     });
@@ -119,10 +148,12 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
       if (intVal != null) {
         final newColor = Color(intVal);
         setState(() {
-          if (_isEditingPrimary) {
+          if (_editTarget == 0) {
             _primary = newColor;
-          } else {
+          } else if (_editTarget == 1) {
             _secondary = newColor;
+          } else {
+            _textColor = newColor;
           }
           _syncHsvFromColor(newColor);
         });
@@ -133,6 +164,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
   Future<void> _applyTheme() async {
     AppState.customPrimaryColorNotifier.value = _primary;
     AppState.customSecondaryColorNotifier.value = _secondary;
+    AppState.customTextColorNotifier.value = _textColor;
     AppState.avatarColorNotifier.value = _primary;
 
     if (AppState.currentUser != null) {
@@ -141,6 +173,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
       await AppState.saveProfile(profile.copyWith(
         primaryColor: _primary,
         secondaryColor: _secondary,
+        textColor: _textColor,
       ));
     }
 
@@ -157,7 +190,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
-    final activeColor = _isEditingPrimary ? _primary : _secondary;
+    final activeColor = _activeColor;
 
     return AlertDialog(
       backgroundColor: theme.colorScheme.surface,
@@ -195,7 +228,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Target Selector: Primary vs Secondary
+              // Target Selector: Primary vs Accent vs Text
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
@@ -204,64 +237,9 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                 ),
                 child: Row(
                   children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isEditingPrimary = true;
-                            _syncHsvFromColor(_primary);
-                          });
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: _isEditingPrimary ? _primary : Colors.transparent,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Primary Tone',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: _isEditingPrimary
-                                  ? (_primary.computeLuminance() > 0.5 ? Colors.black : Colors.white)
-                                  : onSurface.withValues(alpha: 0.6),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isEditingPrimary = false;
-                            _syncHsvFromColor(_secondary);
-                          });
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: !_isEditingPrimary ? _secondary : Colors.transparent,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Accent Tone',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: !_isEditingPrimary
-                                  ? (_secondary.computeLuminance() > 0.5 ? Colors.black : Colors.white)
-                                  : onSurface.withValues(alpha: 0.6),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    _tabButton(0, 'Primary', _primary),
+                    _tabButton(1, 'Accent', _secondary),
+                    _tabButton(2, 'Text Tone', _textColor),
                   ],
                 ),
               ),
@@ -281,28 +259,53 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: _primary.withValues(alpha: 0.4)),
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    CircleAvatar(
-                      backgroundColor: _primary,
-                      radius: 18,
-                      child: Icon(Icons.flash_on, color: _secondary, size: 18),
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: _primary,
+                          radius: 18,
+                          child: Icon(Icons.flash_on, color: _secondary, size: 18),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _editTarget == 0
+                                    ? 'Primary: ${_hexController.text}'
+                                    : (_editTarget == 1
+                                        ? 'Accent: ${_hexController.text}'
+                                        : 'Text Color: ${_hexController.text}'),
+                                style: TextStyle(color: onSurface, fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Live components reflect these colors.',
+                                style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 11),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _isEditingPrimary ? 'Primary: ${_hexController.text}' : 'Accent: ${_hexController.text}',
-                            style: TextStyle(color: onSurface, fontWeight: FontWeight.bold, fontSize: 13),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Live components will reflect these colors.',
-                            style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 11),
-                          ),
-                        ],
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: theme.scaffoldBackgroundColor.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Sample Text Preview: Tally Personal Finance',
+                        style: TextStyle(
+                          color: _textColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ],
@@ -439,12 +442,20 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                 children: _quickPalettes.map((p) {
                   final pri = p['primary'] as Color;
                   final sec = p['secondary'] as Color;
+                  final txt = p['text'] as Color? ?? Colors.white;
                   return GestureDetector(
                     onTap: () {
                       setState(() {
                         _primary = pri;
                         _secondary = sec;
-                        _syncHsvFromColor(_isEditingPrimary ? pri : sec);
+                        _textColor = txt;
+                        if (_editTarget == 0) {
+                          _syncHsvFromColor(pri);
+                        } else if (_editTarget == 1) {
+                          _syncHsvFromColor(sec);
+                        } else {
+                          _syncHsvFromColor(txt);
+                        }
                       });
                     },
                     child: Container(
@@ -457,9 +468,11 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(width: 12, height: 12, decoration: BoxDecoration(color: pri, shape: BoxShape.circle)),
-                          const SizedBox(width: 4),
-                          Container(width: 12, height: 12, decoration: BoxDecoration(color: sec, shape: BoxShape.circle)),
+                          Container(width: 10, height: 10, decoration: BoxDecoration(color: pri, shape: BoxShape.circle)),
+                          const SizedBox(width: 3),
+                          Container(width: 10, height: 10, decoration: BoxDecoration(color: sec, shape: BoxShape.circle)),
+                          const SizedBox(width: 3),
+                          Container(width: 10, height: 10, decoration: BoxDecoration(color: txt, shape: BoxShape.circle)),
                           const SizedBox(width: 6),
                           Text(p['name'] as String, style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontSize: 11)),
                         ],
@@ -493,6 +506,42 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _tabButton(int index, String label, Color color) {
+    final isSelected = _editTarget == index;
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _editTarget = index;
+            _syncHsvFromColor(_activeColor);
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? color : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              color: isSelected
+                  ? (color.computeLuminance() > 0.5 ? Colors.black : Colors.white)
+                  : onSurface.withValues(alpha: 0.6),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
