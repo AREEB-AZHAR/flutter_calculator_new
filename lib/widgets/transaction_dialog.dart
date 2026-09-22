@@ -241,7 +241,7 @@ Future<void> showTransactionDialog(BuildContext context, {Transaction? existingT
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: Text(existingTx == null ? 'Add' : 'Save', style: const TextStyle(fontWeight: FontWeight.bold)),

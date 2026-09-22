@@ -685,12 +685,19 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           );
         }
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => showTransactionDialog(context),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        elevation: 4, 
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
+      floatingActionButton: Builder(
+        builder: (context) {
+          final fabBg = Theme.of(context).colorScheme.primary;
+          final fabFg = fabBg.computeLuminance() > 0.5 ? const Color(0xFF152A22) : Colors.white;
+          return FloatingActionButton(
+            onPressed: () => showTransactionDialog(context),
+            backgroundColor: fabBg,
+            foregroundColor: fabFg,
+            elevation: 4, 
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Icon(Icons.add, color: fabFg, size: 28),
+          );
+        },
       ),
     );
   }

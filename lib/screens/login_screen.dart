@@ -262,17 +262,17 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               style: ElevatedButton.styleFrom(
                                 minimumSize: const Size(double.infinity, 52),
                                 backgroundColor: theme.colorScheme.primary,
-                                foregroundColor: Colors.white,
+                                foregroundColor: theme.colorScheme.onPrimary,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               ),
                               child: _isLoading
-                                  ? const SizedBox(
+                                  ? SizedBox(
                                       width: 22,
                                       height: 22,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2.2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
                                       ),
                                     )
                                   : Text(

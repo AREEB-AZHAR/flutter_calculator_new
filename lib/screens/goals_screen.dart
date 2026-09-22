@@ -34,7 +34,10 @@ class GoalsScreen extends StatelessWidget {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
+          ),
           TextButton(
             onPressed: () {
               final target = double.tryParse(targetStr);
@@ -46,7 +49,7 @@ class GoalsScreen extends StatelessWidget {
                 Navigator.pop(ctx);
               }
             },
-            child: const Text('Create'),
+            child: Text('Create', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -70,7 +73,10 @@ class GoalsScreen extends StatelessWidget {
           onChanged: (v) => amountStr = v,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
+          ),
           TextButton(
             onPressed: () {
               final amount = double.tryParse(amountStr);
@@ -85,7 +91,7 @@ class GoalsScreen extends StatelessWidget {
                 Navigator.pop(ctx);
               }
             },
-            child: const Text('Add'),
+            child: Text('Add', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -178,13 +184,23 @@ class GoalsScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: goal.progress >= 1.0 ? null : () => _showAddFundsDialog(context, goal),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: goal.progress >= 1.0 ? Colors.greenAccent : primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: Text(goal.progress >= 1.0 ? '🎉 Goal Reached!' : 'Add Funds', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: Builder(
+                        builder: (context) {
+                          final btnBg = goal.progress >= 1.0 ? Colors.greenAccent : primary;
+                          final btnFg = btnBg.computeLuminance() > 0.5 ? const Color(0xFF152A22) : Colors.white;
+                          return ElevatedButton(
+                            onPressed: goal.progress >= 1.0 ? null : () => _showAddFundsDialog(context, goal),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: btnBg,
+                              foregroundColor: btnFg,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: Text(
+                              goal.progress >= 1.0 ? '🎉 Goal Reached!' : 'Add Funds',
+                              style: TextStyle(color: btnFg, fontWeight: FontWeight.bold),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -194,11 +210,18 @@ class GoalsScreen extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddGoalDialog(context),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: Builder(
+        builder: (context) {
+          final fabBg = theme.colorScheme.primary;
+          final fabFg = fabBg.computeLuminance() > 0.5 ? const Color(0xFF152A22) : Colors.white;
+          return FloatingActionButton(
+            onPressed: () => _showAddGoalDialog(context),
+            backgroundColor: fabBg,
+            foregroundColor: fabFg,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Icon(Icons.add, color: fabFg),
+          );
+        },
       ),
     );
   }

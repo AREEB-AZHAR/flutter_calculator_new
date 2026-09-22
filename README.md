@@ -228,7 +228,14 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 ---
 
 ## 📝 Recent Changelog
-- **v1.7.0 (Current)**:
+- **v1.7.1 (Current)**:
+  - **Button Text & FAB Icon Contrast Fix (Ink & Paper Themes)**:
+    - **Luminance-Adaptive Foregrounds**: Dynamically computes contrast-compliant foreground colors (`btnBg.computeLuminance() > 0.5 ? Color(0xFF152A22) : Colors.white`) across all `ElevatedButton` widgets and `FloatingActionButton` controls.
+    - **Savings Goals Screen Overhaul**: Eliminated invisible white-on-white text in `GoalsScreen`'s "Add Funds" button and `+` icon on the Floating Action Button. When goals are completed (`progress >= 1.0`), the `Colors.greenAccent` background adapts to dark ink text (`#152A22`) for guaranteed legibility.
+    - **Dashboard FAB Contrast**: Updated `DashboardScreen` Floating Action Button with luminance-aware icon foreground color.
+    - **Theme Collisions & Legacy Profile Protection**: Updated `buildDynamicTheme` in `constants.dart` to protect against primary/secondary colors colliding with `preset.surface` or washing out to pure white/cream in Paper and Ink themes, auto-healing legacy profile data.
+    - **Global Theme Defaults**: Configured `floatingActionButtonTheme` and updated `elevatedButtonTheme` with `onPrimary` contrast calculation.
+- **v1.7.0**:
   - **Dynamic App Launcher Icon Switching**:
     - Generated custom-crafted, high-resolution launcher icons for all three brand styles (**Ledger**, **Paper**, and **Ink**) across all Android mipmap densities (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`).
     - Configured native `<activity-alias>` entries in `AndroidManifest.xml` targeting `.MainActivity` (`MainActivityLedger`, `MainActivityPaper`, `MainActivityInk`).

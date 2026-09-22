@@ -36,13 +36,17 @@ ThemeData buildDynamicTheme({Color? primary, Color? secondary, Color? textColor,
   final preset = themePresets.firstWhere((p) => p.name == name, orElse: () => themePresets.first);
   final isLight = name == 'Paper';
 
-  // Protect against primary or secondary matching background color (e.g. from legacy database profiles)
+  // Protect against primary or secondary matching background or surface color (e.g. from legacy database profiles)
   var primaryCol = primary ?? preset.primary;
   var secondaryCol = secondary ?? preset.secondary;
-  if (primaryCol.toARGB32() == preset.background.toARGB32()) {
+  if (primaryCol.toARGB32() == preset.background.toARGB32() ||
+      primaryCol.toARGB32() == preset.surface.toARGB32() ||
+      (name == 'Ink' && (primaryCol.toARGB32() == 0xFFFFFFFF || primaryCol.toARGB32() == 0xFFF6F0E1 || primaryCol.toARGB32() == 0xFFF3EDE0)) ||
+      (name == 'Paper' && (primaryCol.toARGB32() == 0xFFFFFFFF || primaryCol.toARGB32() == 0xFFF6F0E1 || primaryCol.toARGB32() == 0xFFF3EDE0))) {
     primaryCol = preset.primary;
   }
-  if (secondaryCol.toARGB32() == preset.background.toARGB32()) {
+  if (secondaryCol.toARGB32() == preset.background.toARGB32() ||
+      secondaryCol.toARGB32() == preset.surface.toARGB32()) {
     secondaryCol = preset.secondary;
   }
 
@@ -70,15 +74,19 @@ ThemeData buildDynamicTheme({Color? primary, Color? secondary, Color? textColor,
       : onSurface.withValues(alpha: 0.7);
   final brightness = isLight ? Brightness.light : Brightness.dark;
 
+  // Contrast-aware foreground colors for buttons and floating action buttons
+  final onPrimary = primaryCol.computeLuminance() > 0.5 ? const Color(0xFF152A22) : Colors.white;
+  final onSecondary = secondaryCol.computeLuminance() > 0.5 ? const Color(0xFF152A22) : Colors.white;
+
   return ThemeData(
     brightness: brightness,
     scaffoldBackgroundColor: bg,
     colorScheme: ColorScheme(
       brightness: brightness,
       primary: primaryCol,
-      onPrimary: Colors.white,
+      onPrimary: onPrimary,
       secondary: secondaryCol,
-      onSecondary: Colors.white,
+      onSecondary: onSecondary,
       surface: surface,
       onSurface: onSurface,
       onSurfaceVariant: onSurfaceVariant,
@@ -127,8 +135,14 @@ ThemeData buildDynamicTheme({Color? primary, Color? secondary, Color? textColor,
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryCol,
-        foregroundColor: Colors.white,
+        foregroundColor: onPrimary,
       ),
+    ),
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: primaryCol,
+      foregroundColor: onPrimary,
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: surface,
