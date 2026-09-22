@@ -4,7 +4,6 @@ import '../models/transaction.dart';
 import '../models/savings_goal.dart';
 import '../models/user_profile.dart';
 import '../utils/constants.dart';
-import 'app_icon_service.dart';
 import 'database/app_database.dart';
 
 class AppState {
@@ -70,8 +69,8 @@ class AppState {
     }
   }
 
-  /// Quickly switches to a brand preset (Ledger, Paper, Ink), saves globally to SharedPreferences,
-  /// and updates the Android launcher icon.
+  /// Quickly switches to a brand preset (Ledger, Paper, Ink) and saves globally to SharedPreferences
+  /// without abruptly closing or restarting the app.
   static Future<void> persistThemePreset(AppThemePreset preset) async {
     themeNameNotifier.value = preset.name;
     customPrimaryColorNotifier.value = preset.primary;
@@ -88,8 +87,6 @@ class AppState {
     } catch (e) {
       debugPrint('Error persisting preset theme: $e');
     }
-
-    await AppIconService.setAppIcon(preset.name);
   }
 
   // Initialize and load all data for user from SQLite database
@@ -102,18 +99,41 @@ class AppState {
     bioNotifier.value = profile.bio;
     profilePhotoNotifier.value = profile.photoPath;
 
-    // Heal legacy default if primaryColor matches background (e.g. 0xFF17493B) or old default (0xFF8B5CF6)
+    // If profile has a saved theme, restore it!
+    if (profile.theme != null && profile.theme!.isNotEmpty) {
+      themeNameNotifier.value = profile.theme!;
+    }
+
     Color pCol = profile.primaryColor;
     Color sCol = profile.secondaryColor;
+    Color? tCol = profile.textColor ?? customTextColorNotifier.value;
+
+    // Heal legacy default if primaryColor matches old background (0xFF17493B) or old default (0xFF8B5CF6)
     if (pCol.toARGB32() == 0xFF17493B || pCol.toARGB32() == 0xFF8B5CF6) {
-      pCol = const Color(0xFFE4572E);
-      sCol = const Color(0xFFF6F0E1);
+      if (customPrimaryColorNotifier.value.toARGB32() != 0xFF17493B &&
+          customPrimaryColorNotifier.value.toARGB32() != 0xFF8B5CF6) {
+        pCol = customPrimaryColorNotifier.value;
+        sCol = customSecondaryColorNotifier.value;
+      } else {
+        final preset = themePresets.firstWhere((p) => p.name == themeNameNotifier.value, orElse: () => themePresets.first);
+        pCol = preset.primary;
+        sCol = preset.secondary;
+      }
     }
+
     customPrimaryColorNotifier.value = pCol;
     customSecondaryColorNotifier.value = sCol;
-    customTextColorNotifier.value = profile.textColor;
+    customTextColorNotifier.value = tCol;
     avatarColorNotifier.value = pCol;
     currencyNotifier.value = profile.currency;
+
+    // Persist healed/synced profile to database
+    await db.saveProfile(profile.copyWith(
+      primaryColor: pCol,
+      secondaryColor: sCol,
+      textColor: tCol,
+      theme: themeNameNotifier.value,
+    ));
 
     transactionsNotifier.value = await db.loadTransactions(username);
     budgetsNotifier.value = await db.loadBudgets(username);
@@ -123,6 +143,7 @@ class AppState {
     // Sync user's saved palette to SharedPreferences so next startup boots with this palette
     try {
       final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefThemeKey, themeNameNotifier.value);
       await prefs.setInt(_prefPrimaryColorKey, pCol.toARGB32());
       await prefs.setInt(_prefSecondaryColorKey, sCol.toARGB32());
       if (profile.textColor != null) {
@@ -134,22 +155,24 @@ class AppState {
   }
 
   static Future<void> saveProfile(UserProfile profile) async {
-    await AppDatabase.instance.saveProfile(profile);
-    displayNameNotifier.value = profile.displayName;
-    bioNotifier.value = profile.bio;
-    profilePhotoNotifier.value = profile.photoPath;
-    customPrimaryColorNotifier.value = profile.primaryColor;
-    customSecondaryColorNotifier.value = profile.secondaryColor;
-    customTextColorNotifier.value = profile.textColor;
-    avatarColorNotifier.value = profile.primaryColor;
-    currencyNotifier.value = profile.currency;
+    final updatedProfile = profile.copyWith(theme: themeNameNotifier.value);
+    await AppDatabase.instance.saveProfile(updatedProfile);
+    displayNameNotifier.value = updatedProfile.displayName;
+    bioNotifier.value = updatedProfile.bio;
+    profilePhotoNotifier.value = updatedProfile.photoPath;
+    customPrimaryColorNotifier.value = updatedProfile.primaryColor;
+    customSecondaryColorNotifier.value = updatedProfile.secondaryColor;
+    customTextColorNotifier.value = updatedProfile.textColor;
+    avatarColorNotifier.value = updatedProfile.primaryColor;
+    currencyNotifier.value = updatedProfile.currency;
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_prefPrimaryColorKey, profile.primaryColor.toARGB32());
-      await prefs.setInt(_prefSecondaryColorKey, profile.secondaryColor.toARGB32());
-      if (profile.textColor != null) {
-        await prefs.setInt(_prefTextColorKey, profile.textColor!.toARGB32());
+      await prefs.setString(_prefThemeKey, themeNameNotifier.value);
+      await prefs.setInt(_prefPrimaryColorKey, updatedProfile.primaryColor.toARGB32());
+      await prefs.setInt(_prefSecondaryColorKey, updatedProfile.secondaryColor.toARGB32());
+      if (updatedProfile.textColor != null) {
+        await prefs.setInt(_prefTextColorKey, updatedProfile.textColor!.toARGB32());
       } else {
         await prefs.remove(_prefTextColorKey);
       }
@@ -202,7 +225,12 @@ class AppState {
     } catch (e) {
       debugPrint('Error saving theme to SharedPreferences: $e');
     }
-    await AppIconService.setAppIcon(themeName);
+    if (username != null) {
+      try {
+        final p = await AppDatabase.instance.loadProfile(username);
+        await AppDatabase.instance.saveProfile(p.copyWith(theme: themeName));
+      } catch (_) {}
+    }
   }
 
   static Future<String> loadTheme(String? username) async {

@@ -247,14 +247,30 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
     - Updated `SplashScreen` to dynamically render with the active theme's background color, animated icon colors (e.g. Ink's carbon black, cream strokes, and amber slash), and wordmark styling.
     - Updated `LoginScreen` to dynamically render with the user's saved theme (e.g. if Ink is chosen, login form card, input fields, borders, and buttons match Ink's dark carbon palette and cream typography).
 - **v1.6.1**:
-  - **Notification App Icon Display**:
-    - Configured `AndroidNotificationDetails` with `largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher')` and `color: const Color(0xFF17493B)` (Tally forest green brand accent) so the notification card displays the official Tally app icon preview on Android devices.
-    - Added launcher drawables to `android/app/src/main/res/drawable/` (`ic_notification.png` & `ic_launcher.png`) for robust notification icon resolution across Android versions.
-  - **Instant Settings Popup Theme Reactivity**:
-    - Refactored `_showSettingsPopup` bottom sheet with reactive `ValueListenableBuilder`s listening to theme preset, primary, secondary, and text color notifiers.
-    - Dynamically rebuilds the bottom sheet container and cards with `Theme(data: activeTheme)` and `color: activeTheme.colorScheme.surface`, providing instantaneous live transitions of the modal background, card colors, borders, and typography upon selecting Ledger, Paper, Ink, or Theme Studio palettes.
-    - Selecting a brand preset automatically clears any custom text color override (`clearTextColor: true`), ensuring the preset's carefully tuned high-contrast typography immediately shines.
-- **v1.6.0**:
+- **v1.7.2**:
+  - **Decoupled In-App Theming from Launcher Icon Switching**:
+    - Selecting brand presets (Ledger, Paper, Ink) in Settings immediately updates the app's palette with zero app closure or interruption.
+  - **Launcher App Icon Confirmation Warning**:
+    - Added dedicated **Launcher App Icon** cards and icon action buttons with an informative confirmation warning dialog.
+    - Transparently informs users that the Android OS requires a quick app restart to refresh the launcher icon alias, avoiding unexpected app closures.
+  - **Account Login Theme & Custom Accent Retention**:
+    - Executed non-destructive SQLite migrations adding `text_color` and `theme` columns to the `profiles` table.
+    - Fixed custom accent and text tones reverting to theme native defaults upon account login by persisting active customizations directly to SQLite.
+    - Ensured new account registrations and uninitialized profiles inherit currently selected theme palettes and custom colors.
+  - **App Version Alignment & Settings Footer**:
+    - Updated `pubspec.yaml` to `version: 1.7.2+8`, ensuring Android App Info and system settings accurately reflect version `1.7.2` (Build 8).
+    - Integrated a sleek version and security architecture footer (`Tally v1.7.2 (Build 8) • Local Encrypted Vault`) in the settings bottom sheet.
+- **v1.7.1**:
+  - **High-Contrast Button Text & Action Contrast**:
+    - Resolved button text and floating action button contrast in Paper and Ink themes.
+    - Ensured primary action buttons, FABs, and tab indicators have crisp, readable labels across all light and dark palettes.
+- **v1.7.0**:
+  - **Dynamic Launcher Icon Aliases**:
+    - Added Android activity aliases for Ledger, Paper, and Ink launcher icons.
+    - Added dynamic method channel `com.areeb.tally/app_icon` in `MainActivity.kt` with `PackageManager.setComponentEnabledSetting`.
+  - **Persistent Theming on Cold Start**:
+    - Saved active theme and custom palette settings globally in `SharedPreferences` to dynamically theme the splash and login screens prior to authentication.
+- **v1.6.1**:
   - **Total Balance Card Theme Match & Brand Identity**:
     - Replaced hardcoded violet-to-blue gradient with a theme-matching surface gradient (`theme.colorScheme.surface` with `primary.withValues(alpha: 0.15)`).
     - Removed random credit card numbers (`**** **** **** 4812`) and contactless icon.

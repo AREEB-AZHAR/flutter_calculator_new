@@ -8,6 +8,7 @@ class UserProfile {
   final Color primaryColor;
   final Color secondaryColor;
   final Color? textColor;
+  final String? theme;
   final String currency;
   final DateTime createdAt;
 
@@ -19,6 +20,7 @@ class UserProfile {
     this.primaryColor = const Color(0xFFE4572E),
     this.secondaryColor = const Color(0xFFF6F0E1),
     this.textColor,
+    this.theme,
     this.currency = '\$',
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
@@ -32,6 +34,7 @@ class UserProfile {
       'primary_color': primaryColor.toARGB32(),
       'secondary_color': secondaryColor.toARGB32(),
       'text_color': textColor?.toARGB32(),
+      'theme': theme,
       'currency': currency,
       'created_at': createdAt.toIso8601String(),
     };
@@ -54,6 +57,7 @@ class UserProfile {
       textColor: map['text_color'] != null
           ? Color(map['text_color'] as int)
           : null,
+      theme: map['theme'] as String?,
       currency: (map['currency'] as String?) ?? '\$',
       createdAt: map['created_at'] != null
           ? DateTime.tryParse(map['created_at'] as String) ?? DateTime.now()
@@ -69,6 +73,7 @@ class UserProfile {
     Color? secondaryColor,
     Color? textColor,
     bool clearTextColor = false,
+    String? theme,
     String? currency,
   }) {
     return UserProfile(
@@ -79,6 +84,7 @@ class UserProfile {
       primaryColor: primaryColor ?? this.primaryColor,
       secondaryColor: secondaryColor ?? this.secondaryColor,
       textColor: clearTextColor ? null : (textColor ?? this.textColor),
+      theme: theme ?? this.theme,
       currency: currency ?? this.currency,
       createdAt: createdAt,
     );

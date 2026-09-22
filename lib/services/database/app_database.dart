@@ -58,6 +58,8 @@ class AppDatabase {
             photo_path TEXT,
             primary_color INTEGER,
             secondary_color INTEGER,
+            text_color INTEGER,
+            theme TEXT,
             currency TEXT,
             created_at TEXT
           )
@@ -109,6 +111,14 @@ class AppDatabase {
         ''');
       },
     );
+
+    // Ensure text_color and theme columns exist for existing databases
+    try {
+      await db.execute('ALTER TABLE profiles ADD COLUMN text_color INTEGER');
+    } catch (_) {}
+    try {
+      await db.execute('ALTER TABLE profiles ADD COLUMN theme TEXT');
+    } catch (_) {}
 
     await _migrateLegacyPrefs(db);
     return db;
@@ -222,13 +232,30 @@ class AppDatabase {
       'created_at': DateTime.now().toIso8601String(),
     });
 
+    Color regPrimary = const Color(0xFFE4572E);
+    Color regSecondary = const Color(0xFFF6F0E1);
+    Color? regTextColor;
+    String regTheme = 'Ledger';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      regTheme = prefs.getString('tally_active_theme') ?? 'Ledger';
+      final p = prefs.getInt('tally_primary_color');
+      if (p != null) regPrimary = Color(p);
+      final s = prefs.getInt('tally_secondary_color');
+      if (s != null) regSecondary = Color(s);
+      final t = prefs.getInt('tally_text_color');
+      if (t != null) regTextColor = Color(t);
+    } catch (_) {}
+
     await db.insert('profiles', {
       'username': username,
       'display_name': username,
       'bio': 'Managing finances with clarity & style.',
       'photo_path': null,
-      'primary_color': const Color(0xFF8B5CF6).toARGB32(),
-      'secondary_color': const Color(0xFF10B981).toARGB32(),
+      'primary_color': regPrimary.toARGB32(),
+      'secondary_color': regSecondary.toARGB32(),
+      'text_color': regTextColor?.toARGB32(),
+      'theme': regTheme,
       'currency': '\$',
       'created_at': DateTime.now().toIso8601String(),
     });
@@ -300,7 +327,29 @@ class AppDatabase {
       return UserProfile.fromMap(results.first);
     }
 
-    final profile = UserProfile(username: username, displayName: username);
+    Color defPrimary = const Color(0xFFE4572E);
+    Color defSecondary = const Color(0xFFF6F0E1);
+    Color? defTextColor;
+    String defTheme = 'Ledger';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      defTheme = prefs.getString('tally_active_theme') ?? 'Ledger';
+      final p = prefs.getInt('tally_primary_color');
+      if (p != null) defPrimary = Color(p);
+      final s = prefs.getInt('tally_secondary_color');
+      if (s != null) defSecondary = Color(s);
+      final t = prefs.getInt('tally_text_color');
+      if (t != null) defTextColor = Color(t);
+    } catch (_) {}
+
+    final profile = UserProfile(
+      username: username,
+      displayName: username,
+      primaryColor: defPrimary,
+      secondaryColor: defSecondary,
+      textColor: defTextColor,
+      theme: defTheme,
+    );
     await saveProfile(profile);
     return profile;
   }

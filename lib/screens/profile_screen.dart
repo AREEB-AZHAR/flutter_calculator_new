@@ -6,6 +6,7 @@ import '../models/transaction.dart';
 import '../services/state.dart';
 import '../services/database/app_database.dart';
 import '../services/notification_service.dart';
+import '../services/app_icon_service.dart';
 import '../utils/constants.dart';
 import '../widgets/color_picker_dialog.dart';
 import '../widgets/tally_brand_painters.dart';
@@ -305,8 +306,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 const SizedBox(height: 20),
 
-                                // Brand Palettes & App Icon Styles
-                                _settingsSectionTitle('BRAND PALETTES & APP ICON STYLES', onSurface.withValues(alpha: 0.6)),
+                                // Brand Palettes
+                                _settingsSectionTitle('BRAND PALETTES (INSTANT IN-APP)', onSurface.withValues(alpha: 0.6)),
                                 Card(
                                   color: cardBg,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -341,6 +342,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ],
                                   ),
                                 ),
+
+                                const SizedBox(height: 20),
+
+                                // Launcher App Icon with Restart Notice
+                                _settingsSectionTitle('LAUNCHER APP ICON (REQUIRES RESTART)', onSurface.withValues(alpha: 0.6)),
+                                _launcherIconCard(cardBg, surface, onSurface, primary),
 
                                 const SizedBox(height: 20),
 
@@ -592,7 +599,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   },
                                 ),
 
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 24),
+
+                                // App Version & Security Architecture Footer
+                                Center(
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        'Tally v1.7.2 (Build 8)',
+                                        style: TextStyle(
+                                          color: onSurface.withValues(alpha: 0.7),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Offline-First • Local Encrypted Vault',
+                                        style: TextStyle(
+                                          color: onSurface.withValues(alpha: 0.4),
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                const SizedBox(height: 16),
                               ],
                             ),
                           ),
@@ -1069,8 +1103,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           subtitle: Text(tagline, style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 11.5)),
           trailing: isSelected
-              ? Icon(Icons.check_circle, color: primary, size: 20)
-              : null,
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.install_mobile_rounded, size: 20),
+                      tooltip: 'Set as Home Screen Icon',
+                      color: primary,
+                      onPressed: () => _promptChangeLauncherIcon(context, name),
+                    ),
+                    Icon(Icons.check_circle, color: primary, size: 20),
+                  ],
+                )
+              : IconButton(
+                  icon: Icon(Icons.install_mobile_outlined, size: 20, color: onSurface.withValues(alpha: 0.4)),
+                  tooltip: 'Set as Home Screen Icon',
+                  onPressed: () => _promptChangeLauncherIcon(context, name),
+                ),
           onTap: () async {
             await AppState.persistThemePreset(preset);
 
@@ -1087,12 +1136,229 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Switched to $name theme style & app icon')),
+                SnackBar(
+                  content: Text('Switched in-app theme to $name'),
+                  duration: const Duration(seconds: 2),
+                ),
               );
             }
           },
         );
       },
+    );
+  }
+
+  void _promptChangeLauncherIcon(BuildContext ctx, String iconName) {
+    final theme = Theme.of(ctx);
+    final surface = theme.colorScheme.surface;
+    final onSurface = theme.colorScheme.onSurface;
+    final primary = theme.colorScheme.primary;
+
+    showDialog(
+      context: ctx,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.amberAccent, size: 28),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Change Launcher Icon?',
+                style: TextStyle(color: onSurface, fontWeight: FontWeight.bold, fontSize: 17),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Android requires restarting the app to update the home screen launcher icon to "$iconName".',
+              style: TextStyle(color: onSurface.withValues(alpha: 0.85), fontSize: 13.5),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amberAccent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.amberAccent.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline, color: Colors.amberAccent, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Tally will close and apply your new "$iconName" icon on your device home screen immediately.\n\nWhen you re-open Tally, the new icon will be active.',
+                      style: TextStyle(color: onSurface.withValues(alpha: 0.85), fontSize: 12, height: 1.35),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: Text('Cancel', style: TextStyle(color: onSurface.withValues(alpha: 0.7))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogCtx);
+              await AppIconService.setAppIcon(iconName);
+            },
+            child: const Text('Change & Restart', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _launcherIconCard(Color cardBg, Color surface, Color onSurface, Color primary) {
+    return Card(
+      color: cardBg,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.touch_app_outlined, size: 20, color: primary),
+                const SizedBox(width: 8),
+                Text(
+                  'Set Android Home Screen Icon',
+                  style: TextStyle(color: onSurface, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Choose an icon for your phone home screen launcher. Android requires restarting the app to update.',
+              style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _launcherIconItem(
+                    name: 'Ledger',
+                    bgColor: const Color(0xFF17493B),
+                    strokeColor: const Color(0xFFF6F0E1),
+                    slashColor: const Color(0xFFE4572E),
+                    surface: surface,
+                    onSurface: onSurface,
+                    primary: primary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _launcherIconItem(
+                    name: 'Paper',
+                    bgColor: const Color(0xFFF6F0E1),
+                    strokeColor: const Color(0xFF17493B),
+                    slashColor: const Color(0xFFE4572E),
+                    surface: surface,
+                    onSurface: onSurface,
+                    primary: primary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _launcherIconItem(
+                    name: 'Ink',
+                    bgColor: const Color(0xFF191915),
+                    strokeColor: const Color(0xFFF3EDE0),
+                    slashColor: const Color(0xFFE8A13C),
+                    surface: surface,
+                    onSurface: onSurface,
+                    primary: primary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _launcherIconItem({
+    required String name,
+    required Color bgColor,
+    required Color strokeColor,
+    required Color slashColor,
+    required Color surface,
+    required Color onSurface,
+    required Color primary,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => _promptChangeLauncherIcon(context, name),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: onSurface.withValues(alpha: 0.12)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: CustomPaint(
+                painter: TallyIconPainter(
+                  bgColor: bgColor,
+                  strokeColor: strokeColor,
+                  slashColor: slashColor,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              name,
+              style: TextStyle(color: onSurface, fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                'Set Icon',
+                style: TextStyle(color: primary, fontSize: 10, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
