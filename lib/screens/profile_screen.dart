@@ -1066,11 +1066,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ? Icon(Icons.check_circle, color: primary, size: 20)
               : null,
           onTap: () async {
-            AppState.themeNameNotifier.value = preset.name;
-            AppState.customPrimaryColorNotifier.value = preset.primary;
-            AppState.customSecondaryColorNotifier.value = preset.secondary;
-            AppState.customTextColorNotifier.value = null;
-            AppState.avatarColorNotifier.value = preset.primary;
+            await AppState.persistThemePreset(preset);
 
             if (AppState.currentUser != null) {
               final username = AppState.currentUser!;
@@ -1085,7 +1081,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Switched to $name theme style & palette')),
+                SnackBar(content: Text('Switched to $name theme style & app icon')),
               );
             }
           },

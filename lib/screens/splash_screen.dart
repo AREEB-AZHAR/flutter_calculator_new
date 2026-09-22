@@ -124,9 +124,26 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    // Default theme background: clean paper cream/white
+    final theme = Theme.of(context);
+    final currentThemeName = AppState.themeNameNotifier.value;
+
+    // Pick icon styling matching active theme preset
+    Color iconBg = const Color(0xFF17493B);
+    Color strokeColor = const Color(0xFFF6F0E1);
+    Color slashColor = const Color(0xFFE4572E);
+
+    if (currentThemeName == 'Paper') {
+      iconBg = const Color(0xFFF6F0E1);
+      strokeColor = const Color(0xFF17493B);
+      slashColor = const Color(0xFFE4572E);
+    } else if (currentThemeName == 'Ink') {
+      iconBg = const Color(0xFF191915);
+      strokeColor = const Color(0xFFF3EDE0);
+      slashColor = const Color(0xFFE8A13C);
+    }
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F5),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: AnimatedBuilder(
           animation: _controller,
@@ -146,9 +163,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       stroke3Progress: _s3Anim.value,
                       stroke4Progress: _s4Anim.value,
                       slashProgress: _slashAnim.value,
-                      bgColor: const Color(0xFF17493B),
-                      strokeColor: const Color(0xFFF6F0E1),
-                      slashColor: const Color(0xFFE4572E),
+                      bgColor: iconBg,
+                      strokeColor: strokeColor,
+                      slashColor: slashColor,
                     ),
                   ),
                 ),
@@ -164,8 +181,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       color: Colors.transparent,
                       child: TallyWordmarkWidget(
                         fontSize: 38,
-                        textColor: const Color(0xFF152A22),
-                        uwashColor: const Color(0xFFE4572E),
+                        textColor: theme.colorScheme.onSurface,
+                        uwashColor: theme.colorScheme.primary,
                         typeProgress: _typeProgressAnim.value,
                         uwashProgress: _uwashProgressAnim.value,
                       ),

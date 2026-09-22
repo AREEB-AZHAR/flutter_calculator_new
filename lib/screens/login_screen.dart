@@ -294,7 +294,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               child: Text(
                                 _isLogin ? 'Need an account? Register here' : 'Already registered? Login here',
                                 style: TextStyle(
-                                  color: theme.colorScheme.secondary,
+                                  color: theme.colorScheme.primary,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13,
                                 ),

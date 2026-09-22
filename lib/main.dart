@@ -19,6 +19,9 @@ void main() async {
   // Initialize notifications & schedule reminders
   await NotificationService.instance.init();
 
+  // Load saved theme settings so SplashScreen and LoginScreen immediately boot with the user's chosen theme
+  await AppState.initGlobalTheme();
+
   runApp(const TallyApp());
 }
 

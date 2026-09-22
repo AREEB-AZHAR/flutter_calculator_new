@@ -228,7 +228,18 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 ---
 
 ## 📝 Recent Changelog
-- **v1.6.1 (Current)**:
+- **v1.7.0 (Current)**:
+  - **Dynamic App Launcher Icon Switching**:
+    - Generated custom-crafted, high-resolution launcher icons for all three brand styles (**Ledger**, **Paper**, and **Ink**) across all Android mipmap densities (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`).
+    - Configured native `<activity-alias>` entries in `AndroidManifest.xml` targeting `.MainActivity` (`MainActivityLedger`, `MainActivityPaper`, `MainActivityInk`).
+    - Implemented a native Kotlin `MethodChannel` (`com.areeb.tally/app_icon`) in `MainActivity.kt` and Dart service [AppIconService](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/services/app_icon_service.dart) allowing instant runtime launcher icon switching via `setComponentEnabledSetting(..., DONT_KILL_APP)`.
+  - **Global Persistent Theme Across App Restarts & Exit**:
+    - Added `AppState.initGlobalTheme()` which restores the user's selected theme and custom color palette from `SharedPreferences` in `main.dart` *before* `runApp()`.
+    - Eliminated theme reset on app exit and cold restart: Tally immediately boots into the user's saved theme.
+  - **Full Startup Theming (Splash & Login Screens)**:
+    - Updated `SplashScreen` to dynamically render with the active theme's background color, animated icon colors (e.g. Ink's carbon black, cream strokes, and amber slash), and wordmark styling.
+    - Updated `LoginScreen` to dynamically render with the user's saved theme (e.g. if Ink is chosen, login form card, input fields, borders, and buttons match Ink's dark carbon palette and cream typography).
+- **v1.6.1**:
   - **Notification App Icon Display**:
     - Configured `AndroidNotificationDetails` with `largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher')` and `color: const Color(0xFF17493B)` (Tally forest green brand accent) so the notification card displays the official Tally app icon preview on Android devices.
     - Added launcher drawables to `android/app/src/main/res/drawable/` (`ic_notification.png` & `ic_launcher.png`) for robust notification icon resolution across Android versions.
