@@ -222,10 +222,12 @@ class TallyWordmarkWidget extends StatelessWidget {
         SizedBox(
           width: width,
           height: fontSize * 0.28,
-          child: CustomPaint(
-            painter: TallyUwashPainter(
-              progress: uwashProgress,
-              color: uwashColor,
+          child: RepaintBoundary(
+            child: CustomPaint(
+              painter: TallyUwashPainter(
+                progress: uwashProgress,
+                color: uwashColor,
+              ),
             ),
           ),
         ),

@@ -28,23 +28,6 @@ class _MainNavScreenState extends State<MainNavScreen> {
   void initState() {
     super.initState();
     AppState.activeTabNotifier.addListener(_onTabChanged);
-
-    // Warm up other tabs in the background during idle time without blocking login transition
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _idlePreWarm();
-    });
-  }
-
-  void _idlePreWarm() async {
-    for (int i = 1; i < _screens.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 300));
-      if (!mounted) return;
-      if (!_loadedTabs.contains(i)) {
-        setState(() {
-          _loadedTabs.add(i);
-        });
-      }
-    }
   }
 
   @override

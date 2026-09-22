@@ -68,7 +68,17 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         if (success) {
           await AppState.loadAllUserData(username);
           if (!mounted) return;
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainNavScreen()));
+          Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) => const MainNavScreen(),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(
+                opacity: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+                child: child,
+              ),
+              transitionDuration: const Duration(milliseconds: 250),
+            ),
+          );
         } else {
           if (!mounted) return;
           setState(() {
@@ -81,7 +91,17 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         if (registered) {
           await AppState.loadAllUserData(username);
           if (!mounted) return;
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainNavScreen()));
+          Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) => const MainNavScreen(),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(
+                opacity: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+                child: child,
+              ),
+              transitionDuration: const Duration(milliseconds: 250),
+            ),
+          );
         } else {
           if (!mounted) return;
           setState(() {

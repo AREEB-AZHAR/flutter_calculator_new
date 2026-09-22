@@ -156,16 +156,18 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 SizedBox(
                   width: _iconSizeAnim.value,
                   height: _iconSizeAnim.value,
-                  child: CustomPaint(
-                    painter: TallyIconPainter(
-                      stroke1Progress: _s1Anim.value,
-                      stroke2Progress: _s2Anim.value,
-                      stroke3Progress: _s3Anim.value,
-                      stroke4Progress: _s4Anim.value,
-                      slashProgress: _slashAnim.value,
-                      bgColor: iconBg,
-                      strokeColor: strokeColor,
-                      slashColor: slashColor,
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      painter: TallyIconPainter(
+                        stroke1Progress: _s1Anim.value,
+                        stroke2Progress: _s2Anim.value,
+                        stroke3Progress: _s3Anim.value,
+                        stroke4Progress: _s4Anim.value,
+                        slashProgress: _slashAnim.value,
+                        bgColor: iconBg,
+                        strokeColor: strokeColor,
+                        slashColor: slashColor,
+                      ),
                     ),
                   ),
                 ),

@@ -384,7 +384,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                           .animate(CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic)),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Container(
+                        child: RepaintBoundary(
+                          child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
@@ -542,6 +543,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                           ),
                         ),
                       ),
+                    ),
                     ),
                     
                     const SizedBox(height: 20),
