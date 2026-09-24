@@ -85,7 +85,6 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
     }
 
     final net = income - expense;
-    final currency = AppState.currencyNotifier.value;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     // Donut segments based on active filter
@@ -114,9 +113,12 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
     final onSurface = theme.colorScheme.onSurface;
     final controlBg = theme.scaffoldBackgroundColor;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
+    return ValueListenableBuilder<String>(
+      valueListenable: AppState.currencyNotifier,
+      builder: (context, currency, _) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
@@ -276,6 +278,8 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
           ),
         ],
       ),
+    );
+      },
     );
   }
 

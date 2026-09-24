@@ -246,6 +246,25 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
   - **Full Startup Theming (Splash & Login Screens)**:
     - Updated `SplashScreen` to dynamically render with the active theme's background color, animated icon colors (e.g. Ink's carbon black, cream strokes, and amber slash), and wordmark styling.
     - Updated `LoginScreen` to dynamically render with the user's saved theme (e.g. if Ink is chosen, login form card, input fields, borders, and buttons match Ink's dark carbon palette and cream typography).
+- **v1.7.3**:
+  - **Category Name Fallback for Transaction Titles**:
+    - When adding transactions without manually typing a title, Tally automatically uses the selected category name as the default title.
+    - Updated [transaction_dialog.dart](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/widgets/transaction_dialog.dart) to show dynamic placeholder hints (`Default: <Category>`) and validate amount independently.
+  - **Custom Transaction Date Selection & Chronological Ledger Sorting**:
+    - Added an interactive transaction date picker in the unified transaction dialog.
+    - Users can now select and change the exact date of any transaction (past, present, or future) with formatted date indicators (`formatDateWithYear`).
+    - Automatically maintains strict descending chronological sorting across the entire ledger.
+  - **Mobile Screen Lock & Biometric Unlock (Face ID, Fingerprint, Device PIN)**:
+    - Integrated native device authentication using [BiometricService](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/services/biometric_service.dart) powered by `local_auth`.
+    - Updated `MainActivity.kt` to extend `FlutterFragmentActivity` and enabled `android.permission.USE_BIOMETRIC`.
+    - Added a toggle switch in Settings/Profile under Account Security with confirmation authentication.
+    - Added one-tap **"Unlock with Screen Lock"** button and smooth auto-prompting on [login_screen.dart](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/screens/login_screen.dart).
+  - **Live Reactive Currency Synchronization (Zero App Relaunch Required)**:
+    - Resolved bug where switching currency symbols from the homepage or settings failed to update active screens without relaunching the app.
+    - Wrapped all viewports and widgets ([DashboardScreen](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/screens/dashboard_screen.dart), [AccountsScreen](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/screens/accounts_screen.dart), [GoalsScreen](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/screens/goals_screen.dart), [InsightsScreen](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/screens/insights_screen.dart), [AllTransactionsScreen](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/screens/all_transactions_screen.dart), [InteractiveChartCard](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/widgets/interactive_chart_card.dart), [TransactionTile](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/widgets/transaction_tile.dart)) with `ValueListenableBuilder<String>`.
+    - Added unified `AppState.setCurrency()` that instantly persists to `SharedPreferences` and the SQLite user profile, while immediately re-rendering all financial totals and transaction lists live.
+  - **Future Monetization Strategy Blueprint**:
+    - Architected and documented [FUTURE_MONETIZATION_PLAN.md](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/FUTURE_MONETIZATION_PLAN.md) covering Tally Pro freemium gates, privacy-preserving native ads, tip jars, and RevenueCat integration.
 - **v1.7.2**:
   - **Fluid 60fps/120fps Login & Animation Smoothness**:
     - **Eliminated Post-Login Frame Drops**: Removed aggressive post-login background timer loop that previously fired repeated root `setState()` rebuilds every 300ms across 1.5s immediately after authentication.

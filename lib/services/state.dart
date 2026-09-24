@@ -13,6 +13,7 @@ class AppState {
   static const String _prefPrimaryColorKey = 'tally_primary_color';
   static const String _prefSecondaryColorKey = 'tally_secondary_color';
   static const String _prefTextColorKey = 'tally_text_color';
+  static const String _prefCurrencyKey = 'tally_currency_symbol';
 
   static final ValueNotifier<String> currencyNotifier = ValueNotifier('\$');
   static final ValueNotifier<List<Transaction>> transactionsNotifier = ValueNotifier([]);
@@ -63,6 +64,11 @@ class AppState {
         customTextColorNotifier.value = Color(tCol);
       } else {
         customTextColorNotifier.value = null;
+      }
+
+      final savedCurrency = prefs.getString(_prefCurrencyKey);
+      if (savedCurrency != null && savedCurrency.isNotEmpty) {
+        currencyNotifier.value = savedCurrency;
       }
     } catch (e) {
       debugPrint('Error loading saved global theme: $e');
@@ -151,6 +157,7 @@ class AppState {
       } else {
         await prefs.remove(_prefTextColorKey);
       }
+      await prefs.setString(_prefCurrencyKey, profile.currency);
     } catch (_) {}
   }
 
@@ -176,6 +183,7 @@ class AppState {
       } else {
         await prefs.remove(_prefTextColorKey);
       }
+      await prefs.setString(_prefCurrencyKey, updatedProfile.currency);
     } catch (e) {
       debugPrint('Error saving colors to SharedPreferences: $e');
     }
@@ -260,12 +268,20 @@ class AppState {
     return avatarColorNotifier.value;
   }
 
-  static Future<void> saveCurrency(String username, String currency) async {
+  static Future<void> setCurrency(String currency) async {
     currencyNotifier.value = currency;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefCurrencyKey, currency);
+    } catch (_) {}
     if (currentUser != null) {
-      final p = await AppDatabase.instance.loadProfile(username);
+      final p = await AppDatabase.instance.loadProfile(currentUser!);
       await AppDatabase.instance.saveProfile(p.copyWith(currency: currency));
     }
+  }
+
+  static Future<void> saveCurrency(String username, String currency) async {
+    await setCurrency(currency);
   }
 
   static Future<String> loadCurrency(String username) async {

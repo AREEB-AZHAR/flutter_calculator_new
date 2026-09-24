@@ -7,6 +7,7 @@ import '../services/state.dart';
 import '../services/database/app_database.dart';
 import '../services/notification_service.dart';
 import '../services/app_icon_service.dart';
+import '../services/biometric_service.dart';
 import '../utils/constants.dart';
 import '../widgets/color_picker_dialog.dart';
 import '../widgets/tally_brand_painters.dart';
@@ -494,11 +495,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                     final isSelected = activeCurrency == e.value;
                                                     return SimpleDialogOption(
                                                       onPressed: () {
-                                                        if (AppState.currentUser != null) {
-                                                          AppState.saveCurrency(AppState.currentUser!, e.value);
-                                                        } else {
-                                                          AppState.currencyNotifier.value = e.value;
-                                                        }
+                                                        AppState.setCurrency(e.value);
                                                         Navigator.pop(inner);
                                                       },
                                                       child: Row(
@@ -531,6 +528,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         onTap: () {
                                           Navigator.pop(ctx);
                                           _changePassword();
+                                        },
+                                      ),
+                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                      StatefulBuilder(
+                                        builder: (context, setTileState) {
+                                          return FutureBuilder<bool>(
+                                            future: BiometricService.isBiometricEnabled(),
+                                            builder: (context, snapshot) {
+                                              final isEnabled = snapshot.data ?? false;
+                                              return SwitchListTile(
+                                                secondary: const Icon(Icons.fingerprint, color: Colors.tealAccent),
+                                                title: Text('Screen Lock / Biometrics', style: TextStyle(color: onSurface)),
+                                                subtitle: Text(
+                                                  isEnabled
+                                                      ? 'Quick unlock with Face ID, Fingerprint, or PIN'
+                                                      : 'Use mobile screen lock to unlock Tally',
+                                                  style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12),
+                                                ),
+                                                value: isEnabled,
+                                                activeThumbColor: primary,
+                                                onChanged: (val) async {
+                                                  if (val) {
+                                                    final supported = await BiometricService.isDeviceSupported();
+                                                    if (!supported) {
+                                                      if (!context.mounted) return;
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        const SnackBar(
+                                                          content: Text('Screen lock or biometrics are not configured on this device.'),
+                                                          backgroundColor: Colors.redAccent,
+                                                        ),
+                                                      );
+                                                      return;
+                                                    }
+                                                    final authSuccess = await BiometricService.authenticate(
+                                                      reason: 'Confirm your screen lock to enable fast unlock',
+                                                    );
+                                                    if (authSuccess) {
+                                                      await BiometricService.setBiometricEnabled(true, username: AppState.currentUser);
+                                                      setTileState(() {});
+                                                      if (!context.mounted) return;
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        const SnackBar(
+                                                          content: Text('Biometric / screen lock unlock enabled!'),
+                                                          backgroundColor: Colors.teal,
+                                                        ),
+                                                      );
+                                                    }
+                                                  } else {
+                                                    await BiometricService.setBiometricEnabled(false);
+                                                    setTileState(() {});
+                                                    if (!context.mounted) return;
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      const SnackBar(
+                                                        content: Text('Biometric unlock disabled'),
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                              );
+                                            },
+                                          );
                                         },
                                       ),
                                       Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
@@ -606,7 +664,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   child: Column(
                                     children: [
                                       Text(
-                                        'Tally v1.7.2 (Build 8)',
+                                        'Tally v1.7.3 (Build 9)',
                                         style: TextStyle(
                                           color: onSurface.withValues(alpha: 0.7),
                                           fontSize: 13,

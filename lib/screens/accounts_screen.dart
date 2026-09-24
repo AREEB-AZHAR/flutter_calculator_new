@@ -114,12 +114,15 @@ class _AccountsScreenState extends State<AccountsScreen> {
           )
         ],
       ),
-      body: ValueListenableBuilder<List<String>>(
-        valueListenable: AppState.accountsNotifier,
-        builder: (context, accounts, _) {
-          return ValueListenableBuilder<List<Transaction>>(
-            valueListenable: AppState.transactionsNotifier,
-            builder: (context, transactions, _) {
+      body: ValueListenableBuilder<String>(
+        valueListenable: AppState.currencyNotifier,
+        builder: (context, currentCurrency, _) {
+          return ValueListenableBuilder<List<String>>(
+            valueListenable: AppState.accountsNotifier,
+            builder: (context, accounts, _) {
+              return ValueListenableBuilder<List<Transaction>>(
+                valueListenable: AppState.transactionsNotifier,
+                builder: (context, transactions, _) {
               final allDisplayAccounts = ['Overall', ...accounts];
               if (!allDisplayAccounts.contains(_selectedAccount)) {
                 _selectedAccount = 'Overall';
@@ -290,8 +293,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
               );
             },
           );
-        }
-      ),
+        },
+      );
+    },
+  ),
     );
   }
 }

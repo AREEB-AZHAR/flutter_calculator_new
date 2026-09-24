@@ -288,11 +288,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                         final isSelected = activeCurrency == entry.value;
                         return SimpleDialogOption(
                           onPressed: () {
-                            if (AppState.currentUser != null) {
-                              AppState.saveCurrency(AppState.currentUser!, entry.value);
-                            } else {
-                              AppState.currencyNotifier.value = entry.value;
-                            }
+                            AppState.setCurrency(entry.value);
                             Navigator.pop(ctx);
                           },
                           child: Row(
@@ -329,9 +325,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           ),
         ],
       ),
-      body: ValueListenableBuilder<List<Transaction>>(
-        valueListenable: AppState.transactionsNotifier,
-        builder: (context, transactions, child) {
+      body: ValueListenableBuilder<String>(
+        valueListenable: AppState.currencyNotifier,
+        builder: (context, currentCurrency, _) {
+          return ValueListenableBuilder<List<Transaction>>(
+            valueListenable: AppState.transactionsNotifier,
+            builder: (context, transactions, child) {
           final totalBalance = transactions.fold(0.0, (sum, item) => item.isIncome ? sum + item.amount : sum - item.amount);
           
           return Stack(
@@ -685,8 +684,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             ),
             ],
           );
-        }
-      ),
+        },
+      );
+    },
+  ),
       floatingActionButton: Builder(
         builder: (context) {
           final fabBg = Theme.of(context).colorScheme.primary;

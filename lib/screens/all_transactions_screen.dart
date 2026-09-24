@@ -27,9 +27,12 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
       ),
-      body: ValueListenableBuilder<List<Transaction>>(
-        valueListenable: AppState.transactionsNotifier,
-        builder: (context, transactions, child) {
+      body: ValueListenableBuilder<String>(
+        valueListenable: AppState.currencyNotifier,
+        builder: (context, currentCurrency, _) {
+          return ValueListenableBuilder<List<Transaction>>(
+            valueListenable: AppState.transactionsNotifier,
+            builder: (context, transactions, child) {
           final theme = Theme.of(context);
           final onSurface = theme.colorScheme.onSurface;
           final isLight = theme.brightness == Brightness.light;
@@ -278,7 +281,9 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
             ],
           );
         },
-      ),
+      );
+    },
+  ),
     );
   }
 }

@@ -17,9 +17,12 @@ class InsightsScreen extends StatelessWidget {
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
       ),
-      body: ValueListenableBuilder<List<Transaction>>(
-        valueListenable: AppState.transactionsNotifier,
-        builder: (context, transactions, _) {
+      body: ValueListenableBuilder<String>(
+        valueListenable: AppState.currencyNotifier,
+        builder: (context, currentCurrency, _) {
+          return ValueListenableBuilder<List<Transaction>>(
+            valueListenable: AppState.transactionsNotifier,
+            builder: (context, transactions, _) {
           if (transactions.isEmpty) {
             return Center(child: Text('Add some transactions to see insights!', style: TextStyle(color: onSurface.withValues(alpha: 0.6))));
           }
@@ -139,7 +142,9 @@ class InsightsScreen extends StatelessWidget {
             ),
           );
         },
-      ),
+      );
+    },
+  ),
     );
   }
 

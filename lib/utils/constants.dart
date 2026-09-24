@@ -206,6 +206,11 @@ String formatDate(DateTime date) {
   return '${months[date.month - 1]} ${date.day}';
 }
 
+String formatDateWithYear(DateTime date) {
+  const List<String> months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return '${months[date.month - 1]} ${date.day}, ${date.year}';
+}
+
 String formatTime(DateTime date) {
   final hour = date.hour == 0 ? 12 : (date.hour > 12 ? date.hour - 12 : date.hour);
   final ampm = date.hour >= 12 ? 'PM' : 'AM';

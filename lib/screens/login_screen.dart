@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'main_nav_screen.dart';
 import '../services/state.dart';
 import '../services/database/app_database.dart';
+import '../services/biometric_service.dart';
 import '../widgets/tally_brand_painters.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -17,6 +18,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   bool _isLogin = true;
   String _error = '';
   bool _isLoading = false;
+  bool _canUseBiometrics = false;
+  String? _biometricUser;
 
   late AnimationController _formAnimController;
   late Animation<Offset> _formSlideAnimation;
@@ -45,6 +48,65 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     );
 
     _formAnimController.forward();
+    _checkBiometricAvailability();
+  }
+
+  Future<void> _checkBiometricAvailability() async {
+    final enabled = await BiometricService.isBiometricEnabled();
+    final savedUser = await BiometricService.getSavedBiometricUser();
+    final supported = await BiometricService.isDeviceSupported();
+    if (mounted && enabled && savedUser != null && savedUser.isNotEmpty && supported) {
+      setState(() {
+        _canUseBiometrics = true;
+        _biometricUser = savedUser;
+        if (_usernameCtrl.text.isEmpty) {
+          _usernameCtrl.text = savedUser;
+        }
+      });
+      // Seamlessly prompt mobile screen lock after entrance transition completes
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (mounted && _canUseBiometrics && _isLogin && !_isLoading) {
+          _unlockWithBiometrics();
+        }
+      });
+    }
+  }
+
+  Future<void> _unlockWithBiometrics() async {
+    if (_biometricUser == null || _biometricUser!.isEmpty) return;
+    setState(() {
+      _isLoading = true;
+      _error = '';
+    });
+
+    try {
+      final success = await BiometricService.authenticate(
+        reason: 'Scan fingerprint or Face ID to unlock Tally',
+      );
+      if (success) {
+        await AppState.loadAllUserData(_biometricUser!);
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => const MainNavScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(
+              opacity: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+              child: child,
+            ),
+            transitionDuration: const Duration(milliseconds: 250),
+          ),
+        );
+      } else {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   Future<void> _submit() async {
@@ -66,6 +128,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       if (_isLogin) {
         final success = await AppDatabase.instance.authenticateUser(username, password);
         if (success) {
+          if (await BiometricService.isBiometricEnabled()) {
+            await BiometricService.setBiometricEnabled(true, username: username);
+          }
           await AppState.loadAllUserData(username);
           if (!mounted) return;
           Navigator.pushReplacement(
@@ -300,6 +365,27 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                                     ),
                             ),
+
+                            if (_canUseBiometrics && _isLogin) ...[
+                              const SizedBox(height: 12),
+                              OutlinedButton.icon(
+                                onPressed: _isLoading ? null : _unlockWithBiometrics,
+                                icon: Icon(Icons.fingerprint, color: theme.colorScheme.primary, size: 20),
+                                label: Text(
+                                  'Unlock with Screen Lock ($_biometricUser)',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13.5,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size(double.infinity, 48),
+                                  side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.35)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                ),
+                              ),
+                            ],
 
                             const SizedBox(height: 14),
 

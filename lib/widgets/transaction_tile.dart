@@ -62,9 +62,14 @@ class TransactionTile extends StatelessWidget {
                   ],
                 ),
               ),
-              Text(
-                '${tx.isIncome ? '+' : '-'}${AppState.currencyNotifier.value}${tx.amount.toStringAsFixed(0)}',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+              ValueListenableBuilder<String>(
+                valueListenable: AppState.currencyNotifier,
+                builder: (context, cur, _) {
+                  return Text(
+                    '${tx.isIncome ? '+' : '-'}$cur${tx.amount.toStringAsFixed(0)}',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+                  );
+                },
               ),
             ],
           ),

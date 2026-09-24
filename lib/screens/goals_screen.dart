@@ -110,9 +110,12 @@ class GoalsScreen extends StatelessWidget {
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
       ),
-      body: ValueListenableBuilder<List<SavingsGoal>>(
-        valueListenable: AppState.goalsNotifier,
-        builder: (context, goals, _) {
+      body: ValueListenableBuilder<String>(
+        valueListenable: AppState.currencyNotifier,
+        builder: (context, currentCurrency, _) {
+          return ValueListenableBuilder<List<SavingsGoal>>(
+            valueListenable: AppState.goalsNotifier,
+            builder: (context, goals, _) {
           if (goals.isEmpty) {
             return Center(child: Text('No goals yet. Tap + to create one!', style: TextStyle(color: onSurface.withValues(alpha: 0.6))));
           }
@@ -209,7 +212,9 @@ class GoalsScreen extends StatelessWidget {
             },
           );
         },
-      ),
+      );
+    },
+  ),
       floatingActionButton: Builder(
         builder: (context) {
           final fabBg = theme.colorScheme.primary;
