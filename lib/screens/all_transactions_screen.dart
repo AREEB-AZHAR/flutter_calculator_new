@@ -241,45 +241,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                             tx: tx,
                             onTap: () =>
                                 showTransactionDialog(context, existingTx: tx),
-                            onDelete: () {
-                              final currentList = List<Transaction>.from(
-                                AppState.transactionsNotifier.value,
-                              );
-                              currentList.removeWhere((t) => t.id == tx.id);
-                              AppState.transactionsNotifier.value = currentList;
-                              if (AppState.currentUser != null) {
-                                AppState.saveTransactions(
-                                  AppState.currentUser!,
-                                  currentList,
-                                );
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('${tx.title} deleted'),
-                                  action: SnackBarAction(
-                                    label: 'Undo',
-                                    onPressed: () {
-                                      final restoredList =
-                                          List<Transaction>.from(
-                                            AppState.transactionsNotifier.value,
-                                          );
-                                      restoredList.add(tx);
-                                      restoredList.sort(
-                                        (a, b) => b.date.compareTo(a.date),
-                                      );
-                                      AppState.transactionsNotifier.value =
-                                          restoredList;
-                                      if (AppState.currentUser != null) {
-                                        AppState.saveTransactions(
-                                          AppState.currentUser!,
-                                          restoredList,
-                                        );
-                                      }
-                                    },
-                                  ),
-                                ),
-                              );
-                            },
+                            onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
                           );
                         },
                       ),

@@ -207,6 +207,89 @@ class AppState {
     return await AppDatabase.instance.loadTransactions(username);
   }
 
+  /// Safely deletes a transaction, persists the removal to SQLite, and displays a SnackBar with an 'Undo' option.
+  /// If the user taps 'Undo', the transaction is restored at its chronological position and saved to SQLite.
+  static void deleteTransactionWithUndo(BuildContext context, Transaction tx) {
+    final currentList = List<Transaction>.from(transactionsNotifier.value);
+    final originalIndex = currentList.indexWhere((t) => t.id == tx.id);
+    currentList.removeWhere((t) => t.id == tx.id);
+    transactionsNotifier.value = currentList;
+    if (currentUser != null) {
+      saveTransactions(currentUser!, currentList);
+    }
+
+    try {
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('"${tx.title}" deleted'),
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'Undo',
+            textColor: Colors.amberAccent,
+            onPressed: () {
+              final restoredList = List<Transaction>.from(transactionsNotifier.value);
+              if (!restoredList.any((t) => t.id == tx.id)) {
+                if (originalIndex >= 0 && originalIndex <= restoredList.length) {
+                  restoredList.insert(originalIndex, tx);
+                } else {
+                  restoredList.add(tx);
+                }
+                restoredList.sort((a, b) => b.date.compareTo(a.date));
+                transactionsNotifier.value = restoredList;
+                if (currentUser != null) {
+                  saveTransactions(currentUser!, restoredList);
+                }
+              }
+            },
+          ),
+        ),
+      );
+    } catch (_) {}
+  }
+
+  /// Safely deletes a savings goal, persists the removal to SQLite, and displays a SnackBar with an 'Undo' option.
+  /// If the user taps 'Undo', the goal is restored at its original position and saved to SQLite.
+  static void deleteGoalWithUndo(BuildContext context, SavingsGoal goal) {
+    final currentGoals = List<SavingsGoal>.from(goalsNotifier.value);
+    final originalIndex = currentGoals.indexWhere((g) => g.id == goal.id);
+    currentGoals.removeWhere((g) => g.id == goal.id);
+    goalsNotifier.value = currentGoals;
+    if (currentUser != null) {
+      saveGoals(currentUser!, currentGoals);
+    }
+
+    try {
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Goal "${goal.title}" deleted'),
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'Undo',
+            textColor: Colors.amberAccent,
+            onPressed: () {
+              final restoredGoals = List<SavingsGoal>.from(goalsNotifier.value);
+              if (!restoredGoals.any((g) => g.id == goal.id)) {
+                if (originalIndex >= 0 && originalIndex <= restoredGoals.length) {
+                  restoredGoals.insert(originalIndex, goal);
+                } else {
+                  restoredGoals.add(goal);
+                }
+                goalsNotifier.value = restoredGoals;
+                if (currentUser != null) {
+                  saveGoals(currentUser!, restoredGoals);
+                }
+              }
+            },
+          ),
+        ),
+      );
+    } catch (_) {}
+  }
+
   static Future<void> saveBudgets(String username, Map<String, double> budgets) async {
     await AppDatabase.instance.saveBudgets(username, budgets);
     budgetsNotifier.value = Map.from(budgets);

@@ -11,6 +11,8 @@ import 'package:balance_tracker/widgets/ad_banner_widget.dart';
 import 'package:balance_tracker/screens/insights_screen.dart';
 import 'package:balance_tracker/widgets/transaction_dialog.dart';
 import 'package:balance_tracker/widgets/transaction_tile.dart';
+import 'package:balance_tracker/models/savings_goal.dart';
+import 'package:balance_tracker/screens/goals_screen.dart';
 
 void main() {
   setUp(() {
@@ -350,5 +352,161 @@ void main() {
     expect(find.text('Add some transactions to see insights!'), findsOneWidget);
 
     await MonetizationService.resetPurchases();
+  });
+
+  testWidgets('Delete Confirmation Dialog: Appears and cancelling does not delete transaction', (WidgetTester tester) async {
+    final tx = Transaction(
+      id: 'tx_cancel_test',
+      title: 'Coffee at Cafe',
+      amount: 5.50,
+      date: DateTime.now(),
+      isIncome: false,
+      category: 'Food & Dining',
+      account: 'Main',
+      recurrence: 'None',
+    );
+    AppState.transactionsNotifier.value = [tx];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return TransactionTile(
+                tx: tx,
+                onTap: () {},
+                onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Swipe left to dismiss
+    await tester.drag(find.byType(Dismissible), const Offset(-500.0, 0.0));
+    await tester.pumpAndSettle();
+
+    // Dialog should be visible
+    expect(find.text('Delete Transaction?'), findsOneWidget);
+    expect(find.descendant(of: find.byType(AlertDialog), matching: find.textContaining('Coffee at Cafe')), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
+    expect(find.text('Delete'), findsOneWidget);
+
+    // Tap Cancel
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    // Dialog dismissed and transaction is still present in state
+    expect(find.text('Delete Transaction?'), findsNothing);
+    expect(AppState.transactionsNotifier.value.length, 1);
+    expect(AppState.transactionsNotifier.value.first.id, 'tx_cancel_test');
+  });
+
+  testWidgets('Delete Confirmation Dialog & Undo: Confirming deletes transaction and Undo restores it', (WidgetTester tester) async {
+    final tx = Transaction(
+      id: 'tx_undo_test',
+      title: 'Online Subscription',
+      amount: 14.99,
+      date: DateTime.now(),
+      isIncome: false,
+      category: 'Entertainment',
+      account: 'Credit Card',
+      recurrence: 'Monthly',
+    );
+    AppState.transactionsNotifier.value = [tx];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return TransactionTile(
+                tx: tx,
+                onTap: () {},
+                onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Swipe left
+    await tester.drag(find.byType(Dismissible), const Offset(-500.0, 0.0));
+    await tester.pumpAndSettle();
+
+    // Confirm deletion
+    expect(find.text('Delete Transaction?'), findsOneWidget);
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    // Transaction removed from AppState
+    expect(AppState.transactionsNotifier.value.length, 0);
+
+    // SnackBar with Undo option should appear
+    expect(find.text('"Online Subscription" deleted'), findsOneWidget);
+    expect(find.text('Undo'), findsOneWidget);
+
+    // Tap Undo
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    // Transaction is restored
+    expect(AppState.transactionsNotifier.value.length, 1);
+    expect(AppState.transactionsNotifier.value.first.id, 'tx_undo_test');
+    expect(AppState.transactionsNotifier.value.first.title, 'Online Subscription');
+  });
+
+  testWidgets('Goal Deletion: Shows confirmation dialog, delete removes goal, and Undo restores it', (WidgetTester tester) async {
+    final goal = SavingsGoal(
+      id: 'goal_test_1',
+      title: 'Japan Vacation',
+      target: 3500.0,
+      saved: 1200.0,
+    );
+    AppState.goalsNotifier.value = [goal];
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: GoalsScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Goal is rendered
+    expect(find.text('Japan Vacation'), findsOneWidget);
+
+    // Tap delete icon
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+
+    // Confirmation dialog should be visible
+    expect(find.text('Delete Goal?'), findsOneWidget);
+    expect(find.descendant(of: find.byType(AlertDialog), matching: find.textContaining('Japan Vacation')), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
+    expect(find.text('Delete'), findsOneWidget);
+
+    // Confirm deletion
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    // Goal removed from AppState
+    expect(AppState.goalsNotifier.value.length, 0);
+
+    // SnackBar with Undo option appears
+    expect(find.text('Goal "Japan Vacation" deleted'), findsOneWidget);
+    expect(find.text('Undo'), findsOneWidget);
+
+    // Tap Undo
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    // Goal is restored
+    expect(AppState.goalsNotifier.value.length, 1);
+    expect(AppState.goalsNotifier.value.first.id, 'goal_test_1');
+    expect(AppState.goalsNotifier.value.first.title, 'Japan Vacation');
   });
 }

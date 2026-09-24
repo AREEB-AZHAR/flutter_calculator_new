@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../services/state.dart';
 import '../utils/constants.dart';
+import 'delete_confirmation_dialog.dart';
 
 class TransactionTile extends StatelessWidget {
   final Transaction tx;
   final VoidCallback onTap;
   final VoidCallback onDelete;
+  final Future<bool> Function()? confirmDelete;
 
   const TransactionTile({
     super.key,
     required this.tx,
     required this.onTap,
     required this.onDelete,
+    this.confirmDelete,
   });
 
   @override
@@ -30,6 +33,17 @@ class TransactionTile extends StatelessWidget {
         color: Colors.redAccent,
         child: const Icon(Icons.delete, color: Colors.white),
       ),
+      confirmDismiss: (direction) async {
+        if (confirmDelete != null) {
+          return await confirmDelete!();
+        }
+        return await showDeleteConfirmationDialog(
+          context: context,
+          title: 'Delete Transaction?',
+          message: 'Are you sure you want to delete this transaction?',
+          itemDetail: '${tx.title} • ${tx.isIncome ? '+' : '-'}${AppState.currencyNotifier.value}${tx.amount.toStringAsFixed(0)}',
+        );
+      },
       onDismissed: (_) => onDelete(),
       child: GestureDetector(
         onTap: onTap,

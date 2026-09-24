@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/savings_goal.dart';
 import '../services/state.dart';
+import '../widgets/delete_confirmation_dialog.dart';
 
 class GoalsScreen extends StatelessWidget {
   const GoalsScreen({super.key});
@@ -145,11 +146,17 @@ class GoalsScreen extends StatelessWidget {
                         ]),
                         IconButton(
                           icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                          onPressed: () {
-                            final g = List<SavingsGoal>.from(AppState.goalsNotifier.value);
-                            g.removeWhere((x) => x.id == goal.id);
-                            AppState.goalsNotifier.value = g;
-                            if (AppState.currentUser != null) AppState.saveGoals(AppState.currentUser!, g);
+                          tooltip: 'Delete Goal',
+                          onPressed: () async {
+                            final confirmed = await showDeleteConfirmationDialog(
+                              context: context,
+                              title: 'Delete Goal?',
+                              message: 'Are you sure you want to delete this savings goal?',
+                              itemDetail: '${goal.title} • Target: ${AppState.currencyNotifier.value}${goal.target.toStringAsFixed(0)}',
+                            );
+                            if (confirmed && context.mounted) {
+                              AppState.deleteGoalWithUndo(context, goal);
+                            }
                           },
                         ),
                       ],

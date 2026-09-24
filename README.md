@@ -293,7 +293,26 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 ---
 
 ## 📝 Recent Changelog
-- **v1.8.0 (Current)**:
+- **v1.8.1 (Current)**:
+  - **Theme-Adaptive Deletion Warning Confirmation Dialog**:
+    - Created [delete_confirmation_dialog.dart](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/widgets/delete_confirmation_dialog.dart) featuring a modern modal with a danger icon container, highlighted item detail preview (e.g. `Groceries • -$45` or `Japan Vacation • Target: $3,500`), undo reminder note, Cancel action, and high-contrast red Delete confirmation button.
+    - Integrated with `Dismissible` in [transaction_tile.dart](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/widgets/transaction_tile.dart): swiping a transaction presents the warning dialog. Tapping Cancel snaps the tile back smoothly with zero deletion.
+  - **Universal Undo Option for Transactions Across ALL Screens**:
+    - Centralized `AppState.deleteTransactionWithUndo(context, tx)` across every view where transactions can be deleted:
+      - **DashboardScreen** (Main Screen)
+      - **AllTransactionsScreen**
+      - **AccountsScreen**
+      - **TransactionDialog** (added direct Delete action inside edit modal for existing transactions)
+    - Displays a SnackBar with `"[Title]" deleted` and high-contrast amber **Undo** button. Tapping Undo restores the transaction to its chronological position and updates SQLite persistence reactively.
+  - **Goal Deletion Warning Dialog & Universal Undo**:
+    - Gated goal deletion on [goals_screen.dart](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/screens/goals_screen.dart) with the confirmation warning dialog.
+    - Implemented `AppState.deleteGoalWithUndo(context, goal)` providing instant restoration via an Undo SnackBar.
+  - **Budget & Account Deletion Safety**:
+    - Added deletion confirmation warning and Undo SnackBar when removing a budget cap on [dashboard_screen.dart] and when removing an account on [accounts_screen.dart].
+  - **Windows C++ Compiler & Deprecation Fixes**:
+    - Added `_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS` in `windows/CMakeLists.txt` for `local_auth_windows`.
+    - Cleaned stale plugin references and removed unused imports in test suites.
+- **v1.8.0**:
   - **Tally Pro Freemium Monetization & Power Feature Gating**:
     - Architected [MonetizationService](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/services/monetization_service.dart) tracking `isProUnlockedNotifier`, `isAdsRemovedNotifier`, `isPro`, and `isAdFree` with persistent local storage.
     - **Smart Insights Gate & Preview Paywall**: Wrapped [insights_screen.dart] with a Pro lock. Free users see an attractive frosted preview lock screen displaying daily velocity indicators, savings rate forecast mockups, feature checklists, an "Unlock Tally Pro — \$4.99" CTA button, and "Redeem Promo Code" action. Pro users enjoy instant access to full analytical reports.

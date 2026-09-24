@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../services/state.dart';
 import '../utils/constants.dart';
+import 'delete_confirmation_dialog.dart';
 
 Future<void> showTransactionDialog(BuildContext context, {Transaction? existingTx}) async {
   await showDialog(
@@ -319,6 +320,24 @@ class _TransactionDialogState extends State<_TransactionDialog> {
         ),
       ),
       actions: [
+        if (widget.existingTx != null)
+          TextButton.icon(
+            icon: const Icon(Icons.delete_outline_rounded, size: 16, color: Colors.redAccent),
+            label: const Text('Delete', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            onPressed: () async {
+              final tx = widget.existingTx!;
+              final confirmed = await showDeleteConfirmationDialog(
+                context: context,
+                title: 'Delete Transaction?',
+                message: 'Are you sure you want to delete this transaction?',
+                itemDetail: '${tx.title} • ${tx.isIncome ? '+' : '-'}${AppState.currencyNotifier.value}${tx.amount.toStringAsFixed(0)}',
+              );
+              if (confirmed && context.mounted) {
+                Navigator.of(context).pop();
+                AppState.deleteTransactionWithUndo(context, tx);
+              }
+            },
+          ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: Text('Cancel', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),

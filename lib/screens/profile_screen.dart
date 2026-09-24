@@ -964,7 +964,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   child: Column(
                                     children: [
                                       Text(
-                                        'Tally v1.8.0 (Build 10)',
+                                        'Tally v1.8.1 (Build 11)',
                                         style: TextStyle(
                                           color: onSurface.withValues(alpha: 0.7),
                                           fontSize: 13,

@@ -7,6 +7,7 @@ import '../widgets/transaction_tile.dart';
 import '../widgets/transaction_dialog.dart';
 import '../widgets/interactive_chart_card.dart';
 import '../widgets/ad_banner_widget.dart';
+import '../widgets/delete_confirmation_dialog.dart';
 
 class AccountsScreen extends StatefulWidget {
   const AccountsScreen({super.key});
@@ -133,15 +134,38 @@ class _AccountsScreenState extends State<AccountsScreen> {
                           trailing: IconButton(
                             icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                             tooltip: 'Delete Account',
-                            onPressed: () {
+                            onPressed: () async {
                               if (accounts.length > 1) {
-                                final removedAcc = accounts.removeAt(i);
-                                AppState.accountsNotifier.value = List.from(accounts);
-                                if (AppState.currentUser != null) AppState.saveAccounts(AppState.currentUser!, accounts);
-                                if (_selectedAccount == removedAcc) {
-                                  setState(() => _selectedAccount = 'Overall');
+                                final accName = accounts[i];
+                                final confirmed = await showDeleteConfirmationDialog(
+                                  context: context,
+                                  title: 'Delete Account?',
+                                  message: 'Are you sure you want to delete this account? Any transactions linked to this account will remain in your ledger.',
+                                  itemDetail: accName,
+                                );
+                                if (confirmed && context.mounted) {
+                                  final removedAcc = accounts.removeAt(i);
+                                  AppState.accountsNotifier.value = List.from(accounts);
+                                  if (AppState.currentUser != null) AppState.saveAccounts(AppState.currentUser!, accounts);
+                                  if (_selectedAccount == removedAcc) {
+                                    setState(() => _selectedAccount = 'Overall');
+                                  }
+                                  setDialogState(() {});
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Account "$removedAcc" deleted'),
+                                      action: SnackBarAction(
+                                        label: 'Undo',
+                                        textColor: Colors.amberAccent,
+                                        onPressed: () {
+                                          accounts.insert(i, removedAcc);
+                                          AppState.accountsNotifier.value = List.from(accounts);
+                                          if (AppState.currentUser != null) AppState.saveAccounts(AppState.currentUser!, accounts);
+                                        },
+                                      ),
+                                    ),
+                                  );
                                 }
-                                setDialogState(() {});
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('At least one account is required.')),
@@ -370,14 +394,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                             return TransactionTile(
                               tx: tx,
                               onTap: () => showTransactionDialog(context, existingTx: tx),
-                              onDelete: () {
-                                final currentList = List<Transaction>.from(AppState.transactionsNotifier.value);
-                                currentList.removeWhere((t) => t.id == tx.id);
-                                AppState.transactionsNotifier.value = currentList;
-                                if (AppState.currentUser != null) {
-                                  AppState.saveTransactions(AppState.currentUser!, currentList);
-                                }
-                              },
+                              onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
                             );
                           },
                           childCount: filteredTxs.length,

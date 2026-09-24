@@ -13,6 +13,7 @@ import '../services/biometric_service.dart';
 import '../services/tour_service.dart';
 import '../widgets/feature_tour_dialog.dart';
 import '../widgets/ad_banner_widget.dart';
+import '../widgets/delete_confirmation_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -200,11 +201,35 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
-                                  onPressed: () {
-                                    budgets.remove(entry.key);
-                                    AppState.budgetsNotifier.value = Map.from(budgets);
-                                    if (AppState.currentUser != null) AppState.saveBudgets(AppState.currentUser!, budgets);
-                                    setDialogState(() {});
+                                  onPressed: () async {
+                                    final catName = entry.key;
+                                    final budgetVal = entry.value;
+                                    final confirmed = await showDeleteConfirmationDialog(
+                                      context: context,
+                                      title: 'Delete Budget?',
+                                      message: 'Are you sure you want to remove the budget cap for $catName?',
+                                      itemDetail: '$catName • ${AppState.currencyNotifier.value}${budgetVal.toStringAsFixed(0)}',
+                                    );
+                                    if (confirmed && context.mounted) {
+                                      budgets.remove(catName);
+                                      AppState.budgetsNotifier.value = Map.from(budgets);
+                                      if (AppState.currentUser != null) AppState.saveBudgets(AppState.currentUser!, budgets);
+                                      setDialogState(() {});
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Budget for "$catName" deleted'),
+                                          action: SnackBarAction(
+                                            label: 'Undo',
+                                            textColor: Colors.amberAccent,
+                                            onPressed: () {
+                                              budgets[catName] = budgetVal;
+                                              AppState.budgetsNotifier.value = Map.from(budgets);
+                                              if (AppState.currentUser != null) AppState.saveBudgets(AppState.currentUser!, budgets);
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    }
                                   },
                                 ),
                               ],
@@ -704,28 +729,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                             return TransactionTile(
                               tx: tx,
                               onTap: () => showTransactionDialog(context, existingTx: tx),
-                              onDelete: () {
-                                final currentList = List<Transaction>.from(AppState.transactionsNotifier.value);
-                                currentList.removeWhere((t) => t.id == tx.id);
-                                AppState.transactionsNotifier.value = currentList;
-                                if (AppState.currentUser != null) {
-                                  AppState.saveTransactions(AppState.currentUser!, currentList);
-                                }
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                  content: Text('${tx.title} deleted'),
-                                  action: SnackBarAction(
-                                    label: 'Undo',
-                                    onPressed: () {
-                                      final restoredList = List<Transaction>.from(AppState.transactionsNotifier.value);
-                                      restoredList.insert(index, tx);
-                                      AppState.transactionsNotifier.value = restoredList;
-                                      if (AppState.currentUser != null) {
-                                        AppState.saveTransactions(AppState.currentUser!, restoredList);
-                                      }
-                                    },
-                                  ),
-                                ));
-                              },
+                              onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
                             );
                           },
                         ),
