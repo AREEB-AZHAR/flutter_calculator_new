@@ -14,12 +14,12 @@ class DefaultFirebaseOptions {
   static const String _prefFirebaseAuthDomain = 'tally_firebase_auth_domain';
 
   // Configured project constants (can be populated directly from Firebase Console)
-  static String apiKey = '';
-  static String appId = '';
-  static String messagingSenderId = '';
-  static String projectId = '';
-  static String authDomain = '';
-  static String storageBucket = '';
+  static String apiKey = 'AIzaSyCW-hZvcyqH3OlEEDnCaD8gCpG_XBtcxxw';
+  static String appId = '1:494819662703:android:1eed08eedd66202a07e69a';
+  static String messagingSenderId = '494819662703';
+  static String projectId = 'tally-b3652';
+  static String authDomain = 'tally-b3652.firebaseapp.com';
+  static String storageBucket = 'tally-b3652.firebasestorage.app';
 
   /// Checks if Firebase credentials have been configured
   static bool get isConfigured {
