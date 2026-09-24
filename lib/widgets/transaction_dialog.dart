@@ -177,7 +177,8 @@ class _TransactionDialogState extends State<_TransactionDialog> {
             ),
             const SizedBox(height: 15),
             DropdownButtonFormField<String>(
-              initialValue: _category,
+              // ignore: deprecated_member_use
+              value: _category,
               dropdownColor: surface,
               style: TextStyle(color: onSurface),
               decoration: InputDecoration(
@@ -210,7 +211,8 @@ class _TransactionDialogState extends State<_TransactionDialog> {
             ),
             const SizedBox(height: 15),
             DropdownButtonFormField<String>(
-              initialValue: _account,
+              // ignore: deprecated_member_use
+              value: _account,
               dropdownColor: surface,
               style: TextStyle(color: onSurface),
               decoration: InputDecoration(
@@ -237,7 +239,8 @@ class _TransactionDialogState extends State<_TransactionDialog> {
             ),
             const SizedBox(height: 15),
             DropdownButtonFormField<String>(
-              initialValue: _recurrence,
+              // ignore: deprecated_member_use
+              value: _recurrence,
               dropdownColor: surface,
               style: TextStyle(color: onSurface),
               decoration: InputDecoration(
@@ -267,7 +270,12 @@ class _TransactionDialogState extends State<_TransactionDialog> {
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => setState(() => _isIncome = false),
+                    onTap: () => setState(() {
+                      _isIncome = false;
+                      if (_category == 'Salary') {
+                        _category = 'Food & Dining';
+                      }
+                    }),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -286,7 +294,10 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => setState(() => _isIncome = true),
+                    onTap: () => setState(() {
+                      _isIncome = true;
+                      _category = 'Salary';
+                    }),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(vertical: 12),

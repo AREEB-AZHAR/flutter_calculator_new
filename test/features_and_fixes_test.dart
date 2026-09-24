@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:balance_tracker/models/transaction.dart';
 import 'package:balance_tracker/services/state.dart';
 import 'package:balance_tracker/services/biometric_service.dart';
+import 'package:balance_tracker/services/tour_service.dart';
 import 'package:balance_tracker/widgets/transaction_dialog.dart';
 import 'package:balance_tracker/widgets/transaction_tile.dart';
 
@@ -165,5 +166,76 @@ void main() {
     // Verify list is sorted descending by date
     expect(AppState.transactionsNotifier.value[0].title, 'Lunch');
     expect(AppState.transactionsNotifier.value[1].title, 'Past Conference');
+  });
+
+  test('TourService tracks tour completion and resets correctly', () async {
+    expect(await TourService.isTourCompleted(TourService.tourHome), false);
+    expect(await TourService.isTourCompleted(TourService.tourAccounts), false);
+
+    await TourService.markTourCompleted(TourService.tourHome);
+    expect(await TourService.isTourCompleted(TourService.tourHome), true);
+    expect(await TourService.isTourCompleted(TourService.tourAccounts), false);
+
+    await TourService.markTourCompleted(TourService.tourAccounts);
+    expect(await TourService.isTourCompleted(TourService.tourAccounts), true);
+
+    await TourService.resetAllTours();
+    expect(await TourService.isTourCompleted(TourService.tourHome), false);
+    expect(await TourService.isTourCompleted(TourService.tourAccounts), false);
+  });
+
+  test('BiometricService session prompt resets on logout', () {
+    BiometricService.biometricPromptCheckedThisSession = true;
+    expect(BiometricService.biometricPromptCheckedThisSession, true);
+
+    BiometricService.resetSessionPrompt();
+    expect(BiometricService.biometricPromptCheckedThisSession, false);
+  });
+
+  testWidgets('Transaction Dialog: Selecting Income auto-switches category to Salary & auto-fills title', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () => showTransactionDialog(context),
+                child: const Text('Open Dialog'),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open Dialog'));
+    await tester.pumpAndSettle();
+
+    // Verify initial category is Food & Dining and Expense is active
+    expect(find.text('Expense'), findsOneWidget);
+    expect(find.text('Income'), findsOneWidget);
+
+    // Tap Income
+    await tester.ensureVisible(find.text('Income'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Income'));
+    await tester.pumpAndSettle();
+
+    // Enter amount without entering any title
+    final amountFinder = find.byType(TextField).at(1);
+    await tester.enterText(amountFinder, '4500');
+
+    // Tap Add
+    await tester.ensureVisible(find.text('Add'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add'));
+    await tester.pumpAndSettle();
+
+    expect(AppState.transactionsNotifier.value.length, 1);
+    final tx = AppState.transactionsNotifier.value.first;
+    expect(tx.isIncome, true);
+    expect(tx.category, 'Salary');
+    expect(tx.title, 'Salary'); // Auto-filled from category!
+    expect(tx.amount, 4500.0);
   });
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../services/state.dart';
+import '../services/tour_service.dart';
+import '../widgets/feature_tour_dialog.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/transaction_dialog.dart';
 import '../widgets/interactive_chart_card.dart';
@@ -15,6 +17,96 @@ class AccountsScreen extends StatefulWidget {
 class _AccountsScreenState extends State<AccountsScreen> {
   String _selectedAccount = 'Overall';
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAccountsTour();
+    });
+  }
+
+  Future<void> _checkAccountsTour() async {
+    if (!mounted) return;
+    final tourDone = await TourService.isTourCompleted(TourService.tourAccounts);
+    if (!tourDone && mounted) {
+      await showAccountsTour(context);
+    }
+  }
+
+  void _showAddAccountDialog([VoidCallback? onAdded]) {
+    final textCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (innerCtx) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.add_card_rounded, color: Colors.blueAccent),
+            SizedBox(width: 8),
+            Text('New Account Type', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Add a custom wallet or account (e.g., "Emergency Fund", "Crypto", "PayPal", "Business").',
+              style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: textCtrl,
+              autofocus: true,
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+              decoration: InputDecoration(
+                labelText: 'Account Name',
+                hintText: 'e.g. Savings or Crypto',
+                hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 13),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(innerCtx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final newAcc = textCtrl.text.trim();
+              final accounts = List<String>.from(AppState.accountsNotifier.value);
+              if (newAcc.isNotEmpty && !accounts.contains(newAcc)) {
+                accounts.add(newAcc);
+                AppState.accountsNotifier.value = List.from(accounts);
+                if (AppState.currentUser != null) {
+                  AppState.saveAccounts(AppState.currentUser!, accounts);
+                }
+                setState(() => _selectedAccount = newAcc);
+                Navigator.pop(innerCtx);
+                onAdded?.call();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Account "$newAcc" added successfully!'),
+                    backgroundColor: Colors.teal,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Add Account', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showSettingsDialog() {
     showDialog(
       context: context,
@@ -24,7 +116,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
             final accounts = List<String>.from(AppState.accountsNotifier.value);
             return AlertDialog(
               backgroundColor: Theme.of(context).colorScheme.surface,
-              title: const Text('Manage Accounts'),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: const Text('Manage Accounts', style: TextStyle(fontWeight: FontWeight.bold)),
               content: SizedBox(
                 width: double.maxFinite,
                 child: Column(
@@ -37,7 +130,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         itemBuilder: (c, i) => ListTile(
                           title: Text(accounts[i], style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.redAccent),
+                            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                            tooltip: 'Delete Account',
                             onPressed: () {
                               if (accounts.length > 1) {
                                 final removedAcc = accounts.removeAt(i);
@@ -47,46 +141,28 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                   setState(() => _selectedAccount = 'Overall');
                                 }
                                 setDialogState(() {});
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('At least one account is required.')),
+                                );
                               }
                             },
                           ),
                         ),
                       ),
                     ),
-                    TextButton.icon(
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add Account'),
-                      onPressed: () {
-                        String newAcc = '';
-                        showDialog(
-                          context: context,
-                          builder: (innerCtx) => AlertDialog(
-                            backgroundColor: Theme.of(context).colorScheme.surface,
-                            title: const Text('New Account'),
-                            content: TextField(
-                              autofocus: true,
-                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-                              onChanged: (v) => newAcc = v,
-                            ),
-                            actions: [
-                              TextButton(onPressed: () => Navigator.pop(innerCtx), child: const Text('Cancel')),
-                              TextButton(
-                                onPressed: () {
-                                  if (newAcc.isNotEmpty && !accounts.contains(newAcc)) {
-                                    accounts.add(newAcc);
-                                    AppState.accountsNotifier.value = List.from(accounts);
-                                    if (AppState.currentUser != null) AppState.saveAccounts(AppState.currentUser!, accounts);
-                                    Navigator.pop(innerCtx);
-                                    setDialogState(() {});
-                                  }
-                                },
-                                child: const Text('Add'),
-                              )
-                            ],
-                          )
-                        );
-                      },
-                    )
+                    const SizedBox(height: 10),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Add New Account'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                        foregroundColor: Theme.of(context).colorScheme.primary,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () => _showAddAccountDialog(() => setDialogState(() {})),
+                    ),
                   ],
                 ),
               ),
@@ -109,9 +185,20 @@ class _AccountsScreenState extends State<AccountsScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.add_card_rounded),
+            tooltip: 'Add New Account',
+            onPressed: () => _showAddAccountDialog(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.help_outline_rounded),
+            tooltip: 'Accounts Tour',
+            onPressed: () => showAccountsTour(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Manage Accounts',
             onPressed: _showSettingsDialog,
-          )
+          ),
         ],
       ),
       body: ValueListenableBuilder<String>(

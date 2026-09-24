@@ -8,6 +8,8 @@ import '../services/database/app_database.dart';
 import '../services/notification_service.dart';
 import '../services/app_icon_service.dart';
 import '../services/biometric_service.dart';
+import '../services/tour_service.dart';
+import '../widgets/feature_tour_dialog.dart';
 import '../utils/constants.dart';
 import '../widgets/color_picker_dialog.dart';
 import '../widgets/tally_brand_painters.dart';
@@ -29,6 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     AppState.transactionsNotifier.value = [];
     AppState.goalsNotifier.value = [];
     AppState.activeTabNotifier.value = 0;
+    BiometricService.resetSessionPrompt();
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
   }
 
@@ -305,6 +308,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   'App & Account Settings',
                                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: onSurface),
                                 ),
+                                const SizedBox(height: 16),
+
+                                // Features & Settings Guide Banner Card
+                                Container(
+                                  margin: const EdgeInsets.only(bottom: 20),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        primary.withValues(alpha: 0.16),
+                                        primary.withValues(alpha: 0.04),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(color: primary.withValues(alpha: 0.3)),
+                                  ),
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                    leading: Container(
+                                      width: 42,
+                                      height: 42,
+                                      decoration: BoxDecoration(
+                                        color: primary.withValues(alpha: 0.2),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(Icons.auto_stories_rounded, color: primary, size: 22),
+                                    ),
+                                    title: Text(
+                                      'What Each Setting Does',
+                                      style: TextStyle(fontWeight: FontWeight.bold, color: onSurface, fontSize: 14.5),
+                                    ),
+                                    subtitle: Text(
+                                      'Explore all features, offline vault, biometrics & guides',
+                                      style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontSize: 11.5),
+                                    ),
+                                    trailing: Icon(Icons.arrow_forward_ios_rounded, size: 14, color: primary),
+                                    onTap: () {
+                                      Navigator.pop(ctx);
+                                      _showAllFeaturesGuide(context);
+                                    },
+                                  ),
+                                ),
+
+                                // Interactive Onboarding Tours
+                                _settingsSectionTitle('INTERACTIVE ONBOARDING TOURS', onSurface.withValues(alpha: 0.6)),
+                                Card(
+                                  color: cardBg,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  child: ListTile(
+                                    leading: const Icon(Icons.replay_rounded, color: Colors.cyanAccent),
+                                    title: Text('Replay Feature Tours', style: TextStyle(color: onSurface)),
+                                    subtitle: Text('Relaunch Home & Accounts walkthroughs anytime', style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                                    trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
+                                    onTap: () async {
+                                      await TourService.resetAllTours();
+                                      if (context.mounted) {
+                                        Navigator.pop(ctx);
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Tours reset! Switching to Home and launching walkthrough...'),
+                                            backgroundColor: Colors.teal,
+                                          ),
+                                        );
+                                        AppState.activeTabNotifier.value = 0;
+                                        showHomeDashboardTour(context);
+                                      }
+                                    },
+                                  ),
+                                ),
+
                                 const SizedBox(height: 20),
 
                                 // Brand Palettes
@@ -711,6 +785,254 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  void _showAllFeaturesGuide(BuildContext context) {
+    final theme = Theme.of(context);
+    final surface = theme.colorScheme.surface;
+    final onSurface = theme.colorScheme.onSurface;
+    final primary = theme.colorScheme.primary;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        maxChildSize: 0.95,
+        minChildSize: 0.5,
+        expand: false,
+        builder: (c, scrollCtrl) => Container(
+          decoration: BoxDecoration(
+            color: surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: onSurface.withValues(alpha: 0.24),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(Icons.menu_book_rounded, color: primary, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Features & Settings Guide',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: onSurface,
+                            ),
+                          ),
+                          Text(
+                            'Everything Tally has to offer & what each setting does',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: onSurface.withValues(alpha: 0.65),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView(
+                  controller: scrollCtrl,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  children: [
+                    _guideItem(
+                      icon: Icons.palette_outlined,
+                      title: 'Brand Palettes & Themes',
+                      badge: 'Instant Styling',
+                      description:
+                          'Switch seamlessly between 3 curated design systems:\n'
+                          '• Ledger: Classic Dark Emerald & Slash Coral on White Paper.\n'
+                          '• Paper: Vintage editorial Warm Cream Paper.\n'
+                          '• Ink: Deep OLED Carbon Black & Warm Amber.\n'
+                          'Changes take effect instantly across the whole app, charts, and login screen.',
+                      primary: primary,
+                      onSurface: onSurface,
+                    ),
+                    _guideItem(
+                      icon: Icons.app_shortcut_rounded,
+                      title: 'Launcher App Icons',
+                      badge: 'Home Screen Icon',
+                      description:
+                          'Change your physical Android / iOS home screen app icon to match your preferred theme (Ledger, Paper, or Ink). Requires an app restart to reload OS launcher shortcuts safely.',
+                      primary: primary,
+                      onSurface: onSurface,
+                    ),
+                    _guideItem(
+                      icon: Icons.color_lens_outlined,
+                      title: 'Theme Studio (Custom Colors)',
+                      badge: 'Personalize',
+                      description:
+                          'Customize your primary accent color, secondary accent color, and typography font color using the interactive color wheel.',
+                      primary: primary,
+                      onSurface: onSurface,
+                    ),
+                    _guideItem(
+                      icon: Icons.fingerprint_rounded,
+                      title: 'Biometric & Screen Lock Unlock',
+                      badge: 'Quick Security',
+                      description:
+                          'Enable instant, effortless vault access with Fingerprint, Face ID, or your phone’s screen lock PIN. Kept 100% on your device for absolute privacy.',
+                      primary: primary,
+                      onSurface: onSurface,
+                    ),
+                    _guideItem(
+                      icon: Icons.storage_rounded,
+                      title: 'Offline SQLite Vault & SQL Export',
+                      badge: 'Privacy-First',
+                      description:
+                          'All accounts, transactions, and preferences are stored in an encrypted local SQLite database isolated per user. You can export a full .sql dump anytime for permanent backups.',
+                      primary: primary,
+                      onSurface: onSurface,
+                    ),
+                    _guideItem(
+                      icon: Icons.cloud_sync_outlined,
+                      title: 'Cloud Sync (Firebase Ready)',
+                      badge: 'Sync Architecture',
+                      description:
+                          'Sync your SQLite database to Google Firebase Firestore across multiple devices. The hybrid repository layer coordinates offline and online sync seamlessly.',
+                      primary: primary,
+                      onSurface: onSurface,
+                    ),
+                    _guideItem(
+                      icon: Icons.notifications_active_outlined,
+                      title: 'Daily Reminders & Notifications',
+                      badge: 'Habits',
+                      description:
+                          'Set scheduled local reminders so you never forget to log your daily expenses and maintain financial accountability.',
+                      primary: primary,
+                      onSurface: onSurface,
+                    ),
+                    _guideItem(
+                      icon: Icons.currency_exchange_rounded,
+                      title: 'Currency Switcher',
+                      badge: 'Global Units',
+                      description:
+                          'Select your currency symbol (\$, €, £, ¥, ₹, ₩, etc.). The entire app updates all balances, cards, and graphs instantly without needing a relaunch.',
+                      primary: primary,
+                      onSurface: onSurface,
+                    ),
+                    _guideItem(
+                      icon: Icons.auto_awesome_rounded,
+                      title: 'Transaction Auto-Fill & Category Switching',
+                      badge: 'Smart Entry',
+                      description:
+                          '• Empty Title Auto-Fill: Leave the Title field empty and Tally automatically names the transaction using your selected category!\n'
+                          '• Income Auto-Switch: Choosing "Income" automatically switches the category to "Salary".\n'
+                          '• Custom Dates: Tap the calendar button to record past or future transaction dates.',
+                      primary: primary,
+                      onSurface: onSurface,
+                    ),
+                    _guideItem(
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: 'Multi-Account & Custom Wallets',
+                      badge: 'Accounts Hub',
+                      description:
+                          'Track cash, bank accounts, and credit cards separately. In the Accounts tab, tap "+ Add Account" or the Settings icon to create unlimited custom wallet types.',
+                      primary: primary,
+                      onSurface: onSurface,
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _guideItem({
+    required IconData icon,
+    required String title,
+    required String badge,
+    required String description,
+    required Color primary,
+    required Color onSurface,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: onSurface.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: onSurface.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: primary, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: onSurface),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  badge,
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primary),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            description,
+            style: TextStyle(fontSize: 12.5, height: 1.45, color: onSurface.withValues(alpha: 0.75)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
@@ -721,6 +1043,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: Icon(Icons.auto_stories_rounded, color: Theme.of(context).colorScheme.onSurface),
+            tooltip: 'Features & Settings Guide',
+            onPressed: () => _showAllFeaturesGuide(context),
+          ),
           IconButton(
             icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.onSurface),
             tooltip: 'Settings & Theming',

@@ -7,11 +7,16 @@
 ## 📱 Visual Showcase & Screenshots
 
 > [!TIP]
-> **Screenshots Placeholder**: Capture and place your high-resolution screenshots in `assets/screenshots/` (e.g. `splash.png`, `dashboard.png`, `insights.png`, `accounts_overall.png`, `theme_studio.png`, `reminders_settings.png`).
+> **Screenshots Placeholder**: Capture and place your high-resolution screenshots in `assets/screenshots/` (e.g. `splash.png`, `dashboard.png`, `home_tour.png`, `accounts_tour.png`, `biometric_prompt.png`, `settings_guide.png`).
+> Recommended screens to capture:
+> 1. **Biometric Quick Setup Modal**: Post-login prompt asking to enable screen lock/fingerprint.
+> 2. **Home Screen Feature Tour**: Highlighting transaction auto-fill and category tips.
+> 3. **Accounts Screen Walkthrough**: Explaining how to add new custom account types.
+> 4. **Settings & Features Guide**: The educational bottom sheet explaining all settings.
 
-| Flowing Splash | Home & Dashboard | Consolidated Accounts | Theme Studio & Identity | Reminders & Easter Egg |
+| Flowing Splash | Home & Tour | Accounts Walkthrough | Biometric Setup | Settings Guide |
 | :---: | :---: | :---: | :---: | :---: |
-| *(Add Splash Screenshot)* | *(Add Dashboard Screenshot)* | *(Add Accounts Overall)* | *(Add Profile/Theme Screenshot)* | *(Add Reminders Screenshot)* |
+| *(Add Splash Screenshot)* | *(Add Home Tour Screenshot)* | *(Add Accounts Tour Screenshot)* | *(Add Biometric Modal Screenshot)* | *(Add Settings Guide Screenshot)* |
 
 ---
 
@@ -89,6 +94,34 @@
   - Automatically heals legacy profiles and prevents custom primary colors from ever colliding with background colors.
   - Eliminates hardcoded white/black text across all screens, ensuring pristine contrast and readability regardless of chosen theme.
 
+### 12. 🧭 Interactive Step-by-Step Feature Tours (New Users & Replayable)
+- **Home / Dashboard Onboarding**: Introduces new users to Tally's core financial hub:
+  - Explains the floating `+` button for rapid transaction recording.
+  - **Auto-Fill Magic**: Highlights that users can leave the **Title** field empty to automatically auto-fill it with their selected category name.
+  - **Category Auto-Switching**: Clarifies how selecting "Income" automatically defaults to "Salary".
+  - **Interactive Analytics**: Teaches users how to toggle weekly, monthly, and yearly chart perspectives.
+- **Accounts & Wallets Walkthrough**: Automatically triggered once when users navigate to the Accounts screen:
+  - Explains multi-wallet separation across Bank, Cash, Savings, and Credit Cards.
+  - Shows how to add custom account types via the `+ Add Account` button or the Settings icon (`⚙️`).
+  - Illustrates the difference between the **Overall (🌐 All Accounts)** aggregate balance and isolated wallet analytics.
+- **Replay Anytime**: Users can reset and re-launch both walkthroughs on demand from the Profile Settings menu.
+
+### 13. 🔐 Post-Login Biometric Quick Setup Prompt
+- **Seamless Prompting**: Upon logging in, Tally verifies whether the user has configured biometric login or device screen lock.
+- **One-Tap Enrollment**: If not configured, displays an elegant, non-intrusive popup offering immediate configuration via native biometric authentication (Fingerprint, Face ID, or PIN).
+- **Session-Aware**: Prompts smoothly upon session login without interrupting tab switching, and resets state upon logout.
+
+### 14. 📚 Comprehensive "What Each Setting Does" Features Guide
+- **In-App Educational Guide**: Accessible from the Profile AppBar and the top of the Settings bottom sheet.
+- **Detailed Explanations**: Breaks down what every single setting and function does in clear, user-friendly language:
+  - Brand Palettes (Ledger, Paper, Ink) & instant application-wide styling.
+  - Launcher App Icons and OS home-screen restart requirements.
+  - Theme Studio custom primary, secondary, and typography color picker.
+  - Biometric & screen lock local security.
+  - Encrypted SQLite vault architecture & `.sql` database script export.
+  - Cloud Sync (Firebase Firestore ready) integration.
+  - Real-time dynamic currency switcher.
+
 ---
 
 ## 🏗️ Clean Modular Architecture
@@ -111,14 +144,17 @@ lib/
 │   ├── splash_screen.dart          # Multi-stage Bezier animated brand startup
 │   ├── login_screen.dart           # Hero wordmark & bottom-sliding authentication
 │   ├── main_nav_screen.dart        # Lazy-loaded tab shell with idle pre-warming
-│   ├── dashboard_screen.dart       # Interactive multi-month chart & quick stats
+│   ├── dashboard_screen.dart       # Post-login biometric prompt & Home Tour trigger
 │   ├── all_transactions_screen.dart# Search, filter, and pie chart analytics
 │   ├── insights_screen.dart        # Spending trends & category breakdown
 │   ├── goals_screen.dart           # Goal progress & fund allocations
-│   ├── accounts_screen.dart        # Multi-wallet & "Overall" consolidated view
-│   └── profile_screen.dart         # Financial behavior summary & settings popup
+│   ├── accounts_screen.dart        # Accounts Tour, Add Account dialog & consolidated view
+│   └── profile_screen.dart         # Features & Settings guide, Theme Studio & tours reset
 ├── services/                       # State & Persistence
+│   ├── biometric_service.dart      # Biometric & screen lock auth & setup modal
+│   ├── tour_service.dart           # Tour completion flags & reset persistence
 │   ├── notification_service.dart   # 3-hour scheduled reminders & easter egg
+│   ├── app_icon_service.dart       # Dynamic launcher icon switcher
 │   ├── state.dart                  # AppState ValueNotifiers & reactive state
 │   └── database/                   # SQLite database engine & security
 │       ├── app_database.dart       # SQLite tables, migrations, CRUD & SQL export
@@ -126,12 +162,13 @@ lib/
 ├── utils/                          # Styling & Design Tokens
 │   └── constants.dart              # Dynamic theme generator, icons & currencies
 └── widgets/                        # Reusable UI & Custom Painters
+    ├── feature_tour_dialog.dart    # Step-by-step onboarding walkthrough dialog
     ├── tally_brand_painters.dart   # TallyIconPainter, UwashPainter & Wordmark
     ├── custom_painters.dart        # Repaint-bounded Month line & Donut painters
     ├── interactive_chart_card.dart # Multi-month navigator & line/donut card
     ├── color_picker_dialog.dart    # Graphic Theme Studio (HSV sliders & hex)
     ├── transaction_tile.dart       # Dismissible transaction list item
-    └── transaction_dialog.dart     # Memory-safe modal for add/edit transactions
+    └── transaction_dialog.dart     # Auto-fill empty title & Income->Salary switcher
 ```
 
 ---
