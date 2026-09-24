@@ -179,6 +179,7 @@ lib/
 ├── services/                       # State & Persistence
 │   ├── monetization_service.dart   # Tally Pro, Remove Ads & promo code engine
 │   ├── google_auth_service.dart    # Google Sign-In & SQLite identity binding
+│   ├── cloud_sync_service.dart     # Two-way SQLite & Cloud Firestore synchronization
 │   ├── biometric_service.dart      # Biometric & screen lock auth & setup modal
 │   ├── tour_service.dart           # Tour completion flags & reset persistence
 │   ├── notification_service.dart   # 3-hour scheduled reminders & easter egg
@@ -331,6 +332,11 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
     - Completely eliminated the mock dialog and dummy account (`areeb.finance@gmail.com`). Every sign-in now binds the user's authentic Google Account credentials to SQLite.
     - Architected `DefaultFirebaseOptions` (`lib/firebase_options.dart`) with runtime persistence via `SharedPreferences` and conditional Gradle plugin application in `android/app/build.gradle.kts`.
     - Added an interactive Firebase Setup Modal in Tally showing pre-extracted SHA-1 and package name with 1-tap clipboard copy buttons and instant project configuration.
+  - **Cloud Firestore Encrypted User Vault & Two-Way Sync**:
+    - Integrated `cloud_firestore: ^6.10.0` with `CloudSyncService` (`lib/services/cloud_sync_service.dart`) for secure, per-user data synchronization.
+    - Synchronizes profiles, accounts, budgets, goals, and transactions under private paths `/users/{uid}/...` protected by Firebase security rules.
+    - Added reactive sync state management (`isSyncingNotifier`, `lastSyncTimeNotifier`) with live status indicators ("CONNECTED", "SYNCING") and a manual "Sync Now" trigger in `ProfileScreen`.
+    - Implemented `windows/compat/atlbase.h` fallback shim and `APPLY_STANDARD_SETTINGS` compiler definitions to guarantee clean cross-platform C++ compilation on Windows.
 - **v1.8.0**:
   - **Tally Pro Freemium Monetization & Power Feature Gating**:
     - Architected `MonetizationService` tracking `isProUnlockedNotifier`, `isAdsRemovedNotifier`, `isPro`, and `isAdFree` with persistent local storage.
