@@ -7,6 +7,8 @@ import 'services/notification_service.dart';
 import 'services/monetization_service.dart';
 import 'services/state.dart';
 import 'utils/constants.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +27,18 @@ void main() async {
 
   // Load saved theme settings so SplashScreen and LoginScreen immediately boot with the user's chosen theme
   await AppState.initGlobalTheme();
+
+  // Load and initialize Firebase if configured
+  await DefaultFirebaseOptions.loadSavedConfig();
+  if (DefaultFirebaseOptions.isConfigured) {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } catch (e) {
+      debugPrint('Firebase initialization notice: $e');
+    }
+  }
 
   runApp(const TallyApp());
 }

@@ -161,6 +161,7 @@ assets/
     └── tally-512.png               # High-res 512px raster icon
 lib/
 ├── main.dart                       # App entrypoint & dynamic theme listening
+├── firebase_options.dart           # Cross-platform Firebase config & credentials
 ├── models/                         # Domain data models
 │   ├── transaction.dart            # Transaction schema & serialization
 │   ├── savings_goal.dart           # SavingsGoal schema & progress logic
@@ -248,6 +249,19 @@ flutter analyze
 flutter test
 ```
 
+### 6. Firebase Authentication Setup (Google Sign-In)
+To authenticate with your **actual Google Account** across Android and Windows desktop:
+1. Go to the [Firebase Console](https://console.firebase.google.com/) and click **Add Project** (e.g. `tally-finance`).
+2. Navigate to **Build > Authentication** and enable the **Google** sign-in provider.
+3. In **Project Settings > General**:
+   - Copy your **Project ID** and **Web API Key**.
+   - Under **Your apps**, click **Add app > Android**:
+     - **Package Name**: `com.areeb.balance_tracker`
+     - **Debug SHA-1**: `B7:71:9D:F2:CA:FE:82:46:4A:B9:91:40:59:C1:72:0B:8E:96:BD:CB`
+     - **Debug SHA-256**: `82:E4:2C:AE:78:94:99:F4:F9:7D:3A:8B:16:D9:CB:F9:71:5D:F5:0A:A7:D4:77:E8:FF:1E:67:6C:41:21:EA:99`
+     - Download `google-services.json` and place it in `android/app/`.
+4. Launch Tally, tap **Sign in with Google**, and enter your **Project ID** & **Web API Key** (or they will auto-load). Your authentic Google Account is now bound to your ledger!
+
 ---
 
 ## 🚀 Running the Application
@@ -295,8 +309,8 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 ## 📝 Recent Changelog
 - **v1.8.1 (Current)**:
   - **Theme-Adaptive Deletion Warning Confirmation Dialog**:
-    - Created [delete_confirmation_dialog.dart](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/widgets/delete_confirmation_dialog.dart) featuring a modern modal with a danger icon container, highlighted item detail preview (e.g. `Groceries • -$45` or `Japan Vacation • Target: $3,500`), undo reminder note, Cancel action, and high-contrast red Delete confirmation button.
-    - Integrated with `Dismissible` in [transaction_tile.dart](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/widgets/transaction_tile.dart): swiping a transaction presents the warning dialog. Tapping Cancel snaps the tile back smoothly with zero deletion.
+    - Created `delete_confirmation_dialog.dart` featuring a modern modal with a danger icon container, highlighted item detail preview (e.g. `Groceries • -$45` or `Japan Vacation • Target: $3,500`), undo reminder note, Cancel action, and high-contrast red Delete confirmation button.
+    - Integrated with `Dismissible` in `transaction_tile.dart`: swiping a transaction presents the warning dialog. Tapping Cancel snaps the tile back smoothly with zero deletion.
   - **Universal Undo Option for Transactions Across ALL Screens**:
     - Centralized `AppState.deleteTransactionWithUndo(context, tx)` across every view where transactions can be deleted:
       - **DashboardScreen** (Main Screen)
@@ -305,17 +319,22 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
       - **TransactionDialog** (added direct Delete action inside edit modal for existing transactions)
     - Displays a SnackBar with `"[Title]" deleted` and high-contrast amber **Undo** button. Tapping Undo restores the transaction to its chronological position and updates SQLite persistence reactively.
   - **Goal Deletion Warning Dialog & Universal Undo**:
-    - Gated goal deletion on [goals_screen.dart](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/screens/goals_screen.dart) with the confirmation warning dialog.
+    - Gated goal deletion on `goals_screen.dart` with the confirmation warning dialog.
     - Implemented `AppState.deleteGoalWithUndo(context, goal)` providing instant restoration via an Undo SnackBar.
   - **Budget & Account Deletion Safety**:
-    - Added deletion confirmation warning and Undo SnackBar when removing a budget cap on [dashboard_screen.dart] and when removing an account on [accounts_screen.dart].
+    - Added deletion confirmation warning and Undo SnackBar when removing a budget cap on `dashboard_screen.dart` and when removing an account on `accounts_screen.dart`.
   - **Windows C++ Compiler & Deprecation Fixes**:
     - Added `_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS` in `windows/CMakeLists.txt` for `local_auth_windows`.
     - Cleaned stale plugin references and removed unused imports in test suites.
+  - **Firebase Authentication Engine for Real Google Sign-In (Android & Windows)**:
+    - Integrated `firebase_core: ^4.15.0` and `firebase_auth: ^6.7.0` in `google_auth_service.dart` for authentic Google account authentication.
+    - Completely eliminated the mock dialog and dummy account (`areeb.finance@gmail.com`). Every sign-in now binds the user's authentic Google Account credentials to SQLite.
+    - Architected `DefaultFirebaseOptions` (`lib/firebase_options.dart`) with runtime persistence via `SharedPreferences` and conditional Gradle plugin application in `android/app/build.gradle.kts`.
+    - Added an interactive Firebase Setup Modal in Tally showing pre-extracted SHA-1 and package name with 1-tap clipboard copy buttons and instant project configuration.
 - **v1.8.0**:
   - **Tally Pro Freemium Monetization & Power Feature Gating**:
-    - Architected [MonetizationService](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/services/monetization_service.dart) tracking `isProUnlockedNotifier`, `isAdsRemovedNotifier`, `isPro`, and `isAdFree` with persistent local storage.
-    - **Smart Insights Gate & Preview Paywall**: Wrapped [insights_screen.dart] with a Pro lock. Free users see an attractive frosted preview lock screen displaying daily velocity indicators, savings rate forecast mockups, feature checklists, an "Unlock Tally Pro — \$4.99" CTA button, and "Redeem Promo Code" action. Pro users enjoy instant access to full analytical reports.
+    - Architected `MonetizationService` tracking `isProUnlockedNotifier`, `isAdsRemovedNotifier`, `isPro`, and `isAdFree` with persistent local storage.
+    - **Smart Insights Gate & Preview Paywall**: Wrapped `insights_screen.dart` with a Pro lock. Free users see an attractive frosted preview lock screen displaying daily velocity indicators, savings rate forecast mockups, feature checklists, an "Unlock Tally Pro — \$4.99" CTA button, and "Redeem Promo Code" action. Pro users enjoy instant access to full analytical reports.
     - **Theme Studio Gate**: Gated custom RGB/HSV sliders, text tone adjustments, and custom color wheels behind Pro with lock badges and paywall prompts; curated brand presets (Ledger, Paper, Ink) remain accessible to all users.
     - **Launcher App Icon Gate**: Gated dynamic Android launcher app icon switching behind Pro.
   - **Separate "Remove Ads" Purchase (\$1.99)**:
@@ -323,15 +342,15 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
   - **VIP Promo Code Unlock Modal**:
     - Created an interactive redemption modal (`MonetizationService.showPromoCodeDialog`) accepting codes `PROVIP` / `FINTECH2026` (unlocks full Tally Pro) and `NOADS` (unlocks ad-free tier), with an instant "Reset to Free Tier" button for testing.
   - **Native Contextual Partner Ad Banners**:
-    - Implemented [ad_banner_widget.dart] featuring high-trust fintech partner card designs with an "Ad" badge, financial benefit copies (e.g. YieldMax 5.2% APY Savings, Cloud Multi-Currency Vault, Expense Categorization Engine), and a "Hide" shortcut that opens the paywall.
-    - Embedded banner ads between Balance Card / Chart and Recent Transactions on [dashboard_screen.dart], and on [accounts_screen.dart] and [all_transactions_screen.dart].
+    - Implemented `ad_banner_widget.dart` featuring high-trust fintech partner card designs with an "Ad" badge, financial benefit copies (e.g. YieldMax 5.2% APY Savings, Cloud Multi-Currency Vault, Expense Categorization Engine), and a "Hide" shortcut that opens the paywall.
+    - Embedded banner ads between Balance Card / Chart and Recent Transactions on `dashboard_screen.dart`, and on `accounts_screen.dart` and `all_transactions_screen.dart`.
     - Banners automatically render `SizedBox.shrink()` (0 pixels) when Pro is unlocked or ads are removed.
   - **Google Account Authentication & Secure Cloud Data Binding**:
-    - Integrated `google_sign_in: ^7.2.0` with [GoogleAuthService](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/services/google_auth_service.dart) supporting native 1-tap Google Sign-In on mobile/web and an authentic Google Account Picker dialog fallback for Windows desktop and emulators.
-    - Extended [app_database.dart] with `authenticateOrRegisterGoogleUser()` to bind all SQLite accounts, transactions, budgets, goals, and profiles directly to verified Google email accounts.
+    - Integrated `google_sign_in: ^7.2.0` with `GoogleAuthService` supporting native 1-tap Google Sign-In on mobile/web and an authentic Google Account Picker dialog fallback for Windows desktop and emulators.
+    - Extended `app_database.dart` with `authenticateOrRegisterGoogleUser()` to bind all SQLite accounts, transactions, budgets, goals, and profiles directly to verified Google email accounts.
     - Added an authentic Google Account Status badge (`[G] Bound to Google: user@email.com`) to the Profile header with 1-tap cloud binding for existing users.
   - **2026 Industry Best Practices & Competitive Benchmarks**:
-    - Synthesized comprehensive competitive research across leading personal finance apps (**Monarch Money**, **Copilot**, **YNAB**, **Splitwise**, **Empower**, and **NerdWallet**) in [FUTURE_MONETIZATION_PLAN.md](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/FUTURE_MONETIZATION_PLAN.md).
+    - Synthesized comprehensive competitive research across leading personal finance apps (**Monarch Money**, **Copilot**, **YNAB**, **Splitwise**, **Empower**, and **NerdWallet**) in `FUTURE_MONETIZATION_PLAN.md`.
     - Documented architectural blueprints for Value-Based Gating ("Tracking" vs "Planning"), Native Financial Partner Banners vs Programmatic Networks, Decoupled Ad-Free passes, Local-First SQLite Cloud Vaults, and Progressive Disclosure Onboarding.
 - **v1.7.3**:
   - **Button Text & FAB Icon Contrast Fix (Ink & Paper Themes)**:
@@ -344,7 +363,7 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
   - **Dynamic App Launcher Icon Switching**:
     - Generated custom-crafted, high-resolution launcher icons for all three brand styles (**Ledger**, **Paper**, and **Ink**) across all Android mipmap densities (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`).
     - Configured native `<activity-alias>` entries in `AndroidManifest.xml` targeting `.MainActivity` (`MainActivityLedger`, `MainActivityPaper`, `MainActivityInk`).
-    - Implemented a native Kotlin `MethodChannel` (`com.areeb.tally/app_icon`) in `MainActivity.kt` and Dart service [AppIconService](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/services/app_icon_service.dart) allowing instant runtime launcher icon switching via `setComponentEnabledSetting(..., DONT_KILL_APP)`.
+    - Implemented a native Kotlin `MethodChannel` (`com.areeb.tally/app_icon`) in `MainActivity.kt` and Dart service `AppIconService` allowing instant runtime launcher icon switching via `setComponentEnabledSetting(..., DONT_KILL_APP)`.
   - **Global Persistent Theme Across App Restarts & Exit**:
     - Added `AppState.initGlobalTheme()` which restores the user's selected theme and custom color palette from `SharedPreferences` in `main.dart` *before* `runApp()`.
     - Eliminated theme reset on app exit and cold restart: Tally immediately boots into the user's saved theme.

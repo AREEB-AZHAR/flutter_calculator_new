@@ -65,3 +65,7 @@ tasks.configureEach {
         finalizedBy("copyTallyApk")
     }
 }
+
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
