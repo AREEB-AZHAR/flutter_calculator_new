@@ -311,6 +311,9 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
     - Integrated `google_sign_in: ^7.2.0` with [GoogleAuthService](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/services/google_auth_service.dart) supporting native 1-tap Google Sign-In on mobile/web and an authentic Google Account Picker dialog fallback for Windows desktop and emulators.
     - Extended [app_database.dart] with `authenticateOrRegisterGoogleUser()` to bind all SQLite accounts, transactions, budgets, goals, and profiles directly to verified Google email accounts.
     - Added an authentic Google Account Status badge (`[G] Bound to Google: user@email.com`) to the Profile header with 1-tap cloud binding for existing users.
+  - **2026 Industry Best Practices & Competitive Benchmarks**:
+    - Synthesized comprehensive competitive research across leading personal finance apps (**Monarch Money**, **Copilot**, **YNAB**, **Splitwise**, **Empower**, and **NerdWallet**) in [FUTURE_MONETIZATION_PLAN.md](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/FUTURE_MONETIZATION_PLAN.md).
+    - Documented architectural blueprints for Value-Based Gating ("Tracking" vs "Planning"), Native Financial Partner Banners vs Programmatic Networks, Decoupled Ad-Free passes, Local-First SQLite Cloud Vaults, and Progressive Disclosure Onboarding.
 - **v1.7.3**:
   - **Button Text & FAB Icon Contrast Fix (Ink & Paper Themes)**:
     - **Luminance-Adaptive Foregrounds**: Dynamically computes contrast-compliant foreground colors (`btnBg.computeLuminance() > 0.5 ? Color(0xFF152A22) : Colors.white`) across all `ElevatedButton` widgets and `FloatingActionButton` controls.
