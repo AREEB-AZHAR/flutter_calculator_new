@@ -12,6 +12,7 @@ import '../widgets/tally_brand_painters.dart';
 import '../services/biometric_service.dart';
 import '../services/tour_service.dart';
 import '../widgets/feature_tour_dialog.dart';
+import '../widgets/ad_banner_widget.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -661,7 +662,13 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
+                    const AdBannerWidget(
+                      margin: EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
+                      sponsorCategory: 'YieldMax High-Yield Savings (5.2% APY)',
+                    ),
+
+                    const SizedBox(height: 16),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: Row(

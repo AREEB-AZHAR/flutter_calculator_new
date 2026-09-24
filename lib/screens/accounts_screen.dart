@@ -6,6 +6,7 @@ import '../widgets/feature_tour_dialog.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/transaction_dialog.dart';
 import '../widgets/interactive_chart_card.dart';
+import '../widgets/ad_banner_widget.dart';
 
 class AccountsScreen extends StatefulWidget {
   const AccountsScreen({super.key});
@@ -334,6 +335,13 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         accountFilter: _selectedAccount == 'Overall' ? null : _selectedAccount,
                         title: _selectedAccount == 'Overall' ? 'Overall Analytics (All Wallets)' : 'Analytics: $_selectedAccount',
                       ),
+                    ),
+                  ),
+
+                  const SliverToBoxAdapter(
+                    child: AdBannerWidget(
+                      margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                      sponsorCategory: 'Cloud Multi-Currency Vault',
                     ),
                   ),
 

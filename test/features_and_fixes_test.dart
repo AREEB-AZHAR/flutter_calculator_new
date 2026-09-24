@@ -5,6 +5,10 @@ import 'package:balance_tracker/models/transaction.dart';
 import 'package:balance_tracker/services/state.dart';
 import 'package:balance_tracker/services/biometric_service.dart';
 import 'package:balance_tracker/services/tour_service.dart';
+import 'package:balance_tracker/services/monetization_service.dart';
+import 'package:balance_tracker/services/google_auth_service.dart';
+import 'package:balance_tracker/widgets/ad_banner_widget.dart';
+import 'package:balance_tracker/screens/insights_screen.dart';
 import 'package:balance_tracker/widgets/transaction_dialog.dart';
 import 'package:balance_tracker/widgets/transaction_tile.dart';
 
@@ -237,5 +241,114 @@ void main() {
     expect(tx.category, 'Salary');
     expect(tx.title, 'Salary'); // Auto-filled from category!
     expect(tx.amount, 4500.0);
+  });
+
+  test('MonetizationService: tier transitions, separate remove-ads, and promo codes', () async {
+    await MonetizationService.resetPurchases();
+    expect(MonetizationService.isPro, false);
+    expect(MonetizationService.isAdFree, false);
+
+    // Test separate Remove Ads purchase
+    await MonetizationService.removeAds();
+    expect(MonetizationService.isPro, false);
+    expect(MonetizationService.isAdFree, true);
+
+    // Test reset
+    await MonetizationService.resetPurchases();
+    expect(MonetizationService.isPro, false);
+    expect(MonetizationService.isAdFree, false);
+
+    // Test unlock Pro (gives both Pro and Ad-Free)
+    await MonetizationService.unlockPro();
+    expect(MonetizationService.isPro, true);
+    expect(MonetizationService.isAdFree, true);
+
+    // Test Promo Code NOADS
+    await MonetizationService.resetPurchases();
+    final noAdsResult = await MonetizationService.redeemPromoCode('NOADS');
+    expect(noAdsResult, isNotNull);
+    expect(MonetizationService.isPro, false);
+    expect(MonetizationService.isAdFree, true);
+
+    // Test Promo Code PROVIP
+    await MonetizationService.resetPurchases();
+    final proResult = await MonetizationService.redeemPromoCode('PROVIP');
+    expect(proResult, isNotNull);
+    expect(MonetizationService.isPro, true);
+    expect(MonetizationService.isAdFree, true);
+
+    // Test Invalid Promo Code
+    final invalidResult = await MonetizationService.redeemPromoCode('INVALID_CODE');
+    expect(invalidResult, isNull);
+
+    await MonetizationService.resetPurchases();
+  });
+
+  test('GoogleAuthService: detects Google email bindings', () {
+    AppState.currentUser = 'user123';
+    expect(GoogleAuthService.isCurrentGoogleUser, false);
+
+    AppState.currentUser = 'areeb.finance@gmail.com';
+    expect(GoogleAuthService.isCurrentGoogleUser, true);
+
+    AppState.currentUser = null;
+    expect(GoogleAuthService.isCurrentGoogleUser, false);
+  });
+
+  testWidgets('AdBannerWidget: displays banner for free users and hides when ad-free or pro', (WidgetTester tester) async {
+    await MonetizationService.resetPurchases();
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: AdBannerWidget(
+            sponsorCategory: 'Test Fintech Partner',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Banner should be visible with "Ad" badge and sponsor text
+    expect(find.text('Ad'), findsOneWidget);
+    expect(find.text('Test Fintech Partner'), findsOneWidget);
+    expect(find.text('Hide'), findsOneWidget);
+
+    // Unlock separate Remove Ads
+    await MonetizationService.removeAds();
+    await tester.pumpAndSettle();
+
+    // Banner should be completely hidden
+    expect(find.text('Ad'), findsNothing);
+    expect(find.text('Test Fintech Partner'), findsNothing);
+
+    await MonetizationService.resetPurchases();
+  });
+
+  testWidgets('InsightsScreen: Free users see Tally Pro lock screen, Pro users see insights', (WidgetTester tester) async {
+    await MonetizationService.resetPurchases();
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: InsightsScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Free user should see Pro lock screen
+    expect(find.text('TALLY PRO EXCLUSIVE'), findsOneWidget);
+    expect(find.text('Smart Financial Intelligence'), findsOneWidget);
+    expect(find.text('Unlock Tally Pro — \$4.99'), findsOneWidget);
+    expect(find.text('Have an unlock code? Redeem Promo'), findsOneWidget);
+
+    // Unlock Pro
+    await MonetizationService.unlockPro();
+    await tester.pumpAndSettle();
+
+    // Pro user should see real insights screen (or empty prompt if no transactions)
+    expect(find.text('TALLY PRO EXCLUSIVE'), findsNothing);
+    expect(find.text('Add some transactions to see insights!'), findsOneWidget);
+
+    await MonetizationService.resetPurchases();
   });
 }

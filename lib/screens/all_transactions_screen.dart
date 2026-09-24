@@ -4,6 +4,7 @@ import '../services/state.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/transaction_dialog.dart';
 import '../widgets/custom_painters.dart';
+import '../widgets/ad_banner_widget.dart';
 
 class AllTransactionsScreen extends StatefulWidget {
   const AllTransactionsScreen({super.key});
@@ -209,7 +210,12 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                   }).toList(),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
+              const AdBannerWidget(
+                margin: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                sponsorCategory: 'Smart Expense Categorization Engine',
+              ),
+              const SizedBox(height: 4),
 
               Expanded(
                 child: filtered.isEmpty

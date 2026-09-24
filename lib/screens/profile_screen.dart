@@ -10,6 +10,8 @@ import '../services/app_icon_service.dart';
 import '../services/biometric_service.dart';
 import '../services/tour_service.dart';
 import '../widgets/feature_tour_dialog.dart';
+import '../services/monetization_service.dart';
+import '../services/google_auth_service.dart';
 import '../utils/constants.dart';
 import '../widgets/color_picker_dialog.dart';
 import '../widgets/tally_brand_painters.dart';
@@ -33,6 +35,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
     AppState.activeTabNotifier.value = 0;
     BiometricService.resetSessionPrompt();
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+  }
+
+  Future<void> _linkGoogleAccount() async {
+    try {
+      final googleUser = await GoogleAuthService.signIn(context);
+      if (googleUser != null && mounted) {
+        final previousUser = AppState.currentUser;
+        if (previousUser != null && previousUser != googleUser.email) {
+          await AppDatabase.instance.authenticateOrRegisterGoogleUser(
+            email: googleUser.email,
+            displayName: googleUser.displayName,
+            photoUrl: googleUser.photoUrl,
+          );
+        }
+        await AppState.loadAllUserData(googleUser.email);
+        setState(() {});
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('🎉 Bound to Google Account: ${googleUser.email}'),
+              backgroundColor: Colors.teal,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google binding failed: $e'), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
   }
 
   Future<void> _pickProfilePhoto() async {
@@ -381,6 +415,171 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                                 const SizedBox(height: 20),
 
+                                // Pro & Ad-Free Membership Section
+                                _settingsSectionTitle('PRO & AD-FREE MEMBERSHIP', onSurface.withValues(alpha: 0.6)),
+                                Card(
+                                  color: cardBg,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  child: Column(
+                                    children: [
+                                      // 1. Tally Pro Membership
+                                      ValueListenableBuilder<bool>(
+                                        valueListenable: MonetizationService.isProUnlockedNotifier,
+                                        builder: (context, isPro, _) {
+                                          return ListTile(
+                                            leading: Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: const BoxDecoration(
+                                                gradient: LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFEF4444)]),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(Icons.workspace_premium, color: Colors.white, size: 20),
+                                            ),
+                                            title: Row(
+                                              children: [
+                                                Text(
+                                                  'Tally Pro Membership',
+                                                  style: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                if (isPro)
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.green.withValues(alpha: 0.2),
+                                                      borderRadius: BorderRadius.circular(6),
+                                                    ),
+                                                    child: const Text('ACTIVE', style: TextStyle(color: Colors.greenAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                                                  ),
+                                              ],
+                                            ),
+                                            subtitle: Text(
+                                              isPro
+                                                  ? 'All features unlocked: Insights, Theme Studio, Custom Icons & Ad-Free.'
+                                                  : 'Unlock Insights, Theme Studio, Launcher Icons & Ad-Free (\$4.99)',
+                                              style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12),
+                                            ),
+                                            trailing: isPro
+                                                ? const Icon(Icons.check_circle, color: Colors.greenAccent)
+                                                : ElevatedButton(
+                                                    style: ElevatedButton.styleFrom(
+                                                      backgroundColor: Colors.amber.shade700,
+                                                      foregroundColor: Colors.white,
+                                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                                    ),
+                                                    onPressed: () {
+                                                      MonetizationService.showPaywallModal(
+                                                        context,
+                                                        featureTitle: 'Tally Pro All-Access',
+                                                        featureDescription: 'Unlock predictive velocity, spending comparisons, custom themes, app icons, and remove all ads.',
+                                                      );
+                                                    },
+                                                    child: const Text('Upgrade', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                                  ),
+                                          );
+                                        },
+                                      ),
+                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+
+                                      // 2. Separate Remove Ads Option
+                                      ValueListenableBuilder<bool>(
+                                        valueListenable: MonetizationService.isAdsRemovedNotifier,
+                                        builder: (context, isAdsRemoved, _) {
+                                          return ValueListenableBuilder<bool>(
+                                            valueListenable: MonetizationService.isProUnlockedNotifier,
+                                            builder: (context, isPro, _) {
+                                              final adFree = isPro || isAdsRemoved;
+                                              return ListTile(
+                                                leading: Container(
+                                                  padding: const EdgeInsets.all(8),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.blueAccent.withValues(alpha: 0.15),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: const Icon(Icons.block_rounded, color: Colors.blueAccent, size: 20),
+                                                ),
+                                                title: Row(
+                                                  children: [
+                                                    Text(
+                                                      'Remove Ads (Separate Option)',
+                                                      style: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    if (adFree)
+                                                      Container(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.blue.withValues(alpha: 0.2),
+                                                          borderRadius: BorderRadius.circular(6),
+                                                        ),
+                                                        child: const Text('AD-FREE', style: TextStyle(color: Colors.blueAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                                                      ),
+                                                  ],
+                                                ),
+                                                subtitle: Text(
+                                                  adFree
+                                                      ? 'All banner advertisements are disabled across the app.'
+                                                      : 'Remove all banners permanently without full Pro bundle (\$1.99)',
+                                                  style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12),
+                                                ),
+                                                trailing: adFree
+                                                    ? const Icon(Icons.check_circle, color: Colors.blueAccent)
+                                                    : OutlinedButton(
+                                                        style: OutlinedButton.styleFrom(
+                                                          side: const BorderSide(color: Colors.blueAccent),
+                                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                                        ),
+                                                        onPressed: () async {
+                                                          await MonetizationService.removeAds();
+                                                          if (context.mounted) {
+                                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                              const SnackBar(
+                                                                content: Text('🎉 Ads removed successfully! Enjoy clean banner-free budgeting.'),
+                                                                backgroundColor: Colors.teal,
+                                                              ),
+                                                            );
+                                                          }
+                                                        },
+                                                        child: const Text('Buy (\$1.99)', style: TextStyle(color: Colors.blueAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                                                      ),
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+
+                                      // 3. Redeem Promo Code & Unlock Function
+                                      ListTile(
+                                        leading: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.purpleAccent.withValues(alpha: 0.15),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(Icons.redeem_rounded, color: Colors.purpleAccent, size: 20),
+                                        ),
+                                        title: Text(
+                                          'Redeem Promo / Unlock Code',
+                                          style: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
+                                        ),
+                                        subtitle: Text(
+                                          'Enter a VIP unlock code (e.g. PROVIP or NOADS)',
+                                          style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12),
+                                        ),
+                                        trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
+                                        onTap: () {
+                                          MonetizationService.showPromoCodeDialog(context);
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                const SizedBox(height: 20),
+
                                 // Brand Palettes
                                 _settingsSectionTitle('BRAND PALETTES (INSTANT IN-APP)', onSurface.withValues(alpha: 0.6)),
                                 Card(
@@ -438,6 +637,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
+                                        if (!MonetizationService.isPro) ...[
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.amber.withValues(alpha: 0.2),
+                                              borderRadius: BorderRadius.circular(6),
+                                              border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
+                                            ),
+                                            child: const Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(Icons.lock_outline, size: 10, color: Colors.amber),
+                                                SizedBox(width: 3),
+                                                Text('PRO', style: TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold)),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                        ],
                                         Container(
                                           width: 18,
                                           height: 18,
@@ -453,6 +671,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ],
                                     ),
                                     onTap: () {
+                                      if (!MonetizationService.isPro) {
+                                        MonetizationService.showPaywallModal(
+                                          context,
+                                          featureTitle: 'Graphic Theme Studio',
+                                          featureDescription: 'Unlock custom RGB/HSV sliders, custom text coloring, and bespoke brand palettes with Tally Pro.',
+                                        );
+                                        return;
+                                      }
                                       Navigator.pop(ctx);
                                       ColorPickerDialog.show(context);
                                     },
@@ -738,7 +964,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   child: Column(
                                     children: [
                                       Text(
-                                        'Tally v1.7.3 (Build 9)',
+                                        'Tally v1.8.0 (Build 10)',
                                         style: TextStyle(
                                           color: onSurface.withValues(alpha: 0.7),
                                           fontSize: 13,
@@ -1202,6 +1428,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
                 },
               ),
+              const SizedBox(height: 8),
+
+              // Google Account Binding Status Badge
+              if (GoogleAuthService.isCurrentGoogleUser)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 16,
+                        height: 16,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'G',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      Text(
+                        'Bound to Google: ${AppState.currentUser}',
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                InkWell(
+                  onTap: _linkGoogleAccount,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.14)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.link_rounded, size: 14, color: Theme.of(context).colorScheme.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Link Google Account (Cloud Binding)',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.75),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -1534,6 +1832,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _promptChangeLauncherIcon(BuildContext ctx, String iconName) {
+    if (!MonetizationService.isPro) {
+      MonetizationService.showPaywallModal(
+        ctx,
+        featureTitle: 'Custom Dynamic Launcher Icons',
+        featureDescription: 'Unlock custom dynamic home screen icons ($iconName, Paper, Ledger) with Tally Pro.',
+      );
+      return;
+    }
+
     final theme = Theme.of(ctx);
     final surface = theme.colorScheme.surface;
     final onSurface = theme.colorScheme.onSurface;
@@ -1628,6 +1935,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   'Set Android Home Screen Icon',
                   style: TextStyle(color: onSurface, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
+                const SizedBox(width: 8),
+                if (!MonetizationService.isPro)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.lock_outline, size: 10, color: Colors.amber),
+                        SizedBox(width: 3),
+                        Text('PRO', style: TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: 6),
@@ -1733,12 +2058,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: primary.withValues(alpha: 0.15),
+                color: MonetizationService.isPro ? primary.withValues(alpha: 0.15) : Colors.amber.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Text(
-                'Set Icon',
-                style: TextStyle(color: primary, fontSize: 10, fontWeight: FontWeight.bold),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!MonetizationService.isPro) ...[
+                    const Icon(Icons.lock_outline, size: 10, color: Colors.amber),
+                    const SizedBox(width: 3),
+                  ],
+                  Text(
+                    MonetizationService.isPro ? 'Set Icon' : 'Pro',
+                    style: TextStyle(
+                      color: MonetizationService.isPro ? primary : Colors.amber,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

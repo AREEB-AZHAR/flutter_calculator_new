@@ -7,16 +7,18 @@
 ## 📱 Visual Showcase & Screenshots
 
 > [!TIP]
-> **Screenshots Placeholder**: Capture and place your high-resolution screenshots in `assets/screenshots/` (e.g. `splash.png`, `dashboard.png`, `home_tour.png`, `accounts_tour.png`, `biometric_prompt.png`, `settings_guide.png`).
+> **Screenshots Placeholder**: Capture and place your high-resolution screenshots in `assets/screenshots/` (e.g. `splash.png`, `dashboard.png`, `home_tour.png`, `accounts_tour.png`, `biometric_prompt.png`, `settings_guide.png`, `pro_paywall.png`, `google_auth.png`).
 > Recommended screens to capture:
 > 1. **Biometric Quick Setup Modal**: Post-login prompt asking to enable screen lock/fingerprint.
 > 2. **Home Screen Feature Tour**: Highlighting transaction auto-fill and category tips.
 > 3. **Accounts Screen Walkthrough**: Explaining how to add new custom account types.
 > 4. **Settings & Features Guide**: The educational bottom sheet explaining all settings.
+> 5. **Tally Pro Locked Preview & Paywall**: The Insights preview lock screen with feature checklist and CTA.
+> 6. **Native Ad Banner & Google Sign-In**: Contextual partner banner on Dashboard and Google button on Login.
 
-| Flowing Splash | Home & Tour | Accounts Walkthrough | Biometric Setup | Settings Guide |
+| Flowing Splash | Home & Ad Banner | Insights Pro Lock | Accounts Walkthrough | Google Sign-In & Settings |
 | :---: | :---: | :---: | :---: | :---: |
-| *(Add Splash Screenshot)* | *(Add Home Tour Screenshot)* | *(Add Accounts Tour Screenshot)* | *(Add Biometric Modal Screenshot)* | *(Add Settings Guide Screenshot)* |
+| *(Add Splash Screenshot)* | *(Add Dashboard Banner Screenshot)* | *(Add Pro Paywall Screenshot)* | *(Add Accounts Tour Screenshot)* | *(Add Google Auth Screenshot)* |
 
 ---
 
@@ -122,6 +124,29 @@
   - Cloud Sync (Firebase Firestore ready) integration.
   - Real-time dynamic currency switcher.
 
+### 15. 💎 Tally Pro & Freemium Monetization Engine
+- **Strategic Power-User Gating**: Follows 2026 leading fintech best practices (e.g. Copilot Money, Monarch, Splitwise) keeping essential utility (expense logging, balance tracking, multi-account management) 100% free while gating advanced capabilities behind **Tally Pro**:
+  - **Smart Insights & Predictive Velocity**: Gated behind an elegant, frosted preview lock screen displaying daily spending run-rate mockups, savings trajectory analysis, and direct "Unlock Tally Pro" CTA.
+  - **Graphic Theme Studio**: Fine-grained RGB/HSV sliders, bespoke color palettes, and text tone customizers require Pro membership.
+  - **Custom Dynamic Launcher Icons**: Custom Android home screen icon aliases (Ink, Paper, Ledger) are reserved for Pro members.
+  - **100% Ad-Free Experience**: Pro automatically deactivates all sponsored banner placements across the entire app.
+- **Separate "Remove Ads" Option ($1.99)**:
+  - Users who only want an ad-free interface without paying for full analytical Pro features can purchase the dedicated "Remove Ads" tier directly in Profile Settings.
+- **VIP Promo Code Unlock Modal**:
+  - Interactive unlock modal supporting codes `PROVIP` or `FINTECH2026` (unlocks full Pro tier) and `NOADS` (unlocks ad-free experience), with instant "Reset to Free Tier" for developer and QA validation.
+
+### 16. 📢 Native Contextual Partner Ad Banners (100% Removable)
+- **Fintech-First Non-Intrusive Design**: Replaced aggressive, trust-destroying popups or interstitials with sleek, theme-matched partner banner cards.
+- **Integrated Placements**: Embedded naturally between the Total Balance Card / Interactive Chart and Recent Transactions on `DashboardScreen`, as well as on `AccountsScreen` and `AllTransactionsScreen`.
+- **Dynamic Sponsor Rotation**: Styled with rounded container borders, an unobtrusive "Ad" chip, financial partner benefits (e.g. high-yield savings, cloud infrastructure, smart bookkeeping), and a quick "Hide" shortcut that opens the paywall modal.
+- **Zero-Footprint Dismissal**: When the user unlocks Pro or purchases "Remove Ads", the banner returns `SizedBox.shrink()` (0 pixels height) with no layout shift or leftover padding.
+
+### 17. 🔑 Google Account Authentication & Cloud Ledger Binding
+- **1-Tap Google Sign-In**: Added authentic "Sign in with Google" button on `LoginScreen` with the official Google logo.
+- **Cross-Platform Compatibility**: Uses native Google Identity Services on mobile/web with a styled Google Account Picker fallback for Windows desktop, emulators, and local test environments.
+- **Encrypted Database Identity Binding**: Associates all SQLite accounts, transactions, budgets, goals, and customized profiles directly to the user's Google email (`user_id`), preserving data across logouts and devices.
+- **Account Binding Badge**: Displays an authentic Google status badge (`[G] Bound to Google: user@gmail.com`) in the Profile identity card, with a 1-tap "Link Google Account" button for legacy local accounts.
+
 ---
 
 ## 🏗️ Clean Modular Architecture
@@ -146,11 +171,13 @@ lib/
 │   ├── main_nav_screen.dart        # Lazy-loaded tab shell with idle pre-warming
 │   ├── dashboard_screen.dart       # Post-login biometric prompt & Home Tour trigger
 │   ├── all_transactions_screen.dart# Search, filter, and pie chart analytics
-│   ├── insights_screen.dart        # Spending trends & category breakdown
+│   ├── insights_screen.dart        # Spending trends, category breakdown & Pro lock preview
 │   ├── goals_screen.dart           # Goal progress & fund allocations
 │   ├── accounts_screen.dart        # Accounts Tour, Add Account dialog & consolidated view
 │   └── profile_screen.dart         # Features & Settings guide, Theme Studio & tours reset
 ├── services/                       # State & Persistence
+│   ├── monetization_service.dart   # Tally Pro, Remove Ads & promo code engine
+│   ├── google_auth_service.dart    # Google Sign-In & SQLite identity binding
 │   ├── biometric_service.dart      # Biometric & screen lock auth & setup modal
 │   ├── tour_service.dart           # Tour completion flags & reset persistence
 │   ├── notification_service.dart   # 3-hour scheduled reminders & easter egg
@@ -162,6 +189,7 @@ lib/
 ├── utils/                          # Styling & Design Tokens
 │   └── constants.dart              # Dynamic theme generator, icons & currencies
 └── widgets/                        # Reusable UI & Custom Painters
+    ├── ad_banner_widget.dart       # Theme-adaptive native partner banner card
     ├── feature_tour_dialog.dart    # Step-by-step onboarding walkthrough dialog
     ├── tally_brand_painters.dart   # TallyIconPainter, UwashPainter & Wordmark
     ├── custom_painters.dart        # Repaint-bounded Month line & Donut painters
@@ -265,7 +293,25 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 ---
 
 ## 📝 Recent Changelog
-- **v1.7.1 (Current)**:
+- **v1.8.0 (Current)**:
+  - **Tally Pro Freemium Monetization & Power Feature Gating**:
+    - Architected [MonetizationService](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/services/monetization_service.dart) tracking `isProUnlockedNotifier`, `isAdsRemovedNotifier`, `isPro`, and `isAdFree` with persistent local storage.
+    - **Smart Insights Gate & Preview Paywall**: Wrapped [insights_screen.dart] with a Pro lock. Free users see an attractive frosted preview lock screen displaying daily velocity indicators, savings rate forecast mockups, feature checklists, an "Unlock Tally Pro — \$4.99" CTA button, and "Redeem Promo Code" action. Pro users enjoy instant access to full analytical reports.
+    - **Theme Studio Gate**: Gated custom RGB/HSV sliders, text tone adjustments, and custom color wheels behind Pro with lock badges and paywall prompts; curated brand presets (Ledger, Paper, Ink) remain accessible to all users.
+    - **Launcher App Icon Gate**: Gated dynamic Android launcher app icon switching behind Pro.
+  - **Separate "Remove Ads" Purchase (\$1.99)**:
+    - Added a dedicated separate "Remove Ads" option in the Profile Settings bottom sheet, giving users the freedom to banish all banner ads permanently without paying for the full Pro analytical bundle.
+  - **VIP Promo Code Unlock Modal**:
+    - Created an interactive redemption modal (`MonetizationService.showPromoCodeDialog`) accepting codes `PROVIP` / `FINTECH2026` (unlocks full Tally Pro) and `NOADS` (unlocks ad-free tier), with an instant "Reset to Free Tier" button for testing.
+  - **Native Contextual Partner Ad Banners**:
+    - Implemented [ad_banner_widget.dart] featuring high-trust fintech partner card designs with an "Ad" badge, financial benefit copies (e.g. YieldMax 5.2% APY Savings, Cloud Multi-Currency Vault, Expense Categorization Engine), and a "Hide" shortcut that opens the paywall.
+    - Embedded banner ads between Balance Card / Chart and Recent Transactions on [dashboard_screen.dart], and on [accounts_screen.dart] and [all_transactions_screen.dart].
+    - Banners automatically render `SizedBox.shrink()` (0 pixels) when Pro is unlocked or ads are removed.
+  - **Google Account Authentication & Secure Cloud Data Binding**:
+    - Integrated `google_sign_in: ^7.2.0` with [GoogleAuthService](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/services/google_auth_service.dart) supporting native 1-tap Google Sign-In on mobile/web and an authentic Google Account Picker dialog fallback for Windows desktop and emulators.
+    - Extended [app_database.dart] with `authenticateOrRegisterGoogleUser()` to bind all SQLite accounts, transactions, budgets, goals, and profiles directly to verified Google email accounts.
+    - Added an authentic Google Account Status badge (`[G] Bound to Google: user@email.com`) to the Profile header with 1-tap cloud binding for existing users.
+- **v1.7.3**:
   - **Button Text & FAB Icon Contrast Fix (Ink & Paper Themes)**:
     - **Luminance-Adaptive Foregrounds**: Dynamically computes contrast-compliant foreground colors (`btnBg.computeLuminance() > 0.5 ? Color(0xFF152A22) : Colors.white`) across all `ElevatedButton` widgets and `FloatingActionButton` controls.
     - **Savings Goals Screen Overhaul**: Eliminated invisible white-on-white text in `GoalsScreen`'s "Add Funds" button and `+` icon on the Floating Action Button. When goals are completed (`progress >= 1.0`), the `Colors.greenAccent` background adapts to dark ink text (`#152A22`) for guaranteed legibility.

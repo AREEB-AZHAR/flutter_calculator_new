@@ -3,6 +3,7 @@ import 'main_nav_screen.dart';
 import '../services/state.dart';
 import '../services/database/app_database.dart';
 import '../services/biometric_service.dart';
+import '../services/google_auth_service.dart';
 import '../widgets/tally_brand_painters.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -69,6 +70,46 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           _unlockWithBiometrics();
         }
       });
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+      _error = '';
+    });
+
+    try {
+      final googleUser = await GoogleAuthService.signIn(context);
+      if (googleUser != null) {
+        if (await BiometricService.isBiometricEnabled()) {
+          await BiometricService.setBiometricEnabled(true, username: googleUser.email);
+        }
+        await AppState.loadAllUserData(googleUser.email);
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => const MainNavScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(
+              opacity: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+              child: child,
+            ),
+            transitionDuration: const Duration(milliseconds: 250),
+          ),
+        );
+      } else {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Google Sign-In failed: $e';
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -388,6 +429,81 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                             ],
 
                             const SizedBox(height: 14),
+
+                            // Divider
+                            Row(
+                              children: [
+                                Expanded(child: Divider(color: inkColor.withValues(alpha: 0.15))),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  child: Text(
+                                    'OR CONNECT WITH',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.8,
+                                      color: inkColor.withValues(alpha: 0.45),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(child: Divider(color: inkColor.withValues(alpha: 0.15))),
+                              ],
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // Google Sign-In Button
+                            OutlinedButton(
+                              onPressed: _isLoading ? null : _signInWithGoogle,
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(double.infinity, 50),
+                                backgroundColor: cardBg,
+                                foregroundColor: inkColor,
+                                side: BorderSide(color: inkColor.withValues(alpha: 0.2)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                elevation: 0,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.08),
+                                          blurRadius: 3,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        'G',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue.shade700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'Sign in with Google',
+                                    style: TextStyle(
+                                      color: inkColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
 
                             // Switch mode button
                             TextButton(

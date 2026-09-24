@@ -297,6 +297,92 @@ class AppDatabase {
     return SecurityHelper.verifyPassword(password, salt, expectedHash);
   }
 
+  /// Registers or signs in a Google user, binding their ledger records to their Google email.
+  Future<bool> authenticateOrRegisterGoogleUser({
+    required String email,
+    required String displayName,
+    String? photoUrl,
+  }) async {
+    final db = await database;
+    final results = await db.query(
+      'users',
+      where: 'username = ?',
+      whereArgs: [email],
+    );
+
+    if (results.isEmpty) {
+      final salt = SecurityHelper.generateSalt();
+      final hash = SecurityHelper.hashPassword('GOOGLE_OAUTH_PROTECTED_${SecurityHelper.generateSalt()}', salt);
+
+      await db.insert('users', {
+        'username': email,
+        'password_hash': hash,
+        'salt': salt,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      Color regPrimary = const Color(0xFFE4572E);
+      Color regSecondary = const Color(0xFFF6F0E1);
+      Color? regTextColor;
+      String regTheme = 'Ledger';
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        regTheme = prefs.getString('tally_active_theme') ?? 'Ledger';
+        final p = prefs.getInt('tally_primary_color');
+        if (p != null) regPrimary = Color(p);
+        final s = prefs.getInt('tally_secondary_color');
+        if (s != null) regSecondary = Color(s);
+        final t = prefs.getInt('tally_text_color');
+        if (t != null) regTextColor = Color(t);
+      } catch (_) {}
+
+      await db.insert('profiles', {
+        'username': email,
+        'display_name': displayName.isNotEmpty ? displayName : email.split('@').first,
+        'bio': 'Google Account • Cloud Synced',
+        'photo_path': photoUrl,
+        'primary_color': regPrimary.toARGB32(),
+        'secondary_color': regSecondary.toARGB32(),
+        'text_color': regTextColor?.toARGB32(),
+        'theme': regTheme,
+        'currency': '\$',
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      for (var acc in ['Main', 'Cash', 'Credit Card', 'Digital Wallet']) {
+        await db.insert(
+          'accounts',
+          {'username': email, 'name': acc},
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+      }
+
+      final defaultBudgets = {
+        'Food & Dining': 500.0,
+        'Housing & Rent': 1500.0,
+        'Transportation': 300.0,
+        'Entertainment': 200.0,
+      };
+      for (var b in defaultBudgets.entries) {
+        await db.insert(
+          'budgets',
+          {'username': email, 'category': b.key, 'amount_limit': b.value},
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+      }
+    } else {
+      if (displayName.isNotEmpty || photoUrl != null) {
+        final currentProfile = await loadProfile(email);
+        await saveProfile(currentProfile.copyWith(
+          displayName: displayName.isNotEmpty ? displayName : currentProfile.displayName,
+          photoPath: photoUrl ?? currentProfile.photoPath,
+        ));
+      }
+    }
+
+    return true;
+  }
+
   Future<bool> changePassword(String username, String currentPassword, String newPassword) async {
     final auth = await authenticateUser(username, currentPassword);
     if (!auth) return false;
