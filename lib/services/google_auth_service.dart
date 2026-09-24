@@ -34,6 +34,25 @@ class GoogleAuthService {
   static const String androidSha1 = 'B7:71:9D:F2:CA:FE:82:46:4A:B9:91:40:59:C1:72:0B:8E:96:BD:CB';
   static const String androidSha256 = '82:E4:2C:AE:78:94:99:F4:F9:7D:3A:8B:16:D9:CB:F9:71:5D:F5:0A:A7:D4:77:E8:FF:1E:67:6C:41:21:EA:99';
 
+  // OAuth 2.0 Web Client ID from Firebase Console / google-services.json
+  static const String androidServerClientId = '494819662703-ijqfkem5b7ndiq6iq49arhlefrc65qn2.apps.googleusercontent.com';
+  static bool _isGoogleSignInInitialized = false;
+
+  /// Ensures GoogleSignIn is initialized with the serverClientId on Android
+  static Future<void> ensureInitialized() async {
+    if (_isGoogleSignInInitialized) return;
+    if (!kIsWeb && Platform.isAndroid) {
+      try {
+        await GoogleSignIn.instance.initialize(
+          serverClientId: androidServerClientId,
+        );
+        _isGoogleSignInInitialized = true;
+      } catch (e) {
+        debugPrint('GoogleSignIn.initialize notice: $e');
+      }
+    }
+  }
+
   /// Checks if the currently active user in AppState is bound to a Google Account.
   static bool get isCurrentGoogleUser {
     final user = AppState.currentUser;
@@ -73,6 +92,7 @@ class GoogleAuthService {
       try {
         if (!kIsWeb && Platform.isAndroid) {
           // Native Android Google Play Services flow
+          await ensureInitialized();
           final gAccount = await GoogleSignIn.instance.authenticate();
           final gAuth = gAccount.authentication;
           final credential = GoogleAuthProvider.credential(
@@ -106,7 +126,8 @@ class GoogleAuthService {
         }
       } catch (e) {
         debugPrint('Firebase Google Sign-In error: $e');
-        if (context.mounted) {
+        final isCanceled = e is GoogleSignInException && e.code == GoogleSignInExceptionCode.canceled;
+        if (!isCanceled && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Google Sign-In failed: $e'),
