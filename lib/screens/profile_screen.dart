@@ -12,6 +12,7 @@ import '../services/tour_service.dart';
 import '../widgets/feature_tour_dialog.dart';
 import '../services/monetization_service.dart';
 import '../services/google_auth_service.dart';
+import '../services/cloud_sync_service.dart';
 import '../utils/constants.dart';
 import '../widgets/color_picker_dialog.dart';
 import '../widgets/tally_brand_painters.dart';
@@ -903,36 +904,118 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         },
                                       ),
                                       Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      ListTile(
-                                        leading: const Icon(Icons.cloud_sync, color: Colors.blue),
-                                        title: Text('Cloud Sync (Firebase Ready)', style: TextStyle(color: onSurface)),
-                                        subtitle: Text('Hybrid offline-first architecture', style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
-                                        trailing: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
-                                          child: const Text('READY', style: TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold)),
-                                        ),
-                                        onTap: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (c) => AlertDialog(
-                                              backgroundColor: surface,
-                                              title: Row(
-                                                children: [
-                                                  const Icon(Icons.cloud_done, color: Colors.blue),
-                                                  const SizedBox(width: 8),
-                                                  Text('Firebase Sync Architecture', style: TextStyle(color: onSurface)),
-                                                ],
-                                              ),
-                                              content: Text(
-                                                'Your data is safely stored in a local SQLite file isolated per user.\n\n'
-                                                'To enable multi-device real-time sync, run "flutterfire configure" and link your Firebase project credentials. The repository layer is fully wired to sync SQLite with Firestore automatically.',
-                                                style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontSize: 13),
-                                              ),
-                                              actions: [
-                                                TextButton(onPressed: () => Navigator.pop(c), child: Text('Got it', style: TextStyle(color: primary))),
-                                              ],
+                                      ValueListenableBuilder<bool>(
+                                        valueListenable: CloudSyncService.isSyncingNotifier,
+                                        builder: (context, isSyncing, _) {
+                                          final isCloudReady = CloudSyncService.isCloudAvailable;
+                                          return ListTile(
+                                            leading: Icon(
+                                              isCloudReady ? Icons.cloud_done : Icons.cloud_sync,
+                                              color: isCloudReady ? Colors.greenAccent : Colors.blue,
                                             ),
+                                            title: Text('Cloud Sync (Firestore Vault)', style: TextStyle(color: onSurface)),
+                                            subtitle: Text(
+                                              isSyncing
+                                                  ? 'Syncing ledger with Google Cloud...'
+                                                  : (isCloudReady
+                                                      ? 'Connected to Project tally-b3652'
+                                                      : 'Hybrid offline-first architecture'),
+                                              style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12),
+                                            ),
+                                            trailing: isSyncing
+                                                ? Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                    decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
+                                                    child: const Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        SizedBox(width: 10, height: 10, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blue)),
+                                                        SizedBox(width: 6),
+                                                        Text('SYNCING', style: TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold)),
+                                                      ],
+                                                    ),
+                                                  )
+                                                : Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: (isCloudReady ? Colors.green : Colors.blue).withValues(alpha: 0.2),
+                                                      borderRadius: BorderRadius.circular(8),
+                                                    ),
+                                                    child: Text(
+                                                      isCloudReady ? 'CONNECTED' : 'READY',
+                                                      style: TextStyle(
+                                                        color: isCloudReady ? Colors.greenAccent : Colors.blue,
+                                                        fontSize: 10,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                            onTap: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (c) => AlertDialog(
+                                                  backgroundColor: surface,
+                                                  title: Row(
+                                                    children: [
+                                                      Icon(
+                                                        isCloudReady ? Icons.verified_user : Icons.cloud_sync,
+                                                        color: isCloudReady ? Colors.greenAccent : Colors.blue,
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      Text('Cloud Vault Security', style: TextStyle(color: onSurface, fontSize: 17)),
+                                                    ],
+                                                  ),
+                                                  content: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        isCloudReady
+                                                            ? 'Your local encrypted SQLite ledger is actively paired with Google Cloud Firestore (Project tally-b3652).\n\n'
+                                                              '• Strict Isolation: Path /users/{uid}/ protects your private documents.\n'
+                                                              '• Two-Way Sync: Transactions, goals, accounts, and budgets are backed up automatically.'
+                                                            : 'Your data is securely stored in a local SQLite file on your device.\n\n'
+                                                              'Sign in with your Google account to automatically back up your financial records to your private Google Cloud Firestore vault.',
+                                                        style: TextStyle(color: onSurface.withValues(alpha: 0.75), fontSize: 13, height: 1.4),
+                                                      ),
+                                                      if (CloudSyncService.lastSyncTimeNotifier.value != null) ...[
+                                                        const SizedBox(height: 12),
+                                                        Text(
+                                                          'Last synced: ${CloudSyncService.lastSyncTimeNotifier.value!.toLocal().toString().split(".").first}',
+                                                          style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 11),
+                                                        ),
+                                                      ],
+                                                    ],
+                                                  ),
+                                                  actions: [
+                                                    if (isCloudReady)
+                                                      ElevatedButton.icon(
+                                                        icon: const Icon(Icons.sync, size: 16),
+                                                        label: const Text('Sync Now'),
+                                                        style: ElevatedButton.styleFrom(
+                                                          backgroundColor: primary,
+                                                          foregroundColor: Colors.white,
+                                                        ),
+                                                        onPressed: () async {
+                                                          Navigator.pop(c);
+                                                          final messenger = ScaffoldMessenger.of(context);
+                                                          final user = AppState.currentUser;
+                                                          if (user != null) {
+                                                            final ok = await CloudSyncService.sync(user);
+                                                            messenger.showSnackBar(
+                                                              SnackBar(
+                                                                content: Text(ok ? 'Cloud Vault synced successfully' : 'Sync completed or queued'),
+                                                                backgroundColor: ok ? Colors.green.shade700 : Colors.blueGrey,
+                                                              ),
+                                                            );
+                                                          }
+                                                        },
+                                                      ),
+                                                    TextButton(onPressed: () => Navigator.pop(c), child: Text('Close', style: TextStyle(color: onSurface))),
+                                                  ],
+                                                ),
+                                              );
+                                            },
                                           );
                                         },
                                       ),
