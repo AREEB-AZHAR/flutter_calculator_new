@@ -60,7 +60,7 @@ class MonetizationService {
     }
   }
 
-  /// Validates and redeems promo codes for instant feature unlock.
+  /// Validates and redeems promo codes for instant feature unlock or testing resets.
   static Future<String?> redeemPromoCode(String inputCode) async {
     final code = inputCode.trim().toUpperCase();
     if (code == 'PROVIP' || code == 'TALLYPRO' || code == 'FINTECH2026' || code == 'UNLOCKALL') {
@@ -69,6 +69,9 @@ class MonetizationService {
     } else if (code == 'NOADS' || code == 'REMOVEADS' || code == 'ADFREE') {
       await removeAds();
       return '✨ Ads removed successfully! Enjoy clean banner-free budgeting.';
+    } else if (code == 'RESET' || code == 'RESETVIP' || code == 'RESETPRO' || code == 'FREE' || code == 'FREEVIP') {
+      await resetPurchases();
+      return '🔄 VIP Subscription & Ad-Free status have been reset to Free tier.';
     }
     return null;
   }
@@ -349,7 +352,7 @@ class MonetizationService {
               textCapitalization: TextCapitalization.characters,
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, letterSpacing: 1.5),
               decoration: InputDecoration(
-                hintText: 'e.g. PROVIP or NOADS',
+                hintText: 'e.g. PROVIP, NOADS, or RESETVIP',
                 hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35), fontSize: 13),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -369,12 +372,12 @@ class MonetizationService {
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Invalid promo code. Try PROVIP or NOADS.'), backgroundColor: Colors.redAccent),
+                    const SnackBar(content: Text('Invalid promo code. Try PROVIP, NOADS, or RESETVIP.'), backgroundColor: Colors.redAccent),
                   );
                 }
               }
             },
-            child: const Text('Redeem'),
+            child: const Text('Submit'),
           ),
         ],
       ),

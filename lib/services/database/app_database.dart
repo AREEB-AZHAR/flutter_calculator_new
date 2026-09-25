@@ -44,6 +44,7 @@ class AppDatabase {
           CREATE TABLE users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
+            email TEXT,
             password_hash TEXT NOT NULL,
             salt TEXT NOT NULL,
             created_at TEXT NOT NULL
@@ -111,6 +112,11 @@ class AppDatabase {
         ''');
       },
     );
+
+    // Ensure email column exists on users table
+    try {
+      await db.execute('ALTER TABLE users ADD COLUMN email TEXT');
+    } catch (_) {}
 
     // Ensure text_color and theme columns exist for existing databases
     try {
@@ -213,7 +219,11 @@ class AppDatabase {
   }
 
   // --- AUTHENTICATION ---
-  Future<bool> registerUser(String username, String password) async {
+  Future<bool> registerUser({
+    required String username,
+    required String password,
+    String? email,
+  }) async {
     final db = await database;
     final existing = await db.query(
       'users',
@@ -222,11 +232,21 @@ class AppDatabase {
     );
     if (existing.isNotEmpty) return false;
 
+    if (email != null && email.trim().isNotEmpty) {
+      final existingEmail = await db.query(
+        'users',
+        where: 'email = ?',
+        whereArgs: [email.trim().toLowerCase()],
+      );
+      if (existingEmail.isNotEmpty) return false;
+    }
+
     final salt = SecurityHelper.generateSalt();
     final hash = SecurityHelper.hashPassword(password, salt);
 
     await db.insert('users', {
       'username': username,
+      'email': email?.trim().toLowerCase(),
       'password_hash': hash,
       'salt': salt,
       'created_at': DateTime.now().toIso8601String(),
@@ -281,12 +301,13 @@ class AppDatabase {
     return true;
   }
 
-  Future<bool> authenticateUser(String username, String password) async {
+  Future<bool> authenticateUser(String identifier, String password) async {
     final db = await database;
+    final cleanId = identifier.trim();
     final results = await db.query(
       'users',
-      where: 'username = ?',
-      whereArgs: [username],
+      where: 'username = ? OR email = ?',
+      whereArgs: [cleanId, cleanId.toLowerCase()],
     );
     if (results.isEmpty) return false;
 
@@ -295,6 +316,178 @@ class AppDatabase {
     final expectedHash = user['password_hash'] as String;
 
     return SecurityHelper.verifyPassword(password, salt, expectedHash);
+  }
+
+  /// Resolves the actual canonical username for either a username or a bound email identifier.
+  Future<String?> getUsernameForIdentifier(String identifier) async {
+    final db = await database;
+    final cleanId = identifier.trim();
+    final results = await db.query(
+      'users',
+      columns: ['username'],
+      where: 'username = ? OR email = ?',
+      whereArgs: [cleanId, cleanId.toLowerCase()],
+    );
+    if (results.isNotEmpty) {
+      return results.first['username'] as String;
+    }
+    return null;
+  }
+
+  /// Retrieves the bound email for a given user.
+  Future<String?> getUserEmail(String username) async {
+    final db = await database;
+    final results = await db.query(
+      'users',
+      columns: ['email'],
+      where: 'username = ?',
+      whereArgs: [username],
+    );
+    if (results.isNotEmpty) {
+      return results.first['email'] as String?;
+    }
+    return null;
+  }
+
+  /// Binds or updates a recovery email address for a user.
+  Future<bool> bindEmailToUser(String username, String email) async {
+    final db = await database;
+    final cleanEmail = email.trim().toLowerCase();
+    final existing = await db.query(
+      'users',
+      where: 'email = ? AND username != ?',
+      whereArgs: [cleanEmail, username],
+    );
+    if (existing.isNotEmpty) return false;
+
+    final count = await db.update(
+      'users',
+      {'email': cleanEmail},
+      where: 'username = ?',
+      whereArgs: [username],
+    );
+    return count > 0;
+  }
+
+  /// Looks up a user account by email address or username.
+  Future<Map<String, dynamic>?> getUserByEmail(String email) async {
+    final db = await database;
+    final cleanEmail = email.trim().toLowerCase();
+    final results = await db.query(
+      'users',
+      where: 'email = ? OR username = ?',
+      whereArgs: [cleanEmail, email.trim()],
+    );
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  /// Updates a user's password using their bound email address (for password recovery).
+  Future<bool> updatePasswordByEmail(String email, String newPassword) async {
+    final db = await database;
+    final cleanEmail = email.trim().toLowerCase();
+    final newSalt = SecurityHelper.generateSalt();
+    final newHash = SecurityHelper.hashPassword(newPassword, newSalt);
+
+    final count = await db.update(
+      'users',
+      {'password_hash': newHash, 'salt': newSalt},
+      where: 'email = ? OR username = ?',
+      whereArgs: [cleanEmail, email.trim()],
+    );
+    return count > 0;
+  }
+
+  /// Checks if a username or email has existing transactions or goals in the local SQLite database.
+  Future<bool> hasUserData(String username) async {
+    final db = await database;
+    final txRes = await db.rawQuery(
+      'SELECT COUNT(*) as c FROM transactions WHERE username = ?',
+      [username],
+    );
+    final txCount = txRes.isNotEmpty ? (txRes.first['c'] as int? ?? 0) : 0;
+
+    final goalsRes = await db.rawQuery(
+      'SELECT COUNT(*) as c FROM goals WHERE username = ?',
+      [username],
+    );
+    final goalsCount = goalsRes.isNotEmpty ? (goalsRes.first['c'] as int? ?? 0) : 0;
+    return txCount > 0 || goalsCount > 0;
+  }
+
+  /// Migrates all ledger data (transactions, accounts, budgets, goals, and profile)
+  /// from an existing local account to a bound Google account.
+  Future<void> migrateAndMergeUserData({
+    required String fromUsername,
+    required String toUsername,
+    required bool mergeWithExisting,
+  }) async {
+    if (fromUsername == toUsername) return;
+    final db = await database;
+
+    await db.transaction((txn) async {
+      // 1. Transactions
+      final fromTx = await txn.query('transactions', where: 'username = ?', whereArgs: [fromUsername]);
+      for (var tx in fromTx) {
+        final txMap = Map<String, dynamic>.from(tx);
+        txMap['username'] = toUsername;
+        await txn.insert('transactions', txMap, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+
+      // 2. Accounts
+      final fromAccounts = await txn.query('accounts', where: 'username = ?', whereArgs: [fromUsername]);
+      for (var acc in fromAccounts) {
+        await txn.insert('accounts', {
+          'username': toUsername,
+          'name': acc['name'],
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      }
+
+      // 3. Budgets
+      final fromBudgets = await txn.query('budgets', where: 'username = ?', whereArgs: [fromUsername]);
+      for (var b in fromBudgets) {
+        await txn.insert('budgets', {
+          'username': toUsername,
+          'category': b['category'],
+          'amount_limit': b['amount_limit'],
+        }, conflictAlgorithm: mergeWithExisting ? ConflictAlgorithm.ignore : ConflictAlgorithm.replace);
+      }
+
+      // 4. Goals
+      final fromGoals = await txn.query('goals', where: 'username = ?', whereArgs: [fromUsername]);
+      for (var g in fromGoals) {
+        final goalMap = Map<String, dynamic>.from(g);
+        goalMap['username'] = toUsername;
+        await txn.insert('goals', goalMap, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+
+      // 5. Profile
+      final fromProfile = await txn.query('profiles', where: 'username = ?', whereArgs: [fromUsername]);
+      final toProfile = await txn.query('profiles', where: 'username = ?', whereArgs: [toUsername]);
+      if (fromProfile.isNotEmpty) {
+        if (toProfile.isEmpty) {
+          final pMap = Map<String, dynamic>.from(fromProfile.first);
+          pMap['username'] = toUsername;
+          await txn.insert('profiles', pMap, conflictAlgorithm: ConflictAlgorithm.replace);
+        } else if (!mergeWithExisting) {
+          final f = fromProfile.first;
+          await txn.update('profiles', {
+            'currency': f['currency'],
+            'theme': f['theme'],
+            'primary_color': f['primary_color'],
+            'secondary_color': f['secondary_color'],
+            'text_color': f['text_color'],
+          }, where: 'username = ?', whereArgs: [toUsername]);
+        }
+      }
+
+      // 6. Bind Google email in local user record
+      await txn.update(
+        'users',
+        {'email': toUsername},
+        where: 'username = ?',
+        whereArgs: [fromUsername],
+      );
+    });
   }
 
   /// Registers or signs in a Google user, binding their ledger records to their Google email.

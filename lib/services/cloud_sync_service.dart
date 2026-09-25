@@ -29,6 +29,25 @@ class CloudSyncService {
   /// Current authenticated Firebase User UID
   static String? get currentUid => FirebaseAuth.instance.currentUser?.uid;
 
+  /// Checks whether cloud Firestore already has any data stored for the current Firebase UID or user.
+  static Future<bool> hasCloudData([String? targetUid]) async {
+    if (!isCloudAvailable) return false;
+    final uid = targetUid ?? currentUid;
+    if (uid == null) return false;
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final txSnapshot = await firestore.collection('users').doc(uid).collection('transactions').limit(1).get();
+      if (txSnapshot.docs.isNotEmpty) return true;
+      final goalsSnapshot = await firestore.collection('users').doc(uid).collection('goals').limit(1).get();
+      if (goalsSnapshot.docs.isNotEmpty) return true;
+      final vaultDoc = await firestore.collection('users').doc(uid).collection('vault').doc('budgets').get();
+      if (vaultDoc.exists) return true;
+    } catch (e) {
+      debugPrint('CloudSyncService.hasCloudData check error: $e');
+    }
+    return false;
+  }
+
   /// Performs an intelligent two-way synchronization between SQLite and Firestore.
   static Future<bool> sync(String username) async {
     if (!isCloudAvailable) {
