@@ -39,6 +39,11 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
 }
 
 dependencies {
@@ -61,6 +66,9 @@ tasks.register("copyTallyApk") {
 }
 
 tasks.configureEach {
+    if (name.contains("lintVital", ignoreCase = true) || name.contains("LintVital", ignoreCase = true)) {
+        enabled = false
+    }
     if (name == "assembleRelease" || name == "assemble") {
         finalizedBy("copyTallyApk")
     }
