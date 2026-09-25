@@ -9,6 +9,7 @@
 > [!TIP]
 > **Screenshots Placeholder**: Capture and place your high-resolution screenshots in `assets/screenshots/` (e.g. `splash.png`, `dashboard.png`, `home_tour.png`, `accounts_tour.png`, `biometric_prompt.png`, `settings_guide.png`, `pro_paywall.png`, `google_auth.png`).
 > Recommended screens to capture:
+>
 > 1. **Biometric Quick Setup Modal**: Post-login prompt asking to enable screen lock/fingerprint.
 > 2. **Home Screen Feature Tour**: Highlighting transaction auto-fill and category tips.
 > 3. **Accounts Screen Walkthrough**: Explaining how to add new custom account types.
@@ -25,30 +26,36 @@
 ## ✨ Features & Capabilities
 
 ### 1. 🌈 Flowing Colors Brand Splash & Cold-Boot Polish
+
 - **Dynamic Gradient Sweep**: Fluid linear gradient shader washing vibrant colors (electric violet, ocean cyan, emerald green, solar amber) through the text **"TALLY"**.
 - **Zero Black-Screen Startup**: Immediate rendering prevents the default blank/black frame cold-boot hitch on mobile devices.
 - **Glowing Ambient Pulse**: Breathing micro-animations and smooth cross-fade transition into the login or dashboard shell.
 
 ### 2. ⚡ Zero-Lag Lazy-Loaded Tab Architecture
+
 - **Instant Login Rendering**: Only the active Home dashboard (Tab 0) is built upon authentication, completely eliminating the 5-frame hitch caused by mounting all 5 analytical screens simultaneously.
 - **Smart Idle Pre-Warming**: Sequentially warms up subsequent tabs (Insights, Goals, Accounts, Profile) in the background during idle frame windows (350ms staggered intervals), ensuring zero tab-switch stutter without loading all screens upfront.
 - **Debug-Safe Binding**: Integrated `WidgetsFlutterBinding.ensureInitialized()` and SQLite FFI guards to guarantee instant loading in both Debug and Release build modes.
 
 ### 3. 🌐 "Overall" Consolidated Accounts & Wallet Intelligence
+
 - **Consolidated Multi-Wallet View**: Accounts screen includes an **"Overall" (🌐 All Accounts)** mode displaying cumulative balance, total expenditure across all cards/wallets, and unified transaction feeds.
 - **Multi-Month Wallet Analytics**: Chart dynamically filters for individual accounts or displays consolidated multi-month trend analysis when "Overall" is selected.
 
 ### 4. 🔄 Unified Bidirectional Currency Synchronization
+
 - **Instant Dual-Location Sync**: Switching currencies from either the **Home Dashboard AppBar** or the **Profile Settings modal** immediately syncs across the entire application and updates the SQLite database persistently.
 - **Visual Feedback**: Active currency checkmarks and theme-tinted badges in both picker interfaces.
 
 ### 5. 🎨 Graphic Theme Studio & Custom Identity
+
 - **Fine-Grained Graphic Color Control**: Fine-tune primary and secondary accent colors with interactive Hue, Saturation, and Lightness (HSV) sliders or direct Hex input (`#8B5CF6`).
 - **Curated Theme Palettes**: Quick-select from designer palettes (Violet Neon, Ocean Cyan, Emerald Matrix, Solar Amber, Rose Velvet, Cyberpunk Teal).
 - **Custom Profile Photo Uploads**: Upload profile pictures from the device gallery with automatic fallback to stylized initial avatars.
 - **Personal Bio & Display Name**: Edit custom profile text, displayed across the app header and profile dashboard.
 
 ### 6. 🛡️ Secure SQLite Database Vault & Cloud Architecture
+
 - **On-Device Encrypted SQL Ledger**: All user accounts, transactions, budgets, goals, and customized profiles are securely stored in an on-device SQLite database (`finance_vault.db`).
 - **Cryptographic Password Protection**: User passwords are protected using SHA-256 cryptographic hashing with unique random salts.
 - **Strict User Isolation**: Foreign-key scoped queries guarantee that no account can ever access another user's financial records.
@@ -56,12 +63,14 @@
 - **Firebase Ready (Hybrid Architecture)**: Abstracted database repository ready for instant multi-device cloud synchronization with Firebase Firestore & Firebase Auth.
 
 ### 7. 📈 Interactive Multi-Month Analytics Charts
+
 - **Multi-Month Navigation**: Browse previous and future months seamlessly with `<` and `>` arrow selectors.
 - **Chart Style Toggle**: Switch instantly between a **Smooth Line Flow** (daily balance and cumulative progression) and a **Segmented Donut Breakdown** (category distribution).
 - **Metric Filter Selectors**: Toggle focus between **Spend (Expenses)**, **Income (Received)**, and **All (Net)**.
 - **Dual-Screen Availability**: Embedded on both the **Home Dashboard** and the **Accounts & Wallets** screen.
 
 ### 8. 🧠 Executive Spending Behavior Summary
+
 - **Dynamic Spending Persona**: Real-time behavioral badges based on cumulative savings velocity:
   - 🌟 *Master Wealth Builder* (Savings rate ≥ 40%)
   - 💎 *Balanced Strategist* (Savings rate 20% – 40%)
@@ -72,10 +81,12 @@
 - **Peak Outflow Detector**: Real-time callout identifying the single largest expense recorded.
 
 ### 9. ⚙️ Dedicated Profile Settings Modal
+
 - Access theme customizers, image uploaders, display name editors, currency switchers, password managers, and SQL data export from a central modal sheet.
 - **One-Tap Home Redirection**: Tapping the user avatar in the Home page AppBar instantly navigates directly to the Profile tab.
 
 ### 10. ⏰ 3-Hour Expense Tally Reminders & Secret Dev Easter Egg
+
 - **Offline-First Periodic Reminders**: Scheduled notifications reminding you to tally up recent expenses every 3 hours across active daytime hours (**9:00 AM, 12:00 PM, 3:00 PM, 6:00 PM, and 9:00 PM**).
 - **Quiet Hours at Night**: Completely silent between **11:00 PM and 9:00 AM** to respect your sleep.
 - **20 Friendly Conversational Prompts**: Rotates between 20 warm, casual check-ins that feel like a friend asking about coffee, snacks, impulse buys, or savings goals.
@@ -83,6 +94,7 @@
 - **Cross-Platform Scheduling**: Uses `flutter_local_notifications` and `timezone` with Android `POST_NOTIFICATIONS` and `SCHEDULE_EXACT_ALARM` permissions to ensure alarms persist across device reboots.
 
 ### 11. 🎨 Ledger Brand Identity, Animated Startup & Dynamic Contrast System
+
 - **Official Ledger Brand Mark**: Hand-crafted four vertical strokes and diagonal slash — the oldest counting system, built into high-resolution launcher icons and vector assets (`assets/icons/`).
 - **Native 60fps Multi-Stage Animated Startup**:
   - **Stage 1 (Icon Drawing)**: Mathematical Bezier path rendering of the 4 vertical marks in cream (`#F6F0E1`) and slash in coral (`#E4572E`) on `#17493B` forest green.
@@ -97,6 +109,7 @@
   - Eliminates hardcoded white/black text across all screens, ensuring pristine contrast and readability regardless of chosen theme.
 
 ### 12. 🧭 Interactive Step-by-Step Feature Tours (New Users & Replayable)
+
 - **Home / Dashboard Onboarding**: Introduces new users to Tally's core financial hub:
   - Explains the floating `+` button for rapid transaction recording.
   - **Auto-Fill Magic**: Highlights that users can leave the **Title** field empty to automatically auto-fill it with their selected category name.
@@ -109,11 +122,13 @@
 - **Replay Anytime**: Users can reset and re-launch both walkthroughs on demand from the Profile Settings menu.
 
 ### 13. 🔐 Post-Login Biometric Quick Setup Prompt
+
 - **Seamless Prompting**: Upon logging in, Tally verifies whether the user has configured biometric login or device screen lock.
 - **One-Tap Enrollment**: If not configured, displays an elegant, non-intrusive popup offering immediate configuration via native biometric authentication (Fingerprint, Face ID, or PIN).
 - **Session-Aware**: Prompts smoothly upon session login without interrupting tab switching, and resets state upon logout.
 
 ### 14. 📚 Comprehensive "What Each Setting Does" Features Guide
+
 - **In-App Educational Guide**: Accessible from the Profile AppBar and the top of the Settings bottom sheet.
 - **Detailed Explanations**: Breaks down what every single setting and function does in clear, user-friendly language:
   - Brand Palettes (Ledger, Paper, Ink) & instant application-wide styling.
@@ -125,6 +140,7 @@
   - Real-time dynamic currency switcher.
 
 ### 15. 💎 Tally Pro & Freemium Monetization Engine
+
 - **Strategic Power-User Gating**: Follows 2026 leading fintech best practices (e.g. Copilot Money, Monarch, Splitwise) keeping essential utility (expense logging, balance tracking, multi-account management) 100% free while gating advanced capabilities behind **Tally Pro**:
   - **Smart Insights & Predictive Velocity**: Gated behind an elegant, frosted preview lock screen displaying daily spending run-rate mockups, savings trajectory analysis, and direct "Unlock Tally Pro" CTA.
   - **Graphic Theme Studio**: Fine-grained RGB/HSV sliders, bespoke color palettes, and text tone customizers require Pro membership.
@@ -136,12 +152,14 @@
   - Interactive unlock modal supporting codes `PROVIP` or `FINTECH2026` (unlocks full Pro tier) and `NOADS` (unlocks ad-free experience), with instant "Reset to Free Tier" for developer and QA validation.
 
 ### 16. 📢 Native Contextual Partner Ad Banners (100% Removable)
+
 - **Fintech-First Non-Intrusive Design**: Replaced aggressive, trust-destroying popups or interstitials with sleek, theme-matched partner banner cards.
 - **Integrated Placements**: Embedded naturally between the Total Balance Card / Interactive Chart and Recent Transactions on `DashboardScreen`, as well as on `AccountsScreen` and `AllTransactionsScreen`.
 - **Dynamic Sponsor Rotation**: Styled with rounded container borders, an unobtrusive "Ad" chip, financial partner benefits (e.g. high-yield savings, cloud infrastructure, smart bookkeeping), and a quick "Hide" shortcut that opens the paywall modal.
 - **Zero-Footprint Dismissal**: When the user unlocks Pro or purchases "Remove Ads", the banner returns `SizedBox.shrink()` (0 pixels height) with no layout shift or leftover padding.
 
 ### 17. 🔑 Google Account Authentication & Cloud Ledger Binding
+
 - **1-Tap Google Sign-In**: Added authentic "Sign in with Google" button on `LoginScreen` with the official Google logo.
 - **Cross-Platform Compatibility**: Uses native Google Identity Services on mobile/web with a styled Google Account Picker fallback for Windows desktop, emulators, and local test environments.
 - **Encrypted Database Identity Binding**: Associates all SQLite accounts, transactions, budgets, goals, and customized profiles directly to the user's Google email (`user_id`), preserving data across logouts and devices.
@@ -178,6 +196,7 @@ lib/
 │   └── profile_screen.dart         # Features & Settings guide, Theme Studio & tours reset
 ├── services/                       # State & Persistence
 │   ├── monetization_service.dart   # Tally Pro, Remove Ads & promo code engine
+│   ├── ad_service.dart             # Google Mobile Ads (AdMob) initialization & BannerAd
 │   ├── google_auth_service.dart    # Google Sign-In & SQLite identity binding
 │   ├── cloud_sync_service.dart     # Two-way SQLite & Cloud Firestore synchronization
 │   ├── biometric_service.dart      # Biometric & screen lock auth & setup modal
@@ -189,7 +208,8 @@ lib/
 │       ├── app_database.dart       # SQLite tables, migrations, CRUD & SQL export
 │       └── security_helper.dart    # SHA-256 password salting & verification
 ├── utils/                          # Styling & Design Tokens
-│   └── constants.dart              # Dynamic theme generator, icons & currencies
+│   ├── constants.dart              # Dynamic theme generator, icons & currencies
+│   └── password_validator.dart     # Strong password validation (10+ chars, 1 upper, 1 lower, 1 special, 3 numbers)
 └── widgets/                        # Reusable UI & Custom Painters
     ├── ad_banner_widget.dart       # Theme-adaptive native partner banner card
     ├── feature_tour_dialog.dart    # Step-by-step onboarding walkthrough dialog
@@ -220,30 +240,37 @@ lib/
 Follow these steps to clone and run the project locally on your machine.
 
 ### 1. Prerequisites
+
 - **Flutter SDK**: 3.24.0 or higher (`Channel stable`)
 - **Dart SDK**: 3.5.0 or higher
 - **Java Development Kit (JDK)**: **Java 17 or Java 21 LTS** (⚠️ *Do NOT use Java 25+, as Gradle 8.14 is incompatible with Java 25*).
 - **Android Studio** (for Android emulator / device deployment) or **Visual Studio** (for Windows desktop deployment).
 
 ### 2. Clone the Repository
+
 ```bash
 git clone https://github.com/AREEB-AZHAR/flutter_calculator_new.git
 cd flutter_calculator_new
 ```
 
 ### 3. Ensure Compatible JDK Configuration
+
 If you have Android Studio installed with bundled JBR 25, configure Flutter globally to point to your compatible Java 17/21 installation:
+
 ```bash
 flutter config --jdk-dir "C:\Program Files\Java\jdk-21.0.11"
 ```
 
 ### 4. Fetch Dependencies
+
 ```bash
 flutter pub get
 ```
 
 ### 5. Verify Toolchain
+
 Ensure all checks pass cleanly:
+
 ```bash
 flutter doctor -v
 flutter analyze
@@ -251,7 +278,9 @@ flutter test
 ```
 
 ### 6. Firebase Authentication Setup (Google Sign-In)
+
 To authenticate with your **actual Google Account** across Android and Windows desktop:
+
 1. Go to the [Firebase Console](https://console.firebase.google.com/) and click **Add Project** (e.g. `tally-finance`).
 2. Navigate to **Build > Authentication** and enable the **Google** sign-in provider.
 3. In **Project Settings > General**:
@@ -268,6 +297,7 @@ To authenticate with your **actual Google Account** across Android and Windows d
 ## 🚀 Running the Application
 
 ### On Mobile (Android Device / Emulator)
+
 ```bash
 # List available devices
 flutter devices
@@ -277,11 +307,13 @@ flutter run -d <device-id>
 ```
 
 ### On Windows Desktop
+
 ```bash
 flutter run -d windows
 ```
 
 ### On Chrome / Web
+
 ```bash
 flutter run -d chrome
 ```
@@ -291,24 +323,57 @@ flutter run -d chrome
 ## 📦 Building Releases
 
 ### Android APK
+
 ```bash
 flutter build apk --release
 ```
+
 The output APK will be generated at:
+
 - `build/app/outputs/flutter-apk/tally.apk`
 - `build/app/outputs/flutter-apk/tally-release.apk`
 - `build/app/outputs/flutter-apk/app-release.apk`
 
 ### Windows Executable
+
 ```bash
 flutter build windows --release
 ```
+
 The output executable will be generated at `build/windows/x64/runner/Release/tally.exe`.
 
 ---
 
 ## 📝 Recent Changelog
-- **v1.8.1 (Current)**:
+
+- **v1.8.2 (Current)**:
+  - **Google Account Binding & Data Migration / Conflict Resolution**:
+    - Fixed critical bug where linking/binding a Google account from an existing local session treated the Google account as brand new, replacing local ledger views with empty state.
+    - Added dual-layer conflict detection checking both Google Cloud Firestore (`CloudSyncService.hasCloudData`) and SQLite (`AppDatabase.hasUserData`).
+    - If existing cloud data is detected, an interactive dialog allows the user to either **"Migrate & Merge Data"** (merging local transactions, accounts, budgets, goals, and profile preferences into the Google account and syncing to cloud) or **"Use Google Account Data As-Is"**.
+    - If no existing cloud data is found, seamlessly migrates all local ledger data directly to the Google account and immediately syncs to Cloud Firestore.
+  - **Bound Recovery Email Architecture & Forgot Password Reset Flow**:
+    - Transitioned registration and authentication from username-only to requiring bound recovery email addresses.
+    - Updated database schema with a non-destructive migration adding `email` column to `users` table in `lib/services/database/app_database.dart`.
+    - Added full **"Forgot Password?"** dialog on `LoginScreen` with bound email lookup, real Firebase password reset email dispatching, and in-app secure password reset.
+    - Added recovery email status badge and **"Bind Recovery Email"** interactive dialog in Profile Settings for existing local accounts.
+    - Authentication supports logging in seamlessly with either the canonical username or the bound recovery email.
+  - **Strong Password Security System**:
+    - Built comprehensive password validation engine (`PasswordValidator` in `lib/utils/password_validator.dart`) enforcing strict criteria:
+      1. At least 10 characters long
+      2. At least 1 uppercase letter (A-Z)
+      3. At least 1 lowercase letter (a-z)
+      4. At least 1 special character (`!@#$%^&*...`)
+      5. At least 3 numbers (`0-9`)
+    - Integrated real-time live security requirement checklist in registration and password reset dialogs with animated visual checkmarks and strength indicator.
+  - **VIP Subscription Reset Capability for Testing**:
+    - Added a dedicated **"Reset VIP Subscription (Test Mode)"** button directly inside the Monetization card on the Profile screen, allowing testers to immediately revert back to the Free tier after entering VIP mode.
+    - Extended promo code redemption engine (`MonetizationService.redeemPromoCode`) to support `RESETVIP`, `RESET`, `RESETPRO`, `FREE`, and `FREEVIP` codes.
+  - **Authentic Google Mobile Ads (AdMob) Integration**:
+    - Integrated `google_mobile_ads: ^9.1.0` and configured AdMob Application ID meta-data in `android/app/src/main/AndroidManifest.xml`.
+    - Created `AdService` (`lib/services/ad_service.dart`) with safe initialization and standard Google AdMob test banner ad unit IDs (`ca-app-pub-3940256099942544/6300978111`).
+    - Updated `AdBannerWidget` to dynamically render real Google `AdWidget(ad: _bannerAd)` on supported mobile devices with a "Remove Ads" action, while providing a graceful sponsored fallback on desktop (Windows) and web.
+- **v1.8.1**:
   - **Theme-Adaptive Deletion Warning Confirmation Dialog**:
     - Created `delete_confirmation_dialog.dart` featuring a modern modal with a danger icon container, highlighted item detail preview (e.g. `Groceries • -$45` or `Japan Vacation • Target: $3,500`), undo reminder note, Cancel action, and high-contrast red Delete confirmation button.
     - Integrated with `Dismissible` in `transaction_tile.dart`: swiping a transaction presents the warning dialog. Tapping Cancel snaps the tile back smoothly with zero deletion.

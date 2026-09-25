@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'screens/splash_screen.dart';
 import 'services/notification_service.dart';
+import 'services/ad_service.dart';
 import 'services/monetization_service.dart';
 import 'services/state.dart';
 import 'utils/constants.dart';
@@ -24,6 +25,9 @@ void main() async {
 
   // Initialize monetization and pro/ad-free purchase state
   await MonetizationService.initialize();
+
+  // Initialize Google Mobile Ads SDK on supported platforms
+  await AdService.initialize();
 
   // Load saved theme settings so SplashScreen and LoginScreen immediately boot with the user's chosen theme
   await AppState.initGlobalTheme();

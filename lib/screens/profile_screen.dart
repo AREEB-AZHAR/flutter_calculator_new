@@ -16,6 +16,7 @@ import '../services/cloud_sync_service.dart';
 import '../utils/constants.dart';
 import '../widgets/color_picker_dialog.dart';
 import '../widgets/tally_brand_painters.dart';
+import '../utils/password_validator.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -44,22 +45,112 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (googleUser != null && mounted) {
         final previousUser = AppState.currentUser;
         if (previousUser != null && previousUser != googleUser.email) {
+          final hasCloud = await CloudSyncService.hasCloudData(googleUser.id);
+          final hasLocal = await AppDatabase.instance.hasUserData(googleUser.email);
+
+          // Register or ensure Google user profile exists in database
           await AppDatabase.instance.authenticateOrRegisterGoogleUser(
             email: googleUser.email,
             displayName: googleUser.displayName,
             photoUrl: googleUser.photoUrl,
           );
+
+          if (hasCloud || hasLocal) {
+            if (!mounted) return;
+            // Existing data detected for this Google account: ask user for their preference
+            final choice = await showDialog<String>(
+              context: context,
+              barrierDismissible: false,
+              builder: (ctx) => AlertDialog(
+                backgroundColor: Theme.of(ctx).colorScheme.surface,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                title: const Row(
+                  children: [
+                    Icon(Icons.cloud_sync_rounded, color: Colors.blueAccent, size: 28),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Existing Data Detected',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                content: Text(
+                  'We found existing cloud or ledger data connected to ${googleUser.email}.\n\n'
+                  'Would you like to migrate & merge your local "$previousUser" records into this Google Account, or use the existing Google Account data as-is?',
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.8),
+                  ),
+                ),
+                actions: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx, 'use_google'),
+                    child: const Text('Use Google Data As-Is'),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.primary),
+                    onPressed: () => Navigator.pop(ctx, 'merge'),
+                    child: const Text('Migrate & Merge Data', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
+            );
+
+            if (choice == 'merge') {
+              await AppDatabase.instance.migrateAndMergeUserData(
+                fromUsername: previousUser,
+                toUsername: googleUser.email,
+                mergeWithExisting: true,
+              );
+              await CloudSyncService.sync(googleUser.email);
+              await AppState.loadAllUserData(googleUser.email);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('🎉 Merged "$previousUser" records into ${googleUser.email}!'),
+                    backgroundColor: Colors.teal,
+                  ),
+                );
+              }
+            } else {
+              // 'use_google'
+              await CloudSyncService.sync(googleUser.email);
+              await AppState.loadAllUserData(googleUser.email);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Switched to ${googleUser.email} existing cloud ledger.'),
+                    backgroundColor: Colors.blueAccent,
+                  ),
+                );
+              }
+            }
+          } else {
+            // No existing Google data: seamlessly migrate local data directly!
+            await AppDatabase.instance.migrateAndMergeUserData(
+              fromUsername: previousUser,
+              toUsername: googleUser.email,
+              mergeWithExisting: false,
+            );
+            await CloudSyncService.sync(googleUser.email);
+            await AppState.loadAllUserData(googleUser.email);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('🎉 Local data migrated & bound to ${googleUser.email}!'),
+                  backgroundColor: Colors.teal,
+                ),
+              );
+            }
+          }
+        } else {
+          await AppState.loadAllUserData(googleUser.email);
         }
-        await AppState.loadAllUserData(googleUser.email);
+
         setState(() {});
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('🎉 Bound to Google Account: ${googleUser.email}'),
-              backgroundColor: Colors.teal,
-            ),
-          );
-        }
       }
     } catch (e) {
       if (mounted) {
@@ -68,6 +159,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       }
     }
+  }
+
+  Future<void> _promptBindEmail() async {
+    final currentUsername = AppState.currentUser;
+    if (currentUsername == null) return;
+
+    final currentEmail = await AppDatabase.instance.getUserEmail(currentUsername);
+    final emailCtrl = TextEditingController(text: currentEmail ?? '');
+
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(ctx).colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: const Row(
+          children: [
+            Icon(Icons.mark_email_read_rounded, color: Colors.teal, size: 24),
+            SizedBox(width: 8),
+            Text('Bind Recovery Email', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Binding an email address enables secure password recovery and cloud data portability if you forget your password.',
+              style: TextStyle(fontSize: 12.5, color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.7)),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              autofocus: true,
+              style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface, fontSize: 14),
+              decoration: InputDecoration(
+                labelText: 'Recovery Email Address',
+                hintText: 'e.g. user@example.com',
+                prefixIcon: const Icon(Icons.email_outlined, size: 20),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.primary, foregroundColor: Colors.white),
+            onPressed: () async {
+              final newEmail = emailCtrl.text.trim();
+              if (newEmail.isEmpty || !PasswordValidator.isValidEmail(newEmail)) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a valid email address'), backgroundColor: Colors.redAccent),
+                );
+                return;
+              }
+
+              final success = await AppDatabase.instance.bindEmailToUser(currentUsername, newEmail);
+              if (ctx.mounted) {
+                Navigator.pop(ctx);
+              }
+              if (mounted) {
+                if (success) {
+                  setState(() {});
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('🎉 Recovery email bound: $newEmail'), backgroundColor: Colors.teal),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('This email is already registered to another account.'), backgroundColor: Colors.redAccent),
+                  );
+                }
+              }
+            },
+            child: const Text('Save Email'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _pickProfilePhoto() async {
@@ -567,12 +739,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           style: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
                                         ),
                                         subtitle: Text(
-                                          'Enter a VIP unlock code (e.g. PROVIP or NOADS)',
+                                          'Enter promo or reset codes (e.g. PROVIP, NOADS, or RESETVIP)',
                                           style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12),
                                         ),
                                         trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
                                         onTap: () {
                                           MonetizationService.showPromoCodeDialog(context);
+                                        },
+                                      ),
+
+                                      // 4. Reset VIP Subscription for Testing
+                                      ValueListenableBuilder<bool>(
+                                        valueListenable: MonetizationService.isProUnlockedNotifier,
+                                        builder: (context, isPro, _) {
+                                          return ValueListenableBuilder<bool>(
+                                            valueListenable: MonetizationService.isAdsRemovedNotifier,
+                                            builder: (context, isAdsRemoved, _) {
+                                              if (!isPro && !isAdsRemoved) return const SizedBox.shrink();
+                                              return Column(
+                                                children: [
+                                                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                                  ListTile(
+                                                    leading: Container(
+                                                      padding: const EdgeInsets.all(8),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.redAccent.withValues(alpha: 0.15),
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: const Icon(Icons.restart_alt_rounded, color: Colors.redAccent, size: 20),
+                                                    ),
+                                                    title: const Text(
+                                                      'Reset VIP Subscription (Test Mode)',
+                                                      style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                                                    ),
+                                                    subtitle: Text(
+                                                      'Reset Pro & Ad-Free status back to Free tier for testing',
+                                                      style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12),
+                                                    ),
+                                                    trailing: ElevatedButton(
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor: Colors.redAccent,
+                                                        foregroundColor: Colors.white,
+                                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                                      ),
+                                                      onPressed: () async {
+                                                        await MonetizationService.resetPurchases();
+                                                        if (context.mounted) {
+                                                          ScaffoldMessenger.of(context).showSnackBar(
+                                                            const SnackBar(
+                                                              content: Text('🔄 VIP Subscription & Ad-Free status reset to Free Tier.'),
+                                                              backgroundColor: Colors.redAccent,
+                                                            ),
+                                                          );
+                                                        }
+                                                      },
+                                                      child: const Text('Reset', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
                                         },
                                       ),
                                     ],
@@ -1555,7 +1783,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 )
-              else
+              else ...[
                 InkWell(
                   onTap: _linkGoogleAccount,
                   borderRadius: BorderRadius.circular(16),
@@ -1583,6 +1811,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 6),
+                FutureBuilder<String?>(
+                  future: AppState.currentUser != null
+                      ? AppDatabase.instance.getUserEmail(AppState.currentUser!)
+                      : Future.value(null),
+                  builder: (context, snapshot) {
+                    final email = snapshot.data;
+                    return InkWell(
+                      onTap: _promptBindEmail,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: email != null
+                              ? Colors.teal.withValues(alpha: 0.08)
+                              : Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: email != null
+                                ? Colors.teal.withValues(alpha: 0.3)
+                                : Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              email != null ? Icons.mark_email_read_rounded : Icons.email_outlined,
+                              size: 14,
+                              color: email != null ? Colors.teal : Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              email != null ? 'Recovery Email: $email' : 'Bind Recovery Email',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                                color: email != null ? Colors.teal : Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ],
           ),
         ),
