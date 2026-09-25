@@ -57,6 +57,17 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 add_subdirectory("runner")
 
 
+# Hotfix: Patch flutter_local_notifications_windows CW2A conversion bug for MSVC C++17/20
+set(FLUTTER_LOCAL_NOTIFS_PLUGIN_CPP "${CMAKE_CURRENT_SOURCE_DIR}/flutter/ephemeral/.plugin_symlinks/flutter_local_notifications_windows/src/plugin.cpp")
+if(EXISTS "${FLUTTER_LOCAL_NOTIFS_PLUGIN_CPP}")
+  file(READ "${FLUTTER_LOCAL_NOTIFS_PLUGIN_CPP}" FLN_PLUGIN_CPP_CONTENT)
+  if(FLN_PLUGIN_CPP_CONTENT MATCHES "string\\(CW2A\\(args, CP_UTF8\\)\\)")
+    string(REPLACE "const auto payload = string(CW2A(args, CP_UTF8));" "const std::string payload = args != nullptr ? (LPCSTR)CW2A(args, CP_UTF8) : \"\";" FLN_PATCHED_CONTENT "${FLN_PLUGIN_CPP_CONTENT}")
+    file(WRITE "${FLUTTER_LOCAL_NOTIFS_PLUGIN_CPP}" "${FLN_PATCHED_CONTENT}")
+    message(STATUS "Patched flutter_local_notifications_windows plugin.cpp for MSVC compatibility.")
+  endif()
+endif()
+
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.
 include(flutter/generated_plugins.cmake)

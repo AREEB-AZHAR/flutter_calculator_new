@@ -485,6 +485,11 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
     - Fixed Android release build failure caused by `generateReleaseLintVitalReportModel` attempting to hash missing `module.xml`.
     - Disabled `lintVital` tasks in `tasks.configureEach` in `android/app/build.gradle.kts`.
     - Successfully compiled and verified clean release APK generation (`tally.apk` and `tally-release.apk` in `build/app/outputs/flutter-apk/`).
+  - **Windows Desktop Build & MSVC C++20 Fix**:
+    - Fixed Windows MSVC compilation error `C2440: '<function-style-cast>': cannot convert from 'CW2A' to 'std::string'` in `flutter_local_notifications_windows`.
+    - Implemented null-safe `(LPCSTR)CW2A(args, CP_UTF8)` string conversion.
+    - Integrated automated CMake hotfix patch in `windows/CMakeLists.txt` guaranteeing reproducible, flawless Windows compilation across all clean builds.
+    - Successfully compiled and verified clean Windows release executable (`build/windows/x64/runner/Release/balance_tracker.exe`).
 - **v1.7.2**:
   - **Fluid 60fps/120fps Login & Animation Smoothness**:
     - **Eliminated Post-Login Frame Drops**: Removed aggressive post-login background timer loop that previously fired repeated root `setState()` rebuilds every 300ms across 1.5s immediately after authentication.
