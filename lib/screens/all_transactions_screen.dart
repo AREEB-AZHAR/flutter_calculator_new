@@ -211,9 +211,11 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                 ),
               ),
               const SizedBox(height: 6),
-              const AdBannerWidget(
-                margin: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                sponsorCategory: 'Smart Expense Categorization Engine',
+              const RepaintBoundary(
+                child: AdBannerWidget(
+                  margin: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                  sponsorCategory: 'Smart Expense Categorization Engine',
+                ),
               ),
               const SizedBox(height: 4),
 

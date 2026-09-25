@@ -190,11 +190,10 @@ class AppDatabase {
           // Migrate default accounts
           final accList = ['Main', 'Cash', 'Credit Card', 'Digital Wallet'];
           for (var acc in accList) {
-            await db.insert(
-              'accounts',
-              {'username': username, 'name': acc},
-              conflictAlgorithm: ConflictAlgorithm.ignore,
-            );
+            await db.insert('accounts', {
+              'username': username,
+              'name': acc,
+            }, conflictAlgorithm: ConflictAlgorithm.ignore);
           }
 
           // Migrate default budgets
@@ -205,11 +204,11 @@ class AppDatabase {
             'Entertainment': 200.0,
           };
           for (var b in defaultBudgets.entries) {
-            await db.insert(
-              'budgets',
-              {'username': username, 'category': b.key, 'amount_limit': b.value},
-              conflictAlgorithm: ConflictAlgorithm.ignore,
-            );
+            await db.insert('budgets', {
+              'username': username,
+              'category': b.key,
+              'amount_limit': b.value,
+            }, conflictAlgorithm: ConflictAlgorithm.ignore);
           }
         }
       }
@@ -410,7 +409,9 @@ class AppDatabase {
       'SELECT COUNT(*) as c FROM goals WHERE username = ?',
       [username],
     );
-    final goalsCount = goalsRes.isNotEmpty ? (goalsRes.first['c'] as int? ?? 0) : 0;
+    final goalsCount = goalsRes.isNotEmpty
+        ? (goalsRes.first['c'] as int? ?? 0)
+        : 0;
     return txCount > 0 || goalsCount > 0;
   }
 
@@ -426,15 +427,27 @@ class AppDatabase {
 
     await db.transaction((txn) async {
       // 1. Transactions
-      final fromTx = await txn.query('transactions', where: 'username = ?', whereArgs: [fromUsername]);
+      final fromTx = await txn.query(
+        'transactions',
+        where: 'username = ?',
+        whereArgs: [fromUsername],
+      );
       for (var tx in fromTx) {
         final txMap = Map<String, dynamic>.from(tx);
         txMap['username'] = toUsername;
-        await txn.insert('transactions', txMap, conflictAlgorithm: ConflictAlgorithm.replace);
+        await txn.insert(
+          'transactions',
+          txMap,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
 
       // 2. Accounts
-      final fromAccounts = await txn.query('accounts', where: 'username = ?', whereArgs: [fromUsername]);
+      final fromAccounts = await txn.query(
+        'accounts',
+        where: 'username = ?',
+        whereArgs: [fromUsername],
+      );
       for (var acc in fromAccounts) {
         await txn.insert('accounts', {
           'username': toUsername,
@@ -443,50 +456,134 @@ class AppDatabase {
       }
 
       // 3. Budgets
-      final fromBudgets = await txn.query('budgets', where: 'username = ?', whereArgs: [fromUsername]);
+      final fromBudgets = await txn.query(
+        'budgets',
+        where: 'username = ?',
+        whereArgs: [fromUsername],
+      );
       for (var b in fromBudgets) {
-        await txn.insert('budgets', {
-          'username': toUsername,
-          'category': b['category'],
-          'amount_limit': b['amount_limit'],
-        }, conflictAlgorithm: mergeWithExisting ? ConflictAlgorithm.ignore : ConflictAlgorithm.replace);
+        await txn.insert(
+          'budgets',
+          {
+            'username': toUsername,
+            'category': b['category'],
+            'amount_limit': b['amount_limit'],
+          },
+          conflictAlgorithm: mergeWithExisting
+              ? ConflictAlgorithm.ignore
+              : ConflictAlgorithm.replace,
+        );
       }
 
       // 4. Goals
-      final fromGoals = await txn.query('goals', where: 'username = ?', whereArgs: [fromUsername]);
+      final fromGoals = await txn.query(
+        'goals',
+        where: 'username = ?',
+        whereArgs: [fromUsername],
+      );
       for (var g in fromGoals) {
         final goalMap = Map<String, dynamic>.from(g);
         goalMap['username'] = toUsername;
-        await txn.insert('goals', goalMap, conflictAlgorithm: ConflictAlgorithm.replace);
+        await txn.insert(
+          'goals',
+          goalMap,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
 
       // 5. Profile
-      final fromProfile = await txn.query('profiles', where: 'username = ?', whereArgs: [fromUsername]);
-      final toProfile = await txn.query('profiles', where: 'username = ?', whereArgs: [toUsername]);
+      final fromProfile = await txn.query(
+        'profiles',
+        where: 'username = ?',
+        whereArgs: [fromUsername],
+      );
+      final toProfile = await txn.query(
+        'profiles',
+        where: 'username = ?',
+        whereArgs: [toUsername],
+      );
       if (fromProfile.isNotEmpty) {
         if (toProfile.isEmpty) {
           final pMap = Map<String, dynamic>.from(fromProfile.first);
           pMap['username'] = toUsername;
-          await txn.insert('profiles', pMap, conflictAlgorithm: ConflictAlgorithm.replace);
+          await txn.insert(
+            'profiles',
+            pMap,
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
         } else if (!mergeWithExisting) {
           final f = fromProfile.first;
-          await txn.update('profiles', {
-            'currency': f['currency'],
-            'theme': f['theme'],
-            'primary_color': f['primary_color'],
-            'secondary_color': f['secondary_color'],
-            'text_color': f['text_color'],
-          }, where: 'username = ?', whereArgs: [toUsername]);
+          await txn.update(
+            'profiles',
+            {
+              'currency': f['currency'],
+              'theme': f['theme'],
+              'primary_color': f['primary_color'],
+              'secondary_color': f['secondary_color'],
+              'text_color': f['text_color'],
+            },
+            where: 'username = ?',
+            whereArgs: [toUsername],
+          );
         }
       }
 
-      // 6. Bind Google email in local user record
-      await txn.update(
+      // 6. Delete migrated local user account and all redundant local records
+      await txn.delete(
         'users',
-        {'email': toUsername},
         where: 'username = ?',
         whereArgs: [fromUsername],
       );
+      await txn.delete(
+        'profiles',
+        where: 'username = ?',
+        whereArgs: [fromUsername],
+      );
+      await txn.delete(
+        'transactions',
+        where: 'username = ?',
+        whereArgs: [fromUsername],
+      );
+      await txn.delete(
+        'accounts',
+        where: 'username = ?',
+        whereArgs: [fromUsername],
+      );
+      await txn.delete(
+        'budgets',
+        where: 'username = ?',
+        whereArgs: [fromUsername],
+      );
+      await txn.delete(
+        'goals',
+        where: 'username = ?',
+        whereArgs: [fromUsername],
+      );
+    });
+  }
+
+  /// Safely deletes a local user account and all its records (used when migrating to Google).
+  Future<void> deleteLocalUser(String username) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('users', where: 'username = ?', whereArgs: [username]);
+      await txn.delete(
+        'profiles',
+        where: 'username = ?',
+        whereArgs: [username],
+      );
+      await txn.delete(
+        'transactions',
+        where: 'username = ?',
+        whereArgs: [username],
+      );
+      await txn.delete(
+        'accounts',
+        where: 'username = ?',
+        whereArgs: [username],
+      );
+      await txn.delete('budgets', where: 'username = ?', whereArgs: [username]);
+      await txn.delete('goals', where: 'username = ?', whereArgs: [username]);
     });
   }
 
@@ -505,7 +602,10 @@ class AppDatabase {
 
     if (results.isEmpty) {
       final salt = SecurityHelper.generateSalt();
-      final hash = SecurityHelper.hashPassword('GOOGLE_OAUTH_PROTECTED_${SecurityHelper.generateSalt()}', salt);
+      final hash = SecurityHelper.hashPassword(
+        'GOOGLE_OAUTH_PROTECTED_${SecurityHelper.generateSalt()}',
+        salt,
+      );
 
       await db.insert('users', {
         'username': email,
@@ -531,7 +631,9 @@ class AppDatabase {
 
       await db.insert('profiles', {
         'username': email,
-        'display_name': displayName.isNotEmpty ? displayName : email.split('@').first,
+        'display_name': displayName.isNotEmpty
+            ? displayName
+            : email.split('@').first,
         'bio': 'Google Account • Cloud Synced',
         'photo_path': photoUrl,
         'primary_color': regPrimary.toARGB32(),
@@ -543,40 +645,53 @@ class AppDatabase {
       });
 
       for (var acc in ['Main', 'Cash', 'Credit Card', 'Digital Wallet']) {
-        await db.insert(
-          'accounts',
-          {'username': email, 'name': acc},
-          conflictAlgorithm: ConflictAlgorithm.ignore,
-        );
+        await db.insert('accounts', {
+          'username': email,
+          'name': acc,
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
       }
 
       final defaultBudgets = {
-        'Food & Dining': 500.0,
+        'Food & Dining': 5000.0,
         'Housing & Rent': 1500.0,
-        'Transportation': 300.0,
-        'Entertainment': 200.0,
+        'Transportation': 3000.0,
+        'Entertainment': 2000.0,
       };
       for (var b in defaultBudgets.entries) {
-        await db.insert(
-          'budgets',
-          {'username': email, 'category': b.key, 'amount_limit': b.value},
-          conflictAlgorithm: ConflictAlgorithm.ignore,
-        );
+        await db.insert('budgets', {
+          'username': email,
+          'category': b.key,
+          'amount_limit': b.value,
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
       }
     } else {
       if (displayName.isNotEmpty || photoUrl != null) {
         final currentProfile = await loadProfile(email);
-        await saveProfile(currentProfile.copyWith(
-          displayName: displayName.isNotEmpty ? displayName : currentProfile.displayName,
-          photoPath: photoUrl ?? currentProfile.photoPath,
-        ));
+        final hasCustomUploadedPhoto =
+            currentProfile.photoPath != null &&
+            currentProfile.photoPath!.isNotEmpty &&
+            !currentProfile.photoPath!.startsWith('http');
+        await saveProfile(
+          currentProfile.copyWith(
+            displayName: displayName.isNotEmpty
+                ? displayName
+                : currentProfile.displayName,
+            photoPath: hasCustomUploadedPhoto
+                ? currentProfile.photoPath
+                : (photoUrl ?? currentProfile.photoPath),
+          ),
+        );
       }
     }
 
     return true;
   }
 
-  Future<bool> changePassword(String username, String currentPassword, String newPassword) async {
+  Future<bool> changePassword(
+    String username,
+    String currentPassword,
+    String newPassword,
+  ) async {
     final auth = await authenticateUser(username, currentPassword);
     if (!auth) return false;
 
@@ -666,10 +781,17 @@ class AppDatabase {
     }).toList();
   }
 
-  Future<void> saveTransactions(String username, List<model.Transaction> txs) async {
+  Future<void> saveTransactions(
+    String username,
+    List<model.Transaction> txs,
+  ) async {
     final db = await database;
     await db.transaction((txn) async {
-      await txn.delete('transactions', where: 'username = ?', whereArgs: [username]);
+      await txn.delete(
+        'transactions',
+        where: 'username = ?',
+        whereArgs: [username],
+      );
       for (var tx in txs) {
         await txn.insert('transactions', {
           'id': tx.id,
@@ -699,12 +821,14 @@ class AppDatabase {
     for (var r in results) {
       map[r['category'] as String] = (r['amount_limit'] as num).toDouble();
     }
-    return map.isNotEmpty ? map : {
-      'Food & Dining': 500.0,
-      'Housing & Rent': 1500.0,
-      'Transportation': 300.0,
-      'Entertainment': 200.0,
-    };
+    return map.isNotEmpty
+        ? map
+        : {
+            'Food & Dining': 500.0,
+            'Housing & Rent': 1500.0,
+            'Transportation': 300.0,
+            'Entertainment': 200.0,
+          };
   }
 
   Future<void> saveBudgets(String username, Map<String, double> budgets) async {
@@ -769,13 +893,19 @@ class AppDatabase {
       whereArgs: [username],
     );
     final list = results.map((r) => r['name'] as String).toList();
-    return list.isNotEmpty ? list : ['Main', 'Cash', 'Credit Card', 'Digital Wallet'];
+    return list.isNotEmpty
+        ? list
+        : ['Main', 'Cash', 'Credit Card', 'Digital Wallet'];
   }
 
   Future<void> saveAccounts(String username, List<String> accounts) async {
     final db = await database;
     await db.transaction((txn) async {
-      await txn.delete('accounts', where: 'username = ?', whereArgs: [username]);
+      await txn.delete(
+        'accounts',
+        where: 'username = ?',
+        whereArgs: [username],
+      );
       for (var acc in accounts) {
         await txn.insert('accounts', {'username': username, 'name': acc});
       }
@@ -788,16 +918,24 @@ class AppDatabase {
     final buffer = StringBuffer();
     final now = DateTime.now().toIso8601String();
 
-    buffer.writeln('-- ========================================================');
+    buffer.writeln(
+      '-- ========================================================',
+    );
     buffer.writeln('-- Balance Tracker SQL Ledger Backup');
     buffer.writeln('-- User: $username');
     buffer.writeln('-- Export Date: $now');
-    buffer.writeln('-- ========================================================\n');
+    buffer.writeln(
+      '-- ========================================================\n',
+    );
 
     buffer.writeln('BEGIN TRANSACTION;\n');
 
     // Profile
-    final profiles = await db.query('profiles', where: 'username = ?', whereArgs: [username]);
+    final profiles = await db.query(
+      'profiles',
+      where: 'username = ?',
+      whereArgs: [username],
+    );
     if (profiles.isNotEmpty) {
       final p = profiles.first;
       buffer.writeln('-- User Profile');
@@ -808,37 +946,60 @@ class AppDatabase {
     }
 
     // Accounts
-    final accounts = await db.query('accounts', where: 'username = ?', whereArgs: [username]);
+    final accounts = await db.query(
+      'accounts',
+      where: 'username = ?',
+      whereArgs: [username],
+    );
     if (accounts.isNotEmpty) {
       buffer.writeln('-- Accounts & Wallets');
       for (var a in accounts) {
-        buffer.writeln("INSERT INTO accounts (username, name) VALUES ('$username', '${a['name']}');");
+        buffer.writeln(
+          "INSERT INTO accounts (username, name) VALUES ('$username', '${a['name']}');",
+        );
       }
       buffer.writeln();
     }
 
     // Budgets
-    final budgets = await db.query('budgets', where: 'username = ?', whereArgs: [username]);
+    final budgets = await db.query(
+      'budgets',
+      where: 'username = ?',
+      whereArgs: [username],
+    );
     if (budgets.isNotEmpty) {
       buffer.writeln('-- Monthly Budgets');
       for (var b in budgets) {
-        buffer.writeln("INSERT INTO budgets (username, category, amount_limit) VALUES ('$username', '${b['category']}', ${b['amount_limit']});");
+        buffer.writeln(
+          "INSERT INTO budgets (username, category, amount_limit) VALUES ('$username', '${b['category']}', ${b['amount_limit']});",
+        );
       }
       buffer.writeln();
     }
 
     // Goals
-    final goals = await db.query('goals', where: 'username = ?', whereArgs: [username]);
+    final goals = await db.query(
+      'goals',
+      where: 'username = ?',
+      whereArgs: [username],
+    );
     if (goals.isNotEmpty) {
       buffer.writeln('-- Savings Goals');
       for (var g in goals) {
-        buffer.writeln("INSERT INTO goals (id, username, title, target_amount, current_amount, color, icon) VALUES ('${g['id']}', '$username', '${g['title']}', ${g['target_amount']}, ${g['current_amount']}, ${g['color']}, ${g['icon']});");
+        buffer.writeln(
+          "INSERT INTO goals (id, username, title, target_amount, current_amount, color, icon) VALUES ('${g['id']}', '$username', '${g['title']}', ${g['target_amount']}, ${g['current_amount']}, ${g['color']}, ${g['icon']});",
+        );
       }
       buffer.writeln();
     }
 
     // Transactions
-    final txs = await db.query('transactions', where: 'username = ?', whereArgs: [username], orderBy: 'date ASC');
+    final txs = await db.query(
+      'transactions',
+      where: 'username = ?',
+      whereArgs: [username],
+      orderBy: 'date ASC',
+    );
     if (txs.isNotEmpty) {
       buffer.writeln('-- Transactions');
       for (var t in txs) {

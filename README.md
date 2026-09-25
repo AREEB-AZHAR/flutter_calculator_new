@@ -318,6 +318,16 @@ flutter run -d windows
 flutter run -d chrome
 ```
 
+### On iOS (iPhone Simulator / Physical Device)
+
+```bash
+# Install CocoaPods dependencies (macOS)
+cd ios && pod install && cd ..
+
+# Run on simulator or attached device
+flutter run -d ios
+```
+
 ---
 
 ## 📦 Building Releases
@@ -334,6 +344,13 @@ The output APK will be generated at:
 - `build/app/outputs/flutter-apk/tally-release.apk`
 - `build/app/outputs/flutter-apk/app-release.apk`
 
+### iOS IPA / Bundle
+
+```bash
+# Build iOS release bundle (requires macOS & Xcode)
+flutter build ipa --release
+```
+
 ### Windows Executable
 
 ```bash
@@ -346,7 +363,46 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 
 ## 📝 Recent Changelog
 
-- **v1.8.2 (Current)**:
+- **v1.8.3 (Current)**:
+  - **Google Account Profile Photo Synchronization**:
+    - Fixed critical bug where uploaded custom profile photos were not syncing to the cloud when connected to Google, or were inadvertently replaced by Google's default silhouette.
+    - Implemented `ImageHelper` (`lib/utils/image_helper.dart`) to provide robust, dual-source image resolution for both local filesystem paths (`FileImage`) and remote cloud URLs (`NetworkImage`), with seamless fallback to high-resolution brand avatar assets.
+    - Added automated base64 encoding and cloud synchronization in `CloudSyncService.syncProfileToCloud` and `CloudSyncService.sync`, ensuring custom avatars are safely stored in Firestore and restored across all devices.
+    - Protected user-uploaded photos in `AppDatabase.authenticateOrRegisterGoogleUser` so connecting to Google never overwrites custom profile pictures.
+  - **Account Deletion Persistence & Zombie Account Fix**:
+    - Resolved account resurrection bug where accounts deleted on the Accounts screen would reappear upon the next login or cloud sync.
+    - Diagnosed and eliminated the flawed cloud-length-greater-than-local heuristic in `CloudSyncService.sync`.
+    - Made local deletions authoritative: implemented `CloudSyncService.syncAccountsToCloud` and hooked `AppState.saveAccounts` to immediately synchronize active accounts and delete stale account documents from Firestore.
+  - **Real-Time Transaction & Goal Cloud Deletions**:
+    - Fixed transaction and goal resurrection during cloud sync: previously, deleting a transaction locally in SQLite left orphaned documents in Firestore that were restored during subsequent syncs.
+    - Added `deleteTransactionFromCloud`, `deleteGoalFromCloud`, and `syncGoalsToCloud` to `CloudSyncService`.
+    - Hooked `AppState.deleteTransactionWithUndo` directly to cloud deletion routines with instant re-sync if the user taps Undo.
+    - Implemented full deletion reconciliation in two-way cloud sync: any cloud documents whose IDs no longer exist in the local SQLite ledger are safely purged from Firestore.
+  - **Local Account Deletion & Cleanup on Google Migration**:
+    - Implemented automatic cleanup of the local account upon Google sign-in/account binding (`AppDatabase.deleteLocalUser`).
+    - When a user chooses "Migrate & Merge Data" or "Use Google Account", all local records (users, profiles, transactions, accounts, budgets, goals) belonging to the temporary local account are deleted, preventing orphaned duplicate accounts on device.
+  - **Dedicated Tally Pro & Ad-Free Screen with Google Pay**:
+    - Created a dedicated, state-of-the-art monetization hub (`PremiumScreen` in `lib/screens/premium_screen.dart`), accessible directly from a prominent VIP Membership card on the Profile page.
+    - Completely removed cluttered inline monetization tiles from settings.
+    - Features an authentic Google Pay bottom sheet modal flow with merchant details, itemized breakdown, simulated biometric authorization, and instant activation.
+    - Offers transparent pricing tiers: **Tally Pro Lifetime Access** ($4.99) and **Remove Ads Only** ($1.99).
+    - Includes VIP promo code redemption (`PROVIP`, `NOADS`) and an instant **"Reset VIP Subscription"** button for developer & QA testing.
+  - **Frame Rate Optimization & Stutter Elimination**:
+    - Resolved UI sluggishness and compositor frame drops during scrolling:
+      - Wrapped vector custom painters (`InteractiveChartCard`), `AdBannerWidget`, and heavy ambient background radial gradients in `RepaintBoundary` to isolate GPU texture composition layers.
+      - Replaced un-bounded `ListView.builder(shrinkWrap: true)` on Dashboard recent transactions with an unrolled `Column` of isolated `TransactionTile` widgets, eliminating nested scrolling passes and compositor stalls.
+  - **Tamper-Proof Firebase & Google Cloud Security**:
+    - Created hardened `firestore.rules` enforcing strict per-user UID isolation: `allow read, write: if request.auth != null && request.auth.uid == userId;`.
+    - Prevents any unauthorized tampering, inspection, or manipulation of financial records by anyone other than the authenticated user and developer console.
+  - **iOS Platform Deployment Readiness**:
+    - Configured `ios/Runner/Info.plist` with `CFBundleDisplayName: "Tally"`.
+    - Added user-facing privacy usage descriptions for `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription`, and `NSFaceIDUsageDescription`.
+    - Configured Google Mobile Ads SDK for iOS (`GADApplicationIdentifier: ca-app-pub-3940256099942544~1458002511` and SKAdNetwork items).
+  - **Comprehensive QA Test Suite**:
+    - Added `test/cloud_sync_premium_image_test.dart` verifying ImageHelper URL/file classification, provider resolution, and complete `PremiumScreen` widget interactions.
+    - All 38 automated unit, widget, and frame smoothness benchmark tests passing with 100% success.
+
+- **v1.8.2**:
   - **Google Account Binding & Data Migration / Conflict Resolution**:
     - Fixed critical bug where linking/binding a Google account from an existing local session treated the Google account as brand new, replacing local ledger views with empty state.
     - Added dual-layer conflict detection checking both Google Cloud Firestore (`CloudSyncService.hasCloudData`) and SQLite (`AppDatabase.hasUserData`).

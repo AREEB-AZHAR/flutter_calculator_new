@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -17,7 +16,9 @@ import '../utils/constants.dart';
 import '../widgets/color_picker_dialog.dart';
 import '../widgets/tally_brand_painters.dart';
 import '../utils/password_validator.dart';
+import '../utils/image_helper.dart';
 import 'login_screen.dart';
+import 'premium_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -116,13 +117,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
               }
             } else {
-              // 'use_google'
+              // 'use_google' - Clean up local user account since user switched to Google
+              await AppDatabase.instance.deleteLocalUser(previousUser);
               await CloudSyncService.sync(googleUser.email);
               await AppState.loadAllUserData(googleUser.email);
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Switched to ${googleUser.email} existing cloud ledger.'),
+                    content: Text('Switched to ${googleUser.email} existing cloud ledger (local account cleaned up).'),
                     backgroundColor: Colors.blueAccent,
                   ),
                 );
@@ -593,217 +595,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 Card(
                                   color: cardBg,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  child: Column(
-                                    children: [
-                                      // 1. Tally Pro Membership
-                                      ValueListenableBuilder<bool>(
-                                        valueListenable: MonetizationService.isProUnlockedNotifier,
-                                        builder: (context, isPro, _) {
-                                          return ListTile(
-                                            leading: Container(
-                                              padding: const EdgeInsets.all(8),
-                                              decoration: const BoxDecoration(
-                                                gradient: LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFEF4444)]),
-                                                shape: BoxShape.circle,
-                                              ),
-                                              child: const Icon(Icons.workspace_premium, color: Colors.white, size: 20),
-                                            ),
-                                            title: Row(
-                                              children: [
-                                                Text(
-                                                  'Tally Pro Membership',
-                                                  style: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                if (isPro)
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.green.withValues(alpha: 0.2),
-                                                      borderRadius: BorderRadius.circular(6),
-                                                    ),
-                                                    child: const Text('ACTIVE', style: TextStyle(color: Colors.greenAccent, fontSize: 10, fontWeight: FontWeight.bold)),
-                                                  ),
-                                              ],
-                                            ),
-                                            subtitle: Text(
-                                              isPro
-                                                  ? 'All features unlocked: Insights, Theme Studio, Custom Icons & Ad-Free.'
-                                                  : 'Unlock Insights, Theme Studio, Launcher Icons & Ad-Free (\$4.99)',
-                                              style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12),
-                                            ),
-                                            trailing: isPro
-                                                ? const Icon(Icons.check_circle, color: Colors.greenAccent)
-                                                : ElevatedButton(
-                                                    style: ElevatedButton.styleFrom(
-                                                      backgroundColor: Colors.amber.shade700,
-                                                      foregroundColor: Colors.white,
-                                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                                    ),
-                                                    onPressed: () {
-                                                      MonetizationService.showPaywallModal(
-                                                        context,
-                                                        featureTitle: 'Tally Pro All-Access',
-                                                        featureDescription: 'Unlock predictive velocity, spending comparisons, custom themes, app icons, and remove all ads.',
-                                                      );
-                                                    },
-                                                    child: const Text('Upgrade', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                                  ),
-                                          );
-                                        },
+                                  child: ListTile(
+                                    leading: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: const BoxDecoration(
+                                        gradient: LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFEF4444)]),
+                                        shape: BoxShape.circle,
                                       ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-
-                                      // 2. Separate Remove Ads Option
-                                      ValueListenableBuilder<bool>(
-                                        valueListenable: MonetizationService.isAdsRemovedNotifier,
-                                        builder: (context, isAdsRemoved, _) {
-                                          return ValueListenableBuilder<bool>(
-                                            valueListenable: MonetizationService.isProUnlockedNotifier,
-                                            builder: (context, isPro, _) {
-                                              final adFree = isPro || isAdsRemoved;
-                                              return ListTile(
-                                                leading: Container(
-                                                  padding: const EdgeInsets.all(8),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.blueAccent.withValues(alpha: 0.15),
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  child: const Icon(Icons.block_rounded, color: Colors.blueAccent, size: 20),
-                                                ),
-                                                title: Row(
-                                                  children: [
-                                                    Text(
-                                                      'Remove Ads (Separate Option)',
-                                                      style: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
-                                                    ),
-                                                    const SizedBox(width: 8),
-                                                    if (adFree)
-                                                      Container(
-                                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                        decoration: BoxDecoration(
-                                                          color: Colors.blue.withValues(alpha: 0.2),
-                                                          borderRadius: BorderRadius.circular(6),
-                                                        ),
-                                                        child: const Text('AD-FREE', style: TextStyle(color: Colors.blueAccent, fontSize: 10, fontWeight: FontWeight.bold)),
-                                                      ),
-                                                  ],
-                                                ),
-                                                subtitle: Text(
-                                                  adFree
-                                                      ? 'All banner advertisements are disabled across the app.'
-                                                      : 'Remove all banners permanently without full Pro bundle (\$1.99)',
-                                                  style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12),
-                                                ),
-                                                trailing: adFree
-                                                    ? const Icon(Icons.check_circle, color: Colors.blueAccent)
-                                                    : OutlinedButton(
-                                                        style: OutlinedButton.styleFrom(
-                                                          side: const BorderSide(color: Colors.blueAccent),
-                                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                                        ),
-                                                        onPressed: () async {
-                                                          await MonetizationService.removeAds();
-                                                          if (context.mounted) {
-                                                            ScaffoldMessenger.of(context).showSnackBar(
-                                                              const SnackBar(
-                                                                content: Text('🎉 Ads removed successfully! Enjoy clean banner-free budgeting.'),
-                                                                backgroundColor: Colors.teal,
-                                                              ),
-                                                            );
-                                                          }
-                                                        },
-                                                        child: const Text('Buy (\$1.99)', style: TextStyle(color: Colors.blueAccent, fontSize: 12, fontWeight: FontWeight.bold)),
-                                                      ),
-                                              );
-                                            },
-                                          );
-                                        },
-                                      ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-
-                                      // 3. Redeem Promo Code & Unlock Function
-                                      ListTile(
-                                        leading: Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: Colors.purpleAccent.withValues(alpha: 0.15),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(Icons.redeem_rounded, color: Colors.purpleAccent, size: 20),
-                                        ),
-                                        title: Text(
-                                          'Redeem Promo / Unlock Code',
-                                          style: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
-                                        ),
-                                        subtitle: Text(
-                                          'Enter promo or reset codes (e.g. PROVIP, NOADS, or RESETVIP)',
-                                          style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12),
-                                        ),
-                                        trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
-                                        onTap: () {
-                                          MonetizationService.showPromoCodeDialog(context);
-                                        },
-                                      ),
-
-                                      // 4. Reset VIP Subscription for Testing
-                                      ValueListenableBuilder<bool>(
-                                        valueListenable: MonetizationService.isProUnlockedNotifier,
-                                        builder: (context, isPro, _) {
-                                          return ValueListenableBuilder<bool>(
-                                            valueListenable: MonetizationService.isAdsRemovedNotifier,
-                                            builder: (context, isAdsRemoved, _) {
-                                              if (!isPro && !isAdsRemoved) return const SizedBox.shrink();
-                                              return Column(
-                                                children: [
-                                                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                                  ListTile(
-                                                    leading: Container(
-                                                      padding: const EdgeInsets.all(8),
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.redAccent.withValues(alpha: 0.15),
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                      child: const Icon(Icons.restart_alt_rounded, color: Colors.redAccent, size: 20),
-                                                    ),
-                                                    title: const Text(
-                                                      'Reset VIP Subscription (Test Mode)',
-                                                      style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
-                                                    ),
-                                                    subtitle: Text(
-                                                      'Reset Pro & Ad-Free status back to Free tier for testing',
-                                                      style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12),
-                                                    ),
-                                                    trailing: ElevatedButton(
-                                                      style: ElevatedButton.styleFrom(
-                                                        backgroundColor: Colors.redAccent,
-                                                        foregroundColor: Colors.white,
-                                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                                      ),
-                                                      onPressed: () async {
-                                                        await MonetizationService.resetPurchases();
-                                                        if (context.mounted) {
-                                                          ScaffoldMessenger.of(context).showSnackBar(
-                                                            const SnackBar(
-                                                              content: Text('🔄 VIP Subscription & Ad-Free status reset to Free Tier.'),
-                                                              backgroundColor: Colors.redAccent,
-                                                            ),
-                                                          );
-                                                        }
-                                                      },
-                                                      child: const Text('Reset', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                                    ),
-                                                  ),
-                                                ],
-                                              );
-                                            },
-                                          );
-                                        },
-                                      ),
-                                    ],
+                                      child: const Icon(Icons.workspace_premium, color: Colors.white, size: 20),
+                                    ),
+                                    title: Text(
+                                      'Tally Pro & Subscriptions',
+                                      style: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
+                                    ),
+                                    subtitle: Text(
+                                      'Manage VIP features, remove ads, or pay with Google Pay',
+                                      style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12),
+                                    ),
+                                    trailing: const Icon(Icons.chevron_right),
+                                    onTap: () {
+                                      Navigator.pop(ctx);
+                                      Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen()));
+                                    },
                                   ),
                                 ),
 
@@ -1685,12 +1498,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ValueListenableBuilder<String?>(
                       valueListenable: AppState.profilePhotoNotifier,
                       builder: (context, photoPath, _) {
-                        final hasFile = photoPath != null && photoPath.isNotEmpty && File(photoPath).existsSync();
+                        final imageProvider = getProfileImageProvider(photoPath);
                         return CircleAvatar(
                           radius: 46,
                           backgroundColor: primaryColor.withValues(alpha: 0.2),
-                          backgroundImage: hasFile ? FileImage(File(photoPath)) : null,
-                          child: !hasFile
+                          backgroundImage: imageProvider,
+                          child: imageProvider == null
                               ? ValueListenableBuilder<String>(
                                   valueListenable: AppState.displayNameNotifier,
                                   builder: (context, name, _) {
@@ -1862,7 +1675,109 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
+
+        // Dedicated Tally Pro & VIP Membership Banner
+        ValueListenableBuilder<bool>(
+          valueListenable: MonetizationService.isProUnlockedNotifier,
+          builder: (context, isPro, _) {
+            return ValueListenableBuilder<bool>(
+              valueListenable: MonetizationService.isAdsRemovedNotifier,
+              builder: (context, isAdsRemoved, _) {
+                return GestureDetector(
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())),
+                  child: Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: isPro
+                            ? [Colors.teal.shade900, Colors.teal.shade700]
+                            : [primaryColor.withValues(alpha: 0.9), primaryColor.withValues(alpha: 0.65)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (isPro ? Colors.teal : primaryColor).withValues(alpha: 0.25),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isPro ? Icons.diamond_rounded : Icons.workspace_premium_rounded,
+                            color: Colors.amberAccent,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    isPro ? 'TALLY PRO ACTIVE' : 'UNLOCK TALLY PRO & VIP',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      letterSpacing: 0.6,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  if (isPro)
+                                    const Icon(Icons.verified, color: Colors.greenAccent, size: 15),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                isPro
+                                    ? 'Unlimited predictive insights, custom themes & ad-free'
+                                    : 'Remove ads, unlock predictive velocity & pay with Google Pay',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  fontSize: 11.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            isPro ? 'Manage' : 'Upgrade',
+                            style: TextStyle(
+                              color: isPro ? Colors.teal.shade900 : primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+
+        const SizedBox(height: 18),
 
         // Persona Classification Card
         Container(

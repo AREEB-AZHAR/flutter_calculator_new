@@ -7,7 +7,22 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Balance Tracker</string>
+	<string>Tally</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Tally needs camera access to capture receipts and profile photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Tally needs photo library access to upload custom avatars and receipt attachments.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Tally uses Face ID / Touch ID to securely protect your financial records.</string>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<key>SKAdNetworkItems</key>
+	<array>
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>cstr6suwn9.skadnetwork</string>
+		</dict>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

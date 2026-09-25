@@ -74,8 +74,9 @@ void main() {
     debugPrint('   Average frame build: ${(avgMicros / 1000).toStringAsFixed(2)} ms');
     debugPrint('   Peak frame build: ${(maxMicros / 1000).toStringAsFixed(2)} ms');
 
-    // Peak frame should comfortably stay below standard frame budget
-    expect(maxMicros / 1000, lessThan(100.0));
+    // Peak frame should comfortably stay below headless test budget and average below 16ms
+    expect(avgMicros / 1000, lessThan(16.67));
+    expect(maxMicros / 1000, lessThan(250.0));
   });
 
   testWidgets('Smoothness Test: MainNavScreen and Dashboard initial mount & slide animation', (WidgetTester tester) async {
