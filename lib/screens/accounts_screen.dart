@@ -354,18 +354,22 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      child: InteractiveChartCard(
-                        transactions: transactions,
-                        accountFilter: _selectedAccount == 'Overall' ? null : _selectedAccount,
-                        title: _selectedAccount == 'Overall' ? 'Overall Analytics (All Wallets)' : 'Analytics: $_selectedAccount',
+                      child: RepaintBoundary(
+                        child: InteractiveChartCard(
+                          transactions: transactions,
+                          accountFilter: _selectedAccount == 'Overall' ? null : _selectedAccount,
+                          title: _selectedAccount == 'Overall' ? 'Overall Analytics (All Wallets)' : 'Analytics: $_selectedAccount',
+                        ),
                       ),
                     ),
                   ),
 
                   const SliverToBoxAdapter(
-                    child: AdBannerWidget(
-                      margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                      sponsorCategory: 'Cloud Multi-Currency Vault',
+                    child: RepaintBoundary(
+                      child: AdBannerWidget(
+                        margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                        sponsorCategory: 'Cloud Multi-Currency Vault',
+                      ),
                     ),
                   ),
 

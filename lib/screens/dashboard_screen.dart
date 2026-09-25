@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../services/state.dart';
@@ -14,6 +13,7 @@ import '../services/tour_service.dart';
 import '../widgets/feature_tour_dialog.dart';
 import '../widgets/ad_banner_widget.dart';
 import '../widgets/delete_confirmation_dialog.dart';
+import '../utils/image_helper.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -297,12 +297,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                   return ValueListenableBuilder<Color>(
                     valueListenable: AppState.customPrimaryColorNotifier,
                     builder: (context, primaryColor, _) {
-                      final hasValidFile = photoPath != null && photoPath.isNotEmpty && File(photoPath).existsSync();
+                      final imageProvider = getProfileImageProvider(photoPath);
                       return CircleAvatar(
                         radius: 20,
                         backgroundColor: primaryColor.withValues(alpha: 0.3),
-                        backgroundImage: hasValidFile ? FileImage(File(photoPath)) : null,
-                        child: !hasValidFile
+                        backgroundImage: imageProvider,
+                        child: imageProvider == null
                             ? ValueListenableBuilder<String>(
                                 valueListenable: AppState.displayNameNotifier,
                                 builder: (context, dispName, _) {
@@ -681,16 +681,20 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                     const SizedBox(height: 20),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: InteractiveChartCard(
-                        transactions: transactions,
-                        title: 'Financial Flow & Analytics',
+                      child: RepaintBoundary(
+                        child: InteractiveChartCard(
+                          transactions: transactions,
+                          title: 'Financial Flow & Analytics',
+                        ),
                       ),
                     ),
 
                     const SizedBox(height: 16),
-                    const AdBannerWidget(
-                      margin: EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
-                      sponsorCategory: 'YieldMax High-Yield Savings (5.2% APY)',
+                    const RepaintBoundary(
+                      child: AdBannerWidget(
+                        margin: EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
+                        sponsorCategory: 'YieldMax High-Yield Savings (5.2% APY)',
+                      ),
                     ),
 
                     const SizedBox(height: 16),
@@ -719,19 +723,19 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                           padding: const EdgeInsets.symmetric(vertical: 20),
                           child: Center(child: Text("No transactions yet", style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)))),
                         )
-                      : ListView.builder(
+                      : Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: transactions.length > 5 ? 5 : transactions.length, 
-                          itemBuilder: (ctx, index) {
-                            final tx = transactions[index];
-                            return TransactionTile(
-                              tx: tx,
-                              onTap: () => showTransactionDialog(context, existingTx: tx),
-                              onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
-                            );
-                          },
+                          child: Column(
+                            children: transactions.take(5).map((tx) {
+                              return RepaintBoundary(
+                                child: TransactionTile(
+                                  tx: tx,
+                                  onTap: () => showTransactionDialog(context, existingTx: tx),
+                                  onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
+                                ),
+                              );
+                            }).toList(),
+                          ),
                         ),
                     const SizedBox(height: 20),
                   ],

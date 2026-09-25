@@ -5,6 +5,7 @@ import '../models/savings_goal.dart';
 import '../models/user_profile.dart';
 import '../utils/constants.dart';
 import 'database/app_database.dart';
+import 'cloud_sync_service.dart';
 
 class AppState {
   static String? currentUser;
@@ -187,11 +188,15 @@ class AppState {
     } catch (e) {
       debugPrint('Error saving colors to SharedPreferences: $e');
     }
+
+    // Real-time Cloud Sync for Profile & Avatar
+    CloudSyncService.syncProfileToCloud(updatedProfile);
   }
 
   static Future<void> saveGoals(String username, List<SavingsGoal> goals) async {
     await AppDatabase.instance.saveGoals(username, goals);
     goalsNotifier.value = List.from(goals);
+    CloudSyncService.syncGoalsToCloud(goals);
   }
 
   static Future<List<SavingsGoal>> loadGoals(String username) async {
@@ -217,6 +222,8 @@ class AppState {
     if (currentUser != null) {
       saveTransactions(currentUser!, currentList);
     }
+    // Delete from Firestore immediately
+    CloudSyncService.deleteTransactionFromCloud(tx.id);
 
     try {
       final messenger = ScaffoldMessenger.of(context);
@@ -241,6 +248,8 @@ class AppState {
                 if (currentUser != null) {
                   saveTransactions(currentUser!, restoredList);
                 }
+                // Re-sync restored transaction to cloud
+                CloudSyncService.syncTransactionToCloud(tx);
               }
             },
           ),
@@ -259,6 +268,8 @@ class AppState {
     if (currentUser != null) {
       saveGoals(currentUser!, currentGoals);
     }
+    // Delete from Firestore immediately
+    CloudSyncService.deleteGoalFromCloud(goal.id);
 
     try {
       final messenger = ScaffoldMessenger.of(context);
@@ -302,6 +313,8 @@ class AppState {
   static Future<void> saveAccounts(String username, List<String> accounts) async {
     await AppDatabase.instance.saveAccounts(username, accounts);
     accountsNotifier.value = List.from(accounts);
+    // Push updated accounts list to Firestore immediately so deletions persist
+    CloudSyncService.syncAccountsToCloud(accounts);
   }
 
   static Future<List<String>> loadAccounts(String username) async {

@@ -80,9 +80,10 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
 
             // 1. If Google Mobile Ads banner is loaded, show authentic Google Ad
             if (_isAdLoaded && _bannerAd != null) {
-              return Container(
-                margin: widget.margin,
-                padding: const EdgeInsets.symmetric(vertical: 8),
+              return RepaintBoundary(
+                child: Container(
+                  margin: widget.margin,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
                   color: surface,
                   borderRadius: BorderRadius.circular(16),
@@ -162,13 +163,15 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
                     ),
                   ],
                 ),
-              );
-            }
+              ),
+            );
+          }
 
             // 2. Fallback sponsored banner (for Desktop/Windows or while loading)
-            return Container(
-              margin: widget.margin,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            return RepaintBoundary(
+              child: Container(
+                margin: widget.margin,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: surface,
                 borderRadius: BorderRadius.circular(16),
@@ -278,8 +281,9 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
                   ),
                 ],
               ),
-            );
-          },
+            ),
+          );
+        },
         );
       },
     );
