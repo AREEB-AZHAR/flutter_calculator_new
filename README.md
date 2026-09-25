@@ -460,6 +460,31 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
     - Added unified `AppState.setCurrency()` that instantly persists to `SharedPreferences` and the SQLite user profile, while immediately re-rendering all financial totals and transaction lists live.
   - **Future Monetization Strategy Blueprint**:
     - Architected and documented [FUTURE_MONETIZATION_PLAN.md] covering Tally Pro freemium gates, privacy-preserving native ads, tip jars, and RevenueCat integration.
+- **v1.8.2**:
+  - **Google Account Binding & Smart Data Migration**:
+    - Resolved account binding conflict where linking a Google account to an existing local account previously created a blank new account.
+    - Added automated cloud/local conflict detection via `AppDatabase.hasUserData()` and `CloudSyncService.hasCloudData()`.
+    - If existing cloud data is detected, an interactive dialog allows users to either **"Migrate & Merge"** local transactions, accounts, budgets, and goals into the Google account or **"Use Cloud Data"**.
+    - If no existing data is connected to the Google account, local data is automatically migrated into the Google account seamlessly.
+  - **Bound Recovery Email & Forgotten Password Reset**:
+    - Extended SQLite `users` table schema with an `email` column via non-destructive database migration.
+    - Updated registration and login to support authentication by either **Username** or **Recovery Email**.
+    - Added an interactive **"Forgot Password?"** recovery flow on `LoginScreen` allowing users with a bound recovery email to securely verify their email and reset their password.
+    - Added a recovery email badge and one-tap **"Bind Recovery Email"** action in `ProfileScreen`.
+  - **Strong Password Security Policy**:
+    - Created `PasswordValidator` enforcing fintech-grade credentials: **10+ characters**, at least **1 uppercase letter**, at least **1 lowercase letter**, at least **1 special character**, and at least **3 numbers**.
+    - Integrated real-time dynamic requirement checklist with visual checkmarks and color-coded status badges in both registration and password reset dialogs.
+  - **VIP Subscription Testing Reset Mode**:
+    - Added instant developer/QA testing reset codes to `MonetizationService`: `RESETVIP`, `RESET`, `RESETPRO`, `FREE`, and `FREEVIP`.
+    - Added a dedicated **"Reset VIP Subscription (Test Mode)"** tile in `ProfileScreen` with immediate visual confirmation snackbar.
+  - **Google Mobile Ads (AdMob) Integration**:
+    - Integrated official `google_mobile_ads: ^9.1.0` SDK into `pubspec.yaml` and configured Android Manifest with official AdMob application metadata.
+    - Created `AdService` managing lifecycle initialization and test banner unit IDs (`ca-app-pub-3940256099942544/6300978111`).
+    - Updated `AdBannerWidget` to load authentic native `BannerAd` instances on Android & iOS while seamlessly falling back to contextual financial partner cards on desktop and web.
+  - **Android Gradle 8.14 & AGP 8.11.1 Build Fix**:
+    - Fixed Android release build failure caused by `generateReleaseLintVitalReportModel` attempting to hash missing `module.xml`.
+    - Disabled `lintVital` tasks in `tasks.configureEach` in `android/app/build.gradle.kts`.
+    - Successfully compiled and verified clean release APK generation (`tally.apk` and `tally-release.apk` in `build/app/outputs/flutter-apk/`).
 - **v1.7.2**:
   - **Fluid 60fps/120fps Login & Animation Smoothness**:
     - **Eliminated Post-Login Frame Drops**: Removed aggressive post-login background timer loop that previously fired repeated root `setState()` rebuilds every 300ms across 1.5s immediately after authentication.
