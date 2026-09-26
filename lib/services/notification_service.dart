@@ -6,6 +6,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import '../models/loan.dart';
+import '../models/planned_transaction.dart';
 
 class NotificationService {
   static final NotificationService instance = NotificationService._internal();
@@ -208,5 +210,123 @@ class NotificationService {
       body: msg,
       notificationDetails: details,
     );
+  }
+
+  int _getLoanNotificationId(String loanId) {
+    return (loanId.hashCode.abs() % 50000) + 10000;
+  }
+
+  int _getPlanNotificationId(String planId) {
+    return (planId.hashCode.abs() % 50000) + 60000;
+  }
+
+  /// Schedules a loan reminder notification on the user-defined reminder due date & time
+  Future<void> scheduleLoanReminder({
+    required Loan loan,
+    required String currencySymbol,
+  }) async {
+    final notificationId = _getLoanNotificationId(loan.id);
+    final details = _buildNotificationDetails();
+
+    final String title;
+    final String body;
+
+    if (loan.isReceivable) {
+      title = 'Money Received Check 💰';
+      body = 'Was $currencySymbol${loan.amount.toStringAsFixed(0)} received from ${loan.personName} for "${loan.title}"?';
+    } else {
+      title = 'Payment Due Alert ⚠️';
+      body = 'Friendly alert: You need to pay ${loan.personName} $currencySymbol${loan.amount.toStringAsFixed(0)} for "${loan.title}" today!';
+    }
+
+    try {
+      final scheduledTz = tz.TZDateTime.from(loan.dueDate, tz.local);
+      final nowTz = tz.TZDateTime.now(tz.local);
+
+      if (scheduledTz.isAfter(nowTz)) {
+        await _notificationsPlugin.zonedSchedule(
+          id: notificationId,
+          title: title,
+          body: body,
+          scheduledDate: scheduledTz,
+          notificationDetails: details,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        );
+      } else {
+        await _notificationsPlugin.show(
+          id: notificationId,
+          title: title,
+          body: body,
+          notificationDetails: details,
+        );
+      }
+    } catch (e) {
+      debugPrint('scheduleLoanReminder notice: $e');
+    }
+  }
+
+  /// Cancels an active loan reminder
+  Future<void> cancelLoanReminder(String loanId) async {
+    final notificationId = _getLoanNotificationId(loanId);
+    try {
+      await _notificationsPlugin.cancel(id: notificationId);
+    } catch (_) {}
+  }
+
+  /// Schedules a planned transaction notification on its set date
+  Future<void> schedulePlannedTransactionReminder({
+    required PlannedTransaction plan,
+    required String currencySymbol,
+  }) async {
+    final notificationId = _getPlanNotificationId(plan.id);
+    final details = _buildNotificationDetails();
+
+    final title = 'Planned Transaction Due 📅';
+    final body = 'Your planned ${plan.isIncome ? 'income' : 'expense'} "${plan.title}" of $currencySymbol${plan.amount.toStringAsFixed(0)} is due today!';
+
+    try {
+      final scheduledTz = tz.TZDateTime.from(plan.date, tz.local);
+      final nowTz = tz.TZDateTime.now(tz.local);
+
+      if (scheduledTz.isAfter(nowTz)) {
+        await _notificationsPlugin.zonedSchedule(
+          id: notificationId,
+          title: title,
+          body: body,
+          scheduledDate: scheduledTz,
+          notificationDetails: details,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        );
+      }
+    } catch (e) {
+      debugPrint('schedulePlannedTransactionReminder notice: $e');
+    }
+  }
+
+  /// Cancels a planned transaction reminder
+  Future<void> cancelPlannedTransactionReminder(String planId) async {
+    final notificationId = _getPlanNotificationId(planId);
+    try {
+      await _notificationsPlugin.cancel(id: notificationId);
+    } catch (_) {}
+  }
+
+  /// Shows an instant notification alert
+  Future<void> showInstantAlert({
+    required String title,
+    required String body,
+    int id = 888,
+  }) async {
+    final details = _buildNotificationDetails();
+    try {
+      await _notificationsPlugin.show(
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: details,
+      );
+    } catch (e) {
+      debugPrint('showInstantAlert notice: $e');
+    }
   }
 }

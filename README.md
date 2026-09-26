@@ -158,12 +158,65 @@
 - **Dynamic Sponsor Rotation**: Styled with rounded container borders, an unobtrusive "Ad" chip, financial partner benefits (e.g. high-yield savings, cloud infrastructure, smart bookkeeping), and a quick "Hide" shortcut that opens the paywall modal.
 - **Zero-Footprint Dismissal**: When the user unlocks Pro or purchases "Remove Ads", the banner returns `SizedBox.shrink()` (0 pixels height) with no layout shift or leftover padding.
 
+
 ### 17. 🔑 Google Account Authentication & Cloud Ledger Binding
 
 - **1-Tap Google Sign-In**: Added authentic "Sign in with Google" button on `LoginScreen` with the official Google logo.
 - **Cross-Platform Compatibility**: Uses native Google Identity Services on mobile/web with a styled Google Account Picker fallback for Windows desktop, emulators, and local test environments.
 - **Encrypted Database Identity Binding**: Associates all SQLite accounts, transactions, budgets, goals, and customized profiles directly to the user's Google email (`user_id`), preserving data across logouts and devices.
 - **Account Binding Badge**: Displays an authentic Google status badge (`[G] Bound to Google: user@gmail.com`) in the Profile identity card, with a 1-tap "Link Google Account" button for legacy local accounts.
+
+### 18. 💎 Transparent Tiered Pricing & Community Coffee Support
+
+- **Dedicated Premium Screen**: Accessible directly from the Profile identity card ("Get Tally Pro / Manage Subscription") rather than cluttered in general settings.
+- **Transparent Tier Selection**:
+  - **Monthly Plan**: **$4.99 / month** — flexible monthly billing with full analytical access.
+  - **Annual Plan**: **$49.90 / year** ($4.99 × 10) — grants **2 full months free** with a prominent "Best Value" highlight badge.
+  - **Lifetime Access**: **$47.88 one-time** ($3.99 × 12) — pay once, own Tally Pro forever with no recurring charges.
+  - **Buy Me a Coffee**: **$1.99 one-time** — a warm, community-driven tier ("Support indie development! Removes all sponsored partner ads forever, plus receive a 7-Day Tally Pro trial pass as our special thank-you gift").
+- **Native Checkout Trigger**: Simulated Google Pay (Android) and Apple Pay (iOS) bottom checkout sheets with real-time status feedback, receipt generation, and persistent offline/online state synchronization.
+
+### 19. 🤝 Accounts Receivable & Payable (Loans & Debts Ledger)
+
+- **Dedicated Dual-Mode Ledger**: Integrated into `AccountsScreen` under the **Loans & Debts** segment tab.
+- **Receivables & Payables Segmentation**:
+  - **Money Lent Out (Receivable)**: Track money you loaned to friends, colleagues, or clients with outstanding balances and due dates.
+  - **Money Borrowed (Payable)**: Keep precise track of borrowed sums and debts to ensure timely repayment and protect financial integrity.
+- **Summary Header Metrics**: Real-time cards calculating Total Receivable, Total Payable, and Net Credit/Debt Position.
+- **Automated Push Reminder Notifications**:
+  - Automatically schedules local push notifications on the user-specified reminder date.
+  - For Receivables: Friendly check-in prompt: *"Reminder: Did you receive $X from Person for [Reason]?"*
+  - For Payables: Alert prompt: *"Payment Due: $X to Person for [Reason] is scheduled for today."*
+- **One-Tap Settlement**: Mark loans settled with a single tap, updating history and recalculating balances instantly.
+
+### 20. 📅 Automated Recurring & Planned Transactions
+
+- **Auto-Recurring Engine**: Recurring transactions (Daily, Weekly, Monthly) are automatically evaluated on app launch and user login. Due instances are posted directly to the official SQLite ledger with duplicate protection.
+- **Interactive Planned & Future Sheet**: A dedicated bottom sheet modal (`PlannedTransactionsSheet`) staging future-dated financial commitments.
+- **Early Execution & Cancellation**: Users can inspect upcoming commitments, manually post them immediately with "Post Now", or delete them before they mature.
+
+### 21. 📊 Enhanced Single-Scroll All Transactions & Dynamic Chart Analytics
+
+- **Unified Continuous Scroll**: Completely replaced nested inner scrolling views with a unified, conflict-free `CustomScrollView` ensuring buttery 60/120fps physics.
+- **Real-Time Dynamic Search**: Typing into the search bar instantly filters records and dynamically recalculates total spending, income, counts, and charts in real time.
+- **Tri-Mode Flexible Visualizer**:
+  - **Segmented Donut**: Category allocation breakdown.
+  - **Daily Line Flow**: Interactive cumulative net balance trend.
+  - **Bar Chart**: Periodic volume bars for immediate comparative analysis.
+- **Scope Navigation**: Toggle between Year-to-Date and Month-level analytical scopes with dynamic axis labels.
+
+### 22. 🔄 Two-Way Cloud Deletion Reconciliation & Security
+
+- **Bidirectional Sync Protocol**: Ensures SQLite local changes and Cloud Firestore cloud documents stay in 100% lockstep.
+- **Safe Cloud Deletion Purge**: When an account, transaction, loan, or goal is deleted on a local device, `CloudSyncService.sync` identifies cloud documents whose IDs are no longer present in local storage and safely purges them from Firestore, preventing zombie reappearance upon re-login.
+- **Cryptographic User Isolation**: All Firestore paths are strictly scoped under `users/{user_id}/...`, guaranteeing that only the authenticated user can read or mutate their financial data.
+
+### 23. 🎨 Zero-Glitch Dynamic Palette Engine & Theme Contrast Alignment
+
+- **Unified Single-Frame Rebuilds**: Replaced cascading nested `ValueListenableBuilder`s with a unified `AnimatedBuilder(animation: Listenable.merge([...]))` in `main.dart` and `profile_screen.dart`.
+- **Eliminated Multi-Frame Flashes**: Eliminates the 4-frame visual glitch previously triggered when selecting theme presets.
+- **Smooth 150ms Palette Lerping**: Added `themeAnimationDuration: const Duration(milliseconds: 150)` with `Curves.easeInOut` for smooth, polished color transitions.
+- **Theme-Adaptive Semantic Accents**: Replaced hardcoded neon accents with theme-adaptive colors (`#059669` / `#D97706` / `#DC2626` in light mode, `#10B981` / `#FBBF24` / `#F87171` in dark mode) ensuring crisp contrast across all 9 presets.
 
 ---
 
@@ -178,30 +231,33 @@ assets/
     ├── tally-wordmark-anim.svg     # Animated typography & uwash
     └── tally-512.png               # High-res 512px raster icon
 lib/
-├── main.dart                       # App entrypoint & dynamic theme listening
+├── main.dart                       # App entrypoint, unified AnimatedBuilder theme listener
 ├── firebase_options.dart           # Cross-platform Firebase config & credentials
 ├── models/                         # Domain data models
 │   ├── transaction.dart            # Transaction schema & serialization
 │   ├── savings_goal.dart           # SavingsGoal schema & progress logic
+│   ├── loan.dart                   # Loan model (Receivable/Payable, reminder dates)
+│   ├── planned_transaction.dart    # Planned & future-dated transaction model
 │   └── user_profile.dart           # User profile, custom colors & photo model
 ├── screens/                        # Application screens
 │   ├── splash_screen.dart          # Multi-stage Bezier animated brand startup
 │   ├── login_screen.dart           # Hero wordmark & bottom-sliding authentication
 │   ├── main_nav_screen.dart        # Lazy-loaded tab shell with idle pre-warming
 │   ├── dashboard_screen.dart       # Post-login biometric prompt & Home Tour trigger
-│   ├── all_transactions_screen.dart# Search, filter, and pie chart analytics
+│   ├── all_transactions_screen.dart# Single-scroll dynamic search & 3-mode visualizer
 │   ├── insights_screen.dart        # Spending trends, category breakdown & Pro lock preview
 │   ├── goals_screen.dart           # Goal progress & fund allocations
-│   ├── accounts_screen.dart        # Accounts Tour, Add Account dialog & consolidated view
+│   ├── accounts_screen.dart        # Accounts & Wallets + Loans & Debts dual-tab screen
+│   ├── premium_screen.dart         # Dedicated Tally Pro paywall & Google Pay checkout
 │   └── profile_screen.dart         # Features & Settings guide, Theme Studio & tours reset
 ├── services/                       # State & Persistence
-│   ├── monetization_service.dart   # Tally Pro, Remove Ads & promo code engine
+│   ├── monetization_service.dart   # Tiered pricing, Coffee gift & promo code engine
 │   ├── ad_service.dart             # Google Mobile Ads (AdMob) initialization & BannerAd
 │   ├── google_auth_service.dart    # Google Sign-In & SQLite identity binding
-│   ├── cloud_sync_service.dart     # Two-way SQLite & Cloud Firestore synchronization
+│   ├── cloud_sync_service.dart     # Two-way SQLite & Cloud Firestore deletion sync
 │   ├── biometric_service.dart      # Biometric & screen lock auth & setup modal
 │   ├── tour_service.dart           # Tour completion flags & reset persistence
-│   ├── notification_service.dart   # 3-hour scheduled reminders & easter egg
+│   ├── notification_service.dart   # Loan push reminders & scheduled tally alerts
 │   ├── app_icon_service.dart       # Dynamic launcher icon switcher
 │   ├── state.dart                  # AppState ValueNotifiers & reactive state
 │   └── database/                   # SQLite database engine & security
@@ -209,13 +265,14 @@ lib/
 │       └── security_helper.dart    # SHA-256 password salting & verification
 ├── utils/                          # Styling & Design Tokens
 │   ├── constants.dart              # Dynamic theme generator, icons & currencies
-│   └── password_validator.dart     # Strong password validation (10+ chars, 1 upper, 1 lower, 1 special, 3 numbers)
+│   └── password_validator.dart     # Strong password validation rules
 └── widgets/                        # Reusable UI & Custom Painters
     ├── ad_banner_widget.dart       # Theme-adaptive native partner banner card
     ├── feature_tour_dialog.dart    # Step-by-step onboarding walkthrough dialog
     ├── tally_brand_painters.dart   # TallyIconPainter, UwashPainter & Wordmark
-    ├── custom_painters.dart        # Repaint-bounded Month line & Donut painters
-    ├── interactive_chart_card.dart # Multi-month navigator & line/donut card
+    ├── custom_painters.dart        # Repaint-bounded Month line, Donut & Bar painters
+    ├── interactive_chart_card.dart # Multi-month & tri-mode visualizer card
+    ├── planned_transactions_sheet.dart # Staged future commitments bottom sheet
     ├── color_picker_dialog.dart    # Graphic Theme Studio (HSV sliders & hex)
     ├── transaction_tile.dart       # Dismissible transaction list item
     └── transaction_dialog.dart     # Auto-fill empty title & Income->Salary switcher
@@ -363,7 +420,39 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 
 ## 📝 Recent Changelog
 
-- **v1.8.3 (Current)**:
+- **v1.8.4 (Current)**:
+  - **Zero-Glitch Dynamic Palette Engine & Theme Alignment**:
+    - Replaced 4 nested `ValueListenableBuilder`s in `main.dart` and `profile_screen.dart` with a single unified `AnimatedBuilder(animation: Listenable.merge([themeNameNotifier, customPrimaryColorNotifier, customSecondaryColorNotifier, customTextColorNotifier]))`.
+    - Eliminated cascading 4-frame rebuild glitches and intermediate color flashes when changing themes.
+    - Configured `themeAnimationDuration: const Duration(milliseconds: 150)` and `Curves.easeInOut` for smooth, polished color transitions.
+    - Adjusted semantic colors (`positiveColor`, `negativeColor`, `warningColor`, `planAccent`) across `InteractiveChartCard`, `PlannedTransactionsSheet`, `TransactionDialog`, and `AccountsScreen` for high-contrast legibility in both light (`Paper`) and dark/carbon (`Ledger`, `Ink`) themes.
+    - Repainted charts immediately on theme changes by verifying secondary, text, and empty colors in `YearlyLineChartPainter.shouldRepaint`.
+  - **Transparent Multi-Tier Pricing & Developer Coffee Gift**:
+    - **Monthly Plan**: $4.99/mo.
+    - **Annual Plan**: $49.90/yr ($4.99 × 10, granting 2 full months free) with "Best Value" highlight badge.
+    - **Lifetime Access**: $47.88 one-time ($3.99 × 12, ultimate permanent value).
+    - **"Buy Me a Coffee"**: $1.99 one-time community support tier removing ads forever and granting a 7-Day Tally Pro trial pass as a special thank-you gift.
+    - Integrated native simulated Google Pay / Apple Pay bottom sheet checkout with instant receipt generation and persistent state synchronization.
+  - **Accounts Receivable & Payable (Loans & Debts) Ledger**:
+    - Dedicated "Loans & Debts" segment tab on `AccountsScreen`.
+    - Distinct tracking of **Receivables** (Money Lent Out) and **Payables** (Money Borrowed).
+    - Real-time summary metrics: Total Receivable, Total Payable, and Net Balance position.
+    - Push notifications: Automatically scheduled local notifications reminding the user on due/reminder dates (e.g. *"Reminder: Did you receive $X from Person?"* or *"Payment Due: $X to Person is scheduled for today."*).
+    - One-tap loan settlement updating records in SQLite.
+  - **Automated Recurring & Future Planned Transactions**:
+    - Automated recurring engine evaluating daily/weekly/monthly recurring rules on app launch and user login, posting matured instances into SQLite with duplicate protection.
+    - Dedicated "Planned & Future Sheet" (`PlannedTransactionsSheet`) allowing staging, inspection, and early "Post Now" execution of upcoming financial commitments.
+  - **Single-Scroll Dynamic Search & Tri-Mode Interactive Chart Analytics**:
+    - Converted `AllTransactionsScreen` to a unified, conflict-free `CustomScrollView`.
+    - Real-time search query filtering recalculating transaction counts, income/expense totals, and charts dynamically as user types.
+    - Tri-mode visualizer supporting Segmented Donut, Daily Line Flow, and Bar Charts with Year and Month scope toggles.
+  - **Two-Way Deletion Reconciliation**:
+    - Full bidirectional reconciliation protocol in `CloudSyncService.sync`: any cloud documents whose IDs are missing from local SQLite storage are safely purged from Firestore, guaranteeing local deletions are 100% authoritative and permanent across all devices.
+  - **Comprehensive QA Test Suite**:
+    - Added `test/loans_recurring_analytics_test.dart` and `test/theme_alignment_switching_test.dart`.
+    - All 49 automated unit, widget, and frame timing tests passing with 0 errors and 0 analyzer warnings.
+
+- **v1.8.3**:
   - **Google Account Profile Photo Synchronization**:
     - Fixed critical bug where uploaded custom profile photos were not syncing to the cloud when connected to Google, or were inadvertently replaced by Google's default silhouette.
     - Implemented `ImageHelper` (`lib/utils/image_helper.dart`) to provide robust, dual-source image resolution for both local filesystem paths (`FileImage`) and remote cloud URLs (`NetworkImage`), with seamless fallback to high-resolution brand avatar assets.

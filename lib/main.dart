@@ -52,34 +52,31 @@ class TallyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<String>(
-      valueListenable: AppState.themeNameNotifier,
-      builder: (context, themeName, _) {
-        return ValueListenableBuilder<Color>(
-          valueListenable: AppState.customPrimaryColorNotifier,
-          builder: (context, primaryColor, _) {
-            return ValueListenableBuilder<Color>(
-              valueListenable: AppState.customSecondaryColorNotifier,
-              builder: (context, secondaryColor, _) {
-                return ValueListenableBuilder<Color?>(
-                  valueListenable: AppState.customTextColorNotifier,
-                  builder: (context, textColor, _) {
-                    return MaterialApp(
-                      title: 'Tally',
-                      theme: buildDynamicTheme(
-                        primary: primaryColor,
-                        secondary: secondaryColor,
-                        textColor: textColor,
-                        themeName: themeName,
-                      ),
-                      home: const SplashScreen(),
-                      debugShowCheckedModeBanner: false,
-                    );
-                  },
-                );
-              },
-            );
-          },
+    return AnimatedBuilder(
+      animation: Listenable.merge([
+        AppState.themeNameNotifier,
+        AppState.customPrimaryColorNotifier,
+        AppState.customSecondaryColorNotifier,
+        AppState.customTextColorNotifier,
+      ]),
+      builder: (context, _) {
+        final themeName = AppState.themeNameNotifier.value;
+        final primaryColor = AppState.customPrimaryColorNotifier.value;
+        final secondaryColor = AppState.customSecondaryColorNotifier.value;
+        final textColor = AppState.customTextColorNotifier.value;
+
+        return MaterialApp(
+          title: 'Tally',
+          theme: buildDynamicTheme(
+            primary: primaryColor,
+            secondary: secondaryColor,
+            textColor: textColor,
+            themeName: themeName,
+          ),
+          themeAnimationDuration: const Duration(milliseconds: 150),
+          themeAnimationCurve: Curves.easeInOut,
+          home: const SplashScreen(),
+          debugShowCheckedModeBanner: false,
         );
       },
     );

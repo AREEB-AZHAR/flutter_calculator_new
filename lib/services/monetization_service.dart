@@ -4,15 +4,31 @@ import 'package:shared_preferences/shared_preferences.dart';
 class MonetizationService {
   static const String _prefProUnlockedKey = 'tally_pro_unlocked';
   static const String _prefAdsRemovedKey = 'tally_ads_removed';
+  static const String _prefProTrialExpiryKey = 'tally_pro_trial_expiry';
 
   static final ValueNotifier<bool> isProUnlockedNotifier = ValueNotifier<bool>(false);
   static final ValueNotifier<bool> isAdsRemovedNotifier = ValueNotifier<bool>(false);
+  static final ValueNotifier<DateTime?> proTrialExpiryNotifier = ValueNotifier<DateTime?>(null);
 
-  /// True if user has purchased / unlocked Tally Pro (all-access).
-  static bool get isPro => isProUnlockedNotifier.value;
+  /// True if user is currently enjoying an active 7-day promotional Pro trial.
+  static bool get isTrialActive {
+    final expiry = proTrialExpiryNotifier.value;
+    return expiry != null && DateTime.now().isBefore(expiry);
+  }
 
-  /// True if ads should be hidden (either via Pro unlock or dedicated Remove Ads purchase).
-  static bool get isAdFree => isProUnlockedNotifier.value || isAdsRemovedNotifier.value;
+  /// Remaining trial days (or 0 if expired/not active).
+  static int get trialDaysRemaining {
+    final expiry = proTrialExpiryNotifier.value;
+    if (expiry == null) return 0;
+    final diff = expiry.difference(DateTime.now()).inDays;
+    return diff >= 0 ? diff + 1 : 0;
+  }
+
+  /// True if user has purchased / unlocked Tally Pro (all-access) or has an active trial.
+  static bool get isPro => isProUnlockedNotifier.value || isTrialActive;
+
+  /// True if ads should be hidden (either via Pro unlock, dedicated Remove Ads, or coffee gift).
+  static bool get isAdFree => isProUnlockedNotifier.value || isAdsRemovedNotifier.value || isTrialActive;
 
   /// Initializes monetization states from local SharedPreferences.
   static Future<void> initialize() async {
@@ -20,6 +36,16 @@ class MonetizationService {
       final prefs = await SharedPreferences.getInstance();
       isProUnlockedNotifier.value = prefs.getBool(_prefProUnlockedKey) ?? false;
       isAdsRemovedNotifier.value = prefs.getBool(_prefAdsRemovedKey) ?? false;
+
+      final trialStr = prefs.getString(_prefProTrialExpiryKey);
+      if (trialStr != null && trialStr.isNotEmpty) {
+        final expiry = DateTime.tryParse(trialStr);
+        if (expiry != null && DateTime.now().isBefore(expiry)) {
+          proTrialExpiryNotifier.value = expiry;
+        } else {
+          proTrialExpiryNotifier.value = null;
+        }
+      }
     } catch (e) {
       debugPrint('MonetizationService.initialize error: $e');
     }
@@ -36,7 +62,7 @@ class MonetizationService {
     }
   }
 
-  /// Unlocks the separate Remove Ads option (removes banner ads without full Pro features).
+  /// Unlocks the separate Remove Ads option (removes banner ads permanently).
   static Future<void> removeAds() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -47,14 +73,32 @@ class MonetizationService {
     }
   }
 
+  /// Unlocks the "Buy Me a Coffee" developer gift:
+  /// Permanently removes all banner ads + gives a complimentary 7-day Tally Pro VIP trial!
+  static Future<void> unlockCoffeeWithTrial() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_prefAdsRemovedKey, true);
+      isAdsRemovedNotifier.value = true;
+
+      final expiry = DateTime.now().add(const Duration(days: 7));
+      await prefs.setString(_prefProTrialExpiryKey, expiry.toIso8601String());
+      proTrialExpiryNotifier.value = expiry;
+    } catch (e) {
+      debugPrint('MonetizationService.unlockCoffeeWithTrial error: $e');
+    }
+  }
+
   /// Resets all purchase and unlock flags to Free tier (ideal for testing and verification).
   static Future<void> resetPurchases() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_prefProUnlockedKey);
       await prefs.remove(_prefAdsRemovedKey);
+      await prefs.remove(_prefProTrialExpiryKey);
       isProUnlockedNotifier.value = false;
       isAdsRemovedNotifier.value = false;
+      proTrialExpiryNotifier.value = null;
     } catch (e) {
       debugPrint('MonetizationService.resetPurchases error: $e');
     }

@@ -1,11 +1,15 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/transaction.dart';
 import '../models/savings_goal.dart';
 import '../models/user_profile.dart';
+import '../models/loan.dart';
+import '../models/planned_transaction.dart';
 import '../utils/constants.dart';
 import 'database/app_database.dart';
 import 'cloud_sync_service.dart';
+import 'notification_service.dart';
 
 class AppState {
   static String? currentUser;
@@ -28,6 +32,8 @@ class AppState {
   static final ValueNotifier<Color> avatarColorNotifier = ValueNotifier(const Color(0xFFE4572E));
   static final ValueNotifier<String> themeNameNotifier = ValueNotifier('Ledger');
   static final ValueNotifier<List<SavingsGoal>> goalsNotifier = ValueNotifier([]);
+  static final ValueNotifier<List<Loan>> loansNotifier = ValueNotifier([]);
+  static final ValueNotifier<List<PlannedTransaction>> plannedTransactionsNotifier = ValueNotifier([]);
 
   // Graphic Theme & Profile Customization Notifiers
   static final ValueNotifier<Color> customPrimaryColorNotifier = ValueNotifier(const Color(0xFFE4572E));
@@ -146,6 +152,9 @@ class AppState {
     budgetsNotifier.value = await db.loadBudgets(username);
     goalsNotifier.value = await db.loadGoals(username);
     accountsNotifier.value = await db.loadAccounts(username);
+    loansNotifier.value = await db.loadLoans(username);
+    plannedTransactionsNotifier.value = await db.loadPlannedTransactions(username);
+    await checkAndProcessPlannedAndRecurring(username);
 
     // Sync user's saved palette to SharedPreferences so next startup boots with this palette
     try {
@@ -383,5 +392,139 @@ class AppState {
   static Future<String> loadCurrency(String username) async {
     final p = await AppDatabase.instance.loadProfile(username);
     return p.currency;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Loans & Debts (Receivables & Payables)
+  // ---------------------------------------------------------------------------
+  static Future<void> saveLoan(String username, Loan loan) async {
+    await AppDatabase.instance.saveLoan(username, loan);
+    final loans = await AppDatabase.instance.loadLoans(username);
+    loansNotifier.value = loans;
+
+    // Schedule notification reminder if not settled
+    if (!loan.isSettled) {
+      await NotificationService.instance.scheduleLoanReminder(
+        loan: loan,
+        currencySymbol: currencyNotifier.value,
+      );
+    } else {
+      await NotificationService.instance.cancelLoanReminder(loan.id);
+    }
+  }
+
+  static Future<void> deleteLoan(String username, String loanId) async {
+    await AppDatabase.instance.deleteLoan(username, loanId);
+    await NotificationService.instance.cancelLoanReminder(loanId);
+    final loans = await AppDatabase.instance.loadLoans(username);
+    loansNotifier.value = loans;
+  }
+
+  static Future<void> toggleLoanSettled(String username, Loan loan) async {
+    final updated = loan.copyWith(isSettled: !loan.isSettled);
+    await saveLoan(username, updated);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Planned / Future Transactions & Recurring Automation
+  // ---------------------------------------------------------------------------
+  static Future<void> savePlannedTransaction(String username, PlannedTransaction plan) async {
+    await AppDatabase.instance.savePlannedTransaction(username, plan);
+    final plans = await AppDatabase.instance.loadPlannedTransactions(username);
+    plannedTransactionsNotifier.value = plans;
+
+    await NotificationService.instance.schedulePlannedTransactionReminder(
+      plan: plan,
+      currencySymbol: currencyNotifier.value,
+    );
+  }
+
+  static Future<void> deletePlannedTransaction(String username, String planId) async {
+    await AppDatabase.instance.deletePlannedTransaction(username, planId);
+    await NotificationService.instance.cancelPlannedTransactionReminder(planId);
+    final plans = await AppDatabase.instance.loadPlannedTransactions(username);
+    plannedTransactionsNotifier.value = plans;
+  }
+
+  /// Immediately converts a planned transaction to active and moves it into the main ledger
+  static Future<void> executePlannedTransactionNow(String username, PlannedTransaction plan) async {
+    final newTx = plan.toActiveTransaction();
+    final currentList = List<Transaction>.from(transactionsNotifier.value);
+    currentList.removeWhere((t) => t.id == newTx.id);
+    currentList.insert(0, newTx);
+    currentList.sort((a, b) => b.date.compareTo(a.date));
+
+    transactionsNotifier.value = currentList;
+    await AppDatabase.instance.saveTransactions(username, currentList);
+    await AppDatabase.instance.markPlannedTransactionProcessed(username, plan.id);
+    await NotificationService.instance.cancelPlannedTransactionReminder(plan.id);
+
+    final plans = await AppDatabase.instance.loadPlannedTransactions(username);
+    plannedTransactionsNotifier.value = plans;
+    CloudSyncService.syncTransactionToCloud(newTx);
+  }
+
+  /// Checks for due planned transactions and automatically records them into the active ledger
+  static Future<void> checkAndProcessPlannedAndRecurring(String username) async {
+    try {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day, 23, 59, 59);
+      final plans = await AppDatabase.instance.loadPlannedTransactions(username);
+      final currentTxs = List<Transaction>.from(transactionsNotifier.value);
+      bool txsUpdated = false;
+
+      for (var plan in plans) {
+        if (plan.date.isBefore(today) || plan.date.isAtSameMomentAs(today)) {
+          final activeTx = plan.toActiveTransaction();
+          if (!currentTxs.any((t) => t.id == activeTx.id)) {
+            currentTxs.insert(0, activeTx);
+            txsUpdated = true;
+          }
+          await AppDatabase.instance.markPlannedTransactionProcessed(username, plan.id);
+
+          // Alert user via notification
+          NotificationService.instance.showInstantAlert(
+            title: 'Planned Transaction Added 📅',
+            body: 'Your planned ${plan.isIncome ? "income" : "expense"} "${plan.title}" (${currencyNotifier.value}${plan.amount.toStringAsFixed(0)}) is recorded to your ledger!',
+            id: (plan.id.hashCode.abs() % 50000) + 70000,
+          );
+
+          // If recurrence is active, schedule the next iteration
+          if (plan.recurrence != 'None') {
+            DateTime nextDate = plan.date;
+            if (plan.recurrence == 'Daily') {
+              nextDate = plan.date.add(const Duration(days: 1));
+            } else if (plan.recurrence == 'Weekly') {
+              nextDate = plan.date.add(const Duration(days: 7));
+            } else if (plan.recurrence == 'Monthly') {
+              nextDate = DateTime(plan.date.year, plan.date.month + 1, plan.date.day, plan.date.hour, plan.date.minute);
+            } else if (plan.recurrence == 'Yearly') {
+              nextDate = DateTime(plan.date.year + 1, plan.date.month, plan.date.day, plan.date.hour, plan.date.minute);
+            }
+            final nextPlan = plan.copyWith(
+              id: 'plan_${DateTime.now().millisecondsSinceEpoch}_${plan.id.substring(max(0, plan.id.length - 4))}',
+              date: nextDate,
+              isProcessed: false,
+              createdAt: DateTime.now(),
+            );
+            await AppDatabase.instance.savePlannedTransaction(username, nextPlan);
+            await NotificationService.instance.schedulePlannedTransactionReminder(
+              plan: nextPlan,
+              currencySymbol: currencyNotifier.value,
+            );
+          }
+        }
+      }
+
+      if (txsUpdated) {
+        currentTxs.sort((a, b) => b.date.compareTo(a.date));
+        transactionsNotifier.value = currentTxs;
+        await AppDatabase.instance.saveTransactions(username, currentTxs);
+      }
+
+      plannedTransactionsNotifier.value = await AppDatabase.instance.loadPlannedTransactions(username);
+    } catch (e) {
+      debugPrint('checkAndProcessPlannedAndRecurring notice: $e');
+    }
   }
 }

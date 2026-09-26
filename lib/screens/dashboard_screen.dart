@@ -13,6 +13,7 @@ import '../services/tour_service.dart';
 import '../widgets/feature_tour_dialog.dart';
 import '../widgets/ad_banner_widget.dart';
 import '../widgets/delete_confirmation_dialog.dart';
+import '../widgets/planned_transactions_sheet.dart';
 import '../utils/image_helper.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -707,12 +708,24 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                             'Recent Transactions',
                             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                           ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => const AllTransactionsScreen()));
-                            },
-                            child: Text('See All', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-                          )
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.event_note_rounded, size: 20, color: Colors.amberAccent),
+                                tooltip: 'Planned & Future Sheet',
+                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                padding: EdgeInsets.zero,
+                                onPressed: () => showPlannedTransactionsSheet(context),
+                              ),
+                              const SizedBox(width: 4),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const AllTransactionsScreen()));
+                                },
+                                child: Text('See All', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),

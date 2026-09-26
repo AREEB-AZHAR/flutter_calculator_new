@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
+import '../models/planned_transaction.dart';
 import '../services/state.dart';
 import '../utils/constants.dart';
 import 'delete_confirmation_dialog.dart';
@@ -28,6 +29,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
   late List<String> _accountsList;
   late String _account;
   late String _recurrence;
+  late bool _isPlannedFuture;
 
   @override
   void initState() {
@@ -38,6 +40,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
     _isIncome = tx?.isIncome ?? false;
     _category = tx?.category ?? (_isIncome ? 'Salary' : 'Food & Dining');
     _selectedDate = tx?.date ?? DateTime.now();
+    _isPlannedFuture = _selectedDate.isAfter(DateTime.now());
 
     _accountsList = AppState.accountsNotifier.value.isNotEmpty
         ? AppState.accountsNotifier.value
@@ -62,6 +65,10 @@ class _TransactionDialogState extends State<_TransactionDialog> {
     final onSurface = theme.colorScheme.onSurface;
     final surface = theme.colorScheme.surface;
     final primary = theme.colorScheme.primary;
+    final isLight = theme.brightness == Brightness.light;
+    final positiveColor = isLight ? const Color(0xFF059669) : const Color(0xFF10B981);
+    final negativeColor = isLight ? const Color(0xFFDC2626) : const Color(0xFFF87171);
+    final planAccent = isLight ? const Color(0xFFD97706) : const Color(0xFFFBBF24);
 
     return AlertDialog(
       backgroundColor: surface,
@@ -144,6 +151,9 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                       _selectedDate.hour,
                       _selectedDate.minute,
                     );
+                    if (_selectedDate.isAfter(DateTime.now())) {
+                      _isPlannedFuture = true;
+                    }
                   });
                 }
               },
@@ -176,6 +186,45 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                 ),
               ),
             ),
+            if (_selectedDate.isAfter(DateTime.now())) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: planAccent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: planAccent.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.event_note_rounded, color: planAccent, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Future Date Detected',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: planAccent),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Plan for future: won\'t affect current balance until due date, then auto-adds & alerts you.',
+                            style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.75)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: _isPlannedFuture,
+                      activeTrackColor: planAccent.withValues(alpha: 0.6),
+                      activeThumbColor: planAccent,
+                      onChanged: (val) => setState(() => _isPlannedFuture = val),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 15),
             DropdownButtonFormField<String>(
               // ignore: deprecated_member_use
@@ -282,13 +331,13 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: !_isIncome ? Colors.redAccent.withValues(alpha: 0.2) : Colors.transparent,
+                        color: !_isIncome ? negativeColor.withValues(alpha: 0.2) : Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: !_isIncome ? Colors.redAccent : onSurface.withValues(alpha: 0.2),
+                          color: !_isIncome ? negativeColor : onSurface.withValues(alpha: 0.2),
                         ),
                       ),
-                      child: Text('Expense', style: TextStyle(color: !_isIncome ? Colors.redAccent : onSurface.withValues(alpha: 0.7))),
+                      child: Text('Expense', style: TextStyle(color: !_isIncome ? negativeColor : onSurface.withValues(alpha: 0.7))),
                     ),
                   ),
                 ),
@@ -304,13 +353,13 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: _isIncome ? Colors.greenAccent.withValues(alpha: 0.2) : Colors.transparent,
+                        color: _isIncome ? positiveColor.withValues(alpha: 0.2) : Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _isIncome ? Colors.greenAccent : onSurface.withValues(alpha: 0.2),
+                          color: _isIncome ? positiveColor : onSurface.withValues(alpha: 0.2),
                         ),
                       ),
-                      child: Text('Income', style: TextStyle(color: _isIncome ? Colors.greenAccent : onSurface.withValues(alpha: 0.7))),
+                      child: Text('Income', style: TextStyle(color: _isIncome ? positiveColor : onSurface.withValues(alpha: 0.7))),
                     ),
                   ),
                 ),
@@ -322,8 +371,8 @@ class _TransactionDialogState extends State<_TransactionDialog> {
       actions: [
         if (widget.existingTx != null)
           TextButton.icon(
-            icon: const Icon(Icons.delete_outline_rounded, size: 16, color: Colors.redAccent),
-            label: const Text('Delete', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            icon: Icon(Icons.delete_outline_rounded, size: 16, color: negativeColor),
+            label: Text('Delete', style: TextStyle(color: negativeColor, fontWeight: FontWeight.bold)),
             onPressed: () async {
               final tx = widget.existingTx!;
               final confirmed = await showDeleteConfirmationDialog(
@@ -349,6 +398,29 @@ class _TransactionDialogState extends State<_TransactionDialog> {
             final effectiveTitle = enteredTitle.isNotEmpty ? enteredTitle : _category;
             final amount = double.tryParse(_amountCtrl.text.trim());
             if (amount != null && amount > 0) {
+              if (_isPlannedFuture && _selectedDate.isAfter(DateTime.now()) && widget.existingTx == null) {
+                final plan = PlannedTransaction(
+                  title: effectiveTitle,
+                  amount: amount,
+                  date: _selectedDate,
+                  isIncome: _isIncome,
+                  category: _category,
+                  account: _account,
+                  recurrence: _recurrence,
+                );
+                if (AppState.currentUser != null) {
+                  AppState.savePlannedTransaction(AppState.currentUser!, plan);
+                }
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Saved to Planned Future Sheet for ${formatDateWithYear(_selectedDate)}!'),
+                    backgroundColor: Colors.teal,
+                  ),
+                );
+                return;
+              }
+
               final newTx = Transaction(
                 id: widget.existingTx?.id,
                 title: effectiveTitle,

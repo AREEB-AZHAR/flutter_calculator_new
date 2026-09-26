@@ -17,7 +17,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
   int _selectedTierIndex = 0; // 0: Pro Lifetime, 1: Remove Ads Only
   bool _isProcessingPayment = false;
 
-  Future<void> _handleGooglePay(String planTitle, double price, bool isPro) async {
+  Future<void> _handleGooglePay(String planTitle, double price, bool isPro, {bool isCoffee = false}) async {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
 
@@ -213,7 +213,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
       await Future.delayed(const Duration(milliseconds: 650));
       if (!mounted) return;
 
-      if (isPro) {
+      if (isCoffee) {
+        await MonetizationService.unlockCoffeeWithTrial();
+      } else if (isPro) {
         await MonetizationService.unlockPro();
       } else {
         await MonetizationService.removeAds();
@@ -227,17 +229,26 @@ class _PremiumScreenState extends State<PremiumScreen> {
           builder: (ctx) => AlertDialog(
             backgroundColor: theme.colorScheme.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-            title: const Row(
+            title: Row(
               children: [
-                Icon(Icons.check_circle_rounded, color: Colors.green, size: 28),
-                SizedBox(width: 10),
-                Text('Payment Successful', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Icon(
+                  isCoffee ? Icons.coffee_rounded : Icons.check_circle_rounded,
+                  color: isCoffee ? Colors.amberAccent : Colors.green,
+                  size: 28,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  isCoffee ? 'Thank You for Your Gift!' : 'Payment Successful',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
               ],
             ),
             content: Text(
-              isPro
-                  ? 'Welcome to Tally Pro! All analytics, theme customizations, custom launcher icons, and ad-free browsing are now unlocked.'
-                  : 'Ads successfully removed! Enjoy your completely clean and uninterrupted Tally experience.',
+              isCoffee
+                  ? 'Thank you so much for supporting independent development! ☕ As a gift, all banner ads have been removed for life, and your complimentary 7-Day Tally Pro VIP trial is now active!'
+                  : (isPro
+                      ? 'Welcome to Tally Pro! All analytics, theme customizations, custom launcher icons, and ad-free browsing are now unlocked.'
+                      : 'Ads successfully removed! Enjoy your completely clean and uninterrupted Tally experience.'),
               style: TextStyle(
                 fontSize: 14,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
@@ -458,13 +469,13 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         ),
                         const SizedBox(height: 14),
 
-                        // Option 1: Pro Lifetime
+                        // Option 0: Pro Monthly ($4.99/mo)
                         _buildPlanCard(
                           index: 0,
-                          title: 'Tally Pro Lifetime Access',
-                          price: '\$4.99',
-                          badge: '⭐ BEST VALUE',
-                          subtitle: 'All Pro analytics, Theme Studio, Custom Icons & No Ads forever.',
+                          title: 'Tally Pro Monthly',
+                          price: '\$4.99 / mo',
+                          badge: 'FLEXIBLE',
+                          subtitle: 'Full month-to-month access to predictive analytics, Theme Studio & no ads.',
                           isSelected: _selectedTierIndex == 0,
                           isPurchased: isPro,
                           onTap: () => setState(() => _selectedTierIndex = 0),
@@ -475,16 +486,50 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
                         const SizedBox(height: 12),
 
-                        // Option 2: Remove Ads Only
+                        // Option 1: Pro Yearly ($49.90/yr -> 4.99 * 10, 2 Months Free)
                         _buildPlanCard(
                           index: 1,
-                          title: 'Remove Ads Only',
-                          price: '\$1.99',
-                          badge: '🚫 UTILITY',
-                          subtitle: 'Completely eliminate all banner ads permanently.',
+                          title: 'Tally Pro Yearly',
+                          price: '\$49.90 / yr',
+                          badge: '⭐ BEST VALUE (2 MO FREE)',
+                          subtitle: 'Pay for 10 months, get 12! Only \$4.16/mo (Save 17% vs monthly).',
                           isSelected: _selectedTierIndex == 1,
-                          isPurchased: isAdsRemoved || isPro,
+                          isPurchased: isPro,
                           onTap: () => setState(() => _selectedTierIndex = 1),
+                          primary: primary,
+                          surface: surface,
+                          onSurface: onSurface,
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Option 2: Pro Lifetime ($47.88 -> 3.99 * 12)
+                        _buildPlanCard(
+                          index: 2,
+                          title: 'Tally Pro Lifetime Access',
+                          price: '\$47.88',
+                          badge: '👑 ULTIMATE PASS',
+                          subtitle: 'One-time payment (only \$3.99 × 12). Own all current & future Pro features forever.',
+                          isSelected: _selectedTierIndex == 2,
+                          isPurchased: isPro,
+                          onTap: () => setState(() => _selectedTierIndex = 2),
+                          primary: primary,
+                          surface: surface,
+                          onSurface: onSurface,
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Option 3: Buy Me a Coffee ($1.99) -> Ad-Free for life + 7-Day Pro Trial Gift!
+                        _buildPlanCard(
+                          index: 3,
+                          title: '☕ Buy the Developer a Coffee',
+                          price: '\$1.99',
+                          badge: '🎁 BONUS GIFT',
+                          subtitle: 'Fuel independent development! Enjoy 100% Ad-Free Tally for life + a complimentary 7-Day Tally Pro VIP Trial gift included.',
+                          isSelected: _selectedTierIndex == 3,
+                          isPurchased: isAdsRemoved || isPro,
+                          onTap: () => setState(() => _selectedTierIndex = 3),
                           primary: primary,
                           surface: surface,
                           onSurface: onSurface,
@@ -501,9 +546,13 @@ class _PremiumScreenState extends State<PremiumScreen> {
                                 ? null
                                 : () {
                                     if (_selectedTierIndex == 0) {
-                                      _handleGooglePay('Tally Pro Lifetime', 4.99, true);
+                                      _handleGooglePay('Tally Pro Monthly', 4.99, true);
+                                    } else if (_selectedTierIndex == 1) {
+                                      _handleGooglePay('Tally Pro Yearly (Save 2 Mo)', 49.90, true);
+                                    } else if (_selectedTierIndex == 2) {
+                                      _handleGooglePay('Tally Pro Lifetime Access', 47.88, true);
                                     } else {
-                                      _handleGooglePay('Remove Ads Only', 1.99, false);
+                                      _handleGooglePay('Buy Developer a Coffee & Ad-Free', 1.99, false, isCoffee: true);
                                     }
                                   },
                             style: ElevatedButton.styleFrom(
@@ -538,8 +587,12 @@ class _PremiumScreenState extends State<PremiumScreen> {
                                 const SizedBox(width: 12),
                                 Text(
                                   _selectedTierIndex == 0
-                                      ? (isPro ? 'Already Pro • Manage' : 'Pay with Google Pay • \$4.99')
-                                      : (isAdsRemoved ? 'Ads Already Removed' : 'Pay with Google Pay • \$1.99'),
+                                      ? (isPro ? 'Already Pro • Manage' : 'Pay with Google Pay • \$4.99 / mo')
+                                      : _selectedTierIndex == 1
+                                          ? (isPro ? 'Already Pro • Manage' : 'Pay with Google Pay • \$49.90 / yr')
+                                          : _selectedTierIndex == 2
+                                              ? (isPro ? 'Already Pro • Manage' : 'Pay with Google Pay • \$47.88')
+                                              : (isAdsRemoved ? 'Ads Already Removed • Send Coffee' : 'Pay with Google Pay • \$1.99'),
                                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                 ),
                               ],
@@ -756,14 +809,18 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: onSurface,
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: onSurface,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
