@@ -360,3 +360,231 @@ class PieChartPainter extends CustomPainter {
         oldDelegate.emptyColor != emptyColor;
   }
 }
+
+/// A high-performance, GPU-accelerated bar chart painter for 12-month yearly tracking
+class BarChartPainter extends CustomPainter {
+  final List<double> monthlyValues; // 12 elements (Jan to Dec)
+  final Color barColor;
+  final Color secondaryColor;
+  final Color textColor;
+  final Color? emptyColor;
+  final String currencySymbol;
+  final int? selectedMonth; // 1-12
+
+  final List<String>? customLabels;
+
+  static const List<String> _monthLabels = [
+    'J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'
+  ];
+
+  BarChartPainter({
+    required this.monthlyValues,
+    required this.barColor,
+    required this.secondaryColor,
+    required this.textColor,
+    this.currencySymbol = '\$',
+    this.selectedMonth,
+    this.emptyColor,
+    this.customLabels,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const bottomLabelHeight = 18.0;
+    final chartHeight = size.height - bottomLabelHeight;
+    final barCount = monthlyValues.length; // 12 or custom
+    if (barCount == 0) return;
+
+    final maxVal = monthlyValues.fold<double>(0.0, (prev, elem) => max(prev, elem.abs()));
+    final safeMax = maxVal <= 0 ? 1.0 : maxVal;
+
+    final totalBarAreaWidth = size.width;
+    final slotWidth = totalBarAreaWidth / barCount;
+    final barWidth = max(6.0, slotWidth * 0.55);
+
+    // Draw baseline
+    final baseLinePaint = Paint()
+      ..color = (emptyColor ?? textColor.withValues(alpha: 0.15))
+      ..strokeWidth = 1.0;
+    canvas.drawLine(Offset(0, chartHeight), Offset(size.width, chartHeight), baseLinePaint);
+
+    for (int i = 0; i < barCount; i++) {
+      final val = monthlyValues[i];
+      final isCurrent = selectedMonth != null && selectedMonth == (i + 1);
+      final xCenter = slotWidth * i + (slotWidth / 2);
+      final barHeight = val <= 0 ? 2.0 : (val / safeMax) * (chartHeight - 14);
+
+      final barRect = RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset(xCenter, chartHeight - (barHeight / 2)),
+          width: barWidth,
+          height: max(2.0, barHeight),
+        ),
+        const Radius.circular(4),
+      );
+
+      final barPaint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            isCurrent ? secondaryColor : barColor,
+            barColor.withValues(alpha: isCurrent ? 0.9 : 0.6),
+          ],
+        ).createShader(barRect.outerRect)
+        ..style = PaintingStyle.fill;
+
+      canvas.drawRRect(barRect, barPaint);
+
+      // Label below bar
+      final effectiveLabels = customLabels ?? _monthLabels;
+      final label = (i < effectiveLabels.length) ? effectiveLabels[i] : '${i + 1}';
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: TextStyle(
+            color: isCurrent ? secondaryColor : textColor.withValues(alpha: 0.65),
+            fontSize: 10,
+            fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      textPainter.paint(
+        canvas,
+        Offset(xCenter - (textPainter.width / 2), size.height - bottomLabelHeight + 3),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(BarChartPainter oldDelegate) {
+    return oldDelegate.monthlyValues != monthlyValues ||
+        oldDelegate.barColor != barColor ||
+        oldDelegate.secondaryColor != secondaryColor ||
+        oldDelegate.textColor != textColor ||
+        oldDelegate.selectedMonth != selectedMonth ||
+        oldDelegate.currencySymbol != currencySymbol ||
+        oldDelegate.customLabels != customLabels;
+  }
+}
+
+/// A smooth, GPU-accelerated spline line chart painter for 12-month yearly tracking
+class YearlyLineChartPainter extends CustomPainter {
+  final List<double> monthlyValues; // 12 elements (Jan to Dec)
+  final Color lineColor;
+  final Color secondaryColor;
+  final Color textColor;
+  final Color? emptyColor;
+  final int? selectedMonth;
+  final List<String>? customLabels;
+
+  static const List<String> _monthLabels = [
+    'J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'
+  ];
+
+  YearlyLineChartPainter({
+    required this.monthlyValues,
+    required this.lineColor,
+    required this.secondaryColor,
+    required this.textColor,
+    this.selectedMonth,
+    this.emptyColor,
+    this.customLabels,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const bottomLabelHeight = 18.0;
+    final chartHeight = size.height - bottomLabelHeight;
+    final count = monthlyValues.length;
+    if (count == 0) return;
+
+    final maxVal = monthlyValues.fold<double>(0.0, (prev, elem) => max(prev, elem));
+    final minVal = monthlyValues.fold<double>(0.0, (prev, elem) => min(prev, elem));
+    final diff = maxVal - minVal;
+    final range = diff <= 0 ? 1.0 : diff;
+
+    final widthStep = size.width / max(1, count - 1);
+
+    final path = Path();
+    final fillPath = Path();
+
+    for (int i = 0; i < count; i++) {
+      final x = i * widthStep;
+      final normalized = (monthlyValues[i] - minVal) / range;
+      final y = chartHeight - (normalized * (chartHeight - 16)) - 8;
+
+      if (i == 0) {
+        path.moveTo(x, y);
+        fillPath.moveTo(x, chartHeight);
+        fillPath.lineTo(x, y);
+      } else {
+        final prevX = (i - 1) * widthStep;
+        final prevNorm = (monthlyValues[i - 1] - minVal) / range;
+        final prevY = chartHeight - (prevNorm * (chartHeight - 16)) - 8;
+
+        final cx = (prevX + x) / 2;
+        path.cubicTo(cx, prevY, cx, y, x, y);
+        fillPath.cubicTo(cx, prevY, cx, y, x, y);
+      }
+
+      // Draw month label
+      final label = (i < _monthLabels.length) ? _monthLabels[i] : '${i + 1}';
+      final isCurrent = selectedMonth != null && selectedMonth == (i + 1);
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: TextStyle(
+            color: isCurrent ? secondaryColor : textColor.withValues(alpha: 0.65),
+            fontSize: 10,
+            fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(
+        canvas,
+        Offset(x - (textPainter.width / 2), size.height - bottomLabelHeight + 3),
+      );
+    }
+
+    fillPath.lineTo((count - 1) * widthStep, chartHeight);
+    fillPath.close();
+
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          lineColor.withValues(alpha: 0.35),
+          lineColor.withValues(alpha: 0.0),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, chartHeight))
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(fillPath, fillPaint);
+
+    final strokePaint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    canvas.drawPath(path, strokePaint);
+  }
+
+  @override
+  bool shouldRepaint(YearlyLineChartPainter oldDelegate) {
+    return oldDelegate.monthlyValues != monthlyValues ||
+        oldDelegate.lineColor != lineColor ||
+        oldDelegate.secondaryColor != secondaryColor ||
+        oldDelegate.textColor != textColor ||
+        oldDelegate.selectedMonth != selectedMonth ||
+        oldDelegate.emptyColor != emptyColor;
+  }
+}
+
+

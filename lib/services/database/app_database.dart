@@ -8,6 +8,8 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../../models/transaction.dart' as model;
 import '../../models/savings_goal.dart';
 import '../../models/user_profile.dart';
+import '../../models/loan.dart';
+import '../../models/planned_transaction.dart';
 import 'security_helper.dart';
 
 class AppDatabase {
@@ -124,6 +126,44 @@ class AppDatabase {
     } catch (_) {}
     try {
       await db.execute('ALTER TABLE profiles ADD COLUMN theme TEXT');
+    } catch (_) {}
+
+    // Ensure loans table exists
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS loans (
+          id TEXT PRIMARY KEY,
+          username TEXT NOT NULL,
+          title TEXT NOT NULL,
+          person_name TEXT NOT NULL,
+          amount REAL NOT NULL,
+          due_date TEXT NOT NULL,
+          type TEXT NOT NULL,
+          is_settled INTEGER NOT NULL DEFAULT 0,
+          notes TEXT,
+          account TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        )
+      ''');
+    } catch (_) {}
+
+    // Ensure planned_transactions table exists
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS planned_transactions (
+          id TEXT PRIMARY KEY,
+          username TEXT NOT NULL,
+          title TEXT NOT NULL,
+          amount REAL NOT NULL,
+          date TEXT NOT NULL,
+          is_income INTEGER NOT NULL,
+          category TEXT NOT NULL,
+          account TEXT NOT NULL,
+          recurrence TEXT NOT NULL,
+          is_processed INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL
+        )
+      ''');
     } catch (_) {}
 
     await _migrateLegacyPrefs(db);
@@ -1014,5 +1054,113 @@ class AppDatabase {
 
     buffer.writeln('COMMIT;\n');
     return buffer.toString();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Loans & Debts (Receivables & Payables)
+  // ---------------------------------------------------------------------------
+  Future<List<Loan>> loadLoans(String username) async {
+    final db = await database;
+    final maps = await db.query(
+      'loans',
+      where: 'username = ?',
+      whereArgs: [username],
+      orderBy: 'due_date ASC',
+    );
+    return maps.map((m) => Loan.fromJson(m)).toList();
+  }
+
+  Future<void> saveLoan(String username, Loan loan) async {
+    final db = await database;
+    await db.insert(
+      'loans',
+      {
+        'id': loan.id,
+        'username': username,
+        'title': loan.title,
+        'person_name': loan.personName,
+        'amount': loan.amount,
+        'due_date': loan.dueDate.toIso8601String(),
+        'type': loan.type,
+        'is_settled': loan.isSettled ? 1 : 0,
+        'notes': loan.notes,
+        'account': loan.account,
+        'created_at': loan.createdAt.toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> deleteLoan(String username, String loanId) async {
+    final db = await database;
+    await db.delete(
+      'loans',
+      where: 'username = ? AND id = ?',
+      whereArgs: [username, loanId],
+    );
+  }
+
+  Future<void> setLoanSettled(String username, String loanId, bool isSettled) async {
+    final db = await database;
+    await db.update(
+      'loans',
+      {'is_settled': isSettled ? 1 : 0},
+      where: 'username = ? AND id = ?',
+      whereArgs: [username, loanId],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Planned / Future Transactions & Recurring Execution
+  // ---------------------------------------------------------------------------
+  Future<List<PlannedTransaction>> loadPlannedTransactions(String username) async {
+    final db = await database;
+    final maps = await db.query(
+      'planned_transactions',
+      where: 'username = ? AND is_processed = 0',
+      whereArgs: [username],
+      orderBy: 'date ASC',
+    );
+    return maps.map((m) => PlannedTransaction.fromJson(m)).toList();
+  }
+
+  Future<void> savePlannedTransaction(String username, PlannedTransaction plan) async {
+    final db = await database;
+    await db.insert(
+      'planned_transactions',
+      {
+        'id': plan.id,
+        'username': username,
+        'title': plan.title,
+        'amount': plan.amount,
+        'date': plan.date.toIso8601String(),
+        'is_income': plan.isIncome ? 1 : 0,
+        'category': plan.category,
+        'account': plan.account,
+        'recurrence': plan.recurrence,
+        'is_processed': plan.isProcessed ? 1 : 0,
+        'created_at': plan.createdAt.toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> deletePlannedTransaction(String username, String planId) async {
+    final db = await database;
+    await db.delete(
+      'planned_transactions',
+      where: 'username = ? AND id = ?',
+      whereArgs: [username, planId],
+    );
+  }
+
+  Future<void> markPlannedTransactionProcessed(String username, String planId) async {
+    final db = await database;
+    await db.update(
+      'planned_transactions',
+      {'is_processed': 1},
+      where: 'username = ? AND id = ?',
+      whereArgs: [username, planId],
+    );
   }
 }

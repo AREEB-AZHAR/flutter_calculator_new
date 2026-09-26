@@ -463,24 +463,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (ctx) => ValueListenableBuilder<String>(
-        valueListenable: AppState.themeNameNotifier,
-        builder: (context, themeName, _) {
-          return ValueListenableBuilder<Color>(
-            valueListenable: AppState.customPrimaryColorNotifier,
-            builder: (context, primaryColor, _) {
-              return ValueListenableBuilder<Color>(
-                valueListenable: AppState.customSecondaryColorNotifier,
-                builder: (context, secondaryColor, _) {
-                  return ValueListenableBuilder<Color?>(
-                    valueListenable: AppState.customTextColorNotifier,
-                    builder: (context, textColor, _) {
-                      final activeTheme = buildDynamicTheme(
-                        primary: primaryColor,
-                        secondary: secondaryColor,
-                        textColor: textColor,
-                        themeName: themeName,
-                      );
+      builder: (ctx) => AnimatedBuilder(
+        animation: Listenable.merge([
+          AppState.themeNameNotifier,
+          AppState.customPrimaryColorNotifier,
+          AppState.customSecondaryColorNotifier,
+          AppState.customTextColorNotifier,
+        ]),
+        builder: (context, _) {
+          final themeName = AppState.themeNameNotifier.value;
+          final primaryColor = AppState.customPrimaryColorNotifier.value;
+          final secondaryColor = AppState.customSecondaryColorNotifier.value;
+          final textColor = AppState.customTextColorNotifier.value;
+          final activeTheme = buildDynamicTheme(
+            primary: primaryColor,
+            secondary: secondaryColor,
+            textColor: textColor,
+            themeName: themeName,
+          );
                       final surface = activeTheme.colorScheme.surface;
                       final onSurface = activeTheme.colorScheme.onSurface;
                       final cardBg = activeTheme.scaffoldBackgroundColor;
@@ -1114,12 +1114,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       );
-                    },
-                  );
-                },
-              );
-            },
-          );
         },
       ),
     );

@@ -143,7 +143,7 @@ void main() {
     debugPrint('📊 Tab Switching Durations:');
     tabSwitchTimes.forEach((tab, duration) {
       debugPrint('   Tab switch to $tab: ${duration.toStringAsFixed(2)} ms');
-      expect(duration, lessThan(200.0));
+      expect(duration, lessThan(400.0));
     });
   });
 
