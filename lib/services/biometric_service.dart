@@ -34,9 +34,12 @@ class BiometricService {
   }
 
   /// Checks if user has toggled biometric unlock ON in Tally settings.
-  static Future<bool> isBiometricEnabled() async {
+  static Future<bool> isBiometricEnabled({String? username}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      if (username != null && username.isNotEmpty) {
+        return prefs.getBool('${_prefBiometricEnabledKey}_$username') ?? false;
+      }
       return prefs.getBool(_prefBiometricEnabledKey) ?? false;
     } catch (e) {
       return false;
@@ -57,11 +60,23 @@ class BiometricService {
   static Future<void> setBiometricEnabled(bool enabled, {String? username}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_prefBiometricEnabledKey, enabled);
-      if (enabled && username != null && username.isNotEmpty) {
-        await prefs.setString(_prefBiometricUserKey, username);
-      } else if (!enabled) {
-        await prefs.remove(_prefBiometricUserKey);
+      if (username != null && username.isNotEmpty) {
+        await prefs.setBool('${_prefBiometricEnabledKey}_$username', enabled);
+        if (enabled) {
+          await prefs.setString(_prefBiometricUserKey, username);
+          await prefs.setBool(_prefBiometricEnabledKey, true);
+        } else {
+          final savedUser = prefs.getString(_prefBiometricUserKey);
+          if (savedUser == username) {
+            await prefs.remove(_prefBiometricUserKey);
+            await prefs.setBool(_prefBiometricEnabledKey, false);
+          }
+        }
+      } else {
+        await prefs.setBool(_prefBiometricEnabledKey, enabled);
+        if (!enabled) {
+          await prefs.remove(_prefBiometricUserKey);
+        }
       }
     } catch (e) {
       debugPrint('BiometricService.setBiometricEnabled error: $e');

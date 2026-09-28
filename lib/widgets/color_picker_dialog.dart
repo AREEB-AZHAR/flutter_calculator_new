@@ -217,13 +217,6 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
     AppState.customTextColorNotifier.value = _textColor;
     AppState.avatarColorNotifier.value = _primary;
 
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('tally_primary_color', _primary.toARGB32());
-      await prefs.setInt('tally_secondary_color', _secondary.toARGB32());
-      await prefs.setInt('tally_text_color', _textColor.toARGB32());
-    } catch (_) {}
-
     if (AppState.currentUser != null) {
       final username = AppState.currentUser!;
       final profile = await AppDatabase.instance.loadProfile(username);
@@ -232,6 +225,13 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
         secondaryColor: _secondary,
         textColor: _textColor,
       ));
+    } else {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('tally_primary_color', _primary.toARGB32());
+        await prefs.setInt('tally_secondary_color', _secondary.toARGB32());
+        await prefs.setInt('tally_text_color', _textColor.toARGB32());
+      } catch (_) {}
     }
 
     if (mounted) Navigator.pop(context);

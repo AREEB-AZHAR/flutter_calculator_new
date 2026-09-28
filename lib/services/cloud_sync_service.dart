@@ -27,7 +27,16 @@ class CloudSyncService {
   /// Returns true if the user is authenticated with Firebase and cloud sync is available.
   static bool get isCloudAvailable {
     if (Firebase.apps.isEmpty) return false;
-    return FirebaseAuth.instance.currentUser != null;
+    final fbUser = FirebaseAuth.instance.currentUser;
+    if (fbUser == null) return false;
+    final currentAppUser = AppState.currentUser;
+    // Strictly isolate cloud sync to the authenticated Google/Firebase user.
+    // If the active app user is a local password user or differs from the Firebase account, prevent sync bleed.
+    if (currentAppUser == null || currentAppUser.isEmpty) return false;
+    if (fbUser.email != null && fbUser.email!.toLowerCase() != currentAppUser.toLowerCase()) {
+      return false;
+    }
+    return true;
   }
 
   /// Current authenticated Firebase User UID
@@ -35,7 +44,7 @@ class CloudSyncService {
 
   /// Checks whether cloud Firestore already has any data stored for the current Firebase UID or user.
   static Future<bool> hasCloudData([String? targetUid]) async {
-    if (!isCloudAvailable) return false;
+    if (Firebase.apps.isEmpty) return false;
     final uid = targetUid ?? currentUid;
     if (uid == null) return false;
     try {
@@ -194,7 +203,13 @@ class CloudSyncService {
   /// Performs an intelligent two-way synchronization between SQLite and Firestore.
   static Future<bool> sync(String username) async {
     if (!isCloudAvailable) {
-      debugPrint('CloudSyncService: Firebase Auth user not present, skipping cloud sync.');
+      debugPrint('CloudSyncService: Firebase Auth user not present or does not match active session, skipping cloud sync.');
+      return false;
+    }
+
+    final fbUser = FirebaseAuth.instance.currentUser;
+    if (fbUser != null && fbUser.email != null && fbUser.email!.toLowerCase() != username.toLowerCase()) {
+      debugPrint('CloudSyncService: Firebase user (${fbUser.email}) does not match local username ($username). Aborting sync.');
       return false;
     }
 

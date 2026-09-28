@@ -32,10 +32,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final ImagePicker _picker = ImagePicker();
   int _devToggleCount = 0;
 
-  void _logout() {
-    AppState.clearUserSession();
-    BiometricService.resetSessionPrompt();
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+  Future<void> _logout() async {
+    await AppState.clearUserSession();
+    if (mounted) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+    }
   }
 
   Future<void> _linkGoogleAccount() async {
@@ -948,7 +949,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   child: StatefulBuilder(
                                     builder: (context, setCardState) {
                                       return FutureBuilder<bool>(
-                                        future: NotificationService.instance.areRemindersEnabled(),
+                                        future: NotificationService.instance.areRemindersEnabled(AppState.currentUser),
                                         builder: (context, snapshot) {
                                           final isEnabled = snapshot.data ?? true;
                                           return SwitchListTile(
@@ -959,7 +960,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             value: isEnabled,
                                             onChanged: (val) async {
                                               _devToggleCount++;
-                                              await NotificationService.instance.setRemindersEnabled(val);
+                                              await NotificationService.instance.setRemindersEnabled(val, AppState.currentUser);
                                               setCardState(() {});
                                               if (_devToggleCount >= 10) {
                                                 _devToggleCount = 0;
@@ -1054,7 +1055,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       StatefulBuilder(
                                         builder: (context, setTileState) {
                                           return FutureBuilder<bool>(
-                                            future: BiometricService.isBiometricEnabled(),
+                                            future: BiometricService.isBiometricEnabled(username: AppState.currentUser),
                                             builder: (context, snapshot) {
                                               final isEnabled = snapshot.data ?? false;
                                               return SwitchListTile(
@@ -1096,7 +1097,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                       );
                                                     }
                                                   } else {
-                                                    await BiometricService.setBiometricEnabled(false);
+                                                    await BiometricService.setBiometricEnabled(false, username: AppState.currentUser);
                                                     setTileState(() {});
                                                     if (!context.mounted) return;
                                                     ScaffoldMessenger.of(context).showSnackBar(

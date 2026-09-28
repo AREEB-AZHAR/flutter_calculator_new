@@ -100,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     try {
       final googleUser = await GoogleAuthService.signIn(context);
       if (googleUser != null) {
-        if (await BiometricService.isBiometricEnabled()) {
+        if (await BiometricService.isBiometricEnabled(username: googleUser.email)) {
           await BiometricService.setBiometricEnabled(true, username: googleUser.email);
         }
         await AppState.loadAllUserData(googleUser.email);
@@ -188,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         final success = await AppDatabase.instance.authenticateUser(identifier, password);
         if (success) {
           final canonicalUsername = await AppDatabase.instance.getUsernameForIdentifier(identifier) ?? identifier;
-          if (await BiometricService.isBiometricEnabled()) {
+          if (await BiometricService.isBiometricEnabled(username: canonicalUsername)) {
             await BiometricService.setBiometricEnabled(true, username: canonicalUsername);
           }
           await AppState.loadAllUserData(canonicalUsername);

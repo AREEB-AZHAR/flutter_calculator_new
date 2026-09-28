@@ -291,30 +291,15 @@ class AppDatabase {
       'created_at': DateTime.now().toIso8601String(),
     });
 
-    Color regPrimary = const Color(0xFFE4572E);
-    Color regSecondary = const Color(0xFFF6F0E1);
-    Color? regTextColor;
-    String regTheme = 'Ledger';
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      regTheme = prefs.getString('tally_active_theme') ?? 'Ledger';
-      final p = prefs.getInt('tally_primary_color');
-      if (p != null) regPrimary = Color(p);
-      final s = prefs.getInt('tally_secondary_color');
-      if (s != null) regSecondary = Color(s);
-      final t = prefs.getInt('tally_text_color');
-      if (t != null) regTextColor = Color(t);
-    } catch (_) {}
-
     await db.insert('profiles', {
       'username': username,
       'display_name': username,
       'bio': 'Managing finances with clarity & style.',
       'photo_path': null,
-      'primary_color': regPrimary.toARGB32(),
-      'secondary_color': regSecondary.toARGB32(),
-      'text_color': regTextColor?.toARGB32(),
-      'theme': regTheme,
+      'primary_color': const Color(0xFFE4572E).toARGB32(),
+      'secondary_color': const Color(0xFFF6F0E1).toARGB32(),
+      'text_color': null,
+      'theme': 'Ledger',
       'currency': '\$',
       'created_at': DateTime.now().toIso8601String(),
     });
@@ -568,7 +553,39 @@ class AppDatabase {
         }
       }
 
-      // 6. Delete migrated local user account and all redundant local records
+      // 6. Loans
+      final fromLoans = await txn.query(
+        'loans',
+        where: 'username = ?',
+        whereArgs: [fromUsername],
+      );
+      for (var l in fromLoans) {
+        final lMap = Map<String, dynamic>.from(l);
+        lMap['username'] = toUsername;
+        await txn.insert(
+          'loans',
+          lMap,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      // 7. Planned Transactions
+      final fromPlans = await txn.query(
+        'planned_transactions',
+        where: 'username = ?',
+        whereArgs: [fromUsername],
+      );
+      for (var p in fromPlans) {
+        final pMap = Map<String, dynamic>.from(p);
+        pMap['username'] = toUsername;
+        await txn.insert(
+          'planned_transactions',
+          pMap,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      // 8. Delete migrated local user account and all redundant local records
       await txn.delete(
         'users',
         where: 'username = ?',
@@ -599,6 +616,16 @@ class AppDatabase {
         where: 'username = ?',
         whereArgs: [fromUsername],
       );
+      await txn.delete(
+        'loans',
+        where: 'username = ?',
+        whereArgs: [fromUsername],
+      );
+      await txn.delete(
+        'planned_transactions',
+        where: 'username = ?',
+        whereArgs: [fromUsername],
+      );
     });
   }
 
@@ -624,6 +651,8 @@ class AppDatabase {
       );
       await txn.delete('budgets', where: 'username = ?', whereArgs: [username]);
       await txn.delete('goals', where: 'username = ?', whereArgs: [username]);
+      await txn.delete('loans', where: 'username = ?', whereArgs: [username]);
+      await txn.delete('planned_transactions', where: 'username = ?', whereArgs: [username]);
     });
   }
 
@@ -654,21 +683,6 @@ class AppDatabase {
         'created_at': DateTime.now().toIso8601String(),
       });
 
-      Color regPrimary = const Color(0xFFE4572E);
-      Color regSecondary = const Color(0xFFF6F0E1);
-      Color? regTextColor;
-      String regTheme = 'Ledger';
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        regTheme = prefs.getString('tally_active_theme') ?? 'Ledger';
-        final p = prefs.getInt('tally_primary_color');
-        if (p != null) regPrimary = Color(p);
-        final s = prefs.getInt('tally_secondary_color');
-        if (s != null) regSecondary = Color(s);
-        final t = prefs.getInt('tally_text_color');
-        if (t != null) regTextColor = Color(t);
-      } catch (_) {}
-
       await db.insert('profiles', {
         'username': email,
         'display_name': displayName.isNotEmpty
@@ -676,10 +690,10 @@ class AppDatabase {
             : email.split('@').first,
         'bio': 'Google Account • Cloud Synced',
         'photo_path': photoUrl,
-        'primary_color': regPrimary.toARGB32(),
-        'secondary_color': regSecondary.toARGB32(),
-        'text_color': regTextColor?.toARGB32(),
-        'theme': regTheme,
+        'primary_color': const Color(0xFFE4572E).toARGB32(),
+        'secondary_color': const Color(0xFFF6F0E1).toARGB32(),
+        'text_color': null,
+        'theme': 'Ledger',
         'currency': '\$',
         'created_at': DateTime.now().toIso8601String(),
       });
