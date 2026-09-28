@@ -761,27 +761,17 @@ class AppDatabase {
       return UserProfile.fromMap(results.first);
     }
 
-    Color defPrimary = const Color(0xFFE4572E);
-    Color defSecondary = const Color(0xFFF6F0E1);
-    Color? defTextColor;
-    String defTheme = 'Ledger';
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      defTheme = prefs.getString('tally_active_theme') ?? 'Ledger';
-      final p = prefs.getInt('tally_primary_color');
-      if (p != null) defPrimary = Color(p);
-      final s = prefs.getInt('tally_secondary_color');
-      if (s != null) defSecondary = Color(s);
-      final t = prefs.getInt('tally_text_color');
-      if (t != null) defTextColor = Color(t);
-    } catch (_) {}
+    // Default profile for new account: always clean Ledger base theme
+    const defPrimary = Color(0xFFE4572E);
+    const defSecondary = Color(0xFFF6F0E1);
+    const defTheme = 'Ledger';
 
     final profile = UserProfile(
       username: username,
       displayName: username,
       primaryColor: defPrimary,
       secondaryColor: defSecondary,
-      textColor: defTextColor,
+      textColor: null,
       theme: defTheme,
     );
     await saveProfile(profile);

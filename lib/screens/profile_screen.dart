@@ -33,10 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _devToggleCount = 0;
 
   void _logout() {
-    AppState.currentUser = null;
-    AppState.transactionsNotifier.value = [];
-    AppState.goalsNotifier.value = [];
-    AppState.activeTabNotifier.value = 0;
+    AppState.clearUserSession();
     BiometricService.resetSessionPrompt();
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
   }

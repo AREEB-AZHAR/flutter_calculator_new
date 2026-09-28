@@ -20,6 +20,15 @@ class MonetizationService {
   static final ValueNotifier<DateTime?> proTrialExpiryNotifier = ValueNotifier<DateTime?>(null);
   static final ValueNotifier<int> themePassesNotifier = ValueNotifier<int>(0);
 
+  static String? _activeUsername;
+
+  static String _userKey(String baseKey) {
+    if (_activeUsername != null && _activeUsername!.isNotEmpty) {
+      return '${baseKey}_$_activeUsername';
+    }
+    return baseKey;
+  }
+
   /// True if user is currently enjoying an active 7-day promotional Pro trial.
   static bool get isTrialActive {
     final expiry = proTrialExpiryNotifier.value;
@@ -47,11 +56,11 @@ class MonetizationService {
   static Future<void> initialize() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      isProUnlockedNotifier.value = prefs.getBool(_prefProUnlockedKey) ?? false;
-      isAdsRemovedNotifier.value = prefs.getBool(_prefAdsRemovedKey) ?? false;
-      themePassesNotifier.value = prefs.getInt(_prefThemePassesKey) ?? 0;
+      isProUnlockedNotifier.value = prefs.getBool(_userKey(_prefProUnlockedKey)) ?? false;
+      isAdsRemovedNotifier.value = prefs.getBool(_userKey(_prefAdsRemovedKey)) ?? false;
+      themePassesNotifier.value = prefs.getInt(_userKey(_prefThemePassesKey)) ?? 0;
 
-      final trialStr = prefs.getString(_prefProTrialExpiryKey);
+      final trialStr = prefs.getString(_userKey(_prefProTrialExpiryKey));
       if (trialStr != null && trialStr.isNotEmpty) {
         final expiry = DateTime.tryParse(trialStr);
         if (expiry != null && DateTime.now().isBefore(expiry)) {
@@ -65,14 +74,53 @@ class MonetizationService {
     }
   }
 
+  /// Loads entitlements strictly scoped to the specified user account.
+  static Future<void> loadUserEntitlements(String username) async {
+    _activeUsername = username;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userProKey = '${_prefProUnlockedKey}_$username';
+      final userAdsKey = '${_prefAdsRemovedKey}_$username';
+      final userTrialKey = '${_prefProTrialExpiryKey}_$username';
+      final userPassesKey = '${_prefThemePassesKey}_$username';
+
+      isProUnlockedNotifier.value = prefs.getBool(userProKey) ?? false;
+      isAdsRemovedNotifier.value = prefs.getBool(userAdsKey) ?? false;
+      themePassesNotifier.value = prefs.getInt(userPassesKey) ?? 0;
+
+      final trialStr = prefs.getString(userTrialKey);
+      if (trialStr != null && trialStr.isNotEmpty) {
+        final expiry = DateTime.tryParse(trialStr);
+        if (expiry != null && DateTime.now().isBefore(expiry)) {
+          proTrialExpiryNotifier.value = expiry;
+        } else {
+          proTrialExpiryNotifier.value = null;
+        }
+      } else {
+        proTrialExpiryNotifier.value = null;
+      }
+    } catch (e) {
+      debugPrint('MonetizationService.loadUserEntitlements error: $e');
+    }
+  }
+
+  /// Resets in-memory entitlement notifiers to factory/logged-out state.
+  static void resetToLoggedOut() {
+    _activeUsername = null;
+    isProUnlockedNotifier.value = false;
+    isAdsRemovedNotifier.value = false;
+    proTrialExpiryNotifier.value = null;
+    themePassesNotifier.value = 0;
+  }
+
   /// Grants one or more 1-time theme change passes (e.g. earned by watching a 30s ad).
   static Future<void> grantThemePass([int count = 1]) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final newCount = themePassesNotifier.value + count;
-      await prefs.setInt(_prefThemePassesKey, newCount);
+      await prefs.setInt(_userKey(_prefThemePassesKey), newCount);
       themePassesNotifier.value = newCount;
-      debugPrint('MonetizationService: Granted $count theme pass(es). Total: $newCount');
+      debugPrint('MonetizationService: Granted $count theme pass(es) for $_activeUsername. Total: $newCount');
     } catch (e) {
       debugPrint('MonetizationService.grantThemePass error: $e');
     }
@@ -87,9 +135,9 @@ class MonetizationService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final newCount = themePassesNotifier.value - 1;
-      await prefs.setInt(_prefThemePassesKey, newCount);
+      await prefs.setInt(_userKey(_prefThemePassesKey), newCount);
       themePassesNotifier.value = newCount;
-      debugPrint('MonetizationService: Consumed 1 theme pass. Remaining: $newCount');
+      debugPrint('MonetizationService: Consumed 1 theme pass for $_activeUsername. Remaining: $newCount');
       return true;
     } catch (e) {
       debugPrint('MonetizationService.consumeThemePass error: $e');
@@ -101,7 +149,7 @@ class MonetizationService {
   static Future<void> unlockPro() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_prefProUnlockedKey, true);
+      await prefs.setBool(_userKey(_prefProUnlockedKey), true);
       isProUnlockedNotifier.value = true;
     } catch (e) {
       debugPrint('MonetizationService.unlockPro error: $e');
@@ -112,7 +160,7 @@ class MonetizationService {
   static Future<void> removeAds() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_prefAdsRemovedKey, true);
+      await prefs.setBool(_userKey(_prefAdsRemovedKey), true);
       isAdsRemovedNotifier.value = true;
     } catch (e) {
       debugPrint('MonetizationService.removeAds error: $e');
@@ -124,11 +172,11 @@ class MonetizationService {
   static Future<void> unlockCoffeeWithTrial() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_prefAdsRemovedKey, true);
+      await prefs.setBool(_userKey(_prefAdsRemovedKey), true);
       isAdsRemovedNotifier.value = true;
 
       final expiry = DateTime.now().add(const Duration(days: 7));
-      await prefs.setString(_prefProTrialExpiryKey, expiry.toIso8601String());
+      await prefs.setString(_userKey(_prefProTrialExpiryKey), expiry.toIso8601String());
       proTrialExpiryNotifier.value = expiry;
     } catch (e) {
       debugPrint('MonetizationService.unlockCoffeeWithTrial error: $e');
@@ -139,6 +187,11 @@ class MonetizationService {
   static Future<void> resetPurchases() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_userKey(_prefProUnlockedKey));
+      await prefs.remove(_userKey(_prefAdsRemovedKey));
+      await prefs.remove(_userKey(_prefProTrialExpiryKey));
+      await prefs.remove(_userKey(_prefThemePassesKey));
+      // Also clear legacy keys
       await prefs.remove(_prefProUnlockedKey);
       await prefs.remove(_prefAdsRemovedKey);
       await prefs.remove(_prefProTrialExpiryKey);

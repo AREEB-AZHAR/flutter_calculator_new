@@ -156,9 +156,11 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                     setState(() => _selectedAccount = 'Overall');
                                   }
                                   setDialogState(() {});
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  AppState.showAutoDismissingSnackBar(
+                                    context,
                                     SnackBar(
                                       content: Text('Account "$removedAcc" deleted'),
+                                      duration: const Duration(seconds: 5),
                                       action: SnackBarAction(
                                         label: 'Undo',
                                         textColor: Colors.amberAccent,
@@ -1313,7 +1315,6 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     padding: EdgeInsets.zero,
                     onPressed: () async {
-                      final messenger = ScaffoldMessenger.of(context);
                       final confirmed = await showDeleteConfirmationDialog(
                         context: context,
                         title: 'Delete Loan Record?',
@@ -1322,8 +1323,12 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       );
                       if (confirmed && mounted && AppState.currentUser != null) {
                         AppState.deleteLoan(AppState.currentUser!, loan.id);
-                        messenger.showSnackBar(
-                          const SnackBar(content: Text('Loan record deleted')),
+                        AppState.showAutoDismissingSnackBar(
+                          context,
+                          const SnackBar(
+                            content: Text('Loan record deleted'),
+                            duration: Duration(seconds: 5),
+                          ),
                         );
                       }
                     },

@@ -329,9 +329,11 @@ class PlannedTransactionsSheet extends StatelessWidget {
                                               onTap: () {
                                                 if (AppState.currentUser != null) {
                                                   AppState.deletePlannedTransaction(AppState.currentUser!, plan.id);
-                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                  AppState.showAutoDismissingSnackBar(
+                                                    context,
                                                     SnackBar(
                                                       content: Text('Planned transaction "${plan.title}" removed'),
+                                                      duration: const Duration(seconds: 5),
                                                     ),
                                                   );
                                                 }
