@@ -12,6 +12,8 @@ import 'database/app_database.dart';
 import 'cloud_sync_service.dart';
 import 'notification_service.dart';
 import 'monetization_service.dart';
+import 'google_auth_service.dart';
+import 'biometric_service.dart';
 
 class AppState {
   static String? currentUser;
@@ -53,7 +55,8 @@ class AppState {
       final prefs = await SharedPreferences.getInstance();
       var savedTheme = prefs.getString(_prefThemeKey);
       const freeThemes = ['Ledger', 'Paper', 'Ink'];
-      if (!MonetizationService.isPro && (savedTheme == null || !freeThemes.contains(savedTheme))) {
+      final isProUser = MonetizationService.isPro;
+      if (!isProUser && (savedTheme == null || !freeThemes.contains(savedTheme))) {
         savedTheme = 'Ledger';
       }
 
@@ -65,18 +68,23 @@ class AppState {
         avatarColorNotifier.value = preset.primary;
       }
 
-      final pCol = prefs.getInt(_prefPrimaryColorKey);
-      if (pCol != null) {
-        customPrimaryColorNotifier.value = Color(pCol);
-        avatarColorNotifier.value = Color(pCol);
-      }
-      final sCol = prefs.getInt(_prefSecondaryColorKey);
-      if (sCol != null) {
-        customSecondaryColorNotifier.value = Color(sCol);
-      }
-      final tCol = prefs.getInt(_prefTextColorKey);
-      if (tCol != null) {
-        customTextColorNotifier.value = Color(tCol);
+      // Only load custom palette overrides if user is authenticated with Pro
+      if (isProUser) {
+        final pCol = prefs.getInt(_prefPrimaryColorKey);
+        if (pCol != null) {
+          customPrimaryColorNotifier.value = Color(pCol);
+          avatarColorNotifier.value = Color(pCol);
+        }
+        final sCol = prefs.getInt(_prefSecondaryColorKey);
+        if (sCol != null) {
+          customSecondaryColorNotifier.value = Color(sCol);
+        }
+        final tCol = prefs.getInt(_prefTextColorKey);
+        if (tCol != null) {
+          customTextColorNotifier.value = Color(tCol);
+        } else {
+          customTextColorNotifier.value = null;
+        }
       } else {
         customTextColorNotifier.value = null;
       }
@@ -122,6 +130,23 @@ class AppState {
     _undoSnackBarTimer = null;
     resetThemeToDefault();
     MonetizationService.resetToLoggedOut();
+    BiometricService.resetSessionPrompt();
+
+    // Cancel all scheduled reminders from logged out session
+    await NotificationService.instance.cancelAllReminders();
+
+    // Sign out from Google / Firebase to avoid credential bleed
+    await GoogleAuthService.signOut();
+
+    // Reset fallback global theme in SharedPreferences to clean Ledger
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefThemeKey, 'Ledger');
+      final ledger = themePresets.firstWhere((p) => p.name == 'Ledger');
+      await prefs.setInt(_prefPrimaryColorKey, ledger.primary.toARGB32());
+      await prefs.setInt(_prefSecondaryColorKey, ledger.secondary.toARGB32());
+      await prefs.remove(_prefTextColorKey);
+    } catch (_) {}
   }
 
   /// Quickly switches to a brand preset (Ledger, Paper, Ink) and saves globally to SharedPreferences
@@ -218,6 +243,28 @@ class AppState {
     plannedTransactionsNotifier.value = await db.loadPlannedTransactions(username);
     await checkAndProcessPlannedAndRecurring(username);
 
+    // Schedule active user reminders if enabled
+    final remindersOn = await NotificationService.instance.areRemindersEnabled(username);
+    if (remindersOn) {
+      await NotificationService.instance.scheduleAllDailyReminders();
+      for (final loan in loansNotifier.value) {
+        if (!loan.isSettled) {
+          await NotificationService.instance.scheduleLoanReminder(
+            loan: loan,
+            currencySymbol: currencyNotifier.value,
+          );
+        }
+      }
+      for (final plan in plannedTransactionsNotifier.value) {
+        await NotificationService.instance.schedulePlannedTransactionReminder(
+          plan: plan,
+          currencySymbol: currencyNotifier.value,
+        );
+      }
+    } else {
+      await NotificationService.instance.cancelAllReminders();
+    }
+
     // Sync user's saved palette to SharedPreferences so next startup boots with this palette
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -256,6 +303,16 @@ class AppState {
 
     try {
       final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('${_prefThemeKey}_${profile.username}', themeNameNotifier.value);
+      await prefs.setInt('${_prefPrimaryColorKey}_${profile.username}', updatedProfile.primaryColor.toARGB32());
+      await prefs.setInt('${_prefSecondaryColorKey}_${profile.username}', updatedProfile.secondaryColor.toARGB32());
+      if (updatedProfile.textColor != null) {
+        await prefs.setInt('${_prefTextColorKey}_${profile.username}', updatedProfile.textColor!.toARGB32());
+      } else {
+        await prefs.remove('${_prefTextColorKey}_${profile.username}');
+      }
+      await prefs.setString('${_prefCurrencyKey}_${profile.username}', updatedProfile.currency);
+
       await prefs.setString(_prefThemeKey, themeNameNotifier.value);
       await prefs.setInt(_prefPrimaryColorKey, updatedProfile.primaryColor.toARGB32());
       await prefs.setInt(_prefSecondaryColorKey, updatedProfile.secondaryColor.toARGB32());
@@ -472,7 +529,9 @@ class AppState {
   static Future<String> loadTheme(String? username) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final saved = prefs.getString(_prefThemeKey);
+      final saved = (username != null && username.isNotEmpty)
+          ? prefs.getString('${_prefThemeKey}_$username') ?? prefs.getString(_prefThemeKey)
+          : prefs.getString(_prefThemeKey);
       if (saved != null) {
         themeNameNotifier.value = saved;
         return saved;

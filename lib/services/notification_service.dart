@@ -8,6 +8,7 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../models/loan.dart';
 import '../models/planned_transaction.dart';
+import 'state.dart';
 
 class NotificationService {
   static final NotificationService instance = NotificationService._internal();
@@ -118,15 +119,25 @@ class NotificationService {
     return true;
   }
 
-  Future<bool> areRemindersEnabled() async {
+  Future<bool> areRemindersEnabled([String? username]) async {
     final prefs = await SharedPreferences.getInstance();
+    final user = username ?? AppState.currentUser;
+    if (user != null && user.isNotEmpty) {
+      final userVal = prefs.getBool('${_prefRemindersEnabledKey}_$user');
+      if (userVal != null) return userVal;
+    }
     // Default to enabled (true)
     return prefs.getBool(_prefRemindersEnabledKey) ?? true;
   }
 
-  Future<void> setRemindersEnabled(bool enabled) async {
+  Future<void> setRemindersEnabled(bool enabled, [String? username]) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_prefRemindersEnabledKey, enabled);
+    final user = username ?? AppState.currentUser;
+    if (user != null && user.isNotEmpty) {
+      await prefs.setBool('${_prefRemindersEnabledKey}_$user', enabled);
+    } else {
+      await prefs.setBool(_prefRemindersEnabledKey, enabled);
+    }
 
     if (enabled) {
       await requestPermission();

@@ -41,7 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     // 1. Check if user has configured biometric login option
     if (!BiometricService.biometricPromptCheckedThisSession) {
       BiometricService.biometricPromptCheckedThisSession = true;
-      final isConfigured = await BiometricService.isBiometricEnabled();
+      final isConfigured = await BiometricService.isBiometricEnabled(username: AppState.currentUser);
       if (!isConfigured && mounted) {
         final isSupported = await BiometricService.isDeviceSupported();
         if (isSupported && mounted) {
@@ -275,9 +275,11 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     );
   }
 
-  void _logout() {
-    AppState.clearUserSession();
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+  Future<void> _logout() async {
+    await AppState.clearUserSession();
+    if (mounted) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+    }
   }
 
 

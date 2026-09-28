@@ -8,7 +8,12 @@ import 'package:balance_tracker/services/database/app_database.dart';
 import 'package:balance_tracker/models/user_profile.dart';
 import 'package:balance_tracker/models/transaction.dart';
 import 'package:balance_tracker/models/savings_goal.dart';
+import 'package:balance_tracker/models/loan.dart';
+import 'package:balance_tracker/models/planned_transaction.dart';
 import 'package:balance_tracker/screens/main_nav_screen.dart';
+import 'package:balance_tracker/services/tour_service.dart';
+import 'package:balance_tracker/services/biometric_service.dart';
+import 'package:balance_tracker/services/notification_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -218,6 +223,97 @@ void main() {
 
       expect(find.byKey(const ValueKey('tab_goals')), findsNothing);
       expect(find.byKey(const ValueKey('tab_profile')), findsOneWidget);
+    });
+  });
+
+  group('Cross-User State Isolation & Migration Tests', () {
+    test('Tour onboarding state is isolated per user', () async {
+      AppState.currentUser = 'user_alice';
+      await TourService.markTourCompleted(TourService.tourHome);
+      await TourService.markTourCompleted(TourService.tourAccounts);
+      expect(await TourService.isTourCompleted(TourService.tourHome), isTrue);
+      expect(await TourService.isTourCompleted(TourService.tourAccounts), isTrue);
+
+      // User Bob logs in on same device
+      AppState.currentUser = 'user_bob';
+      expect(await TourService.isTourCompleted(TourService.tourHome), isFalse);
+      expect(await TourService.isTourCompleted(TourService.tourAccounts), isFalse);
+
+      // Alice's completed tours remain intact
+      expect(await TourService.isTourCompleted(TourService.tourHome, 'user_alice'), isTrue);
+    });
+
+    test('Biometric enrollment is strictly scoped per user and not stolen on login', () async {
+      // Alice enables biometrics
+      await BiometricService.setBiometricEnabled(true, username: 'user_alice');
+      expect(await BiometricService.isBiometricEnabled(username: 'user_alice'), isTrue);
+      expect(await BiometricService.getSavedBiometricUser(), equals('user_alice'));
+
+      // Bob logs in without biometrics
+      expect(await BiometricService.isBiometricEnabled(username: 'user_bob'), isFalse);
+
+      // Bob explicitly toggles biometrics OFF in his settings
+      await BiometricService.setBiometricEnabled(false, username: 'user_bob');
+      // Alice's biometric state and saved user are preserved
+      expect(await BiometricService.isBiometricEnabled(username: 'user_alice'), isTrue);
+      expect(await BiometricService.getSavedBiometricUser(), equals('user_alice'));
+    });
+
+    test('Notification reminder preferences are isolated per user', () async {
+      // Alice disables reminders
+      await NotificationService.instance.setRemindersEnabled(false, 'user_alice');
+      expect(await NotificationService.instance.areRemindersEnabled('user_alice'), isFalse);
+
+      // Bob defaults to enabled
+      expect(await NotificationService.instance.areRemindersEnabled('user_bob'), isTrue);
+    });
+
+    test('Account migration migrates loans and planned transactions and cleans up local user', () async {
+      final db = AppDatabase.instance;
+      const localUser = 'legacy_charlie';
+      const googleUser = 'charlie@gmail.com';
+
+      // Insert test loan and planned transaction for legacy_charlie
+      final testLoan = Loan(
+        id: 'loan_mig_1',
+        title: 'Lent for Dinner',
+        personName: 'Bob',
+        amount: 50.0,
+        createdAt: DateTime.now(),
+        dueDate: DateTime.now().add(const Duration(days: 7)),
+        type: 'receivable',
+      );
+      await db.saveLoan(localUser, testLoan);
+
+      final testPlan = PlannedTransaction(
+        id: 'plan_mig_1',
+        title: 'Gym Membership',
+        amount: 30.0,
+        date: DateTime.now().add(const Duration(days: 10)),
+        category: 'Health',
+        account: 'Main',
+        isIncome: false,
+      );
+      await db.savePlannedTransaction(localUser, testPlan);
+
+      // Perform migration to Google account
+      await db.migrateAndMergeUserData(
+        fromUsername: localUser,
+        toUsername: googleUser,
+        mergeWithExisting: false,
+      );
+
+      // Verify Google user has the loan and planned transaction
+      final googleLoans = await db.loadLoans(googleUser);
+      expect(googleLoans.any((l) => l.id == 'loan_mig_1'), isTrue);
+      final googlePlans = await db.loadPlannedTransactions(googleUser);
+      expect(googlePlans.any((p) => p.id == 'plan_mig_1'), isTrue);
+
+      // Verify legacy local user has no orphaned records
+      final localLoans = await db.loadLoans(localUser);
+      expect(localLoans, isEmpty);
+      final localPlans = await db.loadPlannedTransactions(localUser);
+      expect(localPlans, isEmpty);
     });
   });
 }
