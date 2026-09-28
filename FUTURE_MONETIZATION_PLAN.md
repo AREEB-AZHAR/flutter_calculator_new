@@ -26,33 +26,33 @@ Leading personal finance apps in 2026 have shifted decisively away from traditio
 | **YNAB** | Subscription ($14.99/mo or $109/yr) | **Methodology / Trial**: 34-day full-access trial; requires commitment to zero-based budgeting habit. | **Zero ads**. Focuses entirely on educational content and habit formation. | Hands-on transaction assignment tour; "Give every dollar a job". |
 | **Splitwise** | Freemium + Splitwise Pro ($3.99/mo) | **Utility Gate**: Core splitting is free; receipt scanning, currency conversion, and charts are Pro. | **Native display ads** in expense feed; offers dedicated "Remove Ads" upgrade. | Quick social login (Google/Apple/Email); immediate group creation. |
 | **NerdWallet / Empower** | Free with Affiliate / Partner Cards | Free personal financial management tools (net worth, cash flow). | **Curated Affiliate Cards**: HYSA rates, refinancing, credit cards ($30–$150 CPA). | High-trust financial dashboard; contextual recommendation cards. |
-| **Tally (Our App)** | **Hybrid Freemium + Native Banners** | **Tracking Free / Intelligence Pro**: Core tracking, accounts, and 3 base themes are free. Insights, Theme Studio, and launcher icons are Pro ($4.99). | **Theme-matched native partner banners** (HYSA, Vault, Multi-Currency). Dedicated $1.99 Ad-Free pass. | Google Auth database binding; optional BiometricPrompt; dismissible 1-time guided tours. |
+| **Tally (Our App)** | **Hybrid Freemium + Official Play Billing & Rewarded Ads** | **Tracking Free / Intelligence Pro**: Core tracking, accounts, and 3 base themes are free. Advanced insights, Theme Studio, 6 premium themes, and launcher icons are Pro ($2.99/mo, $19.99/yr, $39.99 lifetime). Free users can watch 30s non-skippable rewarded ads to unlock 1-time theme changes! | **Official Google Mobile Ads & Native Banners**: Clean financial partner banners + non-skippable 30-sec rewarded video ads for 1-time theme unlocks. Dedicated $1.99 Ad-Free pass. | Google Auth database binding; optional BiometricPrompt; dismissible 1-time guided tours. |
 
 ---
 
 ## 3. Deep-Dive: The 5 Pillars of Modern Fintech Best Practices
 
-### Pillar 1: Feature Gating ("Passive Tracking" vs. "Active Planning")
+### Pillar 1: Feature Gating & Recalculated Pro Pricing Matrix
 - **The Core Law**: Never charge for basic manual data entry. If a user feels they must pay just to log a coffee expense, abandonment exceeds 80%.
 - **What Free Users Receive**:
   - Unlimited manual transaction logging.
   - Auto-category population and custom dates.
   - Multi-account balance tracking (Cash, Bank, Savings, Credit).
   - High-craft curated default themes (*Ledger*, *Paper*, *Ink*).
-- **What Pro Users Pay For ($4.99 / Pro Tier)**:
-  - **Predictive Velocity & Run-Rate Forecasting**: 30-day projected balance, burn-rate velocity indicators, and savings trajectory.
-  - **Bespoke Theme Studio**: Custom RGB/HSV color sliders, custom accents, surface tones, and custom text luminance.
-  - **Dynamic Launcher App Icons**: Switching system home-screen icons dynamically.
-  - **Advanced Financial Exports**: Formatted PDF statements and CSV exports for tax/accountants.
+  - **1-Time Theme Unlock with 30s Video Ads**: Free users can watch a non-skippable 30-second fullscreen ad anytime to earn a 1-Time Theme Pass and apply any of the 6 premium brand palettes or custom Graphic Theme Studio designs!
+- **Recalculated Pro Pricing Matrix (Calibrated for Offline-First Fintech)**:
+  - **Tally Pro Monthly**: **$2.99 / mo** (Accessible, zero commitment)
+  - **Tally Pro Annual**: **$19.99 / yr** (Only **$1.67 / mo** — **Save 44%**, Best Value!)
+  - **Tally Pro Lifetime Access**: **$39.99** (One-time payment, 2.0× Annual rate, Ultimate Pass)
+  - **Ad-Free Standalone Pass**: **$1.99** (One-time banner removal)
+  - **Developer Gift (Buy Coffee)**: **$2.99** (One-time tip + Ad-Free for life + complimentary 7-Day Pro trial)
 
-### Pillar 2: Advertising Architecture (Trust vs. Revenue)
-- **The Pitfall of Programmatic Display**: Flashing 320x50 AdMob banners featuring games or clickbait degrade financial trust instantly. Users perceive the app as insecure or cheap.
-- **The Best Practice Solution**:
-  - **Native Visual Harmony**: Ads must inherit the current active palette (`AppTheme.primary`, `surface`, `cardBorder`), rounded corners, and typography.
-  - **Relevant Financial Utility**: Promote high-yield cash vaults (5.2% APY), expense categorization tools, or multi-currency wallets.
-  - **Clear Disclosure**: Always display a clean, muted `"Ad"` or `"Partner Offer"` tag.
-  - **Unobtrusive Frequency**: Strict limit of 1 banner per view (Dashboard, Accounts, All Transactions). Never use interstitials or popups.
-  - **Standalone Ad-Free Microtransaction**: Users who dislike ads but don't need Pro analytics can pay a low one-time fee ($1.99) to banish all banners forever.
+### Pillar 2: Advertising Architecture & Rewarded Ads
+- **Official Google AdMob Rewarded Ads**:
+  - Implements authentic non-skippable 30-second video ads for 1-time theme changes (`ca-app-pub-3940256099942544/5224354917`).
+  - High-craft cross-platform fallback (`Fullscreen30SecAdDialog`) with unskippable countdown timer, progress animation, and exit-prevention alerts for desktop and emulator testing.
+  - Native Visual Harmony: Banner ads inherit the active palette (`AppTheme.primary`, `surface`, `cardBorder`), rounded corners, and typography.
+  - Standalone Ad-Free Microtransaction: Users who dislike ads can pay a low one-time fee ($1.99) to banish all banners forever.
 
 ### Pillar 3: Authentication & Cloud Sync ("Local-First" Architecture)
 - **Local SQLite as the Single Source of Truth**:

@@ -67,18 +67,18 @@ void main() {
       expect(find.text('Tally Pro & VIP'), findsOneWidget);
       expect(find.text('Promo Code'), findsOneWidget);
 
-      // Check Plan cards
+      // Check Plan cards (Recalculated Pro Pricing)
       expect(find.text('Tally Pro Monthly'), findsOneWidget);
-      expect(find.text('\$4.99 / mo'), findsOneWidget);
+      expect(find.text('\$2.99 / mo'), findsOneWidget);
       expect(find.text('Tally Pro Yearly'), findsOneWidget);
-      expect(find.text('\$49.90 / yr'), findsOneWidget);
+      expect(find.text('\$19.99 / yr'), findsOneWidget);
       expect(find.text('Tally Pro Lifetime Access'), findsOneWidget);
-      expect(find.text('\$47.88'), findsOneWidget);
+      expect(find.text('\$39.99'), findsOneWidget);
       expect(find.text('☕ Buy the Developer a Coffee'), findsOneWidget);
-      expect(find.text('\$1.99'), findsOneWidget);
+      expect(find.text('\$2.99'), findsOneWidget);
 
-      // Check Google Pay CTA button
-      expect(find.textContaining('Pay with Google Pay'), findsOneWidget);
+      // Check Google Official Payment CTA button
+      expect(find.textContaining('Pay with Google Play'), findsOneWidget);
 
       // Check Feature section
       expect(find.text('What\'s Included'), findsOneWidget);
@@ -102,26 +102,26 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Tap on Buy Coffee tier
+      // Tap on Buy Coffee tier ($2.99)
       await tester.tap(find.text('☕ Buy the Developer a Coffee'));
       await tester.pumpAndSettle();
 
-      // Verify Google Pay button text reflects $1.99
-      expect(find.text('Pay with Google Pay • \$1.99'), findsOneWidget);
+      // Verify Google Play button text reflects $2.99
+      expect(find.text('Pay with Google Play • \$2.99'), findsOneWidget);
 
-      // Tap on Tally Pro Yearly tier
+      // Tap on Tally Pro Yearly tier ($19.99 / yr)
       await tester.tap(find.text('Tally Pro Yearly'));
       await tester.pumpAndSettle();
 
-      // Verify Google Pay button text reflects $49.90 / yr
-      expect(find.text('Pay with Google Pay • \$49.90 / yr'), findsOneWidget);
+      // Verify Google Play button text reflects $19.99 / yr
+      expect(find.text('Pay with Google Play • \$19.99 / yr'), findsOneWidget);
 
-      // Tap on Tally Pro Lifetime Access tier
+      // Tap on Tally Pro Lifetime Access tier ($39.99)
       await tester.tap(find.text('Tally Pro Lifetime Access'));
       await tester.pumpAndSettle();
 
-      // Verify Google Pay button text reflects $47.88
-      expect(find.text('Pay with Google Pay • \$47.88'), findsOneWidget);
+      // Verify Google Play button text reflects $39.99
+      expect(find.text('Pay with Google Play • \$39.99'), findsOneWidget);
     });
 
     testWidgets('Reset Purchases button in developer mode resets VIP state', (tester) async {

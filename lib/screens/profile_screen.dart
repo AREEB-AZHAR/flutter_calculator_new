@@ -10,6 +10,7 @@ import '../services/biometric_service.dart';
 import '../services/tour_service.dart';
 import '../widgets/feature_tour_dialog.dart';
 import '../services/monetization_service.dart';
+import '../services/ad_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/cloud_sync_service.dart';
 import '../utils/constants.dart';
@@ -624,11 +625,120 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                                 // Brand Palettes
                                 _settingsSectionTitle('BRAND PALETTES (INSTANT IN-APP)', onSurface.withValues(alpha: 0.6)),
+
+                                // Theme Passes & 30s Ad Unlock Banner
+                                ValueListenableBuilder<int>(
+                                  valueListenable: MonetizationService.themePassesNotifier,
+                                  builder: (context, themePasses, _) {
+                                    final isPro = MonetizationService.isPro;
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: isPro
+                                            ? Colors.teal.withValues(alpha: 0.12)
+                                            : (themePasses > 0
+                                                ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                                                : primary.withValues(alpha: 0.08)),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: isPro
+                                              ? Colors.teal.withValues(alpha: 0.35)
+                                              : (themePasses > 0
+                                                  ? const Color(0xFF10B981).withValues(alpha: 0.4)
+                                                  : primary.withValues(alpha: 0.25)),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: isPro
+                                                  ? Colors.teal
+                                                  : (themePasses > 0 ? const Color(0xFF10B981) : primary),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              isPro
+                                                  ? Icons.workspace_premium
+                                                  : (themePasses > 0 ? Icons.check_circle : Icons.movie_filter_rounded),
+                                              color: Colors.white,
+                                              size: 20,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  isPro
+                                                      ? 'Tally Pro Member'
+                                                      : (themePasses > 0
+                                                          ? '1-Time Theme Pass Available ($themePasses)'
+                                                          : '1-Time Theme Unlock'),
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 13,
+                                                    color: onSurface,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  isPro
+                                                      ? 'Unlimited access to all 9 brand themes & Graphic Studio'
+                                                      : (themePasses > 0
+                                                          ? 'Ready to apply any premium theme or custom studio palette'
+                                                          : 'Watch a 30s ad to unlock a 1-time theme change'),
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: onSurface.withValues(alpha: 0.65),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          if (!isPro) ...[
+                                            const SizedBox(width: 8),
+                                            ElevatedButton.icon(
+                                              onPressed: () async {
+                                                await AdService.showRewardedThemeAd(
+                                                  context: context,
+                                                  onRewardEarned: () async {
+                                                    await MonetizationService.grantThemePass(1);
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        const SnackBar(
+                                                          content: Text('🎉 Rewarded! 1-Time Theme Change Pass added to vault!'),
+                                                          backgroundColor: Colors.teal,
+                                                        ),
+                                                      );
+                                                    }
+                                                  },
+                                                );
+                                              },
+                                              icon: const Icon(Icons.play_circle_fill_rounded, size: 16),
+                                              label: const Text('Watch 30s Ad', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFF10B981),
+                                                foregroundColor: Colors.white,
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+
                                 Card(
                                   color: cardBg,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                   child: Column(
                                     children: [
+                                      // 3 Base Free Palettes
                                       _brandPaletteTile(
                                         name: 'Ledger',
                                         tagline: 'Forest Green & Slash Coral (Classic White Paper)',
@@ -655,6 +765,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         slashColor: const Color(0xFFE8A13C),
                                         preset: themePresets[2],
                                       ),
+
+                                      // 6 Premium Pro / 30s Rewarded Ad Palettes
+                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                      _brandPaletteTile(
+                                        name: 'Violet Night',
+                                        tagline: 'Deep Midnight & Neon Violet (Pro Aesthetic)',
+                                        bgColor: const Color(0xFF0B0E14),
+                                        strokeColor: const Color(0xFF151A22),
+                                        slashColor: const Color(0xFF8B5CF6),
+                                        preset: themePresets[3],
+                                        isProOnly: true,
+                                      ),
+                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                      _brandPaletteTile(
+                                        name: 'Ocean Blue',
+                                        tagline: 'Deep Navy & Electric Cyan (Fintech Precision)',
+                                        bgColor: const Color(0xFF020617),
+                                        strokeColor: const Color(0xFF0F172A),
+                                        slashColor: const Color(0xFF3B82F6),
+                                        preset: themePresets[4],
+                                        isProOnly: true,
+                                      ),
+                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                      _brandPaletteTile(
+                                        name: 'Emerald Dark',
+                                        tagline: 'Dark Forest & Matrix Emerald (Cyber Wealth)',
+                                        bgColor: const Color(0xFF060F11),
+                                        strokeColor: const Color(0xFF0D1B1E),
+                                        slashColor: const Color(0xFF10B981),
+                                        preset: themePresets[5],
+                                        isProOnly: true,
+                                      ),
+                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                      _brandPaletteTile(
+                                        name: 'Rose Gold',
+                                        tagline: 'Velvet Rose & Warm Amber (Luxury Minimalist)',
+                                        bgColor: const Color(0xFF0F090C),
+                                        strokeColor: const Color(0xFF1C1017),
+                                        slashColor: const Color(0xFFF43F5E),
+                                        preset: themePresets[6],
+                                        isProOnly: true,
+                                      ),
+                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                      _brandPaletteTile(
+                                        name: 'Sunset Orange',
+                                        tagline: 'Solar Orange & Sky Blue (Vibrant Ledger)',
+                                        bgColor: const Color(0xFF0D0A08),
+                                        strokeColor: const Color(0xFF1A1410),
+                                        slashColor: const Color(0xFFF97316),
+                                        preset: themePresets[7],
+                                        isProOnly: true,
+                                      ),
+                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                      _brandPaletteTile(
+                                        name: 'Midnight Teal',
+                                        tagline: 'Cyber Teal & Fuchsia Accent (Modern Neon)',
+                                        bgColor: const Color(0xFF060F0F),
+                                        strokeColor: const Color(0xFF0B1A1A),
+                                        slashColor: const Color(0xFF14B8A6),
+                                        preset: themePresets[8],
+                                        isProOnly: true,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -680,21 +852,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         if (!MonetizationService.isPro) ...[
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: Colors.amber.withValues(alpha: 0.2),
-                                              borderRadius: BorderRadius.circular(6),
-                                              border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
-                                            ),
-                                            child: const Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(Icons.lock_outline, size: 10, color: Colors.amber),
-                                                SizedBox(width: 3),
-                                                Text('PRO', style: TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold)),
-                                              ],
-                                            ),
+                                          ValueListenableBuilder<int>(
+                                            valueListenable: MonetizationService.themePassesNotifier,
+                                            builder: (context, passes, _) {
+                                              final hasPass = passes > 0;
+                                              return Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: (hasPass ? Colors.teal : Colors.amber).withValues(alpha: 0.2),
+                                                  borderRadius: BorderRadius.circular(6),
+                                                  border: Border.all(color: (hasPass ? Colors.teal : Colors.amber).withValues(alpha: 0.5)),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      hasPass ? Icons.check_circle_outline : Icons.lock_outline,
+                                                      size: 10,
+                                                      color: hasPass ? Colors.teal : Colors.amber,
+                                                    ),
+                                                    const SizedBox(width: 3),
+                                                    Text(
+                                                      hasPass ? '$passes PASS' : 'PRO / 30s AD',
+                                                      style: TextStyle(
+                                                        color: hasPass ? Colors.teal : Colors.amber,
+                                                        fontSize: 9,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
                                           ),
                                           const SizedBox(width: 8),
                                         ],
@@ -713,14 +902,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ],
                                     ),
                                     onTap: () {
-                                      if (!MonetizationService.isPro) {
-                                        MonetizationService.showPaywallModal(
-                                          context,
-                                          featureTitle: 'Graphic Theme Studio',
-                                          featureDescription: 'Unlock custom RGB/HSV sliders, custom text coloring, and bespoke brand palettes with Tally Pro.',
-                                        );
-                                        return;
-                                      }
                                       Navigator.pop(ctx);
                                       ColorPickerDialog.show(context);
                                     },
@@ -2016,6 +2197,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required Color strokeColor,
     required Color slashColor,
     required AppThemePreset preset,
+    bool isProOnly = false,
   }) {
     return ValueListenableBuilder<String>(
       valueListenable: AppState.themeNameNotifier,
@@ -2023,6 +2205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final isSelected = currentTheme == name;
         final primary = Theme.of(context).colorScheme.primary;
         final onSurface = Theme.of(context).colorScheme.onSurface;
+        final isPro = MonetizationService.isPro;
 
         return ListTile(
           leading: Container(
@@ -2044,12 +2227,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
-          title: Text(
-            name,
-            style: TextStyle(
-              color: isSelected ? primary : onSurface,
-              fontWeight: FontWeight.bold,
-            ),
+          title: Row(
+            children: [
+              Text(
+                name,
+                style: TextStyle(
+                  color: isSelected ? primary : onSurface,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (isProOnly && !isPro) ...[
+                const SizedBox(width: 8),
+                ValueListenableBuilder<int>(
+                  valueListenable: MonetizationService.themePassesNotifier,
+                  builder: (context, passes, _) {
+                    final hasPass = passes > 0;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: (hasPass ? Colors.teal : Colors.amber).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: (hasPass ? Colors.teal : Colors.amber).withValues(alpha: 0.5)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            hasPass ? Icons.check_circle_outline : Icons.lock_outline,
+                            size: 10,
+                            color: hasPass ? Colors.teal : Colors.amber,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            hasPass ? '1 PASS READY' : 'PRO / 30s AD',
+                            style: TextStyle(
+                              color: hasPass ? Colors.teal : Colors.amber,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ],
           ),
           subtitle: Text(tagline, style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 11.5)),
           trailing: isSelected
@@ -2065,36 +2288,100 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Icon(Icons.check_circle, color: primary, size: 20),
                   ],
                 )
-              : IconButton(
-                  icon: Icon(Icons.install_mobile_outlined, size: 20, color: onSurface.withValues(alpha: 0.4)),
-                  tooltip: 'Set as Home Screen Icon',
-                  onPressed: () => _promptChangeLauncherIcon(context, name),
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isProOnly && !isPro)
+                      IconButton(
+                        icon: const Icon(Icons.movie_filter_rounded, size: 20, color: Color(0xFF10B981)),
+                        tooltip: 'Watch 30s ad to unlock 1-time',
+                        onPressed: () async {
+                          await AdService.showRewardedThemeAd(
+                            context: context,
+                            onRewardEarned: () async {
+                              await MonetizationService.grantThemePass(1);
+                              await MonetizationService.consumeThemePass();
+                              await _applyPresetTheme(preset);
+                            },
+                          );
+                        },
+                      ),
+                    IconButton(
+                      icon: Icon(Icons.install_mobile_outlined, size: 20, color: onSurface.withValues(alpha: 0.4)),
+                      tooltip: 'Set as Home Screen Icon',
+                      onPressed: () => _promptChangeLauncherIcon(context, name),
+                    ),
+                  ],
                 ),
           onTap: () async {
-            await AppState.persistThemePreset(preset);
-
-            if (AppState.currentUser != null) {
-              final username = AppState.currentUser!;
-              final profile = await AppDatabase.instance.loadProfile(username);
-              await AppState.saveProfile(profile.copyWith(
-                primaryColor: preset.primary,
-                secondaryColor: preset.secondary,
-                clearTextColor: true,
-              ));
-              await AppState.saveTheme(username, preset.name);
+            if (isProOnly && !isPro) {
+              if (MonetizationService.themePassesNotifier.value > 0) {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    backgroundColor: Theme.of(ctx).colorScheme.surface,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    title: const Row(
+                      children: [
+                        Icon(Icons.palette_rounded, color: Colors.teal),
+                        SizedBox(width: 8),
+                        Text('Use 1 Theme Pass?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+                      ],
+                    ),
+                    content: Text(
+                      'You have ${MonetizationService.themePassesNotifier.value} Theme Pass(es). Use 1 pass to switch to "$name"?',
+                      style: TextStyle(color: onSurface.withValues(alpha: 0.85), fontSize: 13),
+                    ),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Use Pass & Apply'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed != true) return;
+                await MonetizationService.consumeThemePass();
+              } else {
+                await MonetizationService.showThemeUnlockModal(
+                  context,
+                  themeName: name,
+                  onUnlocked: () async {
+                    await _applyPresetTheme(preset);
+                  },
+                );
+                return;
+              }
             }
 
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Switched in-app theme to $name'),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            }
+            await _applyPresetTheme(preset);
           },
         );
       },
+    );
+  }
+
+  Future<void> _applyPresetTheme(AppThemePreset preset) async {
+    await AppState.persistThemePreset(preset);
+
+    if (AppState.currentUser != null) {
+      final username = AppState.currentUser!;
+      final profile = await AppDatabase.instance.loadProfile(username);
+      await AppState.saveProfile(profile.copyWith(
+        primaryColor: preset.primary,
+        secondaryColor: preset.secondary,
+        clearTextColor: true,
+      ));
+      await AppState.saveTheme(username, preset.name);
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Switched in-app theme to ${preset.name}'),
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
