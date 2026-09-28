@@ -216,9 +216,11 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                       AppState.budgetsNotifier.value = Map.from(budgets);
                                       if (AppState.currentUser != null) AppState.saveBudgets(AppState.currentUser!, budgets);
                                       setDialogState(() {});
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      AppState.showAutoDismissingSnackBar(
+                                        context,
                                         SnackBar(
                                           content: Text('Budget for "$catName" deleted'),
+                                          duration: const Duration(seconds: 5),
                                           action: SnackBarAction(
                                             label: 'Undo',
                                             textColor: Colors.amberAccent,
@@ -274,8 +276,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   }
 
   void _logout() {
-    AppState.currentUser = null;
-    AppState.transactionsNotifier.value = [];
+    AppState.clearUserSession();
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
   }
 

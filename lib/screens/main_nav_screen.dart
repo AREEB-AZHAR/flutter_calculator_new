@@ -14,16 +14,6 @@ class MainNavScreen extends StatefulWidget {
 }
 
 class _MainNavScreenState extends State<MainNavScreen> {
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    InsightsScreen(),
-    GoalsScreen(),
-    AccountsScreen(),
-    ProfileScreen(),
-  ];
-
-  final Set<int> _loadedTabs = {0};
-
   @override
   void initState() {
     super.initState();
@@ -37,12 +27,23 @@ class _MainNavScreenState extends State<MainNavScreen> {
   }
 
   void _onTabChanged() {
-    if (mounted) {
-      final current = AppState.activeTabNotifier.value;
-      if (!_loadedTabs.contains(current)) {
-        _loadedTabs.add(current);
-      }
-      setState(() {});
+    if (mounted) setState(() {});
+  }
+
+  Widget _buildActiveScreen(int index) {
+    switch (index) {
+      case 0:
+        return const DashboardScreen(key: ValueKey('tab_dashboard'));
+      case 1:
+        return const InsightsScreen(key: ValueKey('tab_insights'));
+      case 2:
+        return const GoalsScreen(key: ValueKey('tab_goals'));
+      case 3:
+        return const AccountsScreen(key: ValueKey('tab_accounts'));
+      case 4:
+        return const ProfileScreen(key: ValueKey('tab_profile'));
+      default:
+        return const DashboardScreen(key: ValueKey('tab_dashboard'));
     }
   }
 
@@ -56,20 +57,9 @@ class _MainNavScreenState extends State<MainNavScreen> {
     }
 
     final currentIndex = AppState.activeTabNotifier.value;
-    if (!_loadedTabs.contains(currentIndex)) {
-      _loadedTabs.add(currentIndex);
-    }
 
     return Scaffold(
-      body: IndexedStack(
-        index: currentIndex,
-        children: List.generate(_screens.length, (index) {
-          if (_loadedTabs.contains(index)) {
-            return _screens[index];
-          }
-          return const SizedBox.shrink();
-        }),
-      ),
+      body: _buildActiveScreen(currentIndex),
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
         onDestinationSelected: (i) => AppState.activeTabNotifier.value = i,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +11,7 @@ import '../utils/constants.dart';
 import 'database/app_database.dart';
 import 'cloud_sync_service.dart';
 import 'notification_service.dart';
+import 'monetization_service.dart';
 
 class AppState {
   static String? currentUser;
@@ -43,14 +45,20 @@ class AppState {
   static final ValueNotifier<String> displayNameNotifier = ValueNotifier('');
   static final ValueNotifier<String> bioNotifier = ValueNotifier('');
   static final ValueNotifier<int> activeTabNotifier = ValueNotifier(0);
+  static Timer? _undoSnackBarTimer;
 
   /// Initializes the saved global theme and colors from SharedPreferences before the app renders.
   static Future<void> initGlobalTheme() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final savedTheme = prefs.getString(_prefThemeKey);
-      if (savedTheme != null && themePresets.any((p) => p.name == savedTheme)) {
-        themeNameNotifier.value = savedTheme;
+      var savedTheme = prefs.getString(_prefThemeKey);
+      const freeThemes = ['Ledger', 'Paper', 'Ink'];
+      if (!MonetizationService.isPro && (savedTheme == null || !freeThemes.contains(savedTheme))) {
+        savedTheme = 'Ledger';
+      }
+
+      if (themePresets.any((p) => p.name == savedTheme)) {
+        themeNameNotifier.value = savedTheme!;
         final preset = themePresets.firstWhere((p) => p.name == savedTheme);
         customPrimaryColorNotifier.value = preset.primary;
         customSecondaryColorNotifier.value = preset.secondary;
@@ -82,6 +90,40 @@ class AppState {
     }
   }
 
+  /// Resets theme and color notifiers back to default Ledger base palette.
+  static void resetThemeToDefault() {
+    final ledger = themePresets.firstWhere((p) => p.name == 'Ledger');
+    themeNameNotifier.value = ledger.name;
+    customPrimaryColorNotifier.value = ledger.primary;
+    customSecondaryColorNotifier.value = ledger.secondary;
+    customTextColorNotifier.value = null;
+    avatarColorNotifier.value = ledger.primary;
+  }
+
+  /// Completely wipes all session data from memory and resets theme and monetization entitlements.
+  static Future<void> clearUserSession() async {
+    currentUser = null;
+    transactionsNotifier.value = [];
+    budgetsNotifier.value = {
+      'Food & Dining': 500.0,
+      'Housing & Rent': 1500.0,
+      'Transportation': 300.0,
+      'Entertainment': 200.0,
+    };
+    accountsNotifier.value = ['Main', 'Cash', 'Credit Card', 'Digital Wallet'];
+    goalsNotifier.value = [];
+    loansNotifier.value = [];
+    plannedTransactionsNotifier.value = [];
+    displayNameNotifier.value = '';
+    bioNotifier.value = '';
+    profilePhotoNotifier.value = null;
+    activeTabNotifier.value = 0;
+    _undoSnackBarTimer?.cancel();
+    _undoSnackBarTimer = null;
+    resetThemeToDefault();
+    MonetizationService.resetToLoggedOut();
+  }
+
   /// Quickly switches to a brand preset (Ledger, Paper, Ink) and saves globally to SharedPreferences
   /// without abruptly closing or restarting the app.
   static Future<void> persistThemePreset(AppThemePreset preset) async {
@@ -93,6 +135,12 @@ class AppState {
 
     try {
       final prefs = await SharedPreferences.getInstance();
+      if (currentUser != null && currentUser!.isNotEmpty) {
+        await prefs.setString('${_prefThemeKey}_$currentUser', preset.name);
+        await prefs.setInt('${_prefPrimaryColorKey}_$currentUser', preset.primary.toARGB32());
+        await prefs.setInt('${_prefSecondaryColorKey}_$currentUser', preset.secondary.toARGB32());
+        await prefs.remove('${_prefTextColorKey}_$currentUser');
+      }
       await prefs.setString(_prefThemeKey, preset.name);
       await prefs.setInt(_prefPrimaryColorKey, preset.primary.toARGB32());
       await prefs.setInt(_prefSecondaryColorKey, preset.secondary.toARGB32());
@@ -107,45 +155,59 @@ class AppState {
     currentUser = username;
     final db = AppDatabase.instance;
 
+    // 1. Load monetization entitlements strictly scoped to this user
+    await MonetizationService.loadUserEntitlements(username);
+
+    // 2. Load user profile from SQLite database
     final profile = await db.loadProfile(username);
     displayNameNotifier.value = profile.displayName;
     bioNotifier.value = profile.bio;
     profilePhotoNotifier.value = profile.photoPath;
 
-    // If profile has a saved theme, restore it!
-    if (profile.theme != null && profile.theme!.isNotEmpty) {
-      themeNameNotifier.value = profile.theme!;
+    // 3. Strict Theme Sanitization: Free themes are strictly Ledger, Paper, and Ink
+    const freeThemes = ['Ledger', 'Paper', 'Ink'];
+    String effectiveTheme = profile.theme ?? 'Ledger';
+    if (!themePresets.any((p) => p.name == effectiveTheme)) {
+      effectiveTheme = 'Ledger';
     }
+
+    final isPremium = !freeThemes.contains(effectiveTheme);
 
     Color pCol = profile.primaryColor;
     Color sCol = profile.secondaryColor;
-    Color? tCol = profile.textColor ?? customTextColorNotifier.value;
+    Color? tCol = profile.textColor;
 
-    // Heal legacy default if primaryColor matches old background (0xFF17493B) or old default (0xFF8B5CF6)
-    if (pCol.toARGB32() == 0xFF17493B || pCol.toARGB32() == 0xFF8B5CF6) {
-      if (customPrimaryColorNotifier.value.toARGB32() != 0xFF17493B &&
-          customPrimaryColorNotifier.value.toARGB32() != 0xFF8B5CF6) {
-        pCol = customPrimaryColorNotifier.value;
-        sCol = customSecondaryColorNotifier.value;
-      } else {
-        final preset = themePresets.firstWhere((p) => p.name == themeNameNotifier.value, orElse: () => themePresets.first);
+    // If user is not Pro, revert any premium theme or custom studio modifications
+    if (!MonetizationService.isPro) {
+      if (isPremium) {
+        effectiveTheme = 'Ledger';
+      }
+      final preset = themePresets.firstWhere((p) => p.name == effectiveTheme, orElse: () => themePresets.first);
+      pCol = preset.primary;
+      sCol = preset.secondary;
+      tCol = null;
+    } else {
+      // Pro user: heal legacy default if primaryColor matches old background or old default
+      if (pCol.toARGB32() == 0xFF17493B || pCol.toARGB32() == 0xFF8B5CF6) {
+        final preset = themePresets.firstWhere((p) => p.name == effectiveTheme, orElse: () => themePresets.first);
         pCol = preset.primary;
         sCol = preset.secondary;
       }
     }
 
+    themeNameNotifier.value = effectiveTheme;
     customPrimaryColorNotifier.value = pCol;
     customSecondaryColorNotifier.value = sCol;
     customTextColorNotifier.value = tCol;
     avatarColorNotifier.value = pCol;
     currencyNotifier.value = profile.currency;
 
-    // Persist healed/synced profile to database
+    // Persist healed/sanitized profile to database
     await db.saveProfile(profile.copyWith(
       primaryColor: pCol,
       secondaryColor: sCol,
       textColor: tCol,
-      theme: themeNameNotifier.value,
+      theme: effectiveTheme,
     ));
 
     transactionsNotifier.value = await db.loadTransactions(username);
@@ -159,11 +221,20 @@ class AppState {
     // Sync user's saved palette to SharedPreferences so next startup boots with this palette
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_prefThemeKey, themeNameNotifier.value);
+      await prefs.setString('${_prefThemeKey}_$username', effectiveTheme);
+      await prefs.setInt('${_prefPrimaryColorKey}_$username', pCol.toARGB32());
+      await prefs.setInt('${_prefSecondaryColorKey}_$username', sCol.toARGB32());
+      if (tCol != null) {
+        await prefs.setInt('${_prefTextColorKey}_$username', tCol.toARGB32());
+      } else {
+        await prefs.remove('${_prefTextColorKey}_$username');
+      }
+
+      await prefs.setString(_prefThemeKey, effectiveTheme);
       await prefs.setInt(_prefPrimaryColorKey, pCol.toARGB32());
       await prefs.setInt(_prefSecondaryColorKey, sCol.toARGB32());
-      if (profile.textColor != null) {
-        await prefs.setInt(_prefTextColorKey, profile.textColor!.toARGB32());
+      if (tCol != null) {
+        await prefs.setInt(_prefTextColorKey, tCol.toARGB32());
       } else {
         await prefs.remove(_prefTextColorKey);
       }
@@ -223,6 +294,7 @@ class AppState {
 
   /// Safely deletes a transaction, persists the removal to SQLite, and displays a SnackBar with an 'Undo' option.
   /// If the user taps 'Undo', the transaction is restored at its chronological position and saved to SQLite.
+  /// The undo banner automatically dismisses after exactly 5 seconds.
   static void deleteTransactionWithUndo(BuildContext context, Transaction tx) {
     final currentList = List<Transaction>.from(transactionsNotifier.value);
     final originalIndex = currentList.indexWhere((t) => t.id == tx.id);
@@ -236,15 +308,18 @@ class AppState {
 
     try {
       final messenger = ScaffoldMessenger.of(context);
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(
+      _undoSnackBarTimer?.cancel();
+      messenger.clearSnackBars();
+      final controller = messenger.showSnackBar(
         SnackBar(
           content: Text('"${tx.title}" deleted'),
-          duration: const Duration(seconds: 4),
+          duration: const Duration(seconds: 5),
           action: SnackBarAction(
             label: 'Undo',
             textColor: Colors.amberAccent,
             onPressed: () {
+              _undoSnackBarTimer?.cancel();
+              _undoSnackBarTimer = null;
               final restoredList = List<Transaction>.from(transactionsNotifier.value);
               if (!restoredList.any((t) => t.id == tx.id)) {
                 if (originalIndex >= 0 && originalIndex <= restoredList.length) {
@@ -264,11 +339,21 @@ class AppState {
           ),
         ),
       );
+      _undoSnackBarTimer = Timer(const Duration(seconds: 5), () {
+        try {
+          controller.close();
+        } catch (_) {}
+      });
+      controller.closed.then((_) {
+        _undoSnackBarTimer?.cancel();
+        _undoSnackBarTimer = null;
+      });
     } catch (_) {}
   }
 
   /// Safely deletes a savings goal, persists the removal to SQLite, and displays a SnackBar with an 'Undo' option.
   /// If the user taps 'Undo', the goal is restored at its original position and saved to SQLite.
+  /// The undo banner automatically dismisses after exactly 5 seconds.
   static void deleteGoalWithUndo(BuildContext context, SavingsGoal goal) {
     final currentGoals = List<SavingsGoal>.from(goalsNotifier.value);
     final originalIndex = currentGoals.indexWhere((g) => g.id == goal.id);
@@ -282,15 +367,18 @@ class AppState {
 
     try {
       final messenger = ScaffoldMessenger.of(context);
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(
+      _undoSnackBarTimer?.cancel();
+      messenger.clearSnackBars();
+      final controller = messenger.showSnackBar(
         SnackBar(
           content: Text('Goal "${goal.title}" deleted'),
-          duration: const Duration(seconds: 4),
+          duration: const Duration(seconds: 5),
           action: SnackBarAction(
             label: 'Undo',
             textColor: Colors.amberAccent,
             onPressed: () {
+              _undoSnackBarTimer?.cancel();
+              _undoSnackBarTimer = null;
               final restoredGoals = List<SavingsGoal>.from(goalsNotifier.value);
               if (!restoredGoals.any((g) => g.id == goal.id)) {
                 if (originalIndex >= 0 && originalIndex <= restoredGoals.length) {
@@ -307,6 +395,38 @@ class AppState {
           ),
         ),
       );
+      _undoSnackBarTimer = Timer(const Duration(seconds: 5), () {
+        try {
+          controller.close();
+        } catch (_) {}
+      });
+      controller.closed.then((_) {
+        _undoSnackBarTimer?.cancel();
+        _undoSnackBarTimer = null;
+      });
+    } catch (_) {}
+  }
+
+  /// Displays an auto-dismissing SnackBar guaranteed to disappear after the given duration (default 5s).
+  static void showAutoDismissingSnackBar(
+    BuildContext context,
+    SnackBar snackBar, {
+    Duration duration = const Duration(seconds: 5),
+  }) {
+    try {
+      final messenger = ScaffoldMessenger.of(context);
+      _undoSnackBarTimer?.cancel();
+      messenger.clearSnackBars();
+      final controller = messenger.showSnackBar(snackBar);
+      _undoSnackBarTimer = Timer(duration, () {
+        try {
+          controller.close();
+        } catch (_) {}
+      });
+      controller.closed.then((_) {
+        _undoSnackBarTimer?.cancel();
+        _undoSnackBarTimer = null;
+      });
     } catch (_) {}
   }
 
@@ -334,6 +454,9 @@ class AppState {
     themeNameNotifier.value = themeName;
     try {
       final prefs = await SharedPreferences.getInstance();
+      if (username != null && username.isNotEmpty) {
+        await prefs.setString('${_prefThemeKey}_$username', themeName);
+      }
       await prefs.setString(_prefThemeKey, themeName);
     } catch (e) {
       debugPrint('Error saving theme to SharedPreferences: $e');
