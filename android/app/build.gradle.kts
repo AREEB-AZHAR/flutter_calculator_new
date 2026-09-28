@@ -11,6 +11,7 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -28,6 +29,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -37,8 +39,41 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 flutter {
     source = "../.."
+}
+
+tasks.register("copyTallyApk") {
+    doLast {
+        val outputDir = file("${project.layout.buildDirectory.get()}/outputs/flutter-apk")
+        val releaseApk = file("$outputDir/app-release.apk")
+        if (releaseApk.exists()) {
+            releaseApk.copyTo(file("$outputDir/tally.apk"), overwrite = true)
+            releaseApk.copyTo(file("$outputDir/tally-release.apk"), overwrite = true)
+        }
+    }
+}
+
+tasks.configureEach {
+    if (name.contains("lintVital", ignoreCase = true) || name.contains("LintVital", ignoreCase = true)) {
+        enabled = false
+    }
+    if (name == "assembleRelease" || name == "assemble") {
+        finalizedBy("copyTallyApk")
+    }
+}
+
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }

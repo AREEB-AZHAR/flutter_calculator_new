@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Tally app icon">
+<rect width="512" height="512" rx="115" fill="#17493B"/>
+<g fill="none" stroke="#F6F0E1" stroke-width="44" stroke-linecap="round">
+  <path class="p1" pathLength="1" d="M136 164 C132 216 140 300 136 348"/>
+  <path class="p2" pathLength="1" d="M216 158 C219 210 212 300 216 354"/>
+  <path class="p3" pathLength="1" d="M296 162 C292 212 300 300 296 352"/>
+  <path class="p4" pathLength="1" d="M376 166 C380 214 372 298 376 344"/>
+</g>
+<path class="p5" pathLength="1" fill="none" stroke="#E4572E" stroke-width="40" stroke-linecap="round" d="M104 366 C205 313 322 214 408 146"/>
+</svg>

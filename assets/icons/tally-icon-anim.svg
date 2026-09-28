@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Tally — animated app icon">
+<rect width="512" height="512" rx="115" fill="#17493B"/>
+<g fill="none" stroke="#F6F0E1" stroke-width="44" stroke-linecap="round">
+  <path pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M136 164 C132 216 140 300 136 348">
+    <animate attributeName="stroke-dashoffset" from="1" to="0" begin="0.0s" dur="0.45s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.7 0 0.3 1"/>
+  </path>
+  <path pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M216 158 C219 210 212 300 216 354">
+    <animate attributeName="stroke-dashoffset" from="1" to="0" begin="0.1s" dur="0.45s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.7 0 0.3 1"/>
+  </path>
+  <path pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M296 162 C292 212 300 300 296 352">
+    <animate attributeName="stroke-dashoffset" from="1" to="0" begin="0.2s" dur="0.45s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.7 0 0.3 1"/>
+  </path>
+  <path pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M376 166 C380 214 372 298 376 344">
+    <animate attributeName="stroke-dashoffset" from="1" to="0" begin="0.3s" dur="0.45s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.7 0 0.3 1"/>
+  </path>
+</g>
+<path pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" fill="none" stroke="#E4572E" stroke-width="40" stroke-linecap="round" d="M104 366 C205 313 322 214 408 146">
+  <animate attributeName="stroke-dashoffset" from="1" to="0" begin="0.46s" dur="0.55s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.7 0 0.3 1"/>
+</path>
+</svg>

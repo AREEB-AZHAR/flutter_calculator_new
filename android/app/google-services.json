@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "494819662703",
+    "project_id": "tally-b3652",
+    "storage_bucket": "tally-b3652.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:494819662703:android:1eed08eedd66202a07e69a",
+        "android_client_info": {
+          "package_name": "com.areeb.balance_tracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "494819662703-6d959ckki4hv2hbth3v9qddu4voof4ah.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.areeb.balance_tracker",
+            "certificate_hash": "b7719df2cafe82464ab9914059c1720b8e96bdcb"
+          }
+        },
+        {
+          "client_id": "494819662703-ijqfkem5b7ndiq6iq49arhlefrc65qn2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCW-hZvcyqH3OlEEDnCaD8gCpG_XBtcxxw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "494819662703-ijqfkem5b7ndiq6iq49arhlefrc65qn2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
