@@ -113,7 +113,12 @@ class GoogleAuthService {
           final googleProvider = GoogleAuthProvider();
           googleProvider.addScope('email');
           googleProvider.addScope('profile');
-          final userCred = await FirebaseAuth.instance.signInWithProvider(googleProvider);
+          final UserCredential userCred;
+          if (kIsWeb) {
+            userCred = await FirebaseAuth.instance.signInWithPopup(googleProvider);
+          } else {
+            userCred = await FirebaseAuth.instance.signInWithProvider(googleProvider);
+          }
           final fbUser = userCred.user;
           if (fbUser != null && fbUser.email != null) {
             googleUser = GoogleUserData(

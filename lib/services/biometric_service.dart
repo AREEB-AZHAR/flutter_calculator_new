@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
@@ -10,6 +11,7 @@ class BiometricService {
 
   /// Checks if the device has biometric or screen lock hardware available and supported.
   static Future<bool> isDeviceSupported() async {
+    if (kIsWeb) return false;
     try {
       final isSupported = await _auth.isDeviceSupported();
       final canCheck = await _auth.canCheckBiometrics;
@@ -22,6 +24,7 @@ class BiometricService {
 
   /// Returns list of enrolled biometrics (e.g. fingerprint, face).
   static Future<List<BiometricType>> getAvailableBiometrics() async {
+    if (kIsWeb) return [];
     try {
       return await _auth.getAvailableBiometrics();
     } catch (e) {
@@ -67,6 +70,7 @@ class BiometricService {
 
   /// Prompts the native biometric / screen lock modal (Face ID, Fingerprint, or Device PIN).
   static Future<bool> authenticate({String reason = 'Unlock Tally Vault'}) async {
+    if (kIsWeb) return false;
     try {
       final isSupported = await isDeviceSupported();
       if (!isSupported) return false;
@@ -94,6 +98,7 @@ class BiometricService {
 
   /// Displays the easy biometric login popup dialog to the user upon login.
   static Future<bool?> showBiometricSetupPrompt(BuildContext context) async {
+    if (kIsWeb) return false;
     final theme = Theme.of(context);
     final surface = theme.colorScheme.surface;
     final onSurface = theme.colorScheme.onSurface;

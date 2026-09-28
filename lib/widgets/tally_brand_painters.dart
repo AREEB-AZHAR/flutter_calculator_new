@@ -186,52 +186,56 @@ class TallyWordmarkWidget extends StatelessWidget {
     const letters = ['T', 'A', 'L', 'L', 'Y'];
     final width = fontSize * 4.2;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(letters.length, (index) {
-            // Stagger letter appearance across typeProgress (0.0 to 1.0)
-            final start = index * 0.18;
-            final end = (start + 0.35).clamp(0.0, 1.0);
-            final charProgress = ((typeProgress - start) / (end - start)).clamp(0.0, 1.0);
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(letters.length, (index) {
+              // Stagger letter appearance across typeProgress (0.0 to 1.0)
+              final start = index * 0.18;
+              final end = (start + 0.35).clamp(0.0, 1.0);
+              final charProgress = ((typeProgress - start) / (end - start)).clamp(0.0, 1.0);
 
-            return Opacity(
-              opacity: charProgress,
-              child: Transform.translate(
-                offset: Offset(0, (1.0 - charProgress) * 10),
-                child: Text(
-                  letters[index],
-                  style: TextStyle(
-                    fontFamily: 'serif',
-                    fontStyle: FontStyle.italic,
-                    fontWeight: FontWeight.w700,
-                    fontSize: fontSize,
-                    letterSpacing: index == letters.length - 1 ? 0 : letterSpacing,
-                    color: textColor,
+              return Opacity(
+                opacity: charProgress,
+                child: Transform.translate(
+                  offset: Offset(0, (1.0 - charProgress) * 10),
+                  child: Text(
+                    letters[index],
+                    style: TextStyle(
+                      fontFamily: 'serif',
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w700,
+                      fontSize: fontSize,
+                      letterSpacing: index == letters.length - 1 ? 0 : letterSpacing,
+                      color: textColor,
+                    ),
                   ),
                 ),
-              ),
-            );
-          }),
-        ),
-        const SizedBox(height: 2),
-        SizedBox(
-          width: width,
-          height: fontSize * 0.28,
-          child: RepaintBoundary(
-            child: CustomPaint(
-              painter: TallyUwashPainter(
-                progress: uwashProgress,
-                color: uwashColor,
+              );
+            }),
+          ),
+          const SizedBox(height: 2),
+          SizedBox(
+            width: width,
+            height: fontSize * 0.28,
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: TallyUwashPainter(
+                  progress: uwashProgress,
+                  color: uwashColor,
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

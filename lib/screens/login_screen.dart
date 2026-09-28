@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'main_nav_screen.dart';
 import '../services/state.dart';
@@ -560,7 +561,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            keyboardDismissBehavior: kIsWeb ? ScrollViewKeyboardDismissBehavior.manual : ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 24.0),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),

@@ -460,7 +460,24 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 
 ## 📝 Recent Changelog
 
-- **v1.9.0 (Current)**:
+- **v1.9.1 (Current)**:
+  - **Flutter Web Engine & Cross-Platform Layout Hardening**:
+    - **Subpixel Floating-Point RenderFlex Overflow Fix**:
+      - Resolved `A RenderFlex overflowed by 0.00000255 pixels on the bottom` during `SplashScreen` to `LoginScreen` Hero wordmark flight.
+      - Wrapped `TallyWordmarkWidget`'s Column in `FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.center)`, eliminating yellow-and-black striped layout overflow warnings across all browser zoom levels and mobile viewports.
+    - **Firebase Google Sign-In Web Popup Flow**:
+      - Fixed `UnimplementedError: signInWithProvider() is not implemented` when clicking "Sign in with Google" on Web.
+      - Implemented conditional `FirebaseAuth.instance.signInWithPopup(googleProvider)` for web clients, launching the official Google OAuth browser popup window and linking seamlessly to SQLite/Firestore ledgers.
+    - **Web-Safe Notification & Biometric Service Guards**:
+      - Guarded `NotificationService`'s `init()`, `scheduleAllDailyReminders()`, `cancelAllReminders()`, `scheduleLoanReminder()`, and `showInstantAlert()` with `kIsWeb` guards and try-catch wrappers, eliminating unsupported `zonedSchedule()` web exceptions.
+      - Guarded `BiometricService` with `kIsWeb` platform checks, gracefully bypassing missing `local_auth` platform channels on web without throwing `MissingPluginException`.
+    - **Web Text Editing Focus Detachment Protection**:
+      - Updated `LoginScreen` `SingleChildScrollView` to use `keyboardDismissBehavior: kIsWeb ? ScrollViewKeyboardDismissBehavior.manual : ScrollViewKeyboardDismissBehavior.onDrag`, eliminating the Flutter Web HTML/CanvasKit engine assertion `domElement != null`.
+    - **Cross-Platform Test Suite**:
+      - Added `test/web_compatibility_test.dart` verifying tight boundary layout scaling, notification exception safety, and biometric graceful fallbacks.
+      - All 61 automated unit, widget, and frame timing tests passing with 0 analyzer warnings.
+
+- **v1.9.0**:
   - **Recalculated Pro Pricing & Fintech Unit Economics**:
     - Recomputed Pro pricing matrix to eliminate inversion anomaly (where Lifetime was previously cheaper than 1 Year) and establish standard subscription economics:
       - **Monthly Plan**: **$2.99 / month** — affordable entry point for budgeting power features.
