@@ -50,6 +50,10 @@ class NotificationService {
 
   Future<void> init() async {
     if (_isInitialized) return;
+    if (kIsWeb) {
+      _isInitialized = true;
+      return;
+    }
 
     try {
       tz.initializeTimeZones();
@@ -76,12 +80,16 @@ class NotificationService {
       windows: windowsSettings,
     );
 
-    await _notificationsPlugin.initialize(
-      settings: initSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        debugPrint('Notification tapped with payload: ${response.payload}');
-      },
-    );
+    try {
+      await _notificationsPlugin.initialize(
+        settings: initSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse response) {
+          debugPrint('Notification tapped with payload: ${response.payload}');
+        },
+      );
+    } catch (e) {
+      debugPrint('NotificationService._notificationsPlugin.initialize notice: $e');
+    }
 
     _isInitialized = true;
 
@@ -93,11 +101,12 @@ class NotificationService {
   }
 
   Future<bool> requestPermission() async {
-    if (!kIsWeb && Platform.isAndroid) {
+    if (kIsWeb) return false;
+    if (Platform.isAndroid) {
       final androidImplementation = _notificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
       final granted = await androidImplementation?.requestNotificationsPermission();
       return granted ?? false;
-    } else if (!kIsWeb && (Platform.isIOS || Platform.isMacOS)) {
+    } else if (Platform.isIOS || Platform.isMacOS) {
       final iosImplementation = _notificationsPlugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
       final granted = await iosImplementation?.requestPermissions(
         alert: true,
@@ -164,6 +173,7 @@ class NotificationService {
 
   /// Schedules daily 3-hour check-in notifications for 9 AM, 12 PM, 3 PM, 6 PM, 9 PM
   Future<void> scheduleAllDailyReminders() async {
+    if (kIsWeb) return;
     await cancelAllReminders();
 
     final details = _buildNotificationDetails();
@@ -192,24 +202,34 @@ class NotificationService {
 
   /// Cancels all scheduled reminder notifications
   Future<void> cancelAllReminders() async {
-    for (int i = 0; i < reminderHours.length; i++) {
-      final notificationId = 100 + i;
-      await _notificationsPlugin.cancel(id: notificationId);
+    if (kIsWeb) return;
+    try {
+      for (int i = 0; i < reminderHours.length; i++) {
+        final notificationId = 100 + i;
+        await _notificationsPlugin.cancel(id: notificationId);
+      }
+    } catch (e) {
+      debugPrint('NotificationService.cancelAllReminders notice: $e');
     }
   }
 
   /// Instant test reminder triggered by the hidden dev easter egg (10 toggles)
   Future<void> showInstantFriendlyReminder() async {
+    if (kIsWeb) return;
     final random = Random();
     final msg = friendlyMessages[random.nextInt(friendlyMessages.length)];
     final details = _buildNotificationDetails();
 
-    await _notificationsPlugin.show(
-      id: 999,
-      title: 'Time to Tally! ⏱️',
-      body: msg,
-      notificationDetails: details,
-    );
+    try {
+      await _notificationsPlugin.show(
+        id: 999,
+        title: 'Time to Tally! ⏱️',
+        body: msg,
+        notificationDetails: details,
+      );
+    } catch (e) {
+      debugPrint('NotificationService.showInstantFriendlyReminder notice: $e');
+    }
   }
 
   int _getLoanNotificationId(String loanId) {
@@ -225,6 +245,7 @@ class NotificationService {
     required Loan loan,
     required String currencySymbol,
   }) async {
+    if (kIsWeb) return;
     final notificationId = _getLoanNotificationId(loan.id);
     final details = _buildNotificationDetails();
 
@@ -267,6 +288,7 @@ class NotificationService {
 
   /// Cancels an active loan reminder
   Future<void> cancelLoanReminder(String loanId) async {
+    if (kIsWeb) return;
     final notificationId = _getLoanNotificationId(loanId);
     try {
       await _notificationsPlugin.cancel(id: notificationId);
@@ -278,6 +300,7 @@ class NotificationService {
     required PlannedTransaction plan,
     required String currencySymbol,
   }) async {
+    if (kIsWeb) return;
     final notificationId = _getPlanNotificationId(plan.id);
     final details = _buildNotificationDetails();
 
@@ -305,6 +328,7 @@ class NotificationService {
 
   /// Cancels a planned transaction reminder
   Future<void> cancelPlannedTransactionReminder(String planId) async {
+    if (kIsWeb) return;
     final notificationId = _getPlanNotificationId(planId);
     try {
       await _notificationsPlugin.cancel(id: notificationId);
@@ -317,6 +341,7 @@ class NotificationService {
     required String body,
     int id = 888,
   }) async {
+    if (kIsWeb) return;
     final details = _buildNotificationDetails();
     try {
       await _notificationsPlugin.show(

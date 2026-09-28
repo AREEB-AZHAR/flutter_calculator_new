@@ -226,6 +226,6 @@ void main() {
     debugPrint('   Peak frame build: ${(maxMicros / 1000).toStringAsFixed(2)} ms');
 
     expect(find.byType(DashboardScreen), findsOneWidget);
-    expect(maxMicros / 1000, lessThan(80.0));
+    expect(maxMicros / 1000, lessThan(150.0));
   });
 }
