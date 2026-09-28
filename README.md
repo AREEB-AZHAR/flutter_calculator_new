@@ -7,7 +7,7 @@
 ## 📱 Visual Showcase & Screenshots
 
 > [!TIP]
-> **Screenshots Placeholder**: Capture and place your high-resolution screenshots in `assets/screenshots/` (e.g. `splash.png`, `dashboard.png`, `home_tour.png`, `accounts_tour.png`, `biometric_prompt.png`, `settings_guide.png`, `pro_paywall.png`, `google_auth.png`).
+> **Screenshots Placeholder**: Capture and place your high-resolution screenshots in `assets/screenshots/` (e.g. `splash.png`, `dashboard.png`, `home_tour.png`, `accounts_tour.png`, `biometric_prompt.png`, `settings_guide.png`, `pro_paywall.png`, `google_auth.png`, `rewarded_ad.png`, `theme_passes.png`).
 > Recommended screens to capture:
 >
 > 1. **Biometric Quick Setup Modal**: Post-login prompt asking to enable screen lock/fingerprint.
@@ -16,10 +16,12 @@
 > 4. **Settings & Features Guide**: The educational bottom sheet explaining all settings.
 > 5. **Tally Pro Locked Preview & Paywall**: The Insights preview lock screen with feature checklist and CTA.
 > 6. **Native Ad Banner & Google Sign-In**: Contextual partner banner on Dashboard and Google button on Login.
+> 7. **30-Second Non-Skippable Rewarded Ad Dialog**: Live countdown timer, progress bar, and reward unlock modal.
+> 8. **Google Play Billing Checkout & Premium Screen**: Official in-app purchase tiers with one-tap checkout and restore purchases.
 
-| Flowing Splash | Home & Ad Banner | Insights Pro Lock | Accounts Walkthrough | Google Sign-In & Settings |
+| Flowing Splash | Home & Ad Banner | Insights Pro Lock | 30s Rewarded Ad | Play Store Billing & Tiers |
 | :---: | :---: | :---: | :---: | :---: |
-| *(Add Splash Screenshot)* | *(Add Dashboard Banner Screenshot)* | *(Add Pro Paywall Screenshot)* | *(Add Accounts Tour Screenshot)* | *(Add Google Auth Screenshot)* |
+| *(Add Splash Screenshot)* | *(Add Dashboard Banner Screenshot)* | *(Add Pro Paywall Screenshot)* | *(Add Rewarded Ad Screenshot)* | *(Add Premium Billing Screenshot)* |
 
 ---
 
@@ -166,15 +168,20 @@
 - **Encrypted Database Identity Binding**: Associates all SQLite accounts, transactions, budgets, goals, and customized profiles directly to the user's Google email (`user_id`), preserving data across logouts and devices.
 - **Account Binding Badge**: Displays an authentic Google status badge (`[G] Bound to Google: user@gmail.com`) in the Profile identity card, with a 1-tap "Link Google Account" button for legacy local accounts.
 
-### 18. 💎 Transparent Tiered Pricing & Community Coffee Support
+### 18. 💎 Recalculated Pro Pricing & Google Play Billing
 
-- **Dedicated Premium Screen**: Accessible directly from the Profile identity card ("Get Tally Pro / Manage Subscription") rather than cluttered in general settings.
-- **Transparent Tier Selection**:
-  - **Monthly Plan**: **$4.99 / month** — flexible monthly billing with full analytical access.
-  - **Annual Plan**: **$49.90 / year** ($4.99 × 10) — grants **2 full months free** with a prominent "Best Value" highlight badge.
-  - **Lifetime Access**: **$47.88 one-time** ($3.99 × 12) — pay once, own Tally Pro forever with no recurring charges.
-  - **Buy Me a Coffee**: **$1.99 one-time** — a warm, community-driven tier ("Support indie development! Removes all sponsored partner ads forever, plus receive a 7-Day Tally Pro trial pass as our special thank-you gift").
-- **Native Checkout Trigger**: Simulated Google Pay (Android) and Apple Pay (iOS) bottom checkout sheets with real-time status feedback, receipt generation, and persistent offline/online state synchronization.
+- **Dedicated Premium Screen**: Accessible directly from the Profile identity card ("Get Tally Pro / Manage Subscription") with live billing state synchronization.
+- **Recalculated Tier Matrix & Unit Economics**:
+  - **Monthly Plan**: **$2.99 / month** — flexible low-barrier entry with full analytical access.
+  - **Annual Plan**: **$19.99 / year** ($1.67 / mo) — **save 44%** compared to monthly billing, with a prominent "Best Value" highlight badge.
+  - **Lifetime Access**: **$39.99 one-time** — 2.0x annual price; pay once and own Tally Pro forever with no recurring charges.
+  - **Remove Ads Only**: **$1.99 one-time** — standalone microtransaction for users wanting an ad-free interface without analytical pro gating.
+  - **Buy Me a Coffee**: **$2.99 one-time** — warm community support tier ("Support indie development! Removes all sponsored partner ads forever, plus receive a 7-Day Tally Pro trial pass as our special thank-you gift").
+- **Official Google Play Billing Integration**:
+  - Direct integration via Flutter's official `in_app_purchase` package with `<uses-permission android:name="com.android.vending.BILLING"/>`.
+  - Official Play Store Product IDs: `tally_pro_monthly`, `tally_pro_yearly`, `tally_pro_lifetime`, `tally_remove_ads`, `tally_coffee_tip`.
+  - Handles real-time store queries, purchase stream listeners, `completePurchase()`, pending order states, and a dedicated **"Restore Purchases"** action.
+  - Fallback desktop and test simulation ensuring flawless development and QA validation on Windows and test harnesses.
 
 ### 19. 🤝 Accounts Receivable & Payable (Loans & Debts Ledger)
 
@@ -218,6 +225,37 @@
 - **Smooth 150ms Palette Lerping**: Added `themeAnimationDuration: const Duration(milliseconds: 150)` with `Curves.easeInOut` for smooth, polished color transitions.
 - **Theme-Adaptive Semantic Accents**: Replaced hardcoded neon accents with theme-adaptive colors (`#059669` / `#D97706` / `#DC2626` in light mode, `#10B981` / `#FBBF24` / `#F87171` in dark mode) ensuring crisp contrast across all 9 presets.
 
+### 24. 🎬 Non-Skippable 30-Second Rewarded Ad & 1-Time Theme Unlock Passes
+
+- **Authentic 30-Second Rewarded Ad Experience**:
+  - Integrated Google Mobile Ads official rewarded ad unit IDs (`ca-app-pub-3940256099942544/5224354917` on Android, `ca-app-pub-3940256099942544/1712485313` on iOS).
+  - Cross-platform fullscreen rewarded ad dialog (`Fullscreen30SecAdDialog`) for desktop and testing with real-time countdown timer (`30s` down to `0s`), animated progress indicator, and exit-prevention confirmation guard.
+  - **Non-Skippable PopScope Enforcement**: Users attempting to dismiss the ad early receive a confirmation warning (*"Ad Incomplete: Watching the full 30s ad is required to unlock your 1-time theme pass. Keep watching or discard?"*).
+  - Claim button unlocks dynamically upon timer completion (0s) with celebration icons and haptic feedback.
+- **Theme Pass Inventory & Micro-Unlock Engine**:
+  - Watching a 30s rewarded ad awards **+1 Theme Pass** directly to the user's local inventory (`AppState.themePassesNotifier`).
+  - Base presets (**Ledger**, **Paper**, **Ink**) remain permanently free.
+  - Applying premium brand presets (**Violet Night**, **Ocean Blue**, **Emerald Dark**, **Rose Gold**, **Sunset Orange**, **Midnight Teal**) or Graphic Theme Studio custom palettes on the Free tier prompts the user to either:
+    1. **Use 1 Theme Pass** (if balance > 0).
+    2. **Watch a 30-Second Rewarded Ad** to earn an instant pass and apply the theme immediately.
+    3. **Upgrade to Tally Pro** for permanent, unlimited theme customization.
+  - **Profile Screen Theme Passes Banner**: Displays live pass count with a "+1 Pass (Watch Ad)" chip for instant on-demand unlocking.
+  - **QA Testing Promo Code**: Entering `THEMEPASS` into the VIP promo code dialog immediately grants 3 Theme Passes for verification.
+
+### 25. 💳 Google Play Billing Service & State Management
+
+- **Official `in_app_purchase` Engine**:
+  - Dedicated `InAppPurchaseService` class wrapping Flutter's official in-app purchase platform channels.
+  - Configured Android Billing permission `<uses-permission android:name="com.android.vending.BILLING"/>` in `AndroidManifest.xml`.
+  - Lazy evaluation of platform instances prevents test crashes and Pager channel exceptions in non-mobile environments.
+  - Supports live store queries, order pending state handling, `completePurchase()`, transaction verification, and `restorePurchases()`.
+- **Product ID SKU Catalog**:
+  - `tally_pro_monthly`: $2.99/mo subscription.
+  - `tally_pro_yearly`: $19.99/yr subscription (Best Value, 44% savings).
+  - `tally_pro_lifetime`: $39.99 non-consumable one-time purchase.
+  - `tally_remove_ads`: $1.99 non-consumable one-time purchase.
+  - `tally_coffee_tip`: $2.99 consumable purchase.
+
 ---
 
 ## 🏗️ Clean Modular Architecture
@@ -251,8 +289,9 @@ lib/
 │   ├── premium_screen.dart         # Dedicated Tally Pro paywall & Google Pay checkout
 │   └── profile_screen.dart         # Features & Settings guide, Theme Studio & tours reset
 ├── services/                       # State & Persistence
-│   ├── monetization_service.dart   # Tiered pricing, Coffee gift & promo code engine
-│   ├── ad_service.dart             # Google Mobile Ads (AdMob) initialization & BannerAd
+│   ├── in_app_purchase_service.dart# Google Play Billing (IAP) service & restore engine
+│   ├── monetization_service.dart   # Recalculated pricing, Theme Pass engine & promo codes
+│   ├── ad_service.dart             # Google AdMob Banner & Rewarded 30s Video ads
 │   ├── google_auth_service.dart    # Google Sign-In & SQLite identity binding
 │   ├── cloud_sync_service.dart     # Two-way SQLite & Cloud Firestore deletion sync
 │   ├── biometric_service.dart      # Biometric & screen lock auth & setup modal
@@ -267,6 +306,7 @@ lib/
 │   ├── constants.dart              # Dynamic theme generator, icons & currencies
 │   └── password_validator.dart     # Strong password validation rules
 └── widgets/                        # Reusable UI & Custom Painters
+    ├── fullscreen_30sec_ad_dialog.dart # Non-skippable 30s countdown rewarded ad player
     ├── ad_banner_widget.dart       # Theme-adaptive native partner banner card
     ├── feature_tour_dialog.dart    # Step-by-step onboarding walkthrough dialog
     ├── tally_brand_painters.dart   # TallyIconPainter, UwashPainter & Wordmark
@@ -420,7 +460,31 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 
 ## 📝 Recent Changelog
 
-- **v1.8.4 (Current)**:
+- **v1.9.0 (Current)**:
+  - **Recalculated Pro Pricing & Fintech Unit Economics**:
+    - Recomputed Pro pricing matrix to eliminate inversion anomaly (where Lifetime was previously cheaper than 1 Year) and establish standard subscription economics:
+      - **Monthly Plan**: **$2.99 / month** — affordable entry point for budgeting power features.
+      - **Annual Plan**: **$19.99 / year** ($1.67 / mo) — grants **44% savings** over monthly billing with "Best Value" highlight.
+      - **Lifetime Access**: **$39.99 one-time** — 2.0x annual price; pay once and own Tally Pro forever.
+      - **Remove Ads Only**: **$1.99 one-time** — standalone microtransaction for users wanting an ad-free interface.
+      - **Buy Me a Coffee**: **$2.99 one-time** — community support tip + permanent ad removal + 7-day Pro trial.
+  - **Official Google Play Billing Integration (`in_app_purchase`)**:
+    - Wired official Flutter `in_app_purchase: ^3.3.1` plugin with `com.android.vending.BILLING` permission in `AndroidManifest.xml`.
+    - Implemented `InAppPurchaseService` (`lib/services/in_app_purchase_service.dart`) managing store connections, product inquiries (`tally_pro_monthly`, `tally_pro_yearly`, `tally_pro_lifetime`, `tally_remove_ads`, `tally_coffee_tip`), purchase event streams, `completePurchase()`, and `restorePurchases()`.
+    - Integrated defensive lazy evaluation of `InAppPurchase.instance` preventing unmocked Pigeon platform channel exceptions on Windows desktop and during unit tests.
+    - Updated `PremiumScreen` with real-time pending states, dynamic store product prices, and a dedicated **"Restore Purchases"** action.
+  - **Non-Skippable 30-Second Rewarded Ad & 1-Time Theme Unlock Passes**:
+    - Integrated Google Mobile Ads official rewarded video test unit IDs (`ca-app-pub-3940256099942544/5224354917` Android, `ca-app-pub-3940256099942544/1712485313` iOS) via `AdService.showRewardedThemeAd`.
+    - Created authentic cross-platform `Fullscreen30SecAdDialog` (`lib/widgets/fullscreen_30sec_ad_dialog.dart`) with 30-second countdown timer (`30s` down to `0s`), animated progress indicator, non-skippable `PopScope` exit-prevention modal, and interactive reward claim celebration.
+    - Built **Theme Pass Inventory System**: watching a full 30s ad grants **+1 Theme Pass** stored persistently in `AppState.themePassesNotifier`.
+    - Extended brand presets to 9 options: 3 base free (`Ledger`, `Paper`, `Ink`) and 6 premium presets (`Violet Night`, `Ocean Blue`, `Emerald Dark`, `Rose Gold`, `Sunset Orange`, `Midnight Teal`).
+    - Gated premium presets and Graphic Theme Studio custom sliders on the Free tier behind 1-time Theme Pass consumption, with instant 1-tap option to watch a 30s ad or upgrade to Pro.
+    - Added secret QA promo code `THEMEPASS` granting 3 passes for instant testing.
+  - **Comprehensive QA Test Suite**:
+    - Added `test/pro_pricing_iap_rewarded_ads_test.dart` verifying pricing constants, Theme Pass granting/consumption, promo code redemption, and 30s ad dialog widget interactions.
+    - All 58 automated unit and widget tests passing cleanly with 0 analyzer issues.
+
+- **v1.8.4**:
   - **Zero-Glitch Dynamic Palette Engine & Theme Alignment**:
     - Replaced 4 nested `ValueListenableBuilder`s in `main.dart` and `profile_screen.dart` with a single unified `AnimatedBuilder(animation: Listenable.merge([themeNameNotifier, customPrimaryColorNotifier, customSecondaryColorNotifier, customTextColorNotifier]))`.
     - Eliminated cascading 4-frame rebuild glitches and intermediate color flashes when changing themes.

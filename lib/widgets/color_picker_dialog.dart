@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/state.dart';
 import '../services/database/app_database.dart';
+import '../services/monetization_service.dart';
 
 class ColorPickerDialog extends StatefulWidget {
   final Color initialPrimary;
@@ -163,6 +164,54 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
   }
 
   Future<void> _applyTheme() async {
+    if (!MonetizationService.isPro) {
+      if (MonetizationService.themePassesNotifier.value > 0) {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: Theme.of(ctx).colorScheme.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Row(
+              children: [
+                Icon(Icons.palette_rounded, color: Colors.teal),
+                SizedBox(width: 8),
+                Text('Use 1 Theme Pass?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+              ],
+            ),
+            content: Text(
+              'You have ${MonetizationService.themePassesNotifier.value} Theme Change Pass(es) available. Use 1 pass to apply this custom Graphic Studio palette?',
+              style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.85), fontSize: 13),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Use Pass & Apply'),
+              ),
+            ],
+          ),
+        );
+        if (confirmed != true) return;
+        await MonetizationService.consumeThemePass();
+      } else {
+        await MonetizationService.showThemeUnlockModal(
+          context,
+          themeName: 'Custom Graphic Palette',
+          onUnlocked: () async {
+            await _executeApply();
+          },
+        );
+        return;
+      }
+    }
+
+    await _executeApply();
+  }
+
+  Future<void> _executeApply() async {
     AppState.customPrimaryColorNotifier.value = _primary;
     AppState.customSecondaryColorNotifier.value = _secondary;
     AppState.customTextColorNotifier.value = _textColor;
@@ -498,20 +547,29 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
           onPressed: () => Navigator.pop(context),
           child: Text('Cancel', style: TextStyle(color: onSurface.withValues(alpha: 0.54))),
         ),
-        ElevatedButton(
-          onPressed: _applyTheme,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _primary,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          ),
-          child: Text(
-            'Apply Theme',
-            style: TextStyle(
-              color: _primary.computeLuminance() > 0.5 ? Colors.black : Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        ValueListenableBuilder<int>(
+          valueListenable: MonetizationService.themePassesNotifier,
+          builder: (context, passes, _) {
+            final isPro = MonetizationService.isPro;
+            final label = isPro
+                ? 'Apply Theme'
+                : (passes > 0 ? 'Apply with Pass ($passes left)' : 'Watch 30s Ad & Apply');
+            return ElevatedButton(
+              onPressed: _applyTheme,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: _primary.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            );
+          },
         ),
       ],
     );

@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'ad_service.dart';
 
 class MonetizationService {
   static const String _prefProUnlockedKey = 'tally_pro_unlocked';
   static const String _prefAdsRemovedKey = 'tally_ads_removed';
   static const String _prefProTrialExpiryKey = 'tally_pro_trial_expiry';
+  static const String _prefThemePassesKey = 'tally_theme_passes';
+
+  // Recalculated Pro Pricing Matrix (Fintech Benchmark & Unit Economics)
+  static const double proMonthlyPrice = 2.99;
+  static const double proYearlyPrice = 19.99; // $1.67/mo (Save 44%)
+  static const double proLifetimePrice = 39.99; // 2x Annual, Lifetime Access
+  static const double removeAdsPrice = 1.99; // Standalone banner ad removal
+  static const double coffeeTipPrice = 2.99; // Tip jar + Ad-Free for life + 7-Day Pro trial
 
   static final ValueNotifier<bool> isProUnlockedNotifier = ValueNotifier<bool>(false);
   static final ValueNotifier<bool> isAdsRemovedNotifier = ValueNotifier<bool>(false);
   static final ValueNotifier<DateTime?> proTrialExpiryNotifier = ValueNotifier<DateTime?>(null);
+  static final ValueNotifier<int> themePassesNotifier = ValueNotifier<int>(0);
 
   /// True if user is currently enjoying an active 7-day promotional Pro trial.
   static bool get isTrialActive {
@@ -30,12 +40,16 @@ class MonetizationService {
   /// True if ads should be hidden (either via Pro unlock, dedicated Remove Ads, or coffee gift).
   static bool get isAdFree => isProUnlockedNotifier.value || isAdsRemovedNotifier.value || isTrialActive;
 
+  /// True if user has unlimited access via Pro or has at least 1 theme pass.
+  static bool get hasThemePass => isPro || themePassesNotifier.value > 0;
+
   /// Initializes monetization states from local SharedPreferences.
   static Future<void> initialize() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       isProUnlockedNotifier.value = prefs.getBool(_prefProUnlockedKey) ?? false;
       isAdsRemovedNotifier.value = prefs.getBool(_prefAdsRemovedKey) ?? false;
+      themePassesNotifier.value = prefs.getInt(_prefThemePassesKey) ?? 0;
 
       final trialStr = prefs.getString(_prefProTrialExpiryKey);
       if (trialStr != null && trialStr.isNotEmpty) {
@@ -48,6 +62,38 @@ class MonetizationService {
       }
     } catch (e) {
       debugPrint('MonetizationService.initialize error: $e');
+    }
+  }
+
+  /// Grants one or more 1-time theme change passes (e.g. earned by watching a 30s ad).
+  static Future<void> grantThemePass([int count = 1]) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final newCount = themePassesNotifier.value + count;
+      await prefs.setInt(_prefThemePassesKey, newCount);
+      themePassesNotifier.value = newCount;
+      debugPrint('MonetizationService: Granted $count theme pass(es). Total: $newCount');
+    } catch (e) {
+      debugPrint('MonetizationService.grantThemePass error: $e');
+    }
+  }
+
+  /// Consumes one 1-time theme change pass when applying a premium or custom theme.
+  /// Returns true if a pass was successfully deducted or user is Pro.
+  static Future<bool> consumeThemePass() async {
+    if (isPro) return true;
+    if (themePassesNotifier.value <= 0) return false;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final newCount = themePassesNotifier.value - 1;
+      await prefs.setInt(_prefThemePassesKey, newCount);
+      themePassesNotifier.value = newCount;
+      debugPrint('MonetizationService: Consumed 1 theme pass. Remaining: $newCount');
+      return true;
+    } catch (e) {
+      debugPrint('MonetizationService.consumeThemePass error: $e');
+      return false;
     }
   }
 
@@ -96,9 +142,11 @@ class MonetizationService {
       await prefs.remove(_prefProUnlockedKey);
       await prefs.remove(_prefAdsRemovedKey);
       await prefs.remove(_prefProTrialExpiryKey);
+      await prefs.remove(_prefThemePassesKey);
       isProUnlockedNotifier.value = false;
       isAdsRemovedNotifier.value = false;
       proTrialExpiryNotifier.value = null;
+      themePassesNotifier.value = 0;
     } catch (e) {
       debugPrint('MonetizationService.resetPurchases error: $e');
     }
@@ -113,9 +161,12 @@ class MonetizationService {
     } else if (code == 'NOADS' || code == 'REMOVEADS' || code == 'ADFREE') {
       await removeAds();
       return '✨ Ads removed successfully! Enjoy clean banner-free budgeting.';
+    } else if (code == 'THEMEPASS' || code == 'FREEPASS' || code == 'THEME3') {
+      await grantThemePass(3);
+      return '🎨 3 Free Theme Change Passes added to your vault!';
     } else if (code == 'RESET' || code == 'RESETVIP' || code == 'RESETPRO' || code == 'FREE' || code == 'FREEVIP') {
       await resetPurchases();
-      return '🔄 VIP Subscription & Ad-Free status have been reset to Free tier.';
+      return '🔄 VIP Subscription, Theme Passes & Ad-Free status have been reset to Free tier.';
     }
     return null;
   }
@@ -217,8 +268,8 @@ class MonetizationService {
                 onSurface: onSurface,
               ),
               _featureRow(
-                icon: Icons.color_lens_rounded,
-                title: 'Theme Studio (Custom Color Wheel)',
+                icon: Icons.palette_rounded,
+                title: 'Theme Studio & All 9 Premium Themes',
                 subtitle: 'Fine-tune primary, secondary, and typography font colors to your taste',
                 primary: primary,
                 onSurface: onSurface,
@@ -240,7 +291,7 @@ class MonetizationService {
 
               const SizedBox(height: 24),
 
-              // Primary Action: Unlock Pro Bundle
+              // Primary Action: Unlock Pro Annual ($19.99)
               ElevatedButton(
                 onPressed: () async {
                   await unlockPro();
@@ -265,14 +316,14 @@ class MonetizationService {
                   children: [
                     Icon(Icons.bolt_rounded, size: 20),
                     SizedBox(width: 8),
-                    Text('Unlock Tally Pro — \$4.99 (One-Time)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text('Unlock Tally Pro — \$19.99 / yr (\$1.67/mo)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                   ],
                 ),
               ),
 
               const SizedBox(height: 12),
 
-              // Secondary Action: Remove Ads Only
+              // Secondary Action: Remove Ads Only ($1.99)
               OutlinedButton(
                 onPressed: () async {
                   await removeAds();
@@ -331,6 +382,150 @@ class MonetizationService {
     );
   }
 
+  /// Displays the theme unlock modal allowing users to either watch a 30s fullscreen ad
+  /// for a 1-time theme change or upgrade to Tally Pro for unlimited changes.
+  static Future<void> showThemeUnlockModal(
+    BuildContext context, {
+    required String themeName,
+    required VoidCallback onUnlocked,
+  }) async {
+    final theme = Theme.of(context);
+    final surface = theme.colorScheme.surface;
+    final onSurface = theme.colorScheme.onSurface;
+    final primary = theme.colorScheme.primary;
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          decoration: BoxDecoration(
+            color: surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border.all(color: onSurface.withValues(alpha: 0.12)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: onSurface.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primary.withValues(alpha: 0.15),
+                ),
+                child: Icon(Icons.palette_rounded, size: 36, color: primary),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Unlock "$themeName"',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: onSurface,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'This theme is part of the Tally Pro aesthetic collection. You can unlock it for 1-time use by watching a 30s ad, or upgrade to Pro for unlimited changes.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: onSurface.withValues(alpha: 0.7),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 22),
+
+              // Option 1: Watch 30s Ad to Unlock 1-Time Use
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    await AdService.showRewardedThemeAd(
+                      context: context,
+                      onRewardEarned: () async {
+                        await grantThemePass(1);
+                        await consumeThemePass();
+                        onUnlocked();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('🎉 1-Time Theme Unlocked! Switched to $themeName.'),
+                              backgroundColor: Colors.teal,
+                            ),
+                          );
+                        }
+                      },
+                    );
+                  },
+                  icon: const Icon(Icons.play_circle_filled_rounded, size: 22),
+                  label: const Text(
+                    'Watch 30s Video Ad (Unlock 1-Time)',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Option 2: Upgrade to Tally Pro
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    showPaywallModal(
+                      context,
+                      featureTitle: 'Theme Studio & All Palettes',
+                      featureDescription: 'Unlock unlimited access to all 9 brand themes, Graphic Theme Studio, predictive velocity, and no ads forever.',
+                    );
+                  },
+                  icon: const Icon(Icons.workspace_premium_rounded, size: 18),
+                  label: const Text(
+                    'Upgrade to Pro — Unlimited Access',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: primary,
+                    side: BorderSide(color: primary.withValues(alpha: 0.5)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('Cancel', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   static Widget _featureRow({
     required IconData icon,
     required String title,
@@ -386,7 +581,7 @@ class MonetizationService {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Enter a VIP promo code to unlock Tally Pro or Ad-Free features for testing.',
+              'Enter a VIP promo code to unlock Tally Pro, Free Theme Passes, or Ad-Free features for testing.',
               style: TextStyle(fontSize: 12.5, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
             ),
             const SizedBox(height: 12),
@@ -396,7 +591,7 @@ class MonetizationService {
               textCapitalization: TextCapitalization.characters,
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, letterSpacing: 1.5),
               decoration: InputDecoration(
-                hintText: 'e.g. PROVIP, NOADS, or RESETVIP',
+                hintText: 'e.g. PROVIP, THEMEPASS, NOADS',
                 hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35), fontSize: 13),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -416,7 +611,7 @@ class MonetizationService {
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Invalid promo code. Try PROVIP, NOADS, or RESETVIP.'), backgroundColor: Colors.redAccent),
+                    const SnackBar(content: Text('Invalid promo code. Try PROVIP, THEMEPASS, NOADS, or RESETVIP.'), backgroundColor: Colors.redAccent),
                   );
                 }
               }
