@@ -79,16 +79,18 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       setState(() {
         _canUseBiometrics = true;
         _biometricUser = savedUser;
-        if (_usernameCtrl.text.isEmpty) {
+        if (_usernameCtrl.text.isEmpty && !BiometricService.isExplicitLogout) {
           _usernameCtrl.text = savedUser;
         }
       });
-      // Seamlessly prompt mobile screen lock after entrance transition completes
-      Future.delayed(const Duration(milliseconds: 400), () {
-        if (mounted && _canUseBiometrics && _isLogin && !_isLoading) {
-          _unlockWithBiometrics();
-        }
-      });
+      // Seamlessly prompt mobile screen lock on cold launch only; NEVER auto-prompt after an explicit logout
+      if (!BiometricService.isExplicitLogout) {
+        Future.delayed(const Duration(milliseconds: 400), () {
+          if (mounted && _canUseBiometrics && _isLogin && !_isLoading && !BiometricService.isExplicitLogout) {
+            _unlockWithBiometrics();
+          }
+        });
+      }
     }
   }
 
@@ -101,6 +103,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     try {
       final googleUser = await GoogleAuthService.signIn(context);
       if (googleUser != null) {
+        BiometricService.isExplicitLogout = false;
         if (await BiometricService.isBiometricEnabled(username: googleUser.email)) {
           await BiometricService.setBiometricEnabled(true, username: googleUser.email);
         }
@@ -144,6 +147,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         reason: 'Scan fingerprint or Face ID to unlock Tally',
       );
       if (success) {
+        BiometricService.isExplicitLogout = false;
         await AppState.loadAllUserData(_biometricUser!);
         if (!mounted) return;
         Navigator.pushReplacement(
@@ -188,6 +192,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       try {
         final success = await AppDatabase.instance.authenticateUser(identifier, password);
         if (success) {
+          BiometricService.isExplicitLogout = false;
           final canonicalUsername = await AppDatabase.instance.getUsernameForIdentifier(identifier) ?? identifier;
           if (await BiometricService.isBiometricEnabled(username: canonicalUsername)) {
             await BiometricService.setBiometricEnabled(true, username: canonicalUsername);

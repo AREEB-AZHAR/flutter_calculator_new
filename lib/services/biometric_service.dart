@@ -106,9 +106,15 @@ class BiometricService {
 
   static bool biometricPromptCheckedThisSession = false;
 
-  /// Resets the session prompt state (e.g. upon user logout).
+  /// Tracks whether the user explicitly triggered a logout.
+  /// When true, prevents automatic biometric popups on the LoginScreen so the user
+  /// isn't ambushed to re-enter an account they just logged out of.
+  static bool isExplicitLogout = false;
+
+  /// Resets the session prompt state and marks explicit logout.
   static void resetSessionPrompt() {
     biometricPromptCheckedThisSession = false;
+    isExplicitLogout = true;
   }
 
   /// Displays the easy biometric login popup dialog to the user upon login.

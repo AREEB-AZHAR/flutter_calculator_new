@@ -14,6 +14,7 @@ import 'notification_service.dart';
 import 'monetization_service.dart';
 import 'google_auth_service.dart';
 import 'biometric_service.dart';
+import '../screens/login_screen.dart';
 
 class AppState {
   static String? currentUser;
@@ -106,6 +107,28 @@ class AppState {
     avatarColorNotifier.value = ledger.primary;
   }
 
+  /// Securely and immediately logs out the current user session.
+  /// Transitions the UI instantly with a 60/120 FPS fade transition and clears all user data in memory.
+  static Future<void> logout(BuildContext context) async {
+    BiometricService.resetSessionPrompt();
+
+    // 1. Immediately transition to LoginScreen with a crisp, butter-smooth 200ms fade transition
+    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+          child: child,
+        ),
+        transitionDuration: const Duration(milliseconds: 200),
+      ),
+      (route) => false,
+    );
+
+    // 2. Perform session cleanup concurrently without blocking UI frame delivery
+    await clearUserSession();
+  }
+
   /// Completely wipes all session data from memory and resets theme and monetization entitlements.
   static Future<void> clearUserSession() async {
     currentUser = null;
@@ -130,11 +153,11 @@ class AppState {
     MonetizationService.resetToLoggedOut();
     BiometricService.resetSessionPrompt();
 
-    // Cancel all scheduled reminders from logged out session
-    await NotificationService.instance.cancelAllReminders();
+    // Cancel all scheduled reminders from logged out session asynchronously in background
+    unawaited(NotificationService.instance.cancelAllReminders());
 
-    // Sign out from Google / Firebase to avoid credential bleed
-    await GoogleAuthService.signOut();
+    // Sign out from Google / Firebase to avoid credential bleed asynchronously in background
+    unawaited(GoogleAuthService.signOut());
 
     // Reset fallback global theme in SharedPreferences to clean Ledger
     try {
