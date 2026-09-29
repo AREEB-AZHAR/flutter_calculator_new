@@ -648,6 +648,13 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
     - Integrated `google_mobile_ads: ^9.1.0` and configured AdMob Application ID meta-data in `android/app/src/main/AndroidManifest.xml`.
     - Created `AdService` (`lib/services/ad_service.dart`) with safe initialization and standard Google AdMob test banner ad unit IDs (`ca-app-pub-3940256099942544/6300978111`).
     - Updated `AdBannerWidget` to dynamically render real Google `AdWidget(ad: _bannerAd)` on supported mobile devices with a "Remove Ads" action, while providing a graceful sponsored fallback on desktop (Windows) and web.
+- **v1.8.5**:
+  - **Fixed Password Reset: Cloud Function OTP Email Delivery**:
+    - **Root Cause Fix**: Resolved critical bug where Firebase's `sendPasswordResetEmail()` only updated the Firebase Auth password, while login validation checks against locally hashed SQLite credentials — causing password resets to silently fail at login.
+    - **Firebase Cloud Function (`sendOtpEmail`)**: Created a new Cloud Function (`functions/index.js`) using `nodemailer` to deliver a beautifully formatted HTML email containing the 6-digit OTP verification code directly to the user's inbox.
+    - **Removed Firebase Auth Reset Dependency**: Eliminated `FirebaseAuth.instance.sendPasswordResetEmail()`, `verifyPasswordResetCode()`, and `confirmPasswordReset()` from the password reset flow. The entire reset pipeline now stays within the app: OTP emailed → user enters code → local SQLite password hash updated.
+    - **Cloud Functions Package**: Added `cloud_functions: ^6.5.0` to `pubspec.yaml` and replaced the `firebase_auth` import in `login_screen.dart` with `cloud_functions`.
+    - **Resend Code Fix**: Updated the "Resend Code" handler to call the Cloud Function with the newly generated OTP instead of sending a Firebase reset link.
 - **v1.8.1**:
   - **Theme-Adaptive Deletion Warning Confirmation Dialog**:
     - Created `delete_confirmation_dialog.dart` featuring a modern modal with a danger icon container, highlighted item detail preview (e.g. `Groceries • -$45` or `Japan Vacation • Target: $3,500`), undo reminder note, Cancel action, and high-contrast red Delete confirmation button.
@@ -803,11 +810,11 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
     - **Clean Logout Reset**: Explicit user logout ([`clearUserSession()`](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/services/state.dart)) resets persistent preferences back to standard **Ledger** brand defaults (`0xFFE4572E`, `0xFFF6F0E1`, `null`), ensuring privacy and preventing theme leakages.
     - **New User Ledger Standardization**: All new user registrations in [`AppDatabase.registerUser()`](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/services/database/app_database.dart) and Google logins default to the **Ledger** theme, eliminating conflicts on shared devices.
     - **Dynamic Icon Canvas in Splash**: [`SplashScreen`](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/screens/splash_screen.dart) renders with dynamic preset background tones, responsive stroke contrast, and personalized slash accent colors.
-  - **Firebase Password Reset Security & Email Link Verification**:
-    - **Vulnerability Elimination**: Replaced the unverified email reset dialog with an authentic 3-step security verification flow in [`LoginScreen`](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/screens/login_screen.dart).
-    - **Step 0 — Email Dispatch**: Validates registered email existence, generates an encrypted 6-digit OTP code valid for 10 minutes, and triggers the official Firebase password reset email link (`FirebaseAuth.instance.sendPasswordResetEmail()`).
-    - **Step 1 — Code Verification**: All password inputs remain strictly locked and hidden until the user inputs either the 6-digit verification code or the Firebase email action code (`FirebaseAuth.instance.verifyPasswordResetCode()`). Includes options to resend codes or change email.
-    - **Step 2 — Set New Strong Password**: Once ownership is verified, unlocks password inputs with live `PasswordValidator` criteria checking, updates the SQLite ledger password hash, and confirms password reset in Firebase (`FirebaseAuth.instance.confirmPasswordReset()`).
+  - **Secure OTP-Based Password Reset via Cloud Function**:
+    - **3-Step Verification Flow**: Implemented a secure password reset dialog in [`LoginScreen`](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/screens/login_screen.dart).
+    - **Step 0 — Email Dispatch**: Validates registered email existence, generates an encrypted 6-digit OTP code valid for 10 minutes, and sends it via Firebase Cloud Function (`sendOtpEmail`).
+    - **Step 1 — Code Verification**: All password inputs remain strictly locked and hidden until the user enters the correct 6-digit verification code from their email. Includes options to resend codes or change email.
+    - **Step 2 — Set New Strong Password**: Once ownership is verified, unlocks password inputs with live `PasswordValidator` criteria checking, and updates the SQLite ledger password hash.
   - **60 / 120 FPS High Refresh-Rate Stutter-Free Scrolling Engine**:
     - **Diagnosed 20 FPS Bottlenecks**: Identified that default desktop/web discrete stepped scroll physics, absence of multi-pointer drag devices, and `SingleChildScrollView` wrapping `ListView(shrinkWrap: true)` destroyed Flutter's lazy list virtualization and forced off-screen widget rebuilds and pixel repaints on every frame.
     - **Momentum Physics & Multi-Device Drag**: Integrated [`AppScrollBehavior`](file:///c:/Users/areeb/Desktop/folders/flutter_calculator_new/lib/main.dart) enabling `BouncingScrollPhysics` with support for touch, mouse, trackpad, and stylus dragging across all platforms.
