@@ -664,14 +664,17 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     : transactions.where((t) => t.account == _selectedAccount).toList();
 
                 return CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  cacheExtent: 500,
                   slivers: [
                     SliverToBoxAdapter(
-                      child: Container(
-                        height: 140,
-                        margin: const EdgeInsets.symmetric(vertical: 16),
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: RepaintBoundary(
+                        child: Container(
+                          height: 140,
+                          margin: const EdgeInsets.symmetric(vertical: 16),
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: allDisplayAccounts.length,
                           itemBuilder: (ctx, idx) {
                             final accName = allDisplayAccounts[idx];
@@ -760,6 +763,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         ),
                       ),
                     ),
+                  ),
 
                     SliverToBoxAdapter(
                       child: Padding(
@@ -810,10 +814,13 @@ class _AccountsScreenState extends State<AccountsScreen> {
                           delegate: SliverChildBuilderDelegate(
                             (ctx, index) {
                               final tx = filteredTxs[index];
-                              return TransactionTile(
-                                tx: tx,
-                                onTap: () => showTransactionDialog(context, existingTx: tx),
-                                onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
+                              return RepaintBoundary(
+                                key: ValueKey('acc_tx_${tx.id}'),
+                                child: TransactionTile(
+                                  tx: tx,
+                                  onTap: () => showTransactionDialog(context, existingTx: tx),
+                                  onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
+                                ),
                               );
                             },
                             childCount: filteredTxs.length,
@@ -871,18 +878,21 @@ class _AccountsScreenState extends State<AccountsScreen> {
             }).toList();
 
             return CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              cacheExtent: 500,
               slivers: [
                 // Top Summary Cards (Receivables, Payables, Net Position)
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                    child: Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: onSurface.withValues(alpha: 0.08)),
-                      ),
+                  child: RepaintBoundary(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                      child: Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(color: onSurface.withValues(alpha: 0.08)),
+                        ),
                       child: Column(
                         children: [
                           Row(
@@ -987,6 +997,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     ),
                   ),
                 ),
+              ),
 
                 // Loan Filter Chips
                 SliverToBoxAdapter(
@@ -1079,7 +1090,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       delegate: SliverChildBuilderDelegate(
                         (ctx, i) {
                           final loan = filteredLoans[i];
-                          return _buildLoanCard(loan, currency, theme, onSurface);
+                          return RepaintBoundary(
+                            key: ValueKey('loan_${loan.id}'),
+                            child: _buildLoanCard(loan, currency, theme, onSurface),
+                          );
                         },
                         childCount: filteredLoans.length,
                       ),

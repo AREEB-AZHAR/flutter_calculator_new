@@ -235,6 +235,9 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Salary');
     await tester.pumpAndSettle();
 
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -350));
+    await tester.pumpAndSettle();
+
     expect(find.text('Salary Deposit'), findsOneWidget);
   });
 }
