@@ -413,42 +413,47 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               Positioned(
                 top: -100,
                 right: -100,
-                child: Container(
-                  width: 300,
-                  height: 300,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-                        Colors.transparent,
-                      ],
-                      stops: const [0.3, 1.0],
-                    )
+                child: RepaintBoundary(
+                  child: Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                          Colors.transparent,
+                        ],
+                        stops: const [0.3, 1.0],
+                      ),
+                    ),
                   ),
                 ),
               ),
               Positioned(
                 bottom: -50,
                 left: -100,
-                child: Container(
-                  width: 250,
-                  height: 250,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
-                        Colors.transparent,
-                      ],
-                      stops: const [0.3, 1.0],
-                    )
+                child: RepaintBoundary(
+                  child: Container(
+                    width: 250,
+                    height: 250,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
+                          Colors.transparent,
+                        ],
+                        stops: const [0.3, 1.0],
+                      ),
+                    ),
                   ),
                 ),
               ),
               
               SafeArea(
                 child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -621,66 +626,68 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                     ),
                     
                     const SizedBox(height: 20),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Monthly Budgets',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.edit, color: Theme.of(context).colorScheme.primary, size: 16),
-                                onPressed: () => _showBudgetDialog(context),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          ValueListenableBuilder<Map<String, double>>(
-                            valueListenable: AppState.budgetsNotifier,
-                            builder: (context, budgets, _) {
-                              final now = DateTime.now();
-                              final monthTx = transactions.where((t) => t.date.year == now.year && t.date.month == now.month && !t.isIncome).toList();
-                              
-                              return Column(
-                                children: budgets.entries.map((entry) {
-                                  final spent = monthTx.where((t) => t.category == entry.key).fold(0.0, (sum, t) => sum + t.amount);
-                                  final limit = entry.value;
-                                  final percent = (spent / limit).clamp(0.0, 1.0);
-                                  
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 12.0),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(entry.key, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
-                                            Text('${AppState.currencyNotifier.value}${spent.toStringAsFixed(0)} / ${AppState.currencyNotifier.value}${limit.toStringAsFixed(0)}', style: TextStyle(color: percent > 0.9 ? Colors.redAccent : Theme.of(context).colorScheme.onSurface)),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 6),
-                                        LinearProgressIndicator(
-                                          value: percent,
-                                          backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
-                                          valueColor: AlwaysStoppedAnimation<Color>(percent > 0.9 ? Colors.redAccent : Theme.of(context).colorScheme.secondary),
-                                          minHeight: 6,
-                                          borderRadius: BorderRadius.circular(3),
-                                        )
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                              );
-                            }
-                          )
-                        ]
-                      )
+                    RepaintBoundary(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Monthly Budgets',
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.edit, color: Theme.of(context).colorScheme.primary, size: 16),
+                                  onPressed: () => _showBudgetDialog(context),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            ValueListenableBuilder<Map<String, double>>(
+                              valueListenable: AppState.budgetsNotifier,
+                              builder: (context, budgets, _) {
+                                final now = DateTime.now();
+                                final monthTx = transactions.where((t) => t.date.year == now.year && t.date.month == now.month && !t.isIncome).toList();
+                                
+                                return Column(
+                                  children: budgets.entries.map((entry) {
+                                    final spent = monthTx.where((t) => t.category == entry.key).fold(0.0, (sum, t) => sum + t.amount);
+                                    final limit = entry.value;
+                                    final percent = (spent / limit).clamp(0.0, 1.0);
+                                    
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 12.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(entry.key, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
+                                              Text('${AppState.currencyNotifier.value}${spent.toStringAsFixed(0)} / ${AppState.currencyNotifier.value}${limit.toStringAsFixed(0)}', style: TextStyle(color: percent > 0.9 ? Colors.redAccent : Theme.of(context).colorScheme.onSurface)),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 6),
+                                          LinearProgressIndicator(
+                                            value: percent,
+                                            backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
+                                            valueColor: AlwaysStoppedAnimation<Color>(percent > 0.9 ? Colors.redAccent : Theme.of(context).colorScheme.secondary),
+                                            minHeight: 6,
+                                            borderRadius: BorderRadius.circular(3),
+                                          )
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 20),
                     Padding(

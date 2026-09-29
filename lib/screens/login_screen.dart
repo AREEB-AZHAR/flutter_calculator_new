@@ -1,5 +1,6 @@
+import 'dart:math';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'main_nav_screen.dart';
@@ -291,13 +292,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   /// Opens the interactive password reset dialog for forgotten passwords
   Future<void> _showForgotPasswordDialog() async {
     final emailResetCtrl = TextEditingController(text: _emailCtrl.text.isNotEmpty ? _emailCtrl.text : _usernameCtrl.text);
+    final codeCtrl = TextEditingController();
     final newPassCtrl = TextEditingController();
     final confirmNewPassCtrl = TextEditingController();
 
     bool isVerifying = false;
-    bool emailFound = false;
+    int resetStep = 0; // 0: enter email, 1: verify security code, 2: set new password
     String? dialogError;
     String? resolvedEmail;
+    String? generatedSecurityCode;
+    DateTime? codeGeneratedAt;
 
     await showDialog(
       context: context,
@@ -313,9 +317,18 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             title: Row(
               children: [
-                Icon(Icons.lock_reset_rounded, color: primary, size: 26),
+                Icon(
+                  resetStep == 2 ? Icons.verified_user_rounded : (resetStep == 1 ? Icons.mark_email_read_outlined : Icons.lock_reset_rounded),
+                  color: primary,
+                  size: 26,
+                ),
                 const SizedBox(width: 10),
-                const Text('Reset Password', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  resetStep == 0
+                      ? 'Reset Password'
+                      : (resetStep == 1 ? 'Verify Email Code' : 'Set New Password'),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ],
             ),
             content: SingleChildScrollView(
@@ -323,15 +336,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    emailFound
-                        ? 'Set a new strong password for $resolvedEmail:'
-                        : 'Enter your registered or bound email address to reset your account password:',
-                    style: TextStyle(fontSize: 12.5, color: onSurface.withValues(alpha: 0.7)),
-                  ),
-                  const SizedBox(height: 16),
-
-                  if (!emailFound) ...[
+                  if (resetStep == 0) ...[
+                    Text(
+                      'Enter your registered or bound email address to receive a 6-digit verification code:',
+                      style: TextStyle(fontSize: 12.5, color: onSurface.withValues(alpha: 0.7)),
+                    ),
+                    const SizedBox(height: 16),
                     TextField(
                       controller: emailResetCtrl,
                       keyboardType: TextInputType.emailAddress,
@@ -343,7 +353,112 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                     ),
+                  ] else if (resetStep == 1) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: primary.withValues(alpha: 0.25)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.check_circle_outline, color: primary, size: 16),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'Verification code sent to:',
+                                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: onSurface),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            resolvedEmail ?? '',
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: primary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Enter the 6-digit verification code sent to your inbox:',
+                      style: TextStyle(fontSize: 12.5, color: onSurface.withValues(alpha: 0.7)),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: codeCtrl,
+                      style: TextStyle(color: onSurface, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 2),
+                      textAlign: TextAlign.center,
+                      decoration: InputDecoration(
+                        labelText: '6-Digit Verification Code',
+                        hintText: '123456',
+                        prefixIcon: const Icon(Icons.pin_outlined, size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.refresh, size: 14),
+                        label: const Text('Resend Code', style: TextStyle(fontSize: 12)),
+                        onPressed: isVerifying
+                            ? null
+                            : () async {
+                                setDialogState(() {
+                                  isVerifying = true;
+                                  dialogError = null;
+                                });
+                                final newCode = (100000 + Random.secure().nextInt(900000)).toString();
+                                generatedSecurityCode = newCode;
+                                codeGeneratedAt = DateTime.now();
+                                try {
+                                  if (Firebase.apps.isNotEmpty) {
+                                    final callable = FirebaseFunctions.instance.httpsCallable('sendOtpEmail');
+                                    await callable.call({'email': resolvedEmail!, 'otp': newCode});
+                                  }
+                                } catch (e) {
+                                  debugPrint('Cloud Function sendOtpEmail resend note: $e');
+                                }
+                                setDialogState(() {
+                                  isVerifying = false;
+                                  dialogError = 'New verification code sent! Valid for 10 minutes.';
+                                });
+                              },
+                      ),
+                    ),
                   ] else ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.verified_rounded, color: Colors.green, size: 16),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Email ownership verified successfully!',
+                              style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      'Set a new strong password for $resolvedEmail:',
+                      style: TextStyle(fontSize: 12.5, color: onSurface.withValues(alpha: 0.7)),
+                    ),
+                    const SizedBox(height: 14),
                     TextField(
                       controller: newPassCtrl,
                       obscureText: true,
@@ -373,7 +488,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     const SizedBox(height: 12),
                     Text(
                       dialogError!,
-                      style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                      style: TextStyle(
+                        color: dialogError!.contains('generated!') || dialogError!.contains('sent!') ? Colors.green : Colors.redAccent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -381,6 +500,17 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               ),
             ),
             actions: [
+              if (resetStep == 1)
+                TextButton(
+                  onPressed: () {
+                    setDialogState(() {
+                      resetStep = 0;
+                      dialogError = null;
+                      codeCtrl.clear();
+                    });
+                  },
+                  child: const Text('Change Email'),
+                ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child: const Text('Cancel'),
@@ -395,7 +525,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           dialogError = null;
                         });
 
-                        if (!emailFound) {
+                        if (resetStep == 0) {
+                          // Step 0: Validate email & send Firebase reset email / generate 6-digit OTP
                           final emailInput = emailResetCtrl.text.trim();
                           if (!PasswordValidator.isValidEmail(emailInput)) {
                             setDialogState(() {
@@ -414,20 +545,61 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                             return;
                           }
 
-                          // Trigger Firebase reset email if Firebase is active
+                          final secureOtp = (100000 + Random.secure().nextInt(900000)).toString();
+                          generatedSecurityCode = secureOtp;
+                          codeGeneratedAt = DateTime.now();
+
+                          // Send OTP verification code via Cloud Function
                           try {
                             if (Firebase.apps.isNotEmpty) {
-                              await FirebaseAuth.instance.sendPasswordResetEmail(email: emailInput);
+                              final callable = FirebaseFunctions.instance.httpsCallable('sendOtpEmail');
+                              await callable.call({'email': emailInput, 'otp': secureOtp});
                             }
-                          } catch (_) {}
+                          } catch (e) {
+                            debugPrint('Cloud Function sendOtpEmail note: $e');
+                          }
 
                           setDialogState(() {
                             isVerifying = false;
-                            emailFound = true;
                             resolvedEmail = emailInput;
+                            resetStep = 1;
+                          });
+                        } else if (resetStep == 1) {
+                          // Step 1: Validate verification code
+                          final inputCode = codeCtrl.text.trim();
+                          if (inputCode.isEmpty) {
+                            setDialogState(() {
+                              isVerifying = false;
+                              dialogError = 'Please enter the verification code.';
+                            });
+                            return;
+                          }
+
+                          bool isCodeMatched = false;
+
+                          // Check generated 6-digit OTP (expires in 10 minutes)
+                          if (generatedSecurityCode != null &&
+                              codeGeneratedAt != null &&
+                              DateTime.now().difference(codeGeneratedAt!).inMinutes < 10 &&
+                              inputCode == generatedSecurityCode) {
+                            isCodeMatched = true;
+                          }
+
+                          if (!isCodeMatched) {
+                            setDialogState(() {
+                              isVerifying = false;
+                              dialogError = 'Invalid or expired verification code. Please check your email or tap Resend.';
+                            });
+                            return;
+                          }
+
+                          setDialogState(() {
+                            isVerifying = false;
+                            resetStep = 2;
+                            dialogError = null;
                           });
                         } else {
-                          // Update password step
+                          // Step 2: Set New Password
                           final newPass = newPassCtrl.text;
                           final confirmPass = confirmNewPassCtrl.text;
 
@@ -448,6 +620,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                             return;
                           }
 
+
                           final updated = await AppDatabase.instance.updatePasswordByEmail(resolvedEmail!, newPass);
                           if (updated) {
                             if (ctx.mounted) {
@@ -457,7 +630,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('🎉 Password updated successfully! Please log in with your new password.'),
+                                    content: Text('🎉 Password updated securely! Please log in with your new password.'),
                                     backgroundColor: Colors.teal,
                                   ),
                                 );
@@ -471,7 +644,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           }
                         }
                       },
-                child: Text(emailFound ? 'Update Password' : 'Verify Email'),
+                child: Text(
+                  resetStep == 0
+                      ? 'Send Code'
+                      : (resetStep == 1 ? 'Verify Code' : 'Update Password'),
+                ),
               ),
             ],
           );

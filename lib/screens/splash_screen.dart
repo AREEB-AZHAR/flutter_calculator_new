@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/state.dart';
+import '../utils/constants.dart';
 import '../widgets/tally_brand_painters.dart';
 import 'login_screen.dart';
 import 'main_nav_screen.dart';
@@ -126,21 +127,19 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currentThemeName = AppState.themeNameNotifier.value;
+    final preset = themePresets.firstWhere(
+      (p) => p.name == currentThemeName,
+      orElse: () => themePresets.first,
+    );
 
-    // Pick icon styling matching active theme preset
-    Color iconBg = const Color(0xFF17493B);
-    Color strokeColor = const Color(0xFFF6F0E1);
-    Color slashColor = const Color(0xFFE4572E);
-
-    if (currentThemeName == 'Paper') {
-      iconBg = const Color(0xFFF6F0E1);
-      strokeColor = const Color(0xFF17493B);
-      slashColor = const Color(0xFFE4572E);
-    } else if (currentThemeName == 'Ink') {
-      iconBg = const Color(0xFF191915);
-      strokeColor = const Color(0xFFF3EDE0);
-      slashColor = const Color(0xFFE8A13C);
-    }
+    // Pick icon styling dynamically matching active theme preset and custom colors
+    final Color iconBg = preset.background;
+    final Color strokeColor = (currentThemeName == 'Paper')
+        ? const Color(0xFF17493B)
+        : (currentThemeName == 'Ink'
+            ? const Color(0xFFF3EDE0)
+            : preset.secondary);
+    final Color slashColor = AppState.customPrimaryColorNotifier.value;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,

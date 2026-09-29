@@ -50,41 +50,39 @@ class AppState {
   static Timer? _undoSnackBarTimer;
 
   /// Initializes the saved global theme and colors from SharedPreferences before the app renders.
+  /// If a user hasn't explicitly logged out, this immediately restores their chosen theme & palette
+  /// for the dynamic splash/loading screen and app shell.
   static Future<void> initGlobalTheme() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       var savedTheme = prefs.getString(_prefThemeKey);
-      const freeThemes = ['Ledger', 'Paper', 'Ink'];
-      final isProUser = MonetizationService.isPro;
-      if (!isProUser && (savedTheme == null || !freeThemes.contains(savedTheme))) {
-        savedTheme = 'Ledger';
-      }
 
-      if (themePresets.any((p) => p.name == savedTheme)) {
-        themeNameNotifier.value = savedTheme!;
+      if (savedTheme != null && themePresets.any((p) => p.name == savedTheme)) {
+        themeNameNotifier.value = savedTheme;
         final preset = themePresets.firstWhere((p) => p.name == savedTheme);
         customPrimaryColorNotifier.value = preset.primary;
         customSecondaryColorNotifier.value = preset.secondary;
         avatarColorNotifier.value = preset.primary;
+      } else {
+        final ledger = themePresets.firstWhere((p) => p.name == 'Ledger');
+        themeNameNotifier.value = ledger.name;
+        customPrimaryColorNotifier.value = ledger.primary;
+        customSecondaryColorNotifier.value = ledger.secondary;
+        avatarColorNotifier.value = ledger.primary;
       }
 
-      // Only load custom palette overrides if user is authenticated with Pro
-      if (isProUser) {
-        final pCol = prefs.getInt(_prefPrimaryColorKey);
-        if (pCol != null) {
-          customPrimaryColorNotifier.value = Color(pCol);
-          avatarColorNotifier.value = Color(pCol);
-        }
-        final sCol = prefs.getInt(_prefSecondaryColorKey);
-        if (sCol != null) {
-          customSecondaryColorNotifier.value = Color(sCol);
-        }
-        final tCol = prefs.getInt(_prefTextColorKey);
-        if (tCol != null) {
-          customTextColorNotifier.value = Color(tCol);
-        } else {
-          customTextColorNotifier.value = null;
-        }
+      final pCol = prefs.getInt(_prefPrimaryColorKey);
+      if (pCol != null) {
+        customPrimaryColorNotifier.value = Color(pCol);
+        avatarColorNotifier.value = Color(pCol);
+      }
+      final sCol = prefs.getInt(_prefSecondaryColorKey);
+      if (sCol != null) {
+        customSecondaryColorNotifier.value = Color(sCol);
+      }
+      final tCol = prefs.getInt(_prefTextColorKey);
+      if (tCol != null) {
+        customTextColorNotifier.value = Color(tCol);
       } else {
         customTextColorNotifier.value = null;
       }
