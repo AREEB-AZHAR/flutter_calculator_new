@@ -6,9 +6,7 @@ import '../widgets/transaction_tile.dart';
 import '../widgets/transaction_dialog.dart';
 import '../widgets/interactive_chart_card.dart';
 import 'all_transactions_screen.dart';
-import 'login_screen.dart';
 import '../widgets/tally_brand_painters.dart';
-import '../services/biometric_service.dart';
 import '../services/tour_service.dart';
 import '../widgets/feature_tour_dialog.dart';
 import '../widgets/ad_banner_widget.dart';
@@ -38,35 +36,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   Future<void> _checkPostLoginPrompts() async {
     if (!mounted) return;
 
-    // 1. Check if user has configured biometric login option
-    if (!BiometricService.biometricPromptCheckedThisSession) {
-      BiometricService.biometricPromptCheckedThisSession = true;
-      final isConfigured = await BiometricService.isBiometricEnabled(username: AppState.currentUser);
-      if (!isConfigured && mounted) {
-        final isSupported = await BiometricService.isDeviceSupported();
-        if (isSupported && mounted) {
-          final accepted = await BiometricService.showBiometricSetupPrompt(context);
-          if (accepted == true && mounted) {
-            final authSuccess = await BiometricService.authenticate(
-              reason: 'Authenticate to enable biometric unlock',
-            );
-            if (authSuccess) {
-              await BiometricService.setBiometricEnabled(true, username: AppState.currentUser);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Biometric / screen lock login configured successfully!'),
-                    backgroundColor: Colors.teal,
-                  ),
-                );
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // 2. Interactive step-by-step Home / Dashboard Tour for new users
+    // Interactive step-by-step Home / Dashboard Tour for new users
     if (!mounted) return;
     final homeTourCompleted = await TourService.isTourCompleted(TourService.tourHome);
     if (!homeTourCompleted && mounted) {
@@ -276,10 +246,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   }
 
   Future<void> _logout() async {
-    await AppState.clearUserSession();
-    if (mounted) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-    }
+    await AppState.logout(context);
   }
 
 

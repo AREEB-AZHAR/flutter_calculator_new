@@ -18,7 +18,6 @@ import '../widgets/color_picker_dialog.dart';
 import '../widgets/tally_brand_painters.dart';
 import '../utils/password_validator.dart';
 import '../utils/image_helper.dart';
-import 'login_screen.dart';
 import 'premium_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -33,10 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _devToggleCount = 0;
 
   Future<void> _logout() async {
-    await AppState.clearUserSession();
-    if (mounted) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-    }
+    await AppState.logout(context);
   }
 
   Future<void> _linkGoogleAccount() async {

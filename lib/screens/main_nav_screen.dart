@@ -5,7 +5,6 @@ import 'insights_screen.dart';
 import 'goals_screen.dart';
 import 'accounts_screen.dart';
 import 'profile_screen.dart';
-import 'login_screen.dart';
 
 class MainNavScreen extends StatefulWidget {
   const MainNavScreen({super.key});
@@ -50,9 +49,6 @@ class _MainNavScreenState extends State<MainNavScreen> {
   @override
   Widget build(BuildContext context) {
     if (AppState.currentUser == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-      });
       return const Scaffold();
     }
 
