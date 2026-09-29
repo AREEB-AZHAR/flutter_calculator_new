@@ -171,12 +171,24 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('All Transactions'), findsOneWidget);
+
+      // Scroll down to see virtualized items in test viewport
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -400));
+      await tester.pumpAndSettle();
       expect(find.text('Grocery Store'), findsOneWidget);
       expect(find.text('Freelance Design'), findsOneWidget);
+
+      // Scroll back to top to enter search query
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, 400));
+      await tester.pumpAndSettle();
 
       // Enter search query
       final searchField = find.byType(TextField);
       await tester.enterText(searchField, 'Grocery');
+      await tester.pumpAndSettle();
+
+      // Scroll down to verify filtered list
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -400));
       await tester.pumpAndSettle();
 
       // List and chart should now only contain Grocery Store
