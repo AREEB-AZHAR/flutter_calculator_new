@@ -16,6 +16,11 @@ import '../utils/image_helper.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  /// Tracks if the initial cold-boot intro animation has completed.
+  /// Subsequent tab switches render immediately to eliminate animation jitter.
+  static bool hasAnimatedIntro = false;
+
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
@@ -26,8 +31,13 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
-    _animController.forward();
+    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+    if (!DashboardScreen.hasAnimatedIntro) {
+      DashboardScreen.hasAnimatedIntro = true;
+      _animController.forward();
+    } else {
+      _animController.value = 1.0;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkPostLoginPrompts();
     });

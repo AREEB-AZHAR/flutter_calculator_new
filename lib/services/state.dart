@@ -15,6 +15,7 @@ import 'monetization_service.dart';
 import 'google_auth_service.dart';
 import 'biometric_service.dart';
 import '../screens/login_screen.dart';
+import '../screens/dashboard_screen.dart';
 
 class AppState {
   static String? currentUser;
@@ -152,6 +153,7 @@ class AppState {
     resetThemeToDefault();
     MonetizationService.resetToLoggedOut();
     BiometricService.resetSessionPrompt();
+    DashboardScreen.hasAnimatedIntro = false;
 
     // Cancel all scheduled reminders from logged out session asynchronously in background
     unawaited(NotificationService.instance.cancelAllReminders());
@@ -379,7 +381,7 @@ class AppState {
     currentList.removeWhere((t) => t.id == tx.id);
     transactionsNotifier.value = currentList;
     if (currentUser != null) {
-      saveTransactions(currentUser!, currentList);
+      AppDatabase.instance.deleteSingleTransaction(tx.id);
     }
     // Delete from Firestore immediately
     CloudSyncService.deleteTransactionFromCloud(tx.id);
@@ -408,7 +410,7 @@ class AppState {
                 restoredList.sort((a, b) => b.date.compareTo(a.date));
                 transactionsNotifier.value = restoredList;
                 if (currentUser != null) {
-                  saveTransactions(currentUser!, restoredList);
+                  AppDatabase.instance.insertTransaction(currentUser!, tx);
                 }
                 // Re-sync restored transaction to cloud
                 CloudSyncService.syncTransactionToCloud(tx);
@@ -658,7 +660,7 @@ class AppState {
     currentList.sort((a, b) => b.date.compareTo(a.date));
 
     transactionsNotifier.value = currentList;
-    await AppDatabase.instance.saveTransactions(username, currentList);
+    await AppDatabase.instance.insertTransaction(username, newTx);
     await AppDatabase.instance.markPlannedTransactionProcessed(username, plan.id);
     await NotificationService.instance.cancelPlannedTransactionReminder(plan.id);
 

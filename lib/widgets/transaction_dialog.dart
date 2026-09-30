@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../models/planned_transaction.dart';
 import '../services/state.dart';
+import '../services/database/app_database.dart';
 import '../utils/constants.dart';
 import 'delete_confirmation_dialog.dart';
 
@@ -445,7 +446,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
 
               AppState.transactionsNotifier.value = currentList;
               if (AppState.currentUser != null) {
-                AppState.saveTransactions(AppState.currentUser!, currentList);
+                AppDatabase.instance.insertTransaction(AppState.currentUser!, newTx);
               }
               Navigator.of(context).pop();
             }
