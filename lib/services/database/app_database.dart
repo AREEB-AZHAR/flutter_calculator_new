@@ -166,6 +166,11 @@ class AppDatabase {
       ''');
     } catch (_) {}
 
+    // Ensure index on transactions exists for 100k+ scalability
+    try {
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_username_date ON transactions(username, date DESC)');
+    } catch (_) {}
+
     await _migrateLegacyPrefs(db);
     return db;
   }
@@ -825,6 +830,40 @@ class AppDatabase {
     }).toList();
   }
 
+  /// Fast O(1) single transaction insert or update
+  Future<void> insertTransaction(
+    String username,
+    model.Transaction tx,
+  ) async {
+    final db = await database;
+    await db.insert(
+      'transactions',
+      {
+        'id': tx.id,
+        'username': username,
+        'title': tx.title,
+        'amount': tx.amount,
+        'date': tx.date.toIso8601String(),
+        'is_income': tx.isIncome ? 1 : 0,
+        'category': tx.category,
+        'account': tx.account,
+        'recurrence': tx.recurrence,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Fast O(1) single transaction deletion by ID
+  Future<void> deleteSingleTransaction(String id) async {
+    final db = await database;
+    await db.delete(
+      'transactions',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// High-performance batch transaction saver for bulk migrations and cloud sync restores
   Future<void> saveTransactions(
     String username,
     List<model.Transaction> txs,
@@ -836,8 +875,9 @@ class AppDatabase {
         where: 'username = ?',
         whereArgs: [username],
       );
+      final batch = txn.batch();
       for (var tx in txs) {
-        await txn.insert('transactions', {
+        batch.insert('transactions', {
           'id': tx.id,
           'username': username,
           'title': tx.title,
@@ -849,6 +889,7 @@ class AppDatabase {
           'recurrence': tx.recurrence,
         });
       }
+      await batch.commit(noResult: true);
     });
   }
 
