@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../models/planned_transaction.dart';
+import '../models/savings_goal.dart';
+import '../models/goal_entry.dart';
 import '../services/state.dart';
 import '../services/database/app_database.dart';
 import '../utils/constants.dart';
@@ -31,6 +33,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
   late String _account;
   late String _recurrence;
   late bool _isPlannedFuture;
+  String? _selectedGoalId;
 
   @override
   void initState() {
@@ -260,6 +263,94 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                 if (val != null) setState(() => _category = val);
               },
             ),
+            // Goal Picker: shown when "Savings Goal" category is selected
+            if (_category == 'Savings Goal') ...[
+              const SizedBox(height: 15),
+              ValueListenableBuilder<List<SavingsGoal>>(
+                valueListenable: AppState.goalsNotifier,
+                builder: (context, goals, _) {
+                  final activeGoals = goals.where((g) => g.isActive).toList();
+                  if (activeGoals.isEmpty) {
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'No active savings goals. Create one in the Goals tab first.',
+                              style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  // Auto-select first goal if nothing selected
+                  if (_selectedGoalId == null || !activeGoals.any((g) => g.id == _selectedGoalId)) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) setState(() => _selectedGoalId = activeGoals.first.id);
+                    });
+                  }
+                  return DropdownButtonFormField<String>(
+                    initialValue: activeGoals.any((g) => g.id == _selectedGoalId) ? _selectedGoalId : activeGoals.first.id,
+                    dropdownColor: surface,
+                    style: TextStyle(color: onSurface),
+                    decoration: InputDecoration(
+                      labelText: 'Deposit to Goal',
+                      labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
+                      prefixIcon: Icon(Icons.savings, color: primary, size: 20),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: primary.withValues(alpha: 0.3)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: primary, width: 2),
+                      ),
+                    ),
+                    items: activeGoals.map((g) => DropdownMenuItem<String>(
+                      value: g.id,
+                      child: Text(
+                        '${g.title} (${AppState.currencyNotifier.value}${g.saved.toStringAsFixed(0)}/${AppState.currencyNotifier.value}${g.target.toStringAsFixed(0)})',
+                        style: TextStyle(color: onSurface, fontSize: 13),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )).toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedGoalId = val);
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.teal.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.teal.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, size: 16, color: Colors.teal),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'This deposit goes directly to your savings goal and won\'t reduce your current balance.',
+                        style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 11),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 15),
             DropdownButtonFormField<String>(
               // ignore: deprecated_member_use
@@ -420,6 +511,16 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                   ),
                 );
                 return;
+              }
+
+              // Handle Savings Goal deposits: create a GoalEntry + record the transaction
+              if (_category == 'Savings Goal' && _selectedGoalId != null && AppState.currentUser != null) {
+                final entry = GoalEntry(
+                  goalId: _selectedGoalId!,
+                  amount: amount,
+                  note: enteredTitle.isNotEmpty ? enteredTitle : null,
+                );
+                AppState.addGoalEntry(AppState.currentUser!, entry);
               }
 
               final newTx = Transaction(

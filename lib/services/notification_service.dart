@@ -8,6 +8,7 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../models/loan.dart';
 import '../models/planned_transaction.dart';
+import '../models/savings_goal.dart';
 import 'state.dart';
 
 class NotificationService {
@@ -364,5 +365,69 @@ class NotificationService {
     } catch (e) {
       debugPrint('showInstantAlert notice: $e');
     }
+  }
+
+  int _getGoalNotificationId(String goalId, int slot) {
+    return (goalId.hashCode.abs() % 40000) + 20000 + slot;
+  }
+
+  /// Schedules mid-day (1 PM) and evening (7 PM) pacing reminders for active goals with due dates.
+  /// For daily goals: "Stash $X today for [Goal]"
+  /// For weekly/monthly/custom goals: "$X left to reach [Goal]. Save $Y/day to finish by [Date]!"
+  Future<void> scheduleGoalReminders(List<SavingsGoal> goals, String currencySymbol) async {
+    if (kIsWeb) return;
+    final details = _buildNotificationDetails();
+    const goalReminderHours = [13, 19]; // 1 PM and 7 PM
+
+    for (final goal in goals) {
+      if (!goal.isActive || goal.dueDate == null) continue;
+
+      for (int slot = 0; slot < goalReminderHours.length; slot++) {
+        final hour = goalReminderHours[slot];
+        final notificationId = _getGoalNotificationId(goal.id, slot);
+        final remaining = goal.target - goal.saved;
+
+        String title;
+        String body;
+
+        if (goal.periodType == 'daily') {
+          title = '🎯 Today\'s Goal';
+          body = 'Don\'t forget to stash $currencySymbol${remaining.clamp(0, goal.target).toStringAsFixed(0)} today for "${goal.title}" from your daily allowance!';
+        } else {
+          title = '🎯 Goal Pacing';
+          body = '$currencySymbol${remaining.toStringAsFixed(0)} left to reach "${goal.title}". Save $currencySymbol${goal.dailySavingsNeeded.toStringAsFixed(0)}/day to complete it by ${_formatShortDate(goal.dueDate!)}!';
+        }
+
+        try {
+          await _notificationsPlugin.zonedSchedule(
+            id: notificationId,
+            title: title,
+            body: body,
+            scheduledDate: _nextInstanceOfTime(hour, 0),
+            notificationDetails: details,
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            matchDateTimeComponents: DateTimeComponents.time,
+          );
+        } catch (e) {
+          debugPrint('scheduleGoalReminders notice: $e');
+        }
+      }
+    }
+  }
+
+  /// Cancels goal pacing reminders for a specific goal.
+  Future<void> cancelGoalReminders(String goalId) async {
+    if (kIsWeb) return;
+    for (int slot = 0; slot < 2; slot++) {
+      final notificationId = _getGoalNotificationId(goalId, slot);
+      try {
+        await _notificationsPlugin.cancel(id: notificationId);
+      } catch (_) {}
+    }
+  }
+
+  static String _formatShortDate(DateTime date) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[date.month - 1]} ${date.day}';
   }
 }

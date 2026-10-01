@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/transaction.dart';
 import '../models/savings_goal.dart';
+import '../models/goal_entry.dart';
 import '../models/user_profile.dart';
 import '../models/loan.dart';
 import '../models/planned_transaction.dart';
@@ -264,6 +265,12 @@ class AppState {
     accountsNotifier.value = await db.loadAccounts(username);
     loansNotifier.value = await db.loadLoans(username);
     plannedTransactionsNotifier.value = await db.loadPlannedTransactions(username);
+    await checkGoalExpirations(username);
+    // Schedule goal pacing reminders for active goals with due dates
+    NotificationService.instance.scheduleGoalReminders(
+      goalsNotifier.value,
+      currencyNotifier.value,
+    );
     await checkAndProcessPlannedAndRecurring(username);
 
     // Schedule active user reminders if enabled
@@ -431,16 +438,15 @@ class AppState {
     } catch (_) {}
   }
 
-  /// Safely deletes a savings goal, persists the removal to SQLite, and displays a SnackBar with an 'Undo' option.
-  /// If the user taps 'Undo', the goal is restored at its original position and saved to SQLite.
-  /// The undo banner automatically dismisses after exactly 5 seconds.
+  /// Safely deletes a savings goal using soft-delete logic (archive if >10% or completed),
+  /// and displays a SnackBar with an 'Undo' option.
   static void deleteGoalWithUndo(BuildContext context, SavingsGoal goal) {
     final currentGoals = List<SavingsGoal>.from(goalsNotifier.value);
     final originalIndex = currentGoals.indexWhere((g) => g.id == goal.id);
     currentGoals.removeWhere((g) => g.id == goal.id);
     goalsNotifier.value = currentGoals;
     if (currentUser != null) {
-      saveGoals(currentUser!, currentGoals);
+      AppDatabase.instance.softDeleteGoal(currentUser!, goal.id);
     }
     // Delete from Firestore immediately
     CloudSyncService.deleteGoalFromCloud(goal.id);
@@ -468,7 +474,8 @@ class AppState {
                 }
                 goalsNotifier.value = restoredGoals;
                 if (currentUser != null) {
-                  saveGoals(currentUser!, restoredGoals);
+                  // Re-upsert the goal (un-archive or re-insert)
+                  AppDatabase.instance.upsertGoal(currentUser!, goal.copyWith(isArchived: false));
                 }
               }
             },
@@ -486,6 +493,63 @@ class AppState {
       });
     } catch (_) {}
   }
+
+  // ---------------------------------------------------------------------------
+  // Goal Entry CRUD – deposits into savings goals
+  // ---------------------------------------------------------------------------
+
+  /// Adds a deposit to a savings goal, creates a GoalEntry, and refreshes state.
+  static Future<void> addGoalEntry(String username, GoalEntry entry) async {
+    await AppDatabase.instance.addGoalEntry(username, entry);
+    // Reload goals to get updated saved amounts
+    goalsNotifier.value = await AppDatabase.instance.loadGoals(username);
+  }
+
+  /// Updates an existing goal entry and refreshes state.
+  static Future<void> updateGoalEntry(String username, GoalEntry entry) async {
+    await AppDatabase.instance.updateGoalEntry(username, entry);
+    goalsNotifier.value = await AppDatabase.instance.loadGoals(username);
+  }
+
+  /// Deletes a goal entry and refreshes state.
+  static Future<void> deleteGoalEntry(String username, String entryId, String goalId) async {
+    await AppDatabase.instance.deleteGoalEntry(username, entryId, goalId);
+    goalsNotifier.value = await AppDatabase.instance.loadGoals(username);
+  }
+
+  /// Checks and marks expired/completed goals, triggers recurring cycles if enabled.
+  static Future<void> checkGoalExpirations(String username) async {
+    final goals = List<SavingsGoal>.from(goalsNotifier.value);
+    bool changed = false;
+
+    for (int i = 0; i < goals.length; i++) {
+      final g = goals[i];
+      // Mark completed goals
+      if (g.saved >= g.target && !g.isCompleted) {
+        goals[i] = g.copyWith(isCompleted: true);
+        await AppDatabase.instance.updateGoalStatus(username, g.id, isCompleted: true);
+        changed = true;
+      }
+      // Mark expired goals as failed
+      if (g.isExpired && !g.isFailed) {
+        goals[i] = g.copyWith(isFailed: true);
+        await AppDatabase.instance.updateGoalStatus(username, g.id, isFailed: true);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      goalsNotifier.value = List.from(goals);
+    }
+  }
+
+  /// Calculates total vault savings (sum of all active goals' saved amounts).
+  static double get totalVaultSavings {
+    return goalsNotifier.value
+        .where((g) => !g.isArchived)
+        .fold(0.0, (sum, g) => sum + g.saved);
+  }
+
 
   /// Displays an auto-dismissing SnackBar guaranteed to disappear after the given duration (default 5s).
   static void showAutoDismissingSnackBar(

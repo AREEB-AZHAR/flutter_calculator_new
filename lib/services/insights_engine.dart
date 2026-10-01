@@ -1,6 +1,7 @@
 import 'dart:math';
 import '../models/transaction.dart';
 import '../models/loan.dart';
+import '../models/savings_goal.dart';
 
 enum TimeHorizon {
   daily,
@@ -17,6 +18,8 @@ class CategoryInsight {
   final double percentOfTotal;
   final double percentOfBudget;
   final bool isOverBudget;
+  final bool hasBudget;
+  final double? suggestedBudget;
 
   const CategoryInsight({
     required this.category,
@@ -26,6 +29,8 @@ class CategoryInsight {
     required this.percentOfTotal,
     required this.percentOfBudget,
     required this.isOverBudget,
+    this.hasBudget = true,
+    this.suggestedBudget,
   });
 }
 
@@ -103,6 +108,24 @@ class PaymentTypeInsight {
   });
 }
 
+class GoalInsight {
+  final double periodStashed;
+  final double totalVaultBalance;
+  final int activeGoalsCount;
+  final int completedGoalsCount;
+  final List<SavingsGoal> nearingCompletionGoals;
+  final String motivationalSummary;
+
+  const GoalInsight({
+    required this.periodStashed,
+    required this.totalVaultBalance,
+    required this.activeGoalsCount,
+    required this.completedGoalsCount,
+    required this.nearingCompletionGoals,
+    required this.motivationalSummary,
+  });
+}
+
 class FinancialHealthScore {
   final int score; // 0 - 100
   final String rating; // 'Excellent', 'Strong', 'Moderate', 'Needs Attention'
@@ -135,6 +158,7 @@ class InsightsReport {
   final LoanInsight loanInsight;
   final TaxInsight taxInsight;
   final List<PaymentTypeInsight> paymentTypes;
+  final GoalInsight goalInsight;
   final double safeToSpendDaily;
   final double safeToSpendWeekly;
   final double projected6MonthSavings;
@@ -160,6 +184,7 @@ class InsightsReport {
     required this.loanInsight,
     required this.taxInsight,
     required this.paymentTypes,
+    required this.goalInsight,
     required this.safeToSpendDaily,
     required this.safeToSpendWeekly,
     required this.projected6MonthSavings,
@@ -174,6 +199,7 @@ class InsightsEngine {
     required List<Transaction> transactions,
     required List<Loan> loans,
     required Map<String, double> budgets,
+    List<SavingsGoal> goals = const [],
     required TimeHorizon horizon,
     int periodOffset = 0,
     DateTime? anchorDate,
@@ -245,6 +271,9 @@ class InsightsEngine {
       hasIncome: totalInflow > 0,
     );
 
+    // Goal Momentum & Savings Vault
+    final goalInsight = _calculateGoalInsight(goals, currentTransactions, periodRange);
+
     // Executive Accountant Commentary & Recommendations
     final commentary = _generateAccountantCommentary(
       totalInflow: totalInflow,
@@ -254,6 +283,7 @@ class InsightsEngine {
       spendingChangePercent: spendingChangePercent,
       categories: categories,
       loanInsight: loanInsight,
+      goalInsight: goalInsight,
       healthScore: healthScore,
       horizon: horizon,
     );
@@ -278,6 +308,7 @@ class InsightsEngine {
       loanInsight: loanInsight,
       taxInsight: taxInsight,
       paymentTypes: paymentTypes,
+      goalInsight: goalInsight,
       safeToSpendDaily: safeToSpendDaily,
       safeToSpendWeekly: safeToSpendWeekly,
       projected6MonthSavings: projected6MonthSavings,
@@ -401,9 +432,14 @@ class InsightsEngine {
       final spent = spending[cat] ?? 0.0;
       final monthlyBudget = budgets[cat] ?? 0.0;
       final periodBudget = monthlyBudget * prorateFactor;
-      final remaining = periodBudget - spent;
+      final hasBudget = periodBudget > 0;
+      final remaining = hasBudget ? periodBudget - spent : 0.0;
       final pctOfTotal = totalOutflow > 0 ? (spent / totalOutflow) * 100.0 : 0.0;
-      final pctOfBudget = periodBudget > 0 ? (spent / periodBudget) * 100.0 : (spent > 0 ? 100.0 : 0.0);
+      final pctOfBudget = hasBudget ? (spent / periodBudget) * 100.0 : 0.0;
+      final isOverBudget = hasBudget && spent > periodBudget;
+      final double? suggestedBudget = !hasBudget && spent > 0
+          ? ((spent * 1.25) / 10).ceil() * 10.0
+          : null;
 
       result.add(CategoryInsight(
         category: cat,
@@ -412,7 +448,9 @@ class InsightsEngine {
         remaining: remaining,
         percentOfTotal: pctOfTotal,
         percentOfBudget: pctOfBudget,
-        isOverBudget: periodBudget > 0 && spent > periodBudget,
+        isOverBudget: isOverBudget,
+        hasBudget: hasBudget,
+        suggestedBudget: suggestedBudget,
       ));
     }
 
@@ -658,6 +696,56 @@ class InsightsEngine {
     );
   }
 
+  static GoalInsight _calculateGoalInsight(
+    List<SavingsGoal> goals,
+    List<Transaction> currentTransactions,
+    _DateRange periodRange,
+  ) {
+    double periodStashed = 0.0;
+    for (final goal in goals) {
+      for (final entry in goal.entries) {
+        if (entry.date.isAfter(periodRange.start.subtract(const Duration(milliseconds: 1))) &&
+            entry.date.isBefore(periodRange.end.add(const Duration(milliseconds: 1)))) {
+          periodStashed += entry.amount;
+        }
+      }
+    }
+    // Also include transactions with category 'Savings Goal' if any weren't captured via entries
+    final txSavings = currentTransactions
+        .where((t) => t.category == 'Savings Goal' && !t.isIncome)
+        .fold(0.0, (s, t) => s + t.amount);
+    if (periodStashed == 0.0 && txSavings > 0) {
+      periodStashed = txSavings;
+    }
+
+    final totalVaultBalance = goals.where((g) => !g.isArchived).fold(0.0, (s, g) => s + g.saved);
+    final activeGoals = goals.where((g) => !g.isArchived && !g.isCompleted && !g.isFailed).toList();
+    final completedGoalsCount = goals.where((g) => g.isCompleted).length;
+    final nearingCompletion = activeGoals.where((g) => g.target > 0 && (g.saved / g.target) >= 0.70).toList();
+
+    String motivationalSummary;
+    if (periodStashed > 0) {
+      if (nearingCompletion.isNotEmpty) {
+        motivationalSummary = 'You locked away \$${periodStashed.toStringAsFixed(0)} this period! ${nearingCompletion.length} goal(s) are over 70% funded and close to completion.';
+      } else {
+        motivationalSummary = 'You locked away \$${periodStashed.toStringAsFixed(0)} into your Savings Vault this period! Consistent contributions build long-term freedom.';
+      }
+    } else if (activeGoals.isNotEmpty) {
+      motivationalSummary = 'You have ${activeGoals.length} active goal(s) with \$${totalVaultBalance.toStringAsFixed(0)} saved. Stash a small amount today to keep pacing on track.';
+    } else {
+      motivationalSummary = 'Set a savings goal with a target deadline to automate your wealth-building pacing.';
+    }
+
+    return GoalInsight(
+      periodStashed: periodStashed,
+      totalVaultBalance: totalVaultBalance,
+      activeGoalsCount: activeGoals.length,
+      completedGoalsCount: completedGoalsCount,
+      nearingCompletionGoals: nearingCompletion,
+      motivationalSummary: motivationalSummary,
+    );
+  }
+
   static _AccountantCommentary _generateAccountantCommentary({
     required double totalInflow,
     required double totalOutflow,
@@ -666,6 +754,7 @@ class InsightsEngine {
     required double spendingChangePercent,
     required List<CategoryInsight> categories,
     required LoanInsight loanInsight,
+    required GoalInsight goalInsight,
     required FinancialHealthScore healthScore,
     required TimeHorizon horizon,
   }) {
@@ -680,7 +769,13 @@ class InsightsEngine {
 
     if (totalInflow == 0 && totalOutflow == 0) {
       summary = 'Welcome to your Executive Wealth Intelligence suite. Record your daily cash flow and loans to unlock custom CPA-level analysis.';
-      actionItems.add('Log your regular income sources and recurring bills to calibrate your personal burn rate.');
+      if (goalInsight.nearingCompletionGoals.isNotEmpty) {
+        final goal = goalInsight.nearingCompletionGoals.first;
+        final pct = (goal.progress * 100).toStringAsFixed(0);
+        actionItems.add('Goal Momentum: "${goal.title}" is within reach at $pct% funded. Allocate extra surplus to complete this target!');
+      } else {
+        actionItems.add('Log your regular income sources and recurring bills to calibrate your personal burn rate.');
+      }
       actionItems.add('Set monthly category budgets to receive automated overrun protection warnings.');
       return _AccountantCommentary(summary, actionItems);
     }
@@ -701,6 +796,15 @@ class InsightsEngine {
     if (overBudgetCats.isNotEmpty) {
       final names = overBudgetCats.take(2).map((c) => c.category).join(', ');
       actionItems.add('Budget Alert: Overruns detected in $names. Restrict non-essential expenses in these areas for the next 7 days.');
+    }
+
+    // Goal momentum advice
+    if (goalInsight.nearingCompletionGoals.isNotEmpty) {
+      final goal = goalInsight.nearingCompletionGoals.first;
+      final pct = (goal.progress * 100).toStringAsFixed(0);
+      actionItems.add('Goal Momentum: "${goal.title}" is within reach at $pct% funded. Allocate extra surplus to complete this target!');
+    } else if (goalInsight.periodStashed > 0) {
+      actionItems.add('Savings Vault: Stashed \$${goalInsight.periodStashed.toStringAsFixed(0)} this period. Keep your scheduled pacing cadence active.');
     }
 
     if (loanInsight.totalPayable > 0) {

@@ -328,6 +328,35 @@
 - **High-Converting Pro Locked Experience**:
   - Premium preview showcasing live-like interactive preview cards, CPA badges, and comprehensive feature value checklist.
 
+### 31. 🏦 Savings Vault, Due Dates, Pacing Calculator & Smart Category Budgets (v1.9.0)
+
+- **Smart Unset Category Limit Handling**:
+  - Solves the unbudgeted category issue without false alarm: categories without an explicit limit are now categorized as **Uncapped / Flex Allocation** rather than alarming users with red `OVER / $0` warnings.
+  - Automatically calculates intelligent baseline suggestions based on spending patterns.
+  - Features an inline **`[+ Set Limit]`** button on every uncapped category that opens the budget dialog directly and updates in real-time.
+- **Goal Deadlines & Multi-Cadence Pacing Engine**:
+  - Set target completion dates with quick one-tap duration chips: **Today (Daily Allowance)**, **1 Week**, **1 Month**, or **Custom Date Picker**.
+  - Dynamically computes required savings pace per day or per week: *"Save $32/day to reach by Nov 1"*.
+- **Mid-Day & Evening Pacing Push Reminders**:
+  - Automatically schedules daily reminders at **1:00 PM** and **7:00 PM** for active goals with due dates.
+  - Daily allowance goals receive motivating *"🎯 Today's Goal: Don't forget to stash $X today from your daily allowance!"* check-ins.
+  - Multi-day goals receive pacing alerts showing remaining balance and required daily savings rate.
+- **Recurring Goal Cycles & History Preservation**:
+  - Supports recurring goals with frequencies (**Daily**, **Weekly**, **Monthly**).
+  - Auto-detects completed and expired goals and prompts users to start a fresh cycle without deleting past achievements.
+  - Completed or failed goals display a clear status badge and strikethrough line to preserve historical timeline records.
+- **SQLite Database Preservation & Editable Contribution Entries**:
+  - **Soft-Deletion Retention**: Goals with >10% progress or completed status are safely archived (`is_archived = 1`) upon deletion rather than purged, protecting historical data integrity.
+  - Every deposit and withdrawal is recorded in an indexed `goal_entries` table.
+  - **Collapsible Recent Entries**: Goal cards feature a toggle chevron displaying the 2 most recent deposits directly on the card.
+  - **Goal Detail Bottom Sheet**: Tapping a goal card reveals an interactive **Pie/Donut Progress Chart** (Saved vs. Remaining) and the complete ledger of contributions with full inline edit and delete capabilities.
+- **Direct Goal Transfer from Transaction Dialog & Hero Vault Chip**:
+  - New **"Savings Goal"** category in the Add Transaction modal allows users to select an active goal and deposit directly into it.
+  - Goal transfers are excluded from deducting liquid cash balance on the main dashboard.
+  - **Dashboard Hero Vault Chip**: Under the total balance, a sleek badge displays total vault stashed savings and recent contributions (`🏦 Savings Vault: $X total stashed · Recent: +$Y towards [Goal]`).
+- **Smart Insights Integration**:
+  - New **Savings Vault & Goal Momentum** analytics card in the Smart Insights tab tracking stashed amounts across Daily, Weekly, Monthly, and Yearly horizons with motivational CPA commentary.
+
 ---
 
 ## 🏗️ Clean Modular Architecture
@@ -345,7 +374,8 @@ lib/
 ├── firebase_options.dart           # Cross-platform Firebase config & credentials
 ├── models/                         # Domain data models
 │   ├── transaction.dart            # Transaction schema & serialization
-│   ├── savings_goal.dart           # SavingsGoal schema & progress logic
+│   ├── savings_goal.dart           # SavingsGoal schema, deadline & pacing calculations
+│   ├── goal_entry.dart             # Goal deposit entry model with SQLite persistence
 │   ├── loan.dart                   # Loan model (Receivable/Payable, reminder dates)
 │   ├── planned_transaction.dart    # Planned & future-dated transaction model
 │   └── user_profile.dart           # User profile, custom colors & photo model

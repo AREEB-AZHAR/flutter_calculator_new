@@ -183,6 +183,7 @@ const Map<String, IconData> categoryIcons = {
   'Gifts': Icons.card_giftcard,
   'Travel': Icons.flight,
   'Other': Icons.category,
+  'Savings Goal': Icons.savings,
 };
 
 const Map<String, String> currencyOptions = {
