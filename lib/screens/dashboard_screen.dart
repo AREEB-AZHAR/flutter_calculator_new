@@ -13,6 +13,7 @@ import '../widgets/ad_banner_widget.dart';
 import '../widgets/delete_confirmation_dialog.dart';
 import '../widgets/planned_transactions_sheet.dart';
 import '../utils/image_helper.dart';
+import '../services/biometric_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -47,10 +48,42 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     if (!mounted) return;
 
     // Interactive step-by-step Home / Dashboard Tour for new users
-    if (!mounted) return;
     final homeTourCompleted = await TourService.isTourCompleted(TourService.tourHome);
     if (!homeTourCompleted && mounted) {
       await showHomeDashboardTour(context);
+    }
+
+    if (!mounted) return;
+
+    // Easy biometric / screen lock setup prompt for accounts that have not configured it yet
+    final currentUser = AppState.currentUser;
+    if (currentUser != null && currentUser.isNotEmpty && !BiometricService.biometricPromptCheckedThisSession) {
+      BiometricService.biometricPromptCheckedThisSession = true;
+      final supported = await BiometricService.isDeviceSupported();
+      final enabled = await BiometricService.isBiometricEnabled(username: currentUser);
+      if (supported && !enabled && mounted) {
+        final hasPrompted = await BiometricService.hasPromptedUser(currentUser);
+        if (!hasPrompted && mounted) {
+          await BiometricService.markUserPrompted(currentUser);
+          final configure = await BiometricService.showBiometricSetupPrompt(context);
+          if (configure == true && mounted) {
+            final authSuccess = await BiometricService.authenticate(
+              reason: 'Confirm screen lock or biometric unlock for $currentUser',
+            );
+            if (authSuccess) {
+              await BiometricService.setBiometricEnabled(true, username: currentUser);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Screen lock unlock configured for $currentUser!'),
+                    backgroundColor: Colors.teal,
+                  ),
+                );
+              }
+            }
+          }
+        }
+      }
     }
   }
 

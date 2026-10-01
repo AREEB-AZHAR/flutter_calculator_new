@@ -159,6 +159,10 @@ void main() {
     await tester.tap(find.byIcon(Icons.calendar_today_rounded));
     await tester.pumpAndSettle();
 
+    // Navigate to previous month to ensure selected date is strictly in the past
+    await tester.tap(find.byIcon(Icons.chevron_left));
+    await tester.pumpAndSettle();
+
     // Tap date 15 in the DatePickerDialog
     await tester.tap(find.text('15'));
     await tester.tap(find.text('OK'));

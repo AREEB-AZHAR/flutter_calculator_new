@@ -856,7 +856,17 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
     - **Momentum Physics & Multi-Device Drag**: Integrated [`AppScrollBehavior`](lib/main.dart) enabling `BouncingScrollPhysics` with support for touch, mouse, trackpad, and stylus dragging across all platforms.
     - **SliverList Virtualization**: Refactored [`AllTransactionsScreen`](lib/screens/all_transactions_screen.dart) to a virtualized `CustomScrollView` with `SliverToBoxAdapter` and `SliverList.builder(cacheExtent: 500)`, allowing buttery-smooth continuous scrolling with zero frame drops.
     - **RepaintBoundary Paint Isolation**: Isolated ambient radial gradients and complex cards in [`DashboardScreen`](lib/screens/dashboard_screen.dart) and [`AccountsScreen`](lib/screens/accounts_screen.dart) inside `RepaintBoundary` widgets to prevent full-screen canvas invalidation during scroll passes.
-    - **Automated Performance & Unit Verification**: Verified through [`test/smoothness_benchmark_test.dart`](test/smoothness_benchmark_test.dart) and [`test/dynamic_theme_splash_test.dart`](test/dynamic_theme_splash_test.dart) with average frame build times under ~2.7 - 8.0 ms.
+- **v1.7.0**:
+  - **Account Authentication & Case-Insensitive Collation Overhaul**:
+    - **SQLite `COLLATE NOCASE` Integration**: Updated SQLite `users` table schema, lookup queries (`authenticateUser`, `getUsernameForIdentifier`, `getUserEmail`, `getUserByEmail`, `updatePasswordByEmail`), and indexes (`idx_users_username_nocase`, `idx_users_email_nocase`) to use case-insensitive collation. Resolves mobile keyboard auto-capitalization where users registered as `User123` were locked out when logging in with `user123`.
+    - **Case-Insensitive Duplicate Prevention**: Added case-insensitive duplicate username and email checks during registration to prevent duplicate accounts with differing capitalization.
+    - **Google OAuth Email Persistence**: Fixed missing `email` column value insertion during `authenticateOrRegisterGoogleUser` and added auto-healing for existing legacy Google accounts.
+  - **Biometric Multi-Account Isolation & Onboarding Prompt**:
+    - **Biometric Session Synchronization (`syncUserSession`)**: Implemented dynamic session sync across password login, Google OAuth, biometric unlock, and registration. If the logged-in user does not have biometrics enabled, active biometric credentials from previous accounts are securely cleared, preventing previous accounts from being offered on logout.
+    - **New & Switched Account Biometric Prompt**: Integrated post-login `_checkPostLoginPrompts()` on the Dashboard to detect when a newly registered or switched account supports biometrics and has not yet configured it, prompting them with `showBiometricSetupPrompt` and one-tap biometric setup.
+    - **LoginScreen Credential Isolation**: Corrected `_checkBiometricAvailability()` to only display biometric unlock buttons for the active user who enabled biometrics, while prefilling username fields with the last logged-in account.
+    - **Password Requirement Checklist Overflow Fix**: Wrapped requirement label text in `Expanded` within `_buildPasswordRequirements` to eliminate the 40–87px `RenderFlex` layout overflow error on narrow mobile screens during account creation.
+    - **100% Automated Test Coverage**: Added [`test/account_auth_biometric_test.dart`](test/account_auth_biometric_test.dart) verifying case variations, Google email persistence, credential isolation, and widget flows.
 - **v1.6.1**:
   - **Total Balance Card Theme Match & Brand Identity**:
     - Replaced hardcoded violet-to-blue gradient with a theme-matching surface gradient (`theme.colorScheme.surface` with `primary.withValues(alpha: 0.15)`).
