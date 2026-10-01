@@ -332,7 +332,7 @@ class CloudSyncService {
 
       // 5. Sync Savings Goals
       syncStatusMessageNotifier.value = 'Syncing savings goals...';
-      final localGoals = await AppDatabase.instance.loadGoals(username);
+      final localGoals = await AppDatabase.instance.loadGoals(username, includeArchived: true);
       final goalsCollection = userRef.collection('goals');
 
       if (localGoals.isNotEmpty) {

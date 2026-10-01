@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../models/loan.dart';
+import '../models/savings_goal.dart';
 import '../services/state.dart';
 import '../services/monetization_service.dart';
 import '../services/insights_engine.dart';
@@ -39,6 +40,61 @@ class _InsightsScreenState extends State<InsightsScreen> {
     setState(() {
       _periodOffset = 0;
     });
+  }
+
+  void _showSetLimitDialog(String category, double initialVal) {
+    final controller = TextEditingController(text: initialVal > 0 ? initialVal.toStringAsFixed(0) : '200');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Set Budget for $category'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Set a monthly spending limit to receive pacing and overrun alerts for this category.',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
+              decoration: InputDecoration(
+                prefixText: AppState.currencyNotifier.value,
+                labelText: 'Monthly Limit',
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final val = double.tryParse(controller.text.trim());
+              if (val != null && val > 0) {
+                final updated = Map<String, double>.from(AppState.budgetsNotifier.value);
+                updated[category] = val;
+                final user = AppState.currentUser ?? 'default_user';
+                await AppState.saveBudgets(user, updated);
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Budget limit of ${AppState.currencyNotifier.value}${val.toStringAsFixed(0)} set for $category')),
+                  );
+                }
+              }
+            },
+            child: const Text('Save Limit'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -123,39 +179,47 @@ class _InsightsScreenState extends State<InsightsScreen> {
                       return ValueListenableBuilder<Map<String, double>>(
                         valueListenable: AppState.budgetsNotifier,
                         builder: (context, budgets, _) {
-                          final report = InsightsEngine.generateReport(
-                            transactions: transactions,
-                            loans: loans,
-                            budgets: budgets,
-                            horizon: _selectedHorizon,
-                            periodOffset: _periodOffset,
-                          );
+                          return ValueListenableBuilder<List<SavingsGoal>>(
+                            valueListenable: AppState.goalsNotifier,
+                            builder: (context, goals, _) {
+                              final report = InsightsEngine.generateReport(
+                                transactions: transactions,
+                                loans: loans,
+                                budgets: budgets,
+                                goals: goals,
+                                horizon: _selectedHorizon,
+                                periodOffset: _periodOffset,
+                              );
 
-                          return SingleChildScrollView(
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildHorizonSelector(theme),
-                                const SizedBox(height: 12),
-                                _buildPeriodNavigator(theme, report),
-                                const SizedBox(height: 16),
-                                _buildAccountantBriefCard(theme, report),
-                                const SizedBox(height: 16),
-                                _buildVelocitySummaryGrid(theme, report, currentCurrency),
-                                const SizedBox(height: 20),
-                                _build503020PlanningCard(theme, report, currentCurrency),
-                                const SizedBox(height: 20),
-                                _buildCategoryMatrix(theme, report, currentCurrency),
-                                const SizedBox(height: 20),
-                                _buildLoansAndDebtCard(theme, report, currentCurrency),
-                                const SizedBox(height: 20),
-                                _buildTaxIntelligenceCard(theme, report, currentCurrency),
-                                const SizedBox(height: 20),
-                                _buildPaymentTypeCard(theme, report, currentCurrency),
-                                const SizedBox(height: 32),
-                              ],
-                            ),
+                              return SingleChildScrollView(
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildHorizonSelector(theme),
+                                    const SizedBox(height: 12),
+                                    _buildPeriodNavigator(theme, report),
+                                    const SizedBox(height: 16),
+                                    _buildAccountantBriefCard(theme, report),
+                                    const SizedBox(height: 16),
+                                    _buildSavingsVaultAndGoalsCard(theme, report, currentCurrency),
+                                    const SizedBox(height: 16),
+                                    _buildVelocitySummaryGrid(theme, report, currentCurrency),
+                                    const SizedBox(height: 20),
+                                    _build503020PlanningCard(theme, report, currentCurrency),
+                                    const SizedBox(height: 20),
+                                    _buildCategoryMatrix(theme, report, currentCurrency),
+                                    const SizedBox(height: 20),
+                                    _buildLoansAndDebtCard(theme, report, currentCurrency),
+                                    const SizedBox(height: 20),
+                                    _buildTaxIntelligenceCard(theme, report, currentCurrency),
+                                    const SizedBox(height: 20),
+                                    _buildPaymentTypeCard(theme, report, currentCurrency),
+                                    const SizedBox(height: 32),
+                                  ],
+                                ),
+                              );
+                            },
                           );
                         },
                       );
@@ -670,6 +734,204 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
+  Widget _buildSavingsVaultAndGoalsCard(ThemeData theme, InsightsReport report, String currency) {
+    final onSurface = theme.colorScheme.onSurface;
+    final primary = theme.colorScheme.primary;
+    final goal = report.goalInsight;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: onSurface.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.amberAccent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.savings_rounded, color: Colors.amberAccent, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Savings Vault & Goals',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: onSurface),
+                      ),
+                      Text(
+                        'Period Momentum',
+                        style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${goal.activeGoalsCount} Active',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: primary),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Metric row
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: onSurface.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Stashed Period',
+                        style: TextStyle(fontSize: 10.5, color: onSurface.withValues(alpha: 0.6)),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '$currency${goal.periodStashed.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: goal.periodStashed > 0 ? Colors.greenAccent.shade400 : onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: onSurface.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Vault Total',
+                        style: TextStyle(fontSize: 10.5, color: onSurface.withValues(alpha: 0.6)),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '$currency${goal.totalVaultBalance.toStringAsFixed(0)}',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.amberAccent.shade400),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: onSurface.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Completed',
+                        style: TextStyle(fontSize: 10.5, color: onSurface.withValues(alpha: 0.6)),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${goal.completedGoalsCount}',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Motivational summary
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.amberAccent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.amberAccent.withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.stars_rounded, color: Colors.amberAccent, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    goal.motivationalSummary,
+                    style: TextStyle(fontSize: 11.5, color: onSurface.withValues(alpha: 0.85), height: 1.3),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (goal.nearingCompletionGoals.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Text(
+              'Nearing Completion (Target In Reach)',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: onSurface.withValues(alpha: 0.8)),
+            ),
+            const SizedBox(height: 8),
+            ...goal.nearingCompletionGoals.map((g) {
+              final pct = (g.progress * 100).clamp(0.0, 100.0);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(g.title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: onSurface)),
+                        Text('$currency${g.saved.toStringAsFixed(0)} / $currency${g.target.toStringAsFixed(0)} (${pct.toStringAsFixed(0)}%)',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: primary)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    LinearProgressIndicator(
+                      value: g.progress.clamp(0.0, 1.0),
+                      backgroundColor: onSurface.withValues(alpha: 0.08),
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.greenAccent.shade400),
+                      minHeight: 5,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildCategoryMatrix(ThemeData theme, InsightsReport report, String currency) {
     final onSurface = theme.colorScheme.onSurface;
     final primary = theme.colorScheme.primary;
@@ -720,15 +982,21 @@ class _InsightsScreenState extends State<InsightsScreen> {
           const SizedBox(height: 16),
           ...report.categories.map((c) {
             Color barColor;
-            if (c.isOverBudget) {
-              barColor = Colors.redAccent;
-            } else if (c.percentOfBudget > 75) {
-              barColor = Colors.amberAccent;
-            } else {
-              barColor = primary;
-            }
+            double progressValue;
 
-            final progressValue = (c.percentOfBudget / 100.0).clamp(0.0, 1.0);
+            if (c.hasBudget) {
+              if (c.isOverBudget) {
+                barColor = Colors.redAccent;
+              } else if (c.percentOfBudget > 75) {
+                barColor = Colors.amberAccent;
+              } else {
+                barColor = primary;
+              }
+              progressValue = (c.percentOfBudget / 100.0).clamp(0.0, 1.0);
+            } else {
+              barColor = primary.withValues(alpha: 0.45);
+              progressValue = (c.percentOfTotal / 100.0).clamp(0.04, 1.0);
+            }
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 14),
@@ -746,7 +1014,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                             c.category,
                             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: onSurface),
                           ),
-                          if (c.isOverBudget)
+                          if (c.hasBudget && c.isOverBudget)
                             Container(
                               margin: const EdgeInsets.only(left: 6),
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
@@ -755,13 +1023,60 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: const Text('OVER', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                            )
+                          else if (!c.hasBudget)
+                            Container(
+                              margin: const EdgeInsets.only(left: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: onSurface.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text('Uncapped', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: onSurface.withValues(alpha: 0.6))),
                             ),
                         ],
                       ),
-                      Text(
-                        '$currency${c.spent.toStringAsFixed(0)} / $currency${c.budget.toStringAsFixed(0)}',
-                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: onSurface),
-                      ),
+                      if (c.hasBudget)
+                        Text(
+                          '$currency${c.spent.toStringAsFixed(0)} / $currency${c.budget.toStringAsFixed(0)}',
+                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: onSurface),
+                        )
+                      else
+                        Row(
+                          children: [
+                            Text(
+                              '$currency${c.spent.toStringAsFixed(0)}',
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: onSurface),
+                            ),
+                            const SizedBox(width: 8),
+                            InkWell(
+                              borderRadius: BorderRadius.circular(8),
+                              onTap: () => _showSetLimitDialog(
+                                c.category,
+                                c.suggestedBudget ?? (c.spent > 0 ? c.spent : 200.0),
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: primary.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: primary.withValues(alpha: 0.3)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.add, size: 11, color: primary),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      'Set Limit',
+                                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primary),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -780,16 +1095,28 @@ class _InsightsScreenState extends State<InsightsScreen> {
                         '${c.percentOfTotal.toStringAsFixed(0)}% of total outflows',
                         style: TextStyle(fontSize: 10.5, color: onSurface.withValues(alpha: 0.55)),
                       ),
-                      Text(
-                        c.remaining >= 0
-                            ? '$currency${c.remaining.toStringAsFixed(0)} remaining'
-                            : '+$currency${c.remaining.abs().toStringAsFixed(0)} over budget',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w500,
-                          color: c.remaining >= 0 ? Colors.greenAccent.shade400 : Colors.redAccent,
+                      if (c.hasBudget)
+                        Text(
+                          c.remaining >= 0
+                              ? '$currency${c.remaining.toStringAsFixed(0)} remaining'
+                              : '+$currency${c.remaining.abs().toStringAsFixed(0)} over budget',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w500,
+                            color: c.remaining >= 0 ? Colors.greenAccent.shade400 : Colors.redAccent,
+                          ),
+                        )
+                      else
+                        Text(
+                          c.suggestedBudget != null
+                              ? 'Suggested limit: $currency${c.suggestedBudget!.toStringAsFixed(0)}'
+                              : 'Flexible envelope',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w500,
+                            color: onSurface.withValues(alpha: 0.55),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ],

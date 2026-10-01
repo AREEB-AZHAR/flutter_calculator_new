@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../../models/transaction.dart' as model;
 import '../../models/savings_goal.dart';
+import '../../models/goal_entry.dart';
 import '../../models/user_profile.dart';
 import '../../models/loan.dart';
 import '../../models/planned_transaction.dart';
@@ -178,6 +179,40 @@ class AppDatabase {
     try {
       await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_username_date ON transactions(username, date DESC)');
     } catch (_) {}
+
+    // --- Enhanced Goals: migrate goals table with new columns ---
+    for (final col in [
+      'ALTER TABLE goals ADD COLUMN due_date TEXT',
+      'ALTER TABLE goals ADD COLUMN period_type TEXT DEFAULT \'monthly\'',
+      'ALTER TABLE goals ADD COLUMN is_recurring INTEGER DEFAULT 0',
+      'ALTER TABLE goals ADD COLUMN recurrence TEXT DEFAULT \'none\'',
+      'ALTER TABLE goals ADD COLUMN is_completed INTEGER DEFAULT 0',
+      'ALTER TABLE goals ADD COLUMN is_failed INTEGER DEFAULT 0',
+      'ALTER TABLE goals ADD COLUMN is_archived INTEGER DEFAULT 0',
+      'ALTER TABLE goals ADD COLUMN created_at TEXT',
+    ]) {
+      try {
+        await db.execute(col);
+      } catch (_) {}
+    }
+
+    // --- Goal Entries table for tracking individual deposits ---
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS goal_entries (
+          id TEXT PRIMARY KEY,
+          goal_id TEXT NOT NULL,
+          username TEXT NOT NULL,
+          amount REAL NOT NULL,
+          date TEXT NOT NULL,
+          note TEXT,
+          created_at TEXT NOT NULL
+        )
+      ''');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_goal_entries_goal ON goal_entries(goal_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_goal_entries_user ON goal_entries(username)');
+    } catch (_) {}
+
 
     await _migrateLegacyPrefs(db);
     return db;
@@ -956,30 +991,66 @@ class AppDatabase {
   }
 
   // --- GOALS ---
-  Future<List<SavingsGoal>> loadGoals(String username) async {
+  Future<List<SavingsGoal>> loadGoals(String username, {bool includeArchived = false}) async {
     final db = await database;
+    final where = includeArchived
+        ? 'username = ?'
+        : 'username = ? AND (is_archived = 0 OR is_archived IS NULL)';
     final results = await db.query(
       'goals',
-      where: 'username = ?',
+      where: where,
       whereArgs: [username],
     );
 
-    return results.map((r) {
-      return SavingsGoal(
-        id: r['id'] as String?,
+    final goals = <SavingsGoal>[];
+    for (final r in results) {
+      final goalId = r['id'] as String;
+      // Load entries for this goal
+      final entryRows = await db.query(
+        'goal_entries',
+        where: 'goal_id = ? AND username = ?',
+        whereArgs: [goalId, username],
+        orderBy: 'date DESC',
+      );
+      final entries = entryRows.map((e) => GoalEntry(
+            id: e['id'] as String,
+            goalId: e['goal_id'] as String,
+            amount: (e['amount'] as num).toDouble(),
+            date: DateTime.parse(e['date'] as String),
+            note: e['note'] as String?,
+            createdAt: e['created_at'] != null
+                ? DateTime.parse(e['created_at'] as String)
+                : DateTime.now(),
+          )).toList();
+
+      goals.add(SavingsGoal(
+        id: goalId,
         title: r['title'] as String,
         target: (r['target_amount'] as num).toDouble(),
         saved: (r['current_amount'] as num).toDouble(),
         color: Color(r['color'] as int),
         icon: resolveGoalIconByCodePoint(r['icon'] as int?),
-      );
-    }).toList();
+        dueDate: r['due_date'] != null ? DateTime.tryParse(r['due_date'] as String) : null,
+        periodType: (r['period_type'] as String?) ?? 'monthly',
+        isRecurring: (r['is_recurring'] as int?) == 1,
+        recurrence: (r['recurrence'] as String?) ?? 'none',
+        isCompleted: (r['is_completed'] as int?) == 1,
+        isFailed: (r['is_failed'] as int?) == 1,
+        isArchived: (r['is_archived'] as int?) == 1,
+        createdAt: r['created_at'] != null
+            ? DateTime.tryParse(r['created_at'] as String) ?? DateTime.now()
+            : DateTime.now(),
+        entries: entries,
+      ));
+    }
+    return goals;
   }
 
   Future<void> saveGoals(String username, List<SavingsGoal> goals) async {
     final db = await database;
     await db.transaction((txn) async {
-      await txn.delete('goals', where: 'username = ?', whereArgs: [username]);
+      // Delete goals that are no longer in the list (but preserve archived separately)
+      await txn.delete('goals', where: 'username = ? AND (is_archived = 0 OR is_archived IS NULL)', whereArgs: [username]);
       for (var g in goals) {
         await txn.insert('goals', {
           'id': g.id,
@@ -989,10 +1060,154 @@ class AppDatabase {
           'current_amount': g.saved,
           'color': g.color.toARGB32(),
           'icon': g.icon.codePoint,
-        });
+          'due_date': g.dueDate?.toIso8601String(),
+          'period_type': g.periodType,
+          'is_recurring': g.isRecurring ? 1 : 0,
+          'recurrence': g.recurrence,
+          'is_completed': g.isCompleted ? 1 : 0,
+          'is_failed': g.isFailed ? 1 : 0,
+          'is_archived': g.isArchived ? 1 : 0,
+          'created_at': g.createdAt.toIso8601String(),
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
     });
   }
+
+  /// Inserts or replaces a single goal (upsert).
+  Future<void> upsertGoal(String username, SavingsGoal goal) async {
+    final db = await database;
+    await db.insert('goals', {
+      'id': goal.id,
+      'username': username,
+      'title': goal.title,
+      'target_amount': goal.target,
+      'current_amount': goal.saved,
+      'color': goal.color.toARGB32(),
+      'icon': goal.icon.codePoint,
+      'due_date': goal.dueDate?.toIso8601String(),
+      'period_type': goal.periodType,
+      'is_recurring': goal.isRecurring ? 1 : 0,
+      'recurrence': goal.recurrence,
+      'is_completed': goal.isCompleted ? 1 : 0,
+      'is_failed': goal.isFailed ? 1 : 0,
+      'is_archived': goal.isArchived ? 1 : 0,
+      'created_at': goal.createdAt.toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  /// Soft-delete a goal: archive if completed or >10% progress, else hard-delete.
+  Future<void> softDeleteGoal(String username, String goalId) async {
+    final db = await database;
+    final results = await db.query('goals', where: 'id = ? AND username = ?', whereArgs: [goalId, username]);
+    if (results.isEmpty) return;
+    final r = results.first;
+    final saved = (r['current_amount'] as num).toDouble();
+    final target = (r['target_amount'] as num).toDouble();
+    final isCompleted = (r['is_completed'] as int?) == 1;
+    final progress = target > 0 ? saved / target : 0.0;
+
+    if (isCompleted || progress >= 0.10) {
+      await db.update('goals', {'is_archived': 1}, where: 'id = ? AND username = ?', whereArgs: [goalId, username]);
+    } else {
+      await db.delete('goals', where: 'id = ? AND username = ?', whereArgs: [goalId, username]);
+      await db.delete('goal_entries', where: 'goal_id = ? AND username = ?', whereArgs: [goalId, username]);
+    }
+  }
+
+  /// Update goal status flags (completed, failed, archived).
+  Future<void> updateGoalStatus(String username, String goalId, {bool? isCompleted, bool? isFailed, bool? isArchived}) async {
+    final db = await database;
+    final updates = <String, dynamic>{};
+    if (isCompleted != null) updates['is_completed'] = isCompleted ? 1 : 0;
+    if (isFailed != null) updates['is_failed'] = isFailed ? 1 : 0;
+    if (isArchived != null) updates['is_archived'] = isArchived ? 1 : 0;
+    if (updates.isNotEmpty) {
+      await db.update('goals', updates, where: 'id = ? AND username = ?', whereArgs: [goalId, username]);
+    }
+  }
+
+  // --- GOAL ENTRIES ---
+  Future<List<GoalEntry>> loadGoalEntries(String username, String goalId) async {
+    final db = await database;
+    final results = await db.query(
+      'goal_entries',
+      where: 'goal_id = ? AND username = ?',
+      whereArgs: [goalId, username],
+      orderBy: 'date DESC',
+    );
+    return results.map((e) => GoalEntry(
+          id: e['id'] as String,
+          goalId: e['goal_id'] as String,
+          amount: (e['amount'] as num).toDouble(),
+          date: DateTime.parse(e['date'] as String),
+          note: e['note'] as String?,
+          createdAt: e['created_at'] != null
+              ? DateTime.parse(e['created_at'] as String)
+              : DateTime.now(),
+        )).toList();
+  }
+
+  /// Adds a contribution entry and atomically recalculates the goal's saved total.
+  Future<void> addGoalEntry(String username, GoalEntry entry) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.insert('goal_entries', {
+        'id': entry.id,
+        'goal_id': entry.goalId,
+        'username': username,
+        'amount': entry.amount,
+        'date': entry.date.toIso8601String(),
+        'note': entry.note,
+        'created_at': entry.createdAt.toIso8601String(),
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+      // Recalculate goal total from all entries
+      final sumResult = await txn.rawQuery(
+        'SELECT COALESCE(SUM(amount), 0) as total FROM goal_entries WHERE goal_id = ? AND username = ?',
+        [entry.goalId, username],
+      );
+      final total = (sumResult.first['total'] as num).toDouble();
+      await txn.update('goals', {'current_amount': total},
+          where: 'id = ? AND username = ?', whereArgs: [entry.goalId, username]);
+    });
+  }
+
+  /// Updates an existing contribution entry and recalculates the goal's saved total.
+  Future<void> updateGoalEntry(String username, GoalEntry entry) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.update('goal_entries', {
+        'amount': entry.amount,
+        'date': entry.date.toIso8601String(),
+        'note': entry.note,
+      }, where: 'id = ? AND username = ?', whereArgs: [entry.id, username]);
+
+      final sumResult = await txn.rawQuery(
+        'SELECT COALESCE(SUM(amount), 0) as total FROM goal_entries WHERE goal_id = ? AND username = ?',
+        [entry.goalId, username],
+      );
+      final total = (sumResult.first['total'] as num).toDouble();
+      await txn.update('goals', {'current_amount': total},
+          where: 'id = ? AND username = ?', whereArgs: [entry.goalId, username]);
+    });
+  }
+
+  /// Deletes a contribution entry and recalculates the goal's saved total.
+  Future<void> deleteGoalEntry(String username, String entryId, String goalId) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('goal_entries', where: 'id = ? AND username = ?', whereArgs: [entryId, username]);
+
+      final sumResult = await txn.rawQuery(
+        'SELECT COALESCE(SUM(amount), 0) as total FROM goal_entries WHERE goal_id = ? AND username = ?',
+        [goalId, username],
+      );
+      final total = (sumResult.first['total'] as num).toDouble();
+      await txn.update('goals', {'current_amount': total},
+          where: 'id = ? AND username = ?', whereArgs: [goalId, username]);
+    });
+  }
+
 
   // --- ACCOUNTS ---
   Future<List<String>> loadAccounts(String username) async {

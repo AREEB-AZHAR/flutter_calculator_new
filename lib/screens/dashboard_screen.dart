@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
+import '../models/savings_goal.dart';
 import '../services/state.dart';
 import '../utils/constants.dart';
 import '../widgets/transaction_tile.dart';
@@ -417,7 +418,11 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           return ValueListenableBuilder<List<Transaction>>(
             valueListenable: AppState.transactionsNotifier,
             builder: (context, transactions, child) {
-          final totalBalance = transactions.fold(0.0, (sum, item) => item.isIncome ? sum + item.amount : sum - item.amount);
+          // Exclude 'Savings Goal' deposits from liquid balance – they are vault transfers
+          final totalBalance = transactions.fold(0.0, (sum, item) {
+            if (item.category == 'Savings Goal' && !item.isIncome) return sum;
+            return item.isIncome ? sum + item.amount : sum - item.amount;
+          });
           
           return Stack(
             children: [
@@ -574,6 +579,50 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: -1,
                                     ),
+                                  ),
+                                  // Savings Vault Info Chip
+                                  ValueListenableBuilder<List<SavingsGoal>>(
+                                    valueListenable: AppState.goalsNotifier,
+                                    builder: (context, goals, _) {
+                                      final vaultTotal = goals
+                                          .where((g) => !g.isArchived)
+                                          .fold(0.0, (sum, g) => sum + g.saved);
+                                      if (vaultTotal <= 0) return const SizedBox.shrink();
+                                      // Find most recent entry across all goals
+                                      String? recentInfo;
+                                      for (final g in goals) {
+                                        if (g.entries.isNotEmpty) {
+                                          final latest = g.entries.first;
+                                          recentInfo = '+${AppState.currencyNotifier.value}${latest.amount.toStringAsFixed(0)} → ${g.title}';
+                                          break;
+                                        }
+                                      }
+                                      return Padding(
+                                        padding: const EdgeInsets.only(top: 6),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.teal.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(color: Colors.teal.withValues(alpha: 0.2)),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.account_balance, size: 13, color: Colors.teal),
+                                              const SizedBox(width: 6),
+                                              Flexible(
+                                                child: Text(
+                                                  '${AppState.currencyNotifier.value}${vaultTotal.toStringAsFixed(0)} stashed${recentInfo != null ? ' · $recentInfo' : ''}',
+                                                  style: const TextStyle(color: Colors.teal, fontSize: 11, fontWeight: FontWeight.w600),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
                                   const SizedBox(height: 20),
                                   Row(

@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:balance_tracker/models/transaction.dart';
 import 'package:balance_tracker/models/loan.dart';
+import 'package:balance_tracker/models/savings_goal.dart';
+import 'package:balance_tracker/models/goal_entry.dart';
 import 'package:balance_tracker/services/insights_engine.dart';
 
 void main() {
@@ -161,6 +163,79 @@ void main() {
       expect(report.dailyVelocity, 0.0);
       expect(report.healthScore.score, greaterThan(0));
       expect(report.accountantSummary.isNotEmpty, isTrue);
+    });
+
+    test('Correctly handles uncapped categories without false alarms', () {
+      final transactions = [
+        Transaction(
+          id: 't1',
+          title: 'Concert Tickets',
+          amount: 250.0,
+          date: DateTime(2026, 10, 2),
+          isIncome: false,
+          category: 'Entertainment',
+        ),
+      ];
+
+      // No budget set for Entertainment
+      final report = InsightsEngine.generateReport(
+        transactions: transactions,
+        loans: [],
+        budgets: {},
+        horizon: TimeHorizon.monthly,
+        anchorDate: now,
+      );
+
+      final cat = report.categories.firstWhere((c) => c.category == 'Entertainment');
+      expect(cat.hasBudget, isFalse);
+      expect(cat.isOverBudget, isFalse); // Not over budget because there is no cap!
+      expect(cat.suggestedBudget, isNotNull);
+      expect(cat.suggestedBudget!, greaterThanOrEqualTo(250.0));
+    });
+
+    test('Integrates Savings Vault & Goal Momentum metrics into report and commentary', () {
+      final goals = [
+        SavingsGoal(
+          id: 'g1',
+          title: 'Emergency Fund',
+          target: 1000.0,
+          saved: 800.0, // 80% funded -> nearing completion
+          dueDate: DateTime(2026, 10, 15),
+          entries: [
+            GoalEntry(
+              id: 'e1',
+              goalId: 'g1',
+              amount: 200.0,
+              date: DateTime(2026, 10, 2),
+            ),
+          ],
+        ),
+        SavingsGoal(
+          id: 'g2',
+          title: 'MacBook Pro',
+          target: 2000.0,
+          saved: 500.0, // 25% funded
+          dueDate: DateTime(2026, 12, 1),
+        ),
+      ];
+
+      final report = InsightsEngine.generateReport(
+        transactions: [],
+        loans: [],
+        budgets: {},
+        goals: goals,
+        horizon: TimeHorizon.monthly,
+        anchorDate: now,
+      );
+
+      expect(report.goalInsight.totalVaultBalance, 1300.0);
+      expect(report.goalInsight.periodStashed, 200.0);
+      expect(report.goalInsight.activeGoalsCount, 2);
+      expect(report.goalInsight.nearingCompletionGoals.length, 1);
+      expect(report.goalInsight.nearingCompletionGoals.first.title, 'Emergency Fund');
+      expect(report.goalInsight.motivationalSummary.contains('Emergency Fund') ||
+             report.goalInsight.motivationalSummary.contains('200'), isTrue);
+      expect(report.accountantKeyActionItems.any((item) => item.contains('Emergency Fund')), isTrue);
     });
   });
 }
