@@ -15,6 +15,7 @@ import '../widgets/delete_confirmation_dialog.dart';
 import '../widgets/planned_transactions_sheet.dart';
 import '../utils/image_helper.dart';
 import '../services/biometric_service.dart';
+import '../services/language_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -532,7 +533,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        'Total Balance',
+                                        LanguageService.tr('total_balance'),
                                         style: TextStyle(
                                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                                           fontSize: 16,
@@ -696,7 +697,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Monthly Budgets',
+                                  LanguageService.tr('budget_limits'),
                                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                                 ),
                                 IconButton(
@@ -775,7 +776,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Recent Transactions',
+                            LanguageService.tr('recent_transactions'),
                             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                           ),
                           Row(
@@ -792,7 +793,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                 onPressed: () {
                                   Navigator.push(context, MaterialPageRoute(builder: (_) => const AllTransactionsScreen()));
                                 },
-                                child: Text('See All', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                                child: Text(LanguageService.tr('see_all'), style: TextStyle(color: Theme.of(context).colorScheme.primary)),
                               ),
                             ],
                           ),
@@ -804,7 +805,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                     transactions.isEmpty 
                       ? Padding(
                           padding: const EdgeInsets.symmetric(vertical: 20),
-                          child: Center(child: Text("No transactions yet", style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)))),
+                          child: Center(child: Text(LanguageService.tr('no_transactions_yet'), style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)))),
                         )
                       : Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),

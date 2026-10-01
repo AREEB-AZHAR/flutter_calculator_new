@@ -8,7 +8,6 @@ import '../services/notification_service.dart';
 import '../services/app_icon_service.dart';
 import '../services/biometric_service.dart';
 import '../services/tour_service.dart';
-import '../widgets/feature_tour_dialog.dart';
 import '../services/monetization_service.dart';
 import '../services/ad_service.dart';
 import '../services/google_auth_service.dart';
@@ -20,6 +19,7 @@ import '../widgets/tally_brand_painters.dart';
 import '../utils/password_validator.dart';
 import '../utils/image_helper.dart';
 import 'premium_screen.dart';
+import 'saved_accounts_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -578,7 +578,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           ),
                                         );
                                         AppState.activeTabNotifier.value = 0;
-                                        showHomeDashboardTour(context);
                                       }
                                     },
                                   ),
@@ -1162,6 +1161,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                 },
                                               );
                                             },
+                                          );
+                                        },
+                                      ),
+                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                      ListTile(
+                                        leading: const Icon(Icons.manage_accounts_rounded, color: Colors.teal),
+                                        title: Text(LanguageService.tr('saved_accounts_title'), style: TextStyle(color: onSurface)),
+                                        subtitle: Text(LanguageService.tr('saved_accounts_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                                        trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
+                                        onTap: () {
+                                          Navigator.pop(ctx);
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(builder: (_) => const SavedAccountsScreen()),
                                           );
                                         },
                                       ),
