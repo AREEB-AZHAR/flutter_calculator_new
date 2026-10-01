@@ -78,24 +78,6 @@ class LoanInsight {
   });
 }
 
-class TaxInsight {
-  final double totalDeductible;
-  final double estimatedSavings15Pct;
-  final double estimatedSavings22Pct;
-  final double estimatedSavings24Pct;
-  final Map<String, double> deductibleByCategory;
-  final String taxTip;
-
-  const TaxInsight({
-    required this.totalDeductible,
-    required this.estimatedSavings15Pct,
-    required this.estimatedSavings22Pct,
-    required this.estimatedSavings24Pct,
-    required this.deductibleByCategory,
-    required this.taxTip,
-  });
-}
-
 class PaymentTypeInsight {
   final String accountName;
   final double amount;
@@ -156,7 +138,6 @@ class InsightsReport {
   final List<CategoryInsight> categories;
   final Rule503020Insight rule503020;
   final LoanInsight loanInsight;
-  final TaxInsight taxInsight;
   final List<PaymentTypeInsight> paymentTypes;
   final GoalInsight goalInsight;
   final double safeToSpendDaily;
@@ -182,7 +163,6 @@ class InsightsReport {
     required this.categories,
     required this.rule503020,
     required this.loanInsight,
-    required this.taxInsight,
     required this.paymentTypes,
     required this.goalInsight,
     required this.safeToSpendDaily,
@@ -256,9 +236,6 @@ class InsightsEngine {
     final projected6MonthSavings = max(0.0, monthlyRunRate * 6);
     final projected1YearSavings = max(0.0, monthlyRunRate * 12);
 
-    // Tax Intelligence
-    final taxInsight = _calculateTaxInsight(transactions, periodRange.start.year);
-
     // Payment Types
     final paymentTypes = _calculatePaymentTypes(currentTransactions, totalOutflow);
 
@@ -306,7 +283,6 @@ class InsightsEngine {
       categories: categories,
       rule503020: rule503020,
       loanInsight: loanInsight,
-      taxInsight: taxInsight,
       paymentTypes: paymentTypes,
       goalInsight: goalInsight,
       safeToSpendDaily: safeToSpendDaily,
@@ -565,43 +541,6 @@ class InsightsEngine {
     final remainingNet = totalInflow - totalOutflow;
     if (remainingNet <= 0) return 0.0;
     return remainingNet / max(1, daysInPeriod);
-  }
-
-  static TaxInsight _calculateTaxInsight(List<Transaction> transactions, int currentYear) {
-    const deductibleCategories = {'Healthcare', 'Education', 'Gifts', 'Other'};
-    final yearTransactions = transactions.where((t) =>
-      !t.isIncome &&
-      t.date.year == currentYear &&
-      deductibleCategories.contains(t.category)
-    ).toList();
-
-    double totalDeductible = 0.0;
-    final Map<String, double> byCategory = {};
-
-    for (var t in yearTransactions) {
-      totalDeductible += t.amount;
-      byCategory[t.category] = (byCategory[t.category] ?? 0.0) + t.amount;
-    }
-
-    final savings15 = totalDeductible * 0.15;
-    final savings22 = totalDeductible * 0.22;
-    final savings24 = totalDeductible * 0.24;
-
-    String tip;
-    if (totalDeductible > 1000) {
-      tip = 'Keep detailed receipts and invoices for your Healthcare, Education, and Donation expenses to maximize itemized tax deductions.';
-    } else {
-      tip = 'Categorize recurring professional development, medical expenses, and charitable gifts to automatically unlock potential tax write-offs.';
-    }
-
-    return TaxInsight(
-      totalDeductible: totalDeductible,
-      estimatedSavings15Pct: savings15,
-      estimatedSavings22Pct: savings22,
-      estimatedSavings24Pct: savings24,
-      deductibleByCategory: byCategory,
-      taxTip: tip,
-    );
   }
 
   static List<PaymentTypeInsight> _calculatePaymentTypes(List<Transaction> currentTransactions, double totalOutflow) {

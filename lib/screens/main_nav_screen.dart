@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/state.dart';
+import '../widgets/offline_banner.dart';
 import 'dashboard_screen.dart';
 import 'insights_screen.dart';
 import 'goals_screen.dart';
@@ -55,7 +56,18 @@ class _MainNavScreenState extends State<MainNavScreen> {
     final currentIndex = AppState.activeTabNotifier.value;
 
     return Scaffold(
-      body: _buildActiveScreen(currentIndex),
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(
+              child: _buildActiveScreen(currentIndex),
+            ),
+          ],
+        ),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
         onDestinationSelected: (i) => AppState.activeTabNotifier.value = i,

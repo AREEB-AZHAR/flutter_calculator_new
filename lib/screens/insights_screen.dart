@@ -212,8 +212,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                     const SizedBox(height: 20),
                                     _buildLoansAndDebtCard(theme, report, currentCurrency),
                                     const SizedBox(height: 20),
-                                    _buildTaxIntelligenceCard(theme, report, currentCurrency),
-                                    const SizedBox(height: 20),
                                     _buildPaymentTypeCard(theme, report, currentCurrency),
                                     const SizedBox(height: 32),
                                   ],
@@ -1268,100 +1266,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
-  Widget _buildTaxIntelligenceCard(ThemeData theme, InsightsReport report, String currency) {
-    final onSurface = theme.colorScheme.onSurface;
-    final tax = report.taxInsight;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: onSurface.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.receipt_long, color: Colors.tealAccent, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Tax Return & Deductions Tracker',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: onSurface),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.teal.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text('Tax Year 2026', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.tealAccent)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Total Deductible Expenses', style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6))),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$currency${tax.totalDeductible.toStringAsFixed(0)}',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.tealAccent),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Est. Tax Savings (22% Bracket)', style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6))),
-                    const SizedBox(height: 4),
-                    Text(
-                      '~$currency${tax.estimatedSavings22Pct.toStringAsFixed(0)}',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.greenAccent.shade400),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: theme.scaffoldBackgroundColor.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.info_outline, size: 16, color: Colors.tealAccent),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    tax.taxTip,
-                    style: TextStyle(fontSize: 12, height: 1.35, color: onSurface.withValues(alpha: 0.8)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildPaymentTypeCard(ThemeData theme, InsightsReport report, String currency) {
     final onSurface = theme.colorScheme.onSurface;

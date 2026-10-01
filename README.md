@@ -18,11 +18,14 @@
 > 6. **Native Ad Banner & Google Sign-In**: Contextual partner banner on Dashboard and Google button on Login.
 > 7. **30-Second Non-Skippable Rewarded Ad Dialog**: Live countdown timer, progress bar, and reward unlock modal.
 > 8. **Google Play Billing Checkout & Premium Screen**: Official in-app purchase tiers with one-tap checkout and restore purchases.
-> 9. **Personal Wealth Accountant (Smart Insights)**: Multi-horizon dashboard showing Executive CPA brief, 50/30/20 breakdown, loans hub, and tax return tracker.
+> 9. **Personal Wealth Accountant (Smart Insights)**: Multi-horizon dashboard showing Executive CPA brief, 50/30/20 breakdown, loans hub, and payment liquidity split.
+> 10. **Global Onboarding Setup Modal**: First-time currency selection, 7-language selector, and default notification opt-in.
+> 11. **Ambient Offline Banner & Offline Google Guard**: Real-time connectivity warning and offline Google account intercept modal.
+> 12. **Cloud vs. Local Sync Conflict Comparison**: Side-by-side comparison cards (balances, transactions, goals, timestamps) with overwrite and offline-only data loss alerts.
 
-| Flowing Splash | Home & Ad Banner | Insights Pro Lock | Personal Accountant Insights | Play Store Billing & Tiers |
+| Flowing Splash | Home & Offline Banner | Insights Pro Lock | Sync Conflict Cards | Onboarding Setup |
 | :---: | :---: | :---: | :---: | :---: |
-| *(Add Splash Screenshot)* | *(Add Dashboard Banner Screenshot)* | *(Add Pro Paywall Screenshot)* | *(Add Insights Screen Screenshot)* | *(Add Premium Billing Screenshot)* |
+| *(Add Splash Screenshot)* | *(Add Dashboard Banner Screenshot)* | *(Add Pro Paywall Screenshot)* | *(Add Sync Conflict Screenshot)* | *(Add Onboarding Screenshot)* |
 
 ---
 
@@ -318,10 +321,8 @@
   - Integrated tracking of outstanding debt (`payable`) vs receivables (`receivable`) and net liability position.
   - **Debt-to-Income (DTI) Ratio**: Evaluates debt load against inflow with status tiers (*Healthy <36%*, *Moderate 36-43%*, *Strained >43%*).
   - **Debt Payoff Advisor**: Evaluates Snowball vs. Avalanche strategies, highlights upcoming due dates, and projects debt-free milestones.
-- **Tax Return & Deductions Tracker**:
-  - Automatically identifies tax-deductible expenditures (Healthcare, Education, Charitable Gifts, Professional Expenses).
-  - Calculates year-to-date deductible totals and estimates tax savings across standard effective brackets (15%, 22%, 24%).
-  - Provides CPA-style tax preparation tips to maximize write-offs ahead of tax filing.
+- **Universal Liquidity & Multi-Horizon Financial Health**:
+  - Replaced localized US-specific tax deduction estimates with jurisdiction-agnostic liquidity and savings analytics suitable for global users worldwide.
 - **Payment Types & Liquidity Split**:
   - Analyzes spending distribution across accounts (Credit Card, Cash, Bank Transfer, Digital Wallet).
   - Alerts users on credit card reliance to avoid revolving interest traps.
@@ -356,6 +357,47 @@
   - **Dashboard Hero Vault Chip**: Under the total balance, a sleek badge displays total vault stashed savings and recent contributions (`🏦 Savings Vault: $X total stashed · Recent: +$Y towards [Goal]`).
 - **Smart Insights Integration**:
   - New **Savings Vault & Goal Momentum** analytics card in the Smart Insights tab tracking stashed amounts across Daily, Weekly, Monthly, and Yearly horizons with motivational CPA commentary.
+
+### 32. 🌐 Multi-Currency, 7-Language Localization, Offline Resilience & Sync Conflict Resolution (v2.0.0)
+
+- **Elimination of Region-Specific Tax Estimations**:
+  - Completely stripped regional US tax deduction estimates and UI cards from `insights_engine.dart` and `insights_screen.dart` to maintain an accurate, universal experience across international tax jurisdictions.
+- **Global Multi-Currency Engine**:
+  - Full support for 10 international currencies: `USD ($)`, `EUR (€)`, `GBP (£)`, `PKR (₨)`, `INR (₹)`, `JPY (¥)`, `AED (د.إ)`, `SAR (﷼)`, `CAD (C$)`, `AUD (A$)`.
+  - Available across all dialogs, analytics cards, transaction lists, and profile settings with real-time reactive updates.
+- **7-Language Multilingual Engine with Dynamic RTL Flipping**:
+  - Seamless in-app localization for:
+    1. **English (EN)**
+    2. **Español (ES)**
+    3. **Français (FR)**
+    4. **Deutsch (DE)**
+    5. **اردو (UR - Urdu)** *(Full Right-to-Left RTL support)*
+    6. **العربية (AR - Arabic)** *(Full Right-to-Left RTL support)*
+    7. **हिन्दी (HI - Hindi)**
+  - Reactive `Directionality` flipping dynamically shifts layouts between LTR and RTL without requiring an application restart.
+- **First-Time Account Onboarding Setup Dialog**:
+  - Automatically launches upon creating a new local account or signing in for the first time.
+  - Allows immediate selection of preferred Currency and Language.
+  - **Notifications Enabled by Default**: Automatically activates smart reminders, debt due date alerts, and goal target pacing check-ins with an opt-out toggle.
+- **Real-time Offline Connectivity Monitoring & Ambient Banner**:
+  - `ConnectivityService` provides non-blocking, cross-platform DNS socket reachability checks.
+  - An ambient, animated amber notification banner appears seamlessly at the top of all navigation tabs when disconnected: *"You are offline. Your changes are saved locally and will sync when reconnected."* Includes a quick-tap Retry button.
+- **Offline Google Sign-In Guard**:
+  - Intercepts Google authentication attempts when offline, preventing network error popups.
+  - Displays a clean dialog explaining that Google requires an active connection and offers a one-tap transition to create/use a local device account that will sync automatically upon reconnection.
+- **Cloud Vault vs. Local Storage Sync Conflict Resolution**:
+  - Detects diverging states when logging in with internet and data exists in both Google Cloud Firestore and local SQLite.
+  - Displays side-by-side **Balance & Record Comparison Cards**:
+    - **Google Cloud Vault**: Total balance, transaction count, savings goals count, and last sync timestamp.
+    - **On-Device Storage**: Total balance, transaction count, savings goals count, and last saved timestamp.
+  - Provides 3 explicit resolution actions:
+    1. **Restore Cloud Data**: Replaces local records with cloud vault backup.
+    2. **Upload Device Data**: Overwrites cloud vault with local changes.
+    3. **Keep Using Offline Only**: Retains local device data without uploading.
+  - High-visibility safety notice: *"⚠️ Offline-Only Notice: Data will remain strictly on this device. If you uninstall the app or clear device storage, data cannot be recovered."*
+- **Accessibility Font Scaling Safeguard**:
+  - Wrapped `MaterialApp.builder` with `MediaQuery` overriding `textScaler` clamped between `0.85` and `1.25`.
+  - Prevents button clipping, overflow bars, and layout breakages when high system accessibility font sizes (e.g. 1.5x – 2.0x) are enabled on the operating system.
 
 ---
 
@@ -392,14 +434,16 @@ lib/
 │   └── profile_screen.dart         # Features & Settings guide, Theme Studio & tours reset
 ├── services/                       # State & Persistence
 │   ├── insights_engine.dart        # Multi-horizon intelligence, CPA commentary & 50/30/20 engine
+│   ├── connectivity_service.dart   # Live cross-platform internet reachability monitor
+│   ├── language_service.dart       # 7-Language multilingual engine & RTL manager
 │   ├── in_app_purchase_service.dart# Google Play Billing (IAP) service & restore engine
 │   ├── monetization_service.dart   # Recalculated pricing, Theme Pass engine & promo codes
 │   ├── ad_service.dart             # Google AdMob Banner & Rewarded 30s Video ads
 │   ├── google_auth_service.dart    # Google Sign-In & SQLite identity binding
-│   ├── cloud_sync_service.dart     # Two-way SQLite & Cloud Firestore deletion sync
+│   ├── cloud_sync_service.dart     # Two-way SQLite & Cloud Firestore conflict resolution
 │   ├── biometric_service.dart      # Biometric & screen lock auth & setup modal
 │   ├── tour_service.dart           # Tour completion flags & reset persistence
-│   ├── notification_service.dart   # Loan push reminders & scheduled tally alerts
+│   ├── notification_service.dart   # Loan push reminders, goal pacing & tally alerts
 │   ├── app_icon_service.dart       # Dynamic launcher icon switcher
 │   ├── state.dart                  # AppState ValueNotifiers & reactive state
 │   └── database/                   # SQLite database engine & security
@@ -409,6 +453,9 @@ lib/
 │   ├── constants.dart              # Dynamic theme generator, icons & currencies
 │   └── password_validator.dart     # Strong password validation rules
 └── widgets/                        # Reusable UI & Custom Painters
+    ├── offline_banner.dart         # Ambient real-time offline warning notification bar
+    ├── new_user_setup_dialog.dart  # First-time currency, language & notifications setup modal
+    ├── sync_conflict_dialog.dart   # Cloud vs. Local side-by-side comparison & conflict resolver
     ├── fullscreen_30sec_ad_dialog.dart # Non-skippable 30s countdown rewarded ad player
     ├── ad_banner_widget.dart       # Theme-adaptive native partner banner card
     ├── feature_tour_dialog.dart    # Step-by-step onboarding walkthrough dialog
