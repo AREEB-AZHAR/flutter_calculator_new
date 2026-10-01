@@ -7,7 +7,7 @@
 ## 📱 Visual Showcase & Screenshots
 
 > [!TIP]
-> **Screenshots Placeholder**: Capture and place your high-resolution screenshots in `assets/screenshots/` (e.g. `splash.png`, `dashboard.png`, `home_tour.png`, `accounts_tour.png`, `biometric_prompt.png`, `settings_guide.png`, `pro_paywall.png`, `google_auth.png`, `rewarded_ad.png`, `theme_passes.png`).
+> **Screenshots Placeholder**: Capture and place your high-resolution screenshots in `assets/screenshots/` (e.g. `splash.png`, `dashboard.png`, `home_tour.png`, `accounts_tour.png`, `biometric_prompt.png`, `settings_guide.png`, `pro_paywall.png`, `google_auth.png`, `rewarded_ad.png`, `theme_passes.png`, `saved_accounts.png`).
 > Recommended screens to capture:
 >
 > 1. **Biometric Quick Setup Modal**: Post-login prompt asking to enable screen lock/fingerprint.
@@ -22,10 +22,11 @@
 > 10. **Global Onboarding Setup Modal**: First-time currency selection, 7-language selector, and default notification opt-in.
 > 11. **Ambient Offline Banner & Offline Google Guard**: Real-time connectivity warning and offline Google account intercept modal.
 > 12. **Cloud vs. Local Sync Conflict Comparison**: Side-by-side comparison cards (balances, transactions, goals, timestamps) with overwrite and offline-only data loss alerts.
+> 13. **Saved Accounts Lock Screen Switcher**: One-tap account selection displaying user avatars, Biometric unlock, Google Account, and password auto-fill.
 
-| Flowing Splash | Home & Offline Banner | Insights Pro Lock | Sync Conflict Cards | Onboarding Setup |
+| Flowing Splash | Home & Offline Banner | Insights Pro Lock | Sync Conflict Cards | Saved Accounts Switcher |
 | :---: | :---: | :---: | :---: | :---: |
-| *(Add Splash Screenshot)* | *(Add Dashboard Banner Screenshot)* | *(Add Pro Paywall Screenshot)* | *(Add Sync Conflict Screenshot)* | *(Add Onboarding Screenshot)* |
+| *(Add Splash Screenshot)* | *(Add Dashboard Banner Screenshot)* | *(Add Pro Paywall Screenshot)* | *(Add Sync Conflict Screenshot)* | *(Add Saved Accounts Screenshot)* |
 
 ---
 
@@ -399,6 +400,24 @@
   - Wrapped `MaterialApp.builder` with `MediaQuery` overriding `textScaler` clamped between `0.85` and `1.25`.
   - Prevents button clipping, overflow bars, and layout breakages when high system accessibility font sizes (e.g. 1.5x – 2.0x) are enabled on the operating system.
 
+### 33. 🔐 Saved Accounts Lock Screen Switcher, Tour Concurrency Lock & Multilingual UI Localization (v2.1.0)
+
+- **Dedicated Saved Accounts Manager ([`SavedAccountsScreen`](lib/screens/saved_accounts_screen.dart))**:
+  - Accessible directly from the lock/login screen (`[Manage Saved Accounts]` button & pill indicator) and from Profile Settings.
+  - Automatically queries all registered accounts on device via [`AppDatabase.getAllSavedAccounts()`](lib/services/database/app_database.dart) combining user credentials, avatar paths, custom brand colors, and authentication options.
+  - **One-Tap Biometric Authentication**: For accounts with biometric unlock enabled, tapping the account card or fingerprint icon directly triggers device biometric authentication (Fingerprint, Face ID, PIN) and logs in immediately upon success.
+  - **One-Tap Google Authentication**: For accounts registered with Google Sign-In, tapping launches the authentic Google OAuth pipeline seamlessly.
+  - **Instant Password Auto-Fill**: For standard accounts, selecting an account populates the username in the login form with focus set on the password field.
+  - **Secure Account Removal**: Allows deleting remembered accounts with a safety confirmation dialog without deleting other on-device data.
+  - **Clean Fallback**: Includes a "Log In with Another Account" button at the bottom for new account entry.
+- **Dynamic Multilingual Localization for All Screens**:
+  - Resolved the bug where changing languages left interface labels in English by converting all hardcoded text strings in [`DashboardScreen`](lib/screens/dashboard_screen.dart), [`MainNavScreen`](lib/screens/main_nav_screen.dart), and [`LoginScreen`](lib/screens/login_screen.dart) to reactive [`LanguageService.tr(...)`](lib/services/language_service.dart) calls.
+  - Expanded all 7 translation dictionaries (`en`, `es`, `fr`, `de`, `ur`, `ar`, `hi`) covering navigation tabs, balance cards, monthly budgets, recent transactions, saved accounts management, and all login/registration fields.
+- **Tour Replay Concurrency Lock & Deduplication**:
+  - Eliminated the double tour replay bug where replaying the Home Dashboard tour from Profile Settings triggered the tutorial twice back-to-back.
+  - Implemented a static concurrency mutex `_isTourOpen` with `try ... finally` safety in [`FeatureTourDialog.showFeatureTour()`](lib/widgets/feature_tour_dialog.dart), actively discarding duplicate dialog mount requests.
+  - Removed duplicate calls in [`ProfileScreen`](lib/screens/profile_screen.dart) when switching tabs, preventing race conditions with `DashboardScreen._checkPostLoginPrompts()`.
+
 ---
 
 ## 🏗️ Clean Modular Architecture
@@ -420,10 +439,12 @@ lib/
 │   ├── goal_entry.dart             # Goal deposit entry model with SQLite persistence
 │   ├── loan.dart                   # Loan model (Receivable/Payable, reminder dates)
 │   ├── planned_transaction.dart    # Planned & future-dated transaction model
+│   ├── saved_account_info.dart     # Multi-account lock screen identity model
 │   └── user_profile.dart           # User profile, custom colors & photo model
 ├── screens/                        # Application screens
 │   ├── splash_screen.dart          # Multi-stage Bezier animated brand startup
 │   ├── login_screen.dart           # Hero wordmark & bottom-sliding authentication
+│   ├── saved_accounts_screen.dart  # Multi-account lock screen switcher & biometric auth
 │   ├── main_nav_screen.dart        # Lazy-loaded tab shell with idle pre-warming
 │   ├── dashboard_screen.dart       # Post-login biometric prompt & Home Tour trigger
 │   ├── all_transactions_screen.dart# Single-scroll dynamic search & 3-mode visualizer
@@ -610,7 +631,23 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 
 ## 📝 Recent Changelog
 
-- **v1.9.3 (Current)**:
+- **v2.1.0 (Current)**:
+  - **Lock Screen Saved Accounts Manager & Fast Switcher**:
+    - Built [`SavedAccountsScreen`](lib/screens/saved_accounts_screen.dart) and [`SavedAccountInfo`](lib/models/saved_account_info.dart) model.
+    - Added [`AppDatabase.getAllSavedAccounts()`](lib/services/database/app_database.dart) and `deleteSavedAccount()`.
+    - Integrated quick-access badge button and banner pill into [`LoginScreen`](lib/screens/login_screen.dart) and a settings tile into [`ProfileScreen`](lib/screens/profile_screen.dart).
+    - Supports 1-tap Biometric unlock, 1-tap Google sign-in, password auto-selection, and safe account removal.
+  - **Comprehensive Multilingual UI Localization Across 7 Languages**:
+    - Expanded all 7 dictionary maps in [`LanguageService`](lib/services/language_service.dart) (`en`, `es`, `fr`, `de`, `ur`, `ar`, `hi`).
+    - Replaced hardcoded UI strings with `LanguageService.tr(...)` across [`MainNavScreen`](lib/screens/main_nav_screen.dart), [`DashboardScreen`](lib/screens/dashboard_screen.dart), and [`LoginScreen`](lib/screens/login_screen.dart).
+  - **Feature Tour Deduplication & Concurrency Mutex**:
+    - Added static concurrency guard `_isTourOpen` in [`FeatureTourDialog`](lib/widgets/feature_tour_dialog.dart).
+    - Removed redundant tour triggers in [`ProfileScreen`](lib/screens/profile_screen.dart) during tab redirection to prevent back-to-back duplicate modals.
+  - **Automated Verification Suite**:
+    - Created comprehensive test suite in [`test/language_tour_saved_accounts_test.dart`](test/language_tour_saved_accounts_test.dart) covering translations, tour concurrency, and saved account rendering.
+    - All tests passing with 0 analyzer issues.
+
+- **v1.9.3**:
   - **100,000 Transactions Stress & Scalability Benchmark**:
     - Conducted empirical stress benchmarks on 100,000 recorded transactions in [`test/benchmark_100k_transactions_test.dart`](test/benchmark_100k_transactions_test.dart).
     - **Atomic Single-Record Persistence**: Eliminated the legacy wipe-and-reinsert pattern in [`AppDatabase`](lib/services/database/app_database.dart). Adding a new transaction or deleting a transaction now uses atomic `insertTransaction` and `deleteSingleTransaction` operations taking only **12 ms** (down from 20+ seconds when rewriting 100k rows).

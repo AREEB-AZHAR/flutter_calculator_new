@@ -4,6 +4,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'main_nav_screen.dart';
+import 'saved_accounts_screen.dart';
 import '../services/state.dart';
 import '../services/database/app_database.dart';
 import '../services/biometric_service.dart';
@@ -36,6 +37,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   bool _isLoading = false;
   bool _canUseBiometrics = false;
   String? _biometricUser;
+  int _savedAccountsCount = 0;
 
   late AnimationController _formAnimController;
   late Animation<Offset> _formSlideAnimation;
@@ -77,6 +79,17 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
 
   Future<void> _checkBiometricAvailability() async {
+    try {
+      final savedAccounts = await AppDatabase.instance.getAllSavedAccounts();
+      if (mounted) {
+        setState(() {
+          _savedAccountsCount = savedAccounts.length;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading saved accounts count: $e');
+    }
+
     final enabled = await BiometricService.isBiometricEnabled();
     final savedUser = await BiometricService.getSavedBiometricUser();
     final supported = await BiometricService.isDeviceSupported();
@@ -105,6 +118,37 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           _usernameCtrl.text = lastUser;
         }
       });
+    }
+  }
+
+  /// Opens the dedicated Saved Accounts screen for fast switching or one-tap login.
+  Future<void> _openSavedAccounts() async {
+    final selectedUsername = await Navigator.push<String>(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => const SavedAccountsScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+          child: child,
+        ),
+        transitionDuration: const Duration(milliseconds: 250),
+      ),
+    );
+
+    if (selectedUsername != null && mounted) {
+      setState(() {
+        _usernameCtrl.text = selectedUsername;
+        _passwordCtrl.clear();
+        _isLogin = true;
+      });
+      await _checkBiometricAvailability();
+    } else if (mounted) {
+      try {
+        final accounts = await AppDatabase.instance.getAllSavedAccounts();
+        setState(() {
+          _savedAccountsCount = accounts.length;
+        });
+      } catch (_) {}
     }
   }
 
@@ -943,25 +987,102 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text(
-                              _isLogin ? 'Welcome Back' : 'Create Account',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: inkColor,
-                              ),
-                              textAlign: TextAlign.center,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  _isLogin ? LanguageService.tr('welcome_back') : LanguageService.tr('create_account'),
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: inkColor,
+                                  ),
+                                ),
+                                if (_isLogin && _savedAccountsCount > 0) ...[
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    tooltip: LanguageService.tr('saved_accounts_title'),
+                                    icon: Icon(Icons.switch_account_rounded, color: theme.colorScheme.primary, size: 22),
+                                    onPressed: _openSavedAccounts,
+                                  ),
+                                ],
+                              ],
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              _isLogin ? 'Sign in to access your ledger & budget' : 'Bind a recovery email & create your secure ledger',
+                              _isLogin ? LanguageService.tr('sign_in_subtitle') : LanguageService.tr('create_account_subtitle'),
                               style: TextStyle(
                                 fontSize: 12.5,
                                 color: inkColor.withValues(alpha: 0.6),
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 24),
+
+                            // Dedicated Quick-Access Saved Accounts switcher on Lock Screen
+                            if (_isLogin && _savedAccountsCount > 0) ...[
+                              InkWell(
+                                onTap: _openSavedAccounts,
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: theme.colorScheme.primary.withValues(alpha: 0.22),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(7),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                                        ),
+                                        child: Icon(
+                                          Icons.manage_accounts_rounded,
+                                          size: 18,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              LanguageService.tr('saved_accounts_title'),
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                                color: inkColor,
+                                              ),
+                                            ),
+                                            Text(
+                                              '$_savedAccountsCount ${LanguageService.tr('saved_accounts_desc')}',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: inkColor.withValues(alpha: 0.65),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.chevron_right_rounded,
+                                        color: theme.colorScheme.primary,
+                                        size: 20,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
 
                             // In registration mode: Ask for Email first
                             if (!_isLogin) ...[
@@ -1004,7 +1125,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               textInputAction: TextInputAction.next,
                               style: TextStyle(color: inkColor, fontSize: 15),
                               decoration: InputDecoration(
-                                labelText: _isLogin ? 'Email or Username' : 'Username',
+                                labelText: _isLogin ? LanguageService.tr('email_or_username') : LanguageService.tr('username'),
                                 labelStyle: TextStyle(color: inkColor.withValues(alpha: 0.6)),
                                 filled: true,
                                 fillColor: inputBg,
@@ -1035,7 +1156,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               onSubmitted: (_) => _isLogin ? _submit() : null,
                               style: TextStyle(color: inkColor, fontSize: 15),
                               decoration: InputDecoration(
-                                labelText: 'Password',
+                                labelText: LanguageService.tr('password'),
                                 labelStyle: TextStyle(color: inkColor.withValues(alpha: 0.6)),
                                 filled: true,
                                 fillColor: inputBg,
@@ -1078,7 +1199,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 onSubmitted: (_) => _submit(),
                                 style: TextStyle(color: inkColor, fontSize: 15),
                                 decoration: InputDecoration(
-                                  labelText: 'Confirm Password',
+                                  labelText: LanguageService.tr('confirm_password'),
                                   labelStyle: TextStyle(color: inkColor.withValues(alpha: 0.6)),
                                   filled: true,
                                   fillColor: inputBg,
@@ -1119,7 +1240,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                   ),
                                   child: Text(
-                                    'Forgot Password?',
+                                    LanguageService.tr('forgot_password'),
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
@@ -1168,7 +1289,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                       ),
                                     )
                                   : Text(
-                                      _isLogin ? 'Login to Tally' : 'Create Ledger Account',
+                                      _isLogin ? LanguageService.tr('login_button') : LanguageService.tr('register_button'),
                                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                                     ),
                             ),
@@ -1179,7 +1300,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 onPressed: _isLoading ? null : _unlockWithBiometrics,
                                 icon: Icon(Icons.fingerprint, color: theme.colorScheme.primary, size: 20),
                                 label: Text(
-                                  'Unlock with Screen Lock ($_biometricUser)',
+                                  '${LanguageService.tr('unlock_with_biometrics')} ($_biometricUser)',
                                   style: TextStyle(
                                     color: theme.colorScheme.primary,
                                     fontWeight: FontWeight.w600,
@@ -1203,7 +1324,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 10),
                                   child: Text(
-                                    'OR CONNECT WITH',
+                                    LanguageService.tr('or_connect_with'),
                                     style: TextStyle(
                                       fontSize: 10.5,
                                       fontWeight: FontWeight.bold,
@@ -1258,7 +1379,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   ),
                                   const SizedBox(width: 10),
                                   Text(
-                                    'Sign in with Google',
+                                    LanguageService.tr('sign_in_with_google'),
                                     style: TextStyle(
                                       color: inkColor,
                                       fontWeight: FontWeight.bold,
@@ -1280,7 +1401,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                         _error = '';
                                       }),
                               child: Text(
-                                _isLogin ? 'Need an account? Register with Email' : 'Already registered? Login here',
+                                _isLogin ? LanguageService.tr('need_account') : LanguageService.tr('already_registered'),
                                 style: TextStyle(
                                   color: theme.colorScheme.primary,
                                   fontWeight: FontWeight.w600,

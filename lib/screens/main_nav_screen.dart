@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/state.dart';
+import '../services/language_service.dart';
 import '../widgets/offline_banner.dart';
 import 'dashboard_screen.dart';
 import 'insights_screen.dart';
@@ -68,18 +69,23 @@ class _MainNavScreenState extends State<MainNavScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: (i) => AppState.activeTabNotifier.value = i,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        indicatorColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.insights), label: 'Insights'),
-          NavigationDestination(icon: Icon(Icons.flag), label: 'Goals'),
-          NavigationDestination(icon: Icon(Icons.account_balance_wallet), label: 'Accounts'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-        ],
+      bottomNavigationBar: ValueListenableBuilder<String>(
+        valueListenable: LanguageService.currentLanguageNotifier,
+        builder: (context, lang, child) {
+          return NavigationBar(
+            selectedIndex: currentIndex,
+            onDestinationSelected: (i) => AppState.activeTabNotifier.value = i,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            indicatorColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+            destinations: [
+              NavigationDestination(icon: const Icon(Icons.dashboard), label: LanguageService.tr('nav_home')),
+              NavigationDestination(icon: const Icon(Icons.insights), label: LanguageService.tr('nav_insights')),
+              NavigationDestination(icon: const Icon(Icons.flag), label: LanguageService.tr('nav_goals')),
+              NavigationDestination(icon: const Icon(Icons.account_balance_wallet), label: LanguageService.tr('nav_accounts')),
+              NavigationDestination(icon: const Icon(Icons.person), label: LanguageService.tr('nav_profile')),
+            ],
+          );
+        },
       ),
     );
   }

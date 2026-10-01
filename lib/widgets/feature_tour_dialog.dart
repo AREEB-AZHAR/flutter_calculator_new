@@ -17,6 +17,8 @@ class TourStep {
   });
 }
 
+bool _isTourOpen = false;
+
 Future<void> showFeatureTour(
   BuildContext context, {
   required String tourTitle,
@@ -25,17 +27,23 @@ Future<void> showFeatureTour(
   VoidCallback? onCompleted,
 }) async {
   if (steps.isEmpty) return;
+  if (_isTourOpen) return;
+  _isTourOpen = true;
 
-  await showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (ctx) => _FeatureTourDialog(
-      tourTitle: tourTitle,
-      steps: steps,
-      tourKey: tourKey,
-      onCompleted: onCompleted,
-    ),
-  );
+  try {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => _FeatureTourDialog(
+        tourTitle: tourTitle,
+        steps: steps,
+        tourKey: tourKey,
+        onCompleted: onCompleted,
+      ),
+    );
+  } finally {
+    _isTourOpen = false;
+  }
 }
 
 /// Step-by-step Home / Dashboard screen tour for new users

@@ -11,6 +11,8 @@ import '../../models/goal_entry.dart';
 import '../../models/user_profile.dart';
 import '../../models/loan.dart';
 import '../../models/planned_transaction.dart';
+import '../../models/saved_account_info.dart';
+import '../biometric_service.dart';
 import 'security_helper.dart';
 
 class AppDatabase {
@@ -490,6 +492,68 @@ class AppDatabase {
         ? (goalsRes.first['c'] as int? ?? 0)
         : 0;
     return txCount > 0 || goalsCount > 0;
+  }
+
+  /// Retrieves all saved user accounts remembered on this device.
+  Future<List<SavedAccountInfo>> getAllSavedAccounts() async {
+    final db = await database;
+    try {
+      final rows = await db.rawQuery('''
+        SELECT 
+          u.username,
+          u.email,
+          u.created_at,
+          p.display_name,
+          p.photo_path,
+          p.primary_color
+        FROM users u
+        LEFT JOIN profiles p ON u.username = p.username
+        ORDER BY u.id DESC
+      ''');
+
+      final List<SavedAccountInfo> result = [];
+      for (final r in rows) {
+        final username = r['username'] as String;
+        final email = r['email'] as String?;
+        final displayName = (r['display_name'] as String?)?.isNotEmpty == true
+            ? r['display_name'] as String
+            : username;
+        final photoPath = r['photo_path'] as String?;
+        final primaryColor = (r['primary_color'] as int?) ?? const Color(0xFFE4572E).toARGB32();
+        final createdAt = r['created_at'] as String?;
+
+        final isBio = await BiometricService.isBiometricEnabled(username: username);
+        final isGoogle = (email != null && email.contains('@') && username == email);
+
+        result.add(SavedAccountInfo(
+          username: username,
+          email: email,
+          displayName: displayName,
+          photoPath: photoPath,
+          primaryColor: primaryColor,
+          isBiometricEnabled: isBio,
+          isGoogleAccount: isGoogle,
+          createdAt: createdAt,
+        ));
+      }
+      return result;
+    } catch (e) {
+      debugPrint('AppDatabase.getAllSavedAccounts error: $e');
+      return [];
+    }
+  }
+
+  /// Removes a saved user account and its profile from this device.
+  Future<bool> deleteSavedAccount(String username) async {
+    final db = await database;
+    try {
+      await db.delete('users', where: 'username = ?', whereArgs: [username]);
+      await db.delete('profiles', where: 'username = ?', whereArgs: [username]);
+      return true;
+    } catch (e) {
+      debugPrint('AppDatabase.deleteSavedAccount error: $e');
+      return false;
+    }
   }
 
   /// Migrates all ledger data (transactions, accounts, budgets, goals, and profile)
