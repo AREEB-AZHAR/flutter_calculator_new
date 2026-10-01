@@ -8,6 +8,8 @@ import 'services/notification_service.dart';
 import 'services/in_app_purchase_service.dart';
 import 'services/ad_service.dart';
 import 'services/monetization_service.dart';
+import 'services/connectivity_service.dart';
+import 'services/language_service.dart';
 import 'services/state.dart';
 import 'utils/constants.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -43,6 +45,12 @@ void main() async {
 
   // Initialize notifications & schedule reminders
   await NotificationService.instance.init();
+
+  // Start real-time network reachability monitoring
+  ConnectivityService.startMonitoring();
+
+  // Initialize multilingual language preference
+  await LanguageService.init();
 
   // Initialize monetization and pro/ad-free purchase state
   await MonetizationService.initialize();
@@ -82,12 +90,14 @@ class TallyApp extends StatelessWidget {
         AppState.customPrimaryColorNotifier,
         AppState.customSecondaryColorNotifier,
         AppState.customTextColorNotifier,
+        LanguageService.currentLanguageNotifier,
       ]),
       builder: (context, _) {
         final themeName = AppState.themeNameNotifier.value;
         final primaryColor = AppState.customPrimaryColorNotifier.value;
         final secondaryColor = AppState.customSecondaryColorNotifier.value;
         final textColor = AppState.customTextColorNotifier.value;
+        final isRtl = LanguageService.isRtl;
 
         return MaterialApp(
           title: 'Tally',
@@ -102,6 +112,21 @@ class TallyApp extends StatelessWidget {
           themeAnimationCurve: Curves.easeInOut,
           home: const SplashScreen(),
           debugShowCheckedModeBanner: false,
+          builder: (context, child) {
+            final mediaQuery = MediaQuery.of(context);
+            return Directionality(
+              textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+              child: MediaQuery(
+                data: mediaQuery.copyWith(
+                  textScaler: mediaQuery.textScaler.clamp(
+                    minScaleFactor: 0.85,
+                    maxScaleFactor: 1.25,
+                  ),
+                ),
+                child: child ?? const SizedBox.shrink(),
+              ),
+            );
+          },
         );
       },
     );

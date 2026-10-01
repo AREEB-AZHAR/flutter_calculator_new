@@ -17,6 +17,21 @@ import 'state.dart';
 /// Coordinates two-way synchronization between on-device encrypted SQLite
 /// and Google Cloud Firestore under strictly isolated per-user vault paths:
 /// `/users/{userId}/...`.
+/// Data summary representing vault contents for conflict comparison
+class VaultSummary {
+  final double totalBalance;
+  final int transactionCount;
+  final int goalsCount;
+  final DateTime? lastModified;
+
+  const VaultSummary({
+    required this.totalBalance,
+    required this.transactionCount,
+    required this.goalsCount,
+    this.lastModified,
+  });
+}
+
 class CloudSyncService {
   CloudSyncService._();
 
@@ -59,6 +74,143 @@ class CloudSyncService {
       debugPrint('CloudSyncService.hasCloudData check error: $e');
     }
     return false;
+  }
+
+  /// Calculates a summary of the local SQLite vault for conflict comparisons.
+  static Future<VaultSummary> fetchLocalSummary(String username) async {
+    final txs = await AppDatabase.instance.loadTransactions(username);
+    final goals = await AppDatabase.instance.loadGoals(username, includeArchived: true);
+    double balance = 0.0;
+    DateTime? latest;
+    for (var tx in txs) {
+      if (tx.isIncome) {
+        balance += tx.amount;
+      } else {
+        balance -= tx.amount;
+      }
+      if (latest == null || tx.date.isAfter(latest)) {
+        latest = tx.date;
+      }
+    }
+    return VaultSummary(
+      totalBalance: balance,
+      transactionCount: txs.length,
+      goalsCount: goals.length,
+      lastModified: latest,
+    );
+  }
+
+  /// Calculates a summary of the Google Cloud Firestore vault for conflict comparisons.
+  static Future<VaultSummary?> fetchCloudSummary([String? targetUid]) async {
+    if (Firebase.apps.isEmpty) return null;
+    final uid = targetUid ?? currentUid;
+    if (uid == null) return null;
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final txSnapshot = await firestore.collection('users').doc(uid).collection('transactions').get();
+      final goalsSnapshot = await firestore.collection('users').doc(uid).collection('goals').get();
+      double balance = 0.0;
+      DateTime? latest;
+
+      for (var doc in txSnapshot.docs) {
+        final data = doc.data();
+        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+        final isIncome = data['isIncome'] as bool? ?? false;
+        if (isIncome) {
+          balance += amount;
+        } else {
+          balance -= amount;
+        }
+        final dateStr = data['date'] as String?;
+        if (dateStr != null) {
+          final d = DateTime.tryParse(dateStr);
+          if (d != null && (latest == null || d.isAfter(latest))) {
+            latest = d;
+          }
+        }
+      }
+
+      final userDoc = await firestore.collection('users').doc(uid).get();
+      if (userDoc.exists && userDoc.data()?['lastSyncedAt'] != null) {
+        final ts = userDoc.data()!['lastSyncedAt'];
+        if (ts is Timestamp) {
+          latest = ts.toDate();
+        }
+      }
+
+      return VaultSummary(
+        totalBalance: balance,
+        transactionCount: txSnapshot.docs.length,
+        goalsCount: goalsSnapshot.docs.length,
+        lastModified: latest,
+      );
+    } catch (e) {
+      debugPrint('CloudSyncService.fetchCloudSummary error: $e');
+      return null;
+    }
+  }
+
+  /// Overwrites on-device SQLite database with authoritative Cloud Firestore data.
+  static Future<bool> restoreFromCloud(String username) async {
+    final uid = currentUid;
+    if (uid == null) return false;
+    isSyncingNotifier.value = true;
+    syncStatusMessageNotifier.value = 'Restoring records from Google Cloud...';
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final userRef = firestore.collection('users').doc(uid);
+
+      // 1. Transactions
+      final txSnapshot = await userRef.collection('transactions').get();
+      final restoredTxs = txSnapshot.docs.map((doc) => model.Transaction.fromJson(doc.data())).toList();
+      await AppDatabase.instance.saveTransactions(username, restoredTxs);
+      await AppState.loadTransactions(username);
+
+      // 2. Goals
+      final goalsSnapshot = await userRef.collection('goals').get();
+      final restoredGoals = goalsSnapshot.docs.map((d) => SavingsGoal.fromJson(d.data())).toList();
+      await AppDatabase.instance.saveGoals(username, restoredGoals);
+      await AppState.loadGoals(username);
+
+      // 3. Accounts
+      final accountsDoc = await userRef.collection('vault').doc('accounts').get();
+      if (accountsDoc.exists) {
+        final data = accountsDoc.data();
+        if (data != null && data['list'] is List) {
+          final cloudAccounts = (data['list'] as List).cast<String>();
+          if (cloudAccounts.isNotEmpty) {
+            await AppDatabase.instance.saveAccounts(username, cloudAccounts);
+            AppState.loadAccounts(username);
+          }
+        }
+      }
+
+      // 4. Budgets
+      final budgetsDoc = await userRef.collection('vault').doc('budgets').get();
+      if (budgetsDoc.exists) {
+        final data = budgetsDoc.data();
+        if (data != null && data['categories'] is Map) {
+          final map = (data['categories'] as Map).map((k, v) => MapEntry(k.toString(), (v as num).toDouble()));
+          await AppDatabase.instance.saveBudgets(username, map);
+          AppState.budgetsNotifier.value = map;
+        }
+      }
+
+      lastSyncTimeNotifier.value = DateTime.now();
+      syncStatusMessageNotifier.value = 'Cloud restoration completed';
+      return true;
+    } catch (e) {
+      debugPrint('CloudSyncService.restoreFromCloud error: $e');
+      syncStatusMessageNotifier.value = 'Restoration notice: $e';
+      return false;
+    } finally {
+      isSyncingNotifier.value = false;
+    }
+  }
+
+  /// Overwrites Google Cloud Firestore with authoritative local device data.
+  static Future<bool> overwriteCloudWithLocal(String username) async {
+    return await sync(username);
   }
 
   /// Immediately deletes a transaction document from Firestore.

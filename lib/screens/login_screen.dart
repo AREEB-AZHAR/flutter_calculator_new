@@ -8,6 +8,11 @@ import '../services/state.dart';
 import '../services/database/app_database.dart';
 import '../services/biometric_service.dart';
 import '../services/google_auth_service.dart';
+import '../services/connectivity_service.dart';
+import '../services/language_service.dart';
+import '../services/cloud_sync_service.dart';
+import '../widgets/new_user_setup_dialog.dart';
+import '../widgets/sync_conflict_dialog.dart';
 import '../utils/password_validator.dart';
 import '../widgets/tally_brand_painters.dart';
 
@@ -104,17 +109,66 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
 
   Future<void> _signInWithGoogle() async {
+    // 1. Check if user is offline before attempting Google Sign-In
+    final isOnline = await ConnectivityService.checkOnline();
+    if (!isOnline) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showOfflineGoogleWarningDialog();
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _error = '';
     });
 
     try {
+      if (!mounted) return;
       final googleUser = await GoogleAuthService.signIn(context);
       if (googleUser != null) {
         BiometricService.isExplicitLogout = false;
         await BiometricService.syncUserSession(googleUser.email);
         await AppState.loadAllUserData(googleUser.email);
+
+        // 2. Resolve any Cloud vs Local synchronization conflict
+        if (CloudSyncService.isCloudAvailable) {
+          final cloudSummary = await CloudSyncService.fetchCloudSummary();
+          final localSummary = await CloudSyncService.fetchLocalSummary(googleUser.email);
+
+          if (cloudSummary != null &&
+              cloudSummary.transactionCount > 0 &&
+              localSummary.transactionCount > 0) {
+            if (!mounted) return;
+            final choice = await SyncConflictDialog.show(
+              context,
+              cloudSummary: cloudSummary,
+              localSummary: localSummary,
+              currency: AppState.currencyNotifier.value,
+            );
+
+            if (choice == SyncConflictChoice.restoreCloud) {
+              await CloudSyncService.restoreFromCloud(googleUser.email);
+            } else if (choice == SyncConflictChoice.overwriteCloud) {
+              await CloudSyncService.overwriteCloudWithLocal(googleUser.email);
+            }
+          } else if (cloudSummary != null && cloudSummary.transactionCount > 0 && localSummary.transactionCount == 0) {
+            await CloudSyncService.restoreFromCloud(googleUser.email);
+          } else if ((cloudSummary == null || cloudSummary.transactionCount == 0) && localSummary.transactionCount > 0) {
+            await CloudSyncService.sync(googleUser.email);
+          }
+        }
+
+        // 3. First-time onboarding setup
+        final profile = await AppDatabase.instance.loadProfile(googleUser.email);
+        final isBrandNew = profile.displayName == googleUser.displayName &&
+            AppState.transactionsNotifier.value.isEmpty &&
+            AppState.goalsNotifier.value.isEmpty;
+
+        if (isBrandNew && mounted) {
+          await NewUserSetupDialog.show(context, username: googleUser.email);
+        }
+
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
@@ -140,6 +194,63 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         });
       }
     }
+  }
+
+  void _showOfflineGoogleWarningDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final colorScheme = theme.colorScheme;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.wifi_off_rounded, color: Colors.amber, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  LanguageService.tr('offline_google_title'),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            LanguageService.tr('offline_google_desc'),
+            style: const TextStyle(fontSize: 13, height: 1.4),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(LanguageService.tr('cancel')),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                setState(() {
+                  _isLogin = false;
+                  _error = '';
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text(LanguageService.tr('use_local_account')),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _unlockWithBiometrics() async {
@@ -204,6 +315,35 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           final canonicalUsername = await AppDatabase.instance.getUsernameForIdentifier(identifier) ?? identifier;
           await BiometricService.syncUserSession(canonicalUsername);
           await AppState.loadAllUserData(canonicalUsername);
+
+          // Resolve any cloud vs local synchronization conflict
+          if (CloudSyncService.isCloudAvailable) {
+            final cloudSummary = await CloudSyncService.fetchCloudSummary();
+            final localSummary = await CloudSyncService.fetchLocalSummary(canonicalUsername);
+
+            if (cloudSummary != null &&
+                cloudSummary.transactionCount > 0 &&
+                localSummary.transactionCount > 0) {
+              if (!mounted) return;
+              final choice = await SyncConflictDialog.show(
+                context,
+                cloudSummary: cloudSummary,
+                localSummary: localSummary,
+                currency: AppState.currencyNotifier.value,
+              );
+
+              if (choice == SyncConflictChoice.restoreCloud) {
+                await CloudSyncService.restoreFromCloud(canonicalUsername);
+              } else if (choice == SyncConflictChoice.overwriteCloud) {
+                await CloudSyncService.overwriteCloudWithLocal(canonicalUsername);
+              }
+            } else if (cloudSummary != null && cloudSummary.transactionCount > 0 && localSummary.transactionCount == 0) {
+              await CloudSyncService.restoreFromCloud(canonicalUsername);
+            } else if ((cloudSummary == null || cloudSummary.transactionCount == 0) && localSummary.transactionCount > 0) {
+              await CloudSyncService.sync(canonicalUsername);
+            }
+          }
+
           if (!mounted) return;
           Navigator.pushReplacement(
             context,
@@ -273,6 +413,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           BiometricService.isExplicitLogout = false;
           await BiometricService.syncUserSession(username);
           await AppState.loadAllUserData(username);
+          if (!mounted) return;
+          await NewUserSetupDialog.show(context, username: username);
           if (!mounted) return;
           Navigator.pushReplacement(
             context,

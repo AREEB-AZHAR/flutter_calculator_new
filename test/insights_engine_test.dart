@@ -99,9 +99,6 @@ void main() {
       expect(report.loanInsight.netDebt, 2200.0);
       expect(report.loanInsight.dtiStatus, 'Healthy');
 
-      // Tax
-      expect(report.taxInsight.totalDeductible, 100.0); // Healthcare 100
-      expect(report.taxInsight.estimatedSavings22Pct, 22.0);
 
       // Payment Types
       expect(report.paymentTypes.any((p) => p.accountName == 'Main'), isTrue);

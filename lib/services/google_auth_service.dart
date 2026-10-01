@@ -7,7 +7,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../firebase_options.dart';
-import 'cloud_sync_service.dart';
 import 'state.dart';
 import 'database/app_database.dart';
 
@@ -163,8 +162,7 @@ class GoogleAuthService {
         await prefs.setString(_prefLastGoogleNameKey, googleUser.displayName);
       } catch (_) {}
 
-      // Trigger cloud synchronization in the background
-      CloudSyncService.sync(googleUser.email);
+      // Cloud synchronization will be resolved by the caller with conflict awareness
     }
 
     return googleUser;

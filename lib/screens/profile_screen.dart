@@ -13,6 +13,7 @@ import '../services/monetization_service.dart';
 import '../services/ad_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/cloud_sync_service.dart';
+import '../services/language_service.dart';
 import '../utils/constants.dart';
 import '../widgets/color_picker_dialog.dart';
 import '../widgets/tally_brand_painters.dart';
@@ -1020,6 +1021,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                         children: [
                                                           Text(
                                                             e.key,
+                                                            style: TextStyle(
+                                                              color: isSelected ? primary : onSurface,
+                                                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                                            ),
+                                                          ),
+                                                          if (isSelected)
+                                                            Icon(Icons.check, size: 18, color: primary),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                );
+                                              },
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                      ListTile(
+                                        leading: const Icon(Icons.language_rounded, color: Colors.blueAccent),
+                                        title: Text('App Language', style: TextStyle(color: onSurface)),
+                                        subtitle: ValueListenableBuilder<String>(
+                                          valueListenable: LanguageService.currentLanguageNotifier,
+                                          builder: (context, langCode, _) {
+                                            final opt = LanguageService.supportedLanguages.firstWhere(
+                                              (l) => l.code == langCode,
+                                              orElse: () => LanguageService.supportedLanguages.first,
+                                            );
+                                            return Text(
+                                              '${opt.englishName} (${opt.nativeName})',
+                                              style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12),
+                                            );
+                                          },
+                                        ),
+                                        trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
+                                        onTap: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (inner) => ValueListenableBuilder<String>(
+                                              valueListenable: LanguageService.currentLanguageNotifier,
+                                              builder: (context, activeLang, _) {
+                                                return SimpleDialog(
+                                                  backgroundColor: surface,
+                                                  title: Text('Select Language', style: TextStyle(color: onSurface)),
+                                                  children: LanguageService.supportedLanguages.map((l) {
+                                                    final isSelected = activeLang == l.code;
+                                                    return SimpleDialogOption(
+                                                      onPressed: () {
+                                                        LanguageService.setLanguage(l.code);
+                                                        Navigator.pop(inner);
+                                                      },
+                                                      child: Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                        children: [
+                                                          Text(
+                                                            '${l.englishName} (${l.nativeName})',
                                                             style: TextStyle(
                                                               color: isSelected ? primary : onSurface,
                                                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
