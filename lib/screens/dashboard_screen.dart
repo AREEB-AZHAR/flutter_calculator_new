@@ -65,6 +65,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         final hasPrompted = await BiometricService.hasPromptedUser(currentUser);
         if (!hasPrompted && mounted) {
           await BiometricService.markUserPrompted(currentUser);
+          if (!mounted) return;
           final configure = await BiometricService.showBiometricSetupPrompt(context);
           if (configure == true && mounted) {
             final authSuccess = await BiometricService.authenticate(
