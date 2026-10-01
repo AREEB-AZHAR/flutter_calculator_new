@@ -18,10 +18,11 @@
 > 6. **Native Ad Banner & Google Sign-In**: Contextual partner banner on Dashboard and Google button on Login.
 > 7. **30-Second Non-Skippable Rewarded Ad Dialog**: Live countdown timer, progress bar, and reward unlock modal.
 > 8. **Google Play Billing Checkout & Premium Screen**: Official in-app purchase tiers with one-tap checkout and restore purchases.
+> 9. **Personal Wealth Accountant (Smart Insights)**: Multi-horizon dashboard showing Executive CPA brief, 50/30/20 breakdown, loans hub, and tax return tracker.
 
-| Flowing Splash | Home & Ad Banner | Insights Pro Lock | 30s Rewarded Ad | Play Store Billing & Tiers |
+| Flowing Splash | Home & Ad Banner | Insights Pro Lock | Personal Accountant Insights | Play Store Billing & Tiers |
 | :---: | :---: | :---: | :---: | :---: |
-| *(Add Splash Screenshot)* | *(Add Dashboard Banner Screenshot)* | *(Add Pro Paywall Screenshot)* | *(Add Rewarded Ad Screenshot)* | *(Add Premium Billing Screenshot)* |
+| *(Add Splash Screenshot)* | *(Add Dashboard Banner Screenshot)* | *(Add Pro Paywall Screenshot)* | *(Add Insights Screen Screenshot)* | *(Add Premium Billing Screenshot)* |
 
 ---
 
@@ -286,6 +287,47 @@
 - **Sub-15ms Instant Screen Mounting**:
   - Tab instantiation in Flutter takes merely ~6–12ms, rendering tabs instantly when selected without any need to keep 5 heavy screens loaded concurrently in the background.
 
+### 29. 🛡️ Case-Insensitive SQLite Collation & Biometric Multi-Account Isolation (v1.7.0)
+
+- **Case-Insensitive SQLite Authentication**:
+  - Added `COLLATE NOCASE` across all user table authentication queries (`authenticateUser`, `getUsernameForIdentifier`, `getUserEmail`, `bindEmailToUser`, `getUserByEmail`, `updatePasswordByEmail`, and `registerUser`).
+  - Mobile keyboards that auto-capitalize first letters (e.g. `User123` vs `user123`) now authenticate cleanly without rejection.
+  - Case-insensitive database indexes (`idx_users_username_nocase`, `idx_users_email_nocase`) ensure sub-millisecond lookups.
+  - Google OAuth sign-in automatically persists clean lowercase email addresses and heals legacy records.
+- **Biometric Multi-Account Isolation**:
+  - `BiometricService.syncUserSession(username)` ensures switching to or registering a new account clears previous biometric credentials unless the active account explicitly enabled them.
+  - Automated post-login onboarding prompt on Dashboard invites new and switched accounts to configure screen lock or fingerprint unlock with a single tap.
+
+### 30. 🧠 Smart Financial Intelligence & Personal Wealth Accountant Suite (v1.8.0)
+
+- **Multi-Horizon Analytical Framework**:
+  - Seamlessly switch between **Daily**, **Weekly**, **Monthly**, and **Yearly** horizons with animated selection pills.
+  - Interactive period stepper (`<` and `>`) allows stepping back through historical weeks, months, or years with a quick "Back to Current" reset action.
+  - Dynamically calculates Inflow, Outflow, Net Surplus/Deficit, Savings Rate %, and Daily Burn Velocity with period-over-period delta comparisons (`vs Previous Period`).
+- **Executive Accountant's Take & Financial Health Score**:
+  - Automated CPA-grade briefing synthesizing current cash flow patterns, identifying primary expense drivers, and delivering concrete, actionable recommendations.
+  - **100-Point Financial Health Score** evaluating savings rate, budget discipline, debt burden, and cash flow stability with status badges (*Excellent*, *Strong*, *Moderate*, *Needs Attention*).
+- **Future Planning: 50/30/20 Rule Optimizer & Safe-to-Spend**:
+  - Compares actual spending against the golden standard: **Needs (~50%)**, **Wants (~30%)**, and **Savings & Debt (~20%)** with visual tri-color distribution bars and advisory commentary.
+  - **Safe-to-Spend Run Rate**: Real-time daily and weekly discretionary allowances to ensure positive end-of-period cash reserves.
+  - **Wealth Trajectory**: 6-month and 1-year projected savings milestones based on current velocity.
+- **Category Spending & Prorated Budgets Matrix**:
+  - Prorates monthly budgets accurately across Daily (/30), Weekly (*7/30), Monthly (*1), and Yearly (*12) scopes.
+  - Visual progress indicators with dynamic semantic coloring (Theme Primary < 75%, Amber 75–100%, Coral Red > 100% with `OVER` badges).
+- **Loans & Debt Liabilities Portfolio**:
+  - Integrated tracking of outstanding debt (`payable`) vs receivables (`receivable`) and net liability position.
+  - **Debt-to-Income (DTI) Ratio**: Evaluates debt load against inflow with status tiers (*Healthy <36%*, *Moderate 36-43%*, *Strained >43%*).
+  - **Debt Payoff Advisor**: Evaluates Snowball vs. Avalanche strategies, highlights upcoming due dates, and projects debt-free milestones.
+- **Tax Return & Deductions Tracker**:
+  - Automatically identifies tax-deductible expenditures (Healthcare, Education, Charitable Gifts, Professional Expenses).
+  - Calculates year-to-date deductible totals and estimates tax savings across standard effective brackets (15%, 22%, 24%).
+  - Provides CPA-style tax preparation tips to maximize write-offs ahead of tax filing.
+- **Payment Types & Liquidity Split**:
+  - Analyzes spending distribution across accounts (Credit Card, Cash, Bank Transfer, Digital Wallet).
+  - Alerts users on credit card reliance to avoid revolving interest traps.
+- **High-Converting Pro Locked Experience**:
+  - Premium preview showcasing live-like interactive preview cards, CPA badges, and comprehensive feature value checklist.
+
 ---
 
 ## 🏗️ Clean Modular Architecture
@@ -319,6 +361,7 @@ lib/
 │   ├── premium_screen.dart         # Dedicated Tally Pro paywall & Google Pay checkout
 │   └── profile_screen.dart         # Features & Settings guide, Theme Studio & tours reset
 ├── services/                       # State & Persistence
+│   ├── insights_engine.dart        # Multi-horizon intelligence, CPA commentary & 50/30/20 engine
 │   ├── in_app_purchase_service.dart# Google Play Billing (IAP) service & restore engine
 │   ├── monetization_service.dart   # Recalculated pricing, Theme Pass engine & promo codes
 │   ├── ad_service.dart             # Google AdMob Banner & Rewarded 30s Video ads
