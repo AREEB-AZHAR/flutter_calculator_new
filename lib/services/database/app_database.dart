@@ -24,7 +24,9 @@ class AppDatabase {
   }
 
   Future<Database> get database async {
-    if (_database != null) return _database!;
+    if (_database != null) {
+      return _database!;
+    }
     _database = await _initDatabase();
     return _database!;
   }
@@ -45,8 +47,8 @@ class AppDatabase {
         await db.execute('''
           CREATE TABLE users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT,
+            username TEXT UNIQUE NOT NULL COLLATE NOCASE,
+            email TEXT COLLATE NOCASE,
             password_hash TEXT NOT NULL,
             salt TEXT NOT NULL,
             created_at TEXT NOT NULL
@@ -117,7 +119,13 @@ class AppDatabase {
 
     // Ensure email column exists on users table
     try {
-      await db.execute('ALTER TABLE users ADD COLUMN email TEXT');
+      await db.execute('ALTER TABLE users ADD COLUMN email TEXT COLLATE NOCASE');
+    } catch (_) {}
+
+    // Ensure case-insensitive indexes exist for rapid authentication and lookup
+    try {
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_users_username_nocase ON users(username COLLATE NOCASE)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_users_email_nocase ON users(email COLLATE NOCASE)');
     } catch (_) {}
 
     // Ensure text_color and theme columns exist for existing databases
@@ -269,18 +277,20 @@ class AppDatabase {
     String? email,
   }) async {
     final db = await database;
+    final cleanUsername = username.trim();
     final existing = await db.query(
       'users',
-      where: 'username = ?',
-      whereArgs: [username],
+      where: 'username = ? COLLATE NOCASE',
+      whereArgs: [cleanUsername],
     );
     if (existing.isNotEmpty) return false;
 
     if (email != null && email.trim().isNotEmpty) {
+      final cleanEmail = email.trim().toLowerCase();
       final existingEmail = await db.query(
         'users',
-        where: 'email = ?',
-        whereArgs: [email.trim().toLowerCase()],
+        where: 'email = ? COLLATE NOCASE',
+        whereArgs: [cleanEmail],
       );
       if (existingEmail.isNotEmpty) return false;
     }
@@ -289,7 +299,7 @@ class AppDatabase {
     final hash = SecurityHelper.hashPassword(password, salt);
 
     await db.insert('users', {
-      'username': username,
+      'username': cleanUsername,
       'email': email?.trim().toLowerCase(),
       'password_hash': hash,
       'salt': salt,
@@ -297,8 +307,8 @@ class AppDatabase {
     });
 
     await db.insert('profiles', {
-      'username': username,
-      'display_name': username,
+      'username': cleanUsername,
+      'display_name': cleanUsername,
       'bio': 'Managing finances with clarity & style.',
       'photo_path': null,
       'primary_color': const Color(0xFFE4572E).toARGB32(),
@@ -310,7 +320,7 @@ class AppDatabase {
     });
 
     for (var acc in ['Main', 'Cash', 'Credit Card', 'Digital Wallet']) {
-      await db.insert('accounts', {'username': username, 'name': acc});
+      await db.insert('accounts', {'username': cleanUsername, 'name': acc});
     }
 
     final defaultBudgets = {
@@ -321,7 +331,7 @@ class AppDatabase {
     };
     for (var b in defaultBudgets.entries) {
       await db.insert('budgets', {
-        'username': username,
+        'username': cleanUsername,
         'category': b.key,
         'amount_limit': b.value,
       });
@@ -335,8 +345,8 @@ class AppDatabase {
     final cleanId = identifier.trim();
     final results = await db.query(
       'users',
-      where: 'username = ? OR email = ?',
-      whereArgs: [cleanId, cleanId.toLowerCase()],
+      where: 'username = ? COLLATE NOCASE OR email = ? COLLATE NOCASE',
+      whereArgs: [cleanId, cleanId],
     );
     if (results.isEmpty) return false;
 
@@ -354,8 +364,8 @@ class AppDatabase {
     final results = await db.query(
       'users',
       columns: ['username'],
-      where: 'username = ? OR email = ?',
-      whereArgs: [cleanId, cleanId.toLowerCase()],
+      where: 'username = ? COLLATE NOCASE OR email = ? COLLATE NOCASE',
+      whereArgs: [cleanId, cleanId],
     );
     if (results.isNotEmpty) {
       return results.first['username'] as String;
@@ -366,11 +376,12 @@ class AppDatabase {
   /// Retrieves the bound email for a given user.
   Future<String?> getUserEmail(String username) async {
     final db = await database;
+    final cleanUsername = username.trim();
     final results = await db.query(
       'users',
       columns: ['email'],
-      where: 'username = ?',
-      whereArgs: [username],
+      where: 'username = ? COLLATE NOCASE',
+      whereArgs: [cleanUsername],
     );
     if (results.isNotEmpty) {
       return results.first['email'] as String?;
@@ -382,18 +393,19 @@ class AppDatabase {
   Future<bool> bindEmailToUser(String username, String email) async {
     final db = await database;
     final cleanEmail = email.trim().toLowerCase();
+    final cleanUsername = username.trim();
     final existing = await db.query(
       'users',
-      where: 'email = ? AND username != ?',
-      whereArgs: [cleanEmail, username],
+      where: 'email = ? COLLATE NOCASE AND username != ? COLLATE NOCASE',
+      whereArgs: [cleanEmail, cleanUsername],
     );
     if (existing.isNotEmpty) return false;
 
     final count = await db.update(
       'users',
       {'email': cleanEmail},
-      where: 'username = ?',
-      whereArgs: [username],
+      where: 'username = ? COLLATE NOCASE',
+      whereArgs: [cleanUsername],
     );
     return count > 0;
   }
@@ -401,11 +413,11 @@ class AppDatabase {
   /// Looks up a user account by email address or username.
   Future<Map<String, dynamic>?> getUserByEmail(String email) async {
     final db = await database;
-    final cleanEmail = email.trim().toLowerCase();
+    final cleanEmail = email.trim();
     final results = await db.query(
       'users',
-      where: 'email = ? OR username = ?',
-      whereArgs: [cleanEmail, email.trim()],
+      where: 'email = ? COLLATE NOCASE OR username = ? COLLATE NOCASE',
+      whereArgs: [cleanEmail, cleanEmail],
     );
     return results.isNotEmpty ? results.first : null;
   }
@@ -413,15 +425,15 @@ class AppDatabase {
   /// Updates a user's password using their bound email address (for password recovery).
   Future<bool> updatePasswordByEmail(String email, String newPassword) async {
     final db = await database;
-    final cleanEmail = email.trim().toLowerCase();
+    final cleanEmail = email.trim();
     final newSalt = SecurityHelper.generateSalt();
     final newHash = SecurityHelper.hashPassword(newPassword, newSalt);
 
     final count = await db.update(
       'users',
       {'password_hash': newHash, 'salt': newSalt},
-      where: 'email = ? OR username = ?',
-      whereArgs: [cleanEmail, email.trim()],
+      where: 'email = ? COLLATE NOCASE OR username = ? COLLATE NOCASE',
+      whereArgs: [cleanEmail, cleanEmail],
     );
     return count > 0;
   }
@@ -668,10 +680,11 @@ class AppDatabase {
     String? photoUrl,
   }) async {
     final db = await database;
+    final cleanEmail = email.trim();
     final results = await db.query(
       'users',
-      where: 'username = ?',
-      whereArgs: [email],
+      where: 'username = ? COLLATE NOCASE OR email = ? COLLATE NOCASE',
+      whereArgs: [cleanEmail, cleanEmail],
     );
 
     if (results.isEmpty) {
@@ -682,17 +695,18 @@ class AppDatabase {
       );
 
       await db.insert('users', {
-        'username': email,
+        'username': cleanEmail,
+        'email': cleanEmail.toLowerCase(),
         'password_hash': hash,
         'salt': salt,
         'created_at': DateTime.now().toIso8601String(),
       });
 
       await db.insert('profiles', {
-        'username': email,
+        'username': cleanEmail,
         'display_name': displayName.isNotEmpty
             ? displayName
-            : email.split('@').first,
+            : cleanEmail.split('@').first,
         'bio': 'Google Account • Cloud Synced',
         'photo_path': photoUrl,
         'primary_color': const Color(0xFFE4572E).toARGB32(),
@@ -705,7 +719,7 @@ class AppDatabase {
 
       for (var acc in ['Main', 'Cash', 'Credit Card', 'Digital Wallet']) {
         await db.insert('accounts', {
-          'username': email,
+          'username': cleanEmail,
           'name': acc,
         }, conflictAlgorithm: ConflictAlgorithm.ignore);
       }
@@ -718,14 +732,25 @@ class AppDatabase {
       };
       for (var b in defaultBudgets.entries) {
         await db.insert('budgets', {
-          'username': email,
+          'username': cleanEmail,
           'category': b.key,
           'amount_limit': b.value,
         }, conflictAlgorithm: ConflictAlgorithm.ignore);
       }
     } else {
+      final user = results.first;
+      final canonicalUsername = user['username'] as String;
+      if (user['email'] == null || (user['email'] as String).isEmpty) {
+        await db.update(
+          'users',
+          {'email': cleanEmail.toLowerCase()},
+          where: 'username = ? COLLATE NOCASE',
+          whereArgs: [canonicalUsername],
+        );
+      }
+
       if (displayName.isNotEmpty || photoUrl != null) {
-        final currentProfile = await loadProfile(email);
+        final currentProfile = await loadProfile(canonicalUsername);
         final hasCustomUploadedPhoto =
             currentProfile.photoPath != null &&
             currentProfile.photoPath!.isNotEmpty &&

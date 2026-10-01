@@ -8,6 +8,66 @@ class BiometricService {
   static final LocalAuthentication _auth = LocalAuthentication();
   static const String _prefBiometricEnabledKey = 'tally_biometric_enabled';
   static const String _prefBiometricUserKey = 'tally_biometric_username';
+  static const String _prefLastUserKey = 'tally_last_logged_in_user';
+  static const String _prefBiometricPromptedPrefix = 'tally_biometric_prompted_';
+
+  /// Retrieves the last logged-in username.
+  static Future<String?> getLastLoggedInUser() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_prefLastUserKey);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Sets the last logged-in username.
+  static Future<void> setLastLoggedInUser(String username) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefLastUserKey, username);
+    } catch (_) {}
+  }
+
+  /// Checks if the user has already been prompted for biometric setup.
+  static Future<bool> hasPromptedUser(String username) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('$_prefBiometricPromptedPrefix$username') ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Marks that the user has been prompted for biometric setup.
+  static Future<void> markUserPrompted(String username) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('$_prefBiometricPromptedPrefix$username', true);
+    } catch (_) {}
+  }
+
+  /// Synchronizes biometric session whenever ANY user successfully logs in or registers.
+  /// If the current user has biometric unlock enabled, they become the active biometric user.
+  /// If the current user does NOT have biometric unlock enabled, the active biometric credentials
+  /// are cleared to prevent previous users from being mistakenly offered on logout.
+  static Future<void> syncUserSession(String username) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefLastUserKey, username);
+
+      final isEnabled = await isBiometricEnabled(username: username);
+      if (isEnabled) {
+        await prefs.setString(_prefBiometricUserKey, username);
+        await prefs.setBool(_prefBiometricEnabledKey, true);
+      } else {
+        await prefs.remove(_prefBiometricUserKey);
+        await prefs.setBool(_prefBiometricEnabledKey, false);
+      }
+    } catch (e) {
+      debugPrint('BiometricService.syncUserSession error: $e');
+    }
+  }
 
   /// Checks if the device has biometric or screen lock hardware available and supported.
   static Future<bool> isDeviceSupported() async {

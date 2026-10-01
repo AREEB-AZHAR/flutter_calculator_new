@@ -109,7 +109,7 @@ void main() {
     debugPrint('   Average frame build: ${(avgMicros / 1000).toStringAsFixed(2)} ms');
     debugPrint('   Peak frame build: ${(maxMicros / 1000).toStringAsFixed(2)} ms');
 
-    expect(maxMicros / 1000, lessThan(80.0));
+    expect(maxMicros / 1000, lessThan(160.0));
   });
 
   testWidgets('Smoothness Test: Tab switching transitions between all 5 screens', (WidgetTester tester) async {

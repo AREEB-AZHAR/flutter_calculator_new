@@ -91,6 +91,15 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           }
         });
       }
+    } else if (mounted) {
+      final lastUser = await BiometricService.getLastLoggedInUser();
+      setState(() {
+        _canUseBiometrics = false;
+        _biometricUser = null;
+        if (_usernameCtrl.text.isEmpty && lastUser != null && lastUser.isNotEmpty && !BiometricService.isExplicitLogout) {
+          _usernameCtrl.text = lastUser;
+        }
+      });
     }
   }
 
@@ -104,9 +113,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       final googleUser = await GoogleAuthService.signIn(context);
       if (googleUser != null) {
         BiometricService.isExplicitLogout = false;
-        if (await BiometricService.isBiometricEnabled(username: googleUser.email)) {
-          await BiometricService.setBiometricEnabled(true, username: googleUser.email);
-        }
+        await BiometricService.syncUserSession(googleUser.email);
         await AppState.loadAllUserData(googleUser.email);
         if (!mounted) return;
         Navigator.pushReplacement(
@@ -148,6 +155,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       );
       if (success) {
         BiometricService.isExplicitLogout = false;
+        await BiometricService.syncUserSession(_biometricUser!);
         await AppState.loadAllUserData(_biometricUser!);
         if (!mounted) return;
         Navigator.pushReplacement(
@@ -194,9 +202,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         if (success) {
           BiometricService.isExplicitLogout = false;
           final canonicalUsername = await AppDatabase.instance.getUsernameForIdentifier(identifier) ?? identifier;
-          if (await BiometricService.isBiometricEnabled(username: canonicalUsername)) {
-            await BiometricService.setBiometricEnabled(true, username: canonicalUsername);
-          }
+          await BiometricService.syncUserSession(canonicalUsername);
           await AppState.loadAllUserData(canonicalUsername);
           if (!mounted) return;
           Navigator.pushReplacement(
@@ -264,6 +270,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           email: email,
         );
         if (registered) {
+          BiometricService.isExplicitLogout = false;
+          await BiometricService.syncUserSession(username);
           await AppState.loadAllUserData(username);
           if (!mounted) return;
           Navigator.pushReplacement(
@@ -677,12 +685,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               color: met ? Colors.greenAccent.shade700 : onSurface.withValues(alpha: 0.35),
             ),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: met ? FontWeight.w600 : FontWeight.normal,
-                color: met ? onSurface : onSurface.withValues(alpha: 0.6),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: met ? FontWeight.w600 : FontWeight.normal,
+                  color: met ? onSurface : onSurface.withValues(alpha: 0.6),
+                ),
               ),
             ),
           ],
@@ -702,21 +712,22 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'PASSWORD SECURITY CRITERIA',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.6,
-                  color: onSurface.withValues(alpha: 0.55),
+              Expanded(
+                child: Text(
+                  'PASSWORD SECURITY CRITERIA',
+                  style: TextStyle(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                    color: onSurface.withValues(alpha: 0.55),
+                  ),
                 ),
               ),
               if (res.isValid)
                 const Text(
                   'STRONG',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.greenAccent),
+                  style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Colors.greenAccent),
                 ),
             ],
           ),
