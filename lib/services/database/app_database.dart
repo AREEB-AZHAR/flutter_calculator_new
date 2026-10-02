@@ -1272,6 +1272,20 @@ class AppDatabase {
     });
   }
 
+  /// Deletes a goal entry linked to a transaction if present.
+  Future<void> deleteGoalEntryByTransactionId(String username, String txId) async {
+    final db = await database;
+    final entries = await db.query(
+      'goal_entries',
+      where: 'id = ? AND username = ?',
+      whereArgs: ['tx_$txId', username],
+    );
+    if (entries.isNotEmpty) {
+      final goalId = entries.first['goal_id'] as String;
+      await deleteGoalEntry(username, 'tx_$txId', goalId);
+    }
+  }
+
 
   // --- ACCOUNTS ---
   Future<List<String>> loadAccounts(String username) async {

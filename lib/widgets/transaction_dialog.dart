@@ -484,7 +484,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
           child: Text('Cancel', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
         ),
         ElevatedButton(
-          onPressed: () {
+          onPressed: () async {
             final enteredTitle = _titleCtrl.text.trim();
             // If user leaves title empty, save category name as the title
             final effectiveTitle = enteredTitle.isNotEmpty ? enteredTitle : _category;
@@ -503,7 +503,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                 if (AppState.currentUser != null) {
                   AppState.savePlannedTransaction(AppState.currentUser!, plan);
                 }
-                Navigator.of(context).pop();
+                if (context.mounted) Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Saved to Planned Future Sheet for ${formatDateWithYear(_selectedDate)}!'),
@@ -511,16 +511,6 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                   ),
                 );
                 return;
-              }
-
-              // Handle Savings Goal deposits: create a GoalEntry + record the transaction
-              if (_category == 'Savings Goal' && _selectedGoalId != null && AppState.currentUser != null) {
-                final entry = GoalEntry(
-                  goalId: _selectedGoalId!,
-                  amount: amount,
-                  note: enteredTitle.isNotEmpty ? enteredTitle : null,
-                );
-                AppState.addGoalEntry(AppState.currentUser!, entry);
               }
 
               final newTx = Transaction(
@@ -533,6 +523,21 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                 account: _account,
                 recurrence: _recurrence,
               );
+
+              // Handle Savings Goal deposits: create a GoalEntry + record the transaction
+              if (_category == 'Savings Goal' && _selectedGoalId != null && AppState.currentUser != null) {
+                final entry = GoalEntry(
+                  id: 'tx_${newTx.id}',
+                  goalId: _selectedGoalId!,
+                  amount: amount,
+                  date: _selectedDate,
+                  note: enteredTitle.isNotEmpty ? enteredTitle : null,
+                );
+                await AppState.addGoalEntry(AppState.currentUser!, entry);
+              } else if (widget.existingTx != null && widget.existingTx!.category == 'Savings Goal' && AppState.currentUser != null) {
+                // Category was changed away from Savings Goal: remove the previous entry
+                await AppState.removeGoalEntryForTransaction(AppState.currentUser!, widget.existingTx!.id);
+              }
 
               final currentList = List<Transaction>.from(AppState.transactionsNotifier.value);
               if (widget.existingTx != null) {
@@ -549,7 +554,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
               if (AppState.currentUser != null) {
                 AppDatabase.instance.insertTransaction(AppState.currentUser!, newTx);
               }
-              Navigator.of(context).pop();
+              if (context.mounted) Navigator.of(context).pop();
             }
           },
           style: ElevatedButton.styleFrom(
