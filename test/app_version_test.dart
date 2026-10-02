@@ -11,28 +11,28 @@ void main() {
   });
 
   group('AppVersion Service Tests', () {
-    test('Default fallback version matches 1.8.7 and build 17', () {
-      expect(AppVersion.version, equals('1.8.7'));
-      expect(AppVersion.buildNumber, equals('17'));
+    test('Default fallback version matches 1.8.8 and build 18', () {
+      expect(AppVersion.version, equals('1.8.8'));
+      expect(AppVersion.buildNumber, equals('18'));
       expect(AppVersion.appName, equals('Tally'));
-      expect(AppVersion.displayString, equals('Tally v1.8.7 (Build 17)'));
+      expect(AppVersion.displayString, equals('Tally v1.8.8 (Build 18)'));
     });
 
     test('Mock values update getters and display string dynamically', () {
       AppVersion.setMockValues(
-        version: '1.8.8',
-        buildNumber: '18',
+        version: '1.8.9',
+        buildNumber: '19',
         appName: 'Tally Pro',
       );
 
-      expect(AppVersion.version, equals('1.8.8'));
-      expect(AppVersion.buildNumber, equals('18'));
+      expect(AppVersion.version, equals('1.8.9'));
+      expect(AppVersion.buildNumber, equals('19'));
       expect(AppVersion.appName, equals('Tally Pro'));
-      expect(AppVersion.displayString, equals('Tally Pro v1.8.8 (Build 18)'));
+      expect(AppVersion.displayString, equals('Tally Pro v1.8.9 (Build 19)'));
 
       AppVersion.reset();
-      expect(AppVersion.version, equals('1.8.7'));
-      expect(AppVersion.buildNumber, equals('17'));
+      expect(AppVersion.version, equals('1.8.8'));
+      expect(AppVersion.buildNumber, equals('18'));
     });
 
     test('pubspec.yaml single-source-of-truth matches AppVersion fallback', () {
@@ -65,7 +65,7 @@ void main() {
       );
 
       expect(find.byKey(const Key('app_version_footer')), findsOneWidget);
-      expect(find.text('Tally v1.8.7 (Build 17)'), findsOneWidget);
+      expect(find.text('Tally v1.8.8 (Build 18)'), findsOneWidget);
     });
   });
 }

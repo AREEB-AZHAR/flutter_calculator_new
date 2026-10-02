@@ -469,6 +469,17 @@
   Add-MpPreference -ExclusionPath "$env:USERPROFILE\.gradle"
   ```
 
+### 37. 🛡️ Google Play Core & Flutter Deferred Components ProGuard Hardening (v1.8.8)
+
+- **Root Cause Resolution**:
+  - Flutter's native Java embedding contains optional dynamic delivery hooks (`PlayStoreDeferredComponentManager` and `FlutterPlayStoreSplitApplication`) that reference `com.google.android.play.core.**`.
+  - In release builds with R8 shrinking, missing references to Play Core caused fatal compilation errors because the app operates as a standalone package without split modules.
+- **ProGuard Hardening**:
+  - Added `-dontwarn com.google.android.play.core.**`, `-dontwarn io.flutter.embedding.engine.deferredcomponents.**`, and `-dontwarn io.flutter.embedding.android.FlutterPlayStoreSplitApplication` to [`android/app/proguard-rules.pro`](android/app/proguard-rules.pro).
+  - Guaranteed zero fatal warnings or missing class aborts during release `:app:minifyReleaseWithR8`.
+- **Version Parity**:
+  - Bumped to `v1.8.8+18` per strict `+0.0.1` incremental release policy.
+
 ---
 
 ## 🏗️ Clean Modular Architecture
@@ -683,7 +694,14 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 
 ## 📝 Recent Changelog
 
-- **v1.8.7 (Current)**:
+- **v1.8.8 (Current)**:
+  - **Google Play Core & Flutter Deferred Components ProGuard Fix**:
+    - Added suppression directives in [`android/app/proguard-rules.pro`](android/app/proguard-rules.pro) for `com.google.android.play.core.**`, `io.flutter.embedding.engine.deferredcomponents.**`, and `FlutterPlayStoreSplitApplication`.
+    - Resolved fatal `:app:minifyReleaseWithR8` missing class build failure.
+  - **Version Parity**:
+    - Bumped to `v1.8.8+18` across `pubspec.yaml`, `AppVersion` service, and automated test suite per +0.0.1 incremental policy.
+
+- **v1.8.7**:
   - **Android Build Speed Acceleration & R8 Optimization**:
     - Tuned `android/gradle.properties` with parallel task execution (`org.gradle.parallel=true`), local build caching (`org.gradle.caching=true`), daemon persistence, and file system watching (`org.gradle.vfs.watch=true`).
     - Configured R8 compat mode (`android.enableR8.fullMode=false`) and non-transitive R classes (`android.nonTransitiveRClass=true`), slashing whole-program minification time.

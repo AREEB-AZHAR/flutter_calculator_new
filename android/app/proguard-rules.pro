@@ -8,6 +8,11 @@
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.**  { *; }
 
+# Google Play Core & Flutter Deferred Components (optional engine dependencies)
+-dontwarn com.google.android.play.core.**
+-dontwarn io.flutter.embedding.engine.deferredcomponents.**
+-dontwarn io.flutter.embedding.android.FlutterPlayStoreSplitApplication
+
 # Google Mobile Ads SDK (suppress missing inner class reflection warnings)
 -dontwarn com.google.android.gms.internal.ads.**
 -dontwarn com.google.android.gms.ads.**
