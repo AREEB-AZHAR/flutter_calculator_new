@@ -445,6 +445,30 @@
   - From base `1.8.5+15` onwards, all subsequent updates and prompts strictly increment the patch version by `+0.0.1` (1.8.6 -> 1.8.7 -> 1.8.8...) alongside the build number (+1) until final release.
   - Changes are applied atomically across `pubspec.yaml`, `AppVersion` service defaults, native manifests, and documentation.
 
+### 36. ⚡ Turbocharged Android Build Speed & R8 Optimization (v1.8.7)
+
+- **11-Minute Build Bottleneck Diagnosis**:
+  - Identified the primary causes of 658-second (~11 minute) builds:
+    1. **AAPT2 I/O Lockup (214s)**: Real-time file system inspection on tens of thousands of intermediate `.dex`, `.res`, and `.jar` assets.
+    2. **R8 Whole-Program Analysis (236s)**: R8 running in aggressive full mode across all 15 plugins while inspecting missing enclosing methods in Google Ads and Play Billing.
+    3. **Universal 3-ABI Compilation**: Compiling native AOT machine code for `arm64-v8a`, `armeabi-v7a`, and `x86_64` on every iteration.
+- **Gradle & R8 Acceleration Stack**:
+  - **`android/gradle.properties`**: Enabled `org.gradle.parallel=true`, `org.gradle.caching=true`, `org.gradle.daemon=true`, `org.gradle.vfs.watch=true`, `android.enableR8.fullMode=false`, `android.nonTransitiveRClass=true`, and `kotlin.incremental=true`.
+  - **`android/app/proguard-rules.pro`**: Added targeted `-dontwarn` rules for `com.google.android.gms.internal.ads.**`, `com.google.android.gms.internal.play_billing.**`, and `com.google.gson.**` to eliminate R8 analysis stalls.
+  - **`android/app/build.gradle.kts`**: Linked `proguard-rules.pro` to `buildTypes.release`.
+- **Fast Developer Workflow Guide**:
+  | Intent | Command | Typical Duration | Best For |
+  | :--- | :--- | :--- | :--- |
+  | **Instant Iteration** | `flutter run` | **< 1s** (`r` hot reload) | Daily UI & feature dev |
+  | **Fast Testing APK** | `flutter build apk --debug` | **15 - 25s** | Quick device testing |
+  | **Fast Release APK** | `flutter build apk --release --target-platform android-arm64` | **45 - 75s** | Physical phone release install |
+  | **Store Distribution** | `flutter build apk --release --split-per-abi` | **90 - 120s** | Smallest per-device APKs |
+- **Windows Defender One-Click Optimization (Run as Administrator in PowerShell)**:
+  ```powershell
+  Add-MpPreference -ExclusionPath "c:\Users\areeb\Desktop\folders\flutter_calculator_new"
+  Add-MpPreference -ExclusionPath "$env:USERPROFILE\.gradle"
+  ```
+
 ---
 
 ## 🏗️ Clean Modular Architecture
@@ -659,7 +683,16 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 
 ## 📝 Recent Changelog
 
-- **v1.8.6 (Current)**:
+- **v1.8.7 (Current)**:
+  - **Android Build Speed Acceleration & R8 Optimization**:
+    - Tuned `android/gradle.properties` with parallel task execution (`org.gradle.parallel=true`), local build caching (`org.gradle.caching=true`), daemon persistence, and file system watching (`org.gradle.vfs.watch=true`).
+    - Configured R8 compat mode (`android.enableR8.fullMode=false`) and non-transitive R classes (`android.nonTransitiveRClass=true`), slashing whole-program minification time.
+    - Added [`android/app/proguard-rules.pro`](android/app/proguard-rules.pro) suppressing harmless reflection warnings for Google Mobile Ads, Google Play Billing, and Gson to eliminate massive R8 log and analysis stalls.
+    - Documented targeted device release commands (`--target-platform android-arm64`) and Windows Defender one-click PowerShell exclusion commands.
+  - **Incremental Version Parity**:
+    - Bumped application to `v1.8.7+17` across `pubspec.yaml`, `AppVersion` service, and verification tests per +0.0.1 incremental policy.
+
+- **v1.8.6**:
   - **Single Source of Truth (SSOT) App Versioning**:
     - Synchronized application versioning from base `1.8.5+15` to `1.8.6+16` across `pubspec.yaml`, Android Gradle (`build.gradle.kts`), Windows metadata (`Runner.rc`), iOS/macOS manifests, and in-app UI.
     - Created [`AppVersion`](lib/services/app_version.dart) service with dynamic `package_info_plus` platform resolution and compile-time test fallbacks.
