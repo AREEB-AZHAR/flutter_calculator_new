@@ -10,6 +10,7 @@ import 'services/ad_service.dart';
 import 'services/monetization_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/language_service.dart';
+import 'services/app_version.dart';
 import 'services/state.dart';
 import 'utils/constants.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -51,6 +52,9 @@ void main() async {
 
   // Initialize multilingual language preference
   await LanguageService.init();
+
+  // Initialize runtime application versioning from native platform
+  await AppVersion.init();
 
   // Initialize monetization and pro/ad-free purchase state
   await MonetizationService.initialize();

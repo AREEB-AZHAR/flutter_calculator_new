@@ -13,6 +13,7 @@ import '../services/ad_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/cloud_sync_service.dart';
 import '../services/language_service.dart';
+import '../services/app_version.dart';
 import '../utils/constants.dart';
 import '../widgets/color_picker_dialog.dart';
 import '../widgets/tally_brand_painters.dart';
@@ -1333,7 +1334,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   child: Column(
                                     children: [
                                       Text(
-                                        'Tally v1.8.1 (Build 11)',
+                                        AppVersion.displayString,
                                         style: TextStyle(
                                           color: onSurface.withValues(alpha: 0.7),
                                           fontSize: 13,

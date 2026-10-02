@@ -433,6 +433,18 @@
 - **End-of-Day Expiration Guard**:
   - Protected `SavingsGoal.isExpired` from prematurely failing goals mid-day on their due date: goals remain active until 23:59:59 of their scheduled completion date.
 
+### 35. 🏷️ Single Source of Truth App Versioning & Strict +0.0.1 Incremental Policy (v1.8.6)
+
+- **Single Source of Truth (SSOT) Architecture**:
+  - Consolidated versioning directly in `pubspec.yaml` (`version: 1.8.6+16`).
+  - Automated propagation to Android (`versionCode` & `versionName` in `build.gradle.kts`), iOS/macOS (`Info.plist` / `project.pbxproj`), and Windows (`Runner.rc` / `CMakeLists.txt`).
+- **Dynamic Runtime Reflection**:
+  - Introduced [`AppVersion`](lib/services/app_version.dart) service backed by `package_info_plus` with compile-time resilient fallbacks.
+  - Replaced hardcoded string in [`ProfileScreen`](lib/screens/profile_screen.dart) settings footer with dynamic `AppVersion.displayString` (`Tally v1.8.6 (Build 16) • Local Encrypted Vault`).
+- **Strict +0.0.1 Incremental Release Policy**:
+  - From base `1.8.5+15` onwards, all subsequent updates and prompts strictly increment the patch version by `+0.0.1` (1.8.6 -> 1.8.7 -> 1.8.8...) alongside the build number (+1) until final release.
+  - Changes are applied atomically across `pubspec.yaml`, `AppVersion` service defaults, native manifests, and documentation.
+
 ---
 
 ## 🏗️ Clean Modular Architecture
@@ -469,6 +481,7 @@ lib/
 │   ├── premium_screen.dart         # Dedicated Tally Pro paywall & Google Pay checkout
 │   └── profile_screen.dart         # Features & Settings guide, Theme Studio & tours reset
 ├── services/                       # State & Persistence
+│   ├── app_version.dart            # Single-source-of-truth runtime package_info_plus version manager
 │   ├── insights_engine.dart        # Multi-horizon intelligence, CPA commentary & 50/30/20 engine
 │   ├── connectivity_service.dart   # Live cross-platform internet reachability monitor
 │   ├── language_service.dart       # 7-Language multilingual engine & RTL manager
@@ -646,7 +659,18 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 
 ## 📝 Recent Changelog
 
-- **v2.2.0 (Current)**:
+- **v1.8.6 (Current)**:
+  - **Single Source of Truth (SSOT) App Versioning**:
+    - Synchronized application versioning from base `1.8.5+15` to `1.8.6+16` across `pubspec.yaml`, Android Gradle (`build.gradle.kts`), Windows metadata (`Runner.rc`), iOS/macOS manifests, and in-app UI.
+    - Created [`AppVersion`](lib/services/app_version.dart) service with dynamic `package_info_plus` platform resolution and compile-time test fallbacks.
+    - Dynamically bound the version footer in [`ProfileScreen`](lib/screens/profile_screen.dart) (`Tally v1.8.6 (Build 16) • Local Encrypted Vault`).
+  - **Strict +0.0.1 Incremental Policy**:
+    - Established enforced rule: every subsequent update/prompt increments patch version by `+0.0.1` (1.8.6 -> 1.8.7 -> 1.8.8...) alongside the build number (+1) until final release.
+  - **Automated Verification Suite**:
+    - Created unit, widget, and `pubspec.yaml` regex sync tests in [`test/app_version_test.dart`](test/app_version_test.dart).
+    - All tests passing with 0 analyzer issues.
+
+- **v1.8.5 (Goal Pacing & Notifications)**:
   - **Precision Goal Reminders & Dynamic Remaining Balance**:
     - Overhauled [`NotificationService.scheduleGoalReminders`](lib/services/notification_service.dart) to calculate the live remaining balance (`remainingToSave`) rather than retaining stale target amounts.
     - Added reactive rescheduling across all goal mutations: creating goals, adding deposits, deleting transactions, and switching currencies immediately update notification alarms.
