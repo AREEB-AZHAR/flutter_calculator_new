@@ -78,32 +78,76 @@ class SavingsGoal {
   /// Remaining amount needed to hit target.
   double get remainingToSave => max(0.0, target - saved);
 
-  /// Days remaining until due date; 0 if no due date or already past.
-  int get daysRemaining {
-    if (dueDate == null) return 0;
+  /// Effective due date: returns [dueDate] if explicitly set,
+  /// otherwise computes a sensible end-of-period date based on [periodType].
+  DateTime get effectiveDueDate {
+    if (dueDate != null) return dueDate!;
     final now = DateTime.now();
-    final diff = dueDate!.difference(DateTime(now.year, now.month, now.day)).inDays;
-    return diff < 0 ? 0 : diff;
+    switch (periodType) {
+      case 'daily':
+        return DateTime(now.year, now.month, now.day, 23, 59, 59);
+      case 'weekly':
+        final daysUntilSunday = DateTime.sunday - now.weekday;
+        return DateTime(now.year, now.month, now.day + daysUntilSunday, 23, 59, 59);
+      case 'monthly':
+      default:
+        return DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+    }
+  }
+
+  /// Whether the goal is due today.
+  bool get isDueToday {
+    final now = DateTime.now();
+    final effective = effectiveDueDate;
+    return effective.year == now.year && effective.month == now.month && effective.day == now.day;
+  }
+
+  /// Days remaining until due date.
+  /// If due today, returns 1. If past due, returns 0.
+  /// If no explicit due date is set, computes remaining days in the period.
+  int get daysRemaining {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (dueDate != null) {
+      final targetDay = DateTime(dueDate!.year, dueDate!.month, dueDate!.day);
+      final diff = targetDay.difference(today).inDays;
+      if (diff < 0) return 0;
+      if (diff == 0) return 1; // Due today has 1 day left (today)
+      return diff;
+    }
+    // No explicit due date: compute based on periodType
+    switch (periodType) {
+      case 'daily':
+        return 1;
+      case 'weekly':
+        final remainingInWeek = DateTime.sunday - now.weekday + 1;
+        return max(1, remainingInWeek);
+      case 'monthly':
+      default:
+        final lastDayOfMonth = DateTime(now.year, now.month + 1, 0).day;
+        final remainingInMonth = lastDayOfMonth - now.day + 1;
+        return max(1, remainingInMonth);
+    }
   }
 
   /// How much the user needs to save per day to hit the target by the due date.
   double get dailySavingsNeeded {
-    final remaining = target - saved;
-    if (remaining <= 0) return 0;
+    final remaining = remainingToSave;
+    if (remaining <= 0) return 0.0;
     final days = daysRemaining;
-    if (days <= 0) return remaining; // All remaining is due today
+    if (days <= 1) return remaining; // Due today or 1 day left: full remaining needed
     return remaining / days;
   }
 
   /// Weekly savings needed based on daily rate.
   double get weeklySavingsNeeded => dailySavingsNeeded * 7;
 
-  /// Whether the goal has expired (past due date and not yet reached target).
-  bool get isExpired =>
-      dueDate != null &&
-      DateTime.now().isAfter(dueDate!) &&
-      saved < target &&
-      !isCompleted;
+  /// Whether the goal has expired (strictly past the END of due date 23:59:59 and not yet reached target).
+  bool get isExpired {
+    if (dueDate == null || isCompleted) return false;
+    final endOfDueDay = DateTime(dueDate!.year, dueDate!.month, dueDate!.day, 23, 59, 59);
+    return DateTime.now().isAfter(endOfDueDay) && saved < target;
+  }
 
   /// Whether the goal is currently active (not completed, not failed, not archived).
   bool get isActive => !isCompleted && !isFailed && !isArchived;

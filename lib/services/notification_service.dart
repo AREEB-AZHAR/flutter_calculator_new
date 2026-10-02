@@ -15,13 +15,15 @@ class NotificationService {
   static final NotificationService instance = NotificationService._internal();
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   bool _isInitialized = false;
 
   static const String _prefRemindersEnabledKey = 'tally_reminders_enabled';
   static const String _channelId = 'expense_tally_reminders';
   static const String _channelName = 'Expense Tally Reminders';
-  static const String _channelDescription = 'Friendly periodic reminders to tally up daily expenses';
+  static const String _channelDescription =
+      'Friendly periodic reminders to tally up daily expenses';
 
   // 20 casual, friendly, conversational check-in prompts between friends
   static const List<String> friendlyMessages = [
@@ -63,17 +65,20 @@ class NotificationService {
       debugPrint('Error initializing timezones: $e');
     }
 
-    const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const DarwinInitializationSettings darwinSettings = DarwinInitializationSettings(
-      requestAlertPermission: false,
-      requestBadgePermission: false,
-      requestSoundPermission: false,
-    );
-    const WindowsInitializationSettings windowsSettings = WindowsInitializationSettings(
-      appName: 'Tally Expense Tracker',
-      appUserModelId: 'com.example.flutter_calculator_new',
-      guid: '9f5e1f0e-36fa-4ec4-bf18-091924b1702d',
-    );
+    const AndroidInitializationSettings androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const DarwinInitializationSettings darwinSettings =
+        DarwinInitializationSettings(
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        );
+    const WindowsInitializationSettings windowsSettings =
+        WindowsInitializationSettings(
+          appName: 'Tally Expense Tracker',
+          appUserModelId: 'com.example.flutter_calculator_new',
+          guid: '9f5e1f0e-36fa-4ec4-bf18-091924b1702d',
+        );
 
     const InitializationSettings initSettings = InitializationSettings(
       android: androidSettings,
@@ -90,7 +95,9 @@ class NotificationService {
         },
       );
     } catch (e) {
-      debugPrint('NotificationService._notificationsPlugin.initialize notice: $e');
+      debugPrint(
+        'NotificationService._notificationsPlugin.initialize notice: $e',
+      );
     }
 
     _isInitialized = true;
@@ -105,11 +112,18 @@ class NotificationService {
   Future<bool> requestPermission() async {
     if (kIsWeb) return false;
     if (Platform.isAndroid) {
-      final androidImplementation = _notificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-      final granted = await androidImplementation?.requestNotificationsPermission();
+      final androidImplementation = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      final granted = await androidImplementation
+          ?.requestNotificationsPermission();
       return granted ?? false;
     } else if (Platform.isIOS || Platform.isMacOS) {
-      final iosImplementation = _notificationsPlugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+      final iosImplementation = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
       final granted = await iosImplementation?.requestPermissions(
         alert: true,
         badge: true,
@@ -149,17 +163,18 @@ class NotificationService {
   }
 
   NotificationDetails _buildNotificationDetails() {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      _channelId,
-      _channelName,
-      channelDescription: _channelDescription,
-      importance: Importance.high,
-      priority: Priority.high,
-      showWhen: true,
-      icon: '@mipmap/ic_launcher',
-      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
-      color: Color(0xFF17493B),
-    );
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          _channelId,
+          _channelName,
+          channelDescription: _channelDescription,
+          importance: Importance.high,
+          priority: Priority.high,
+          showWhen: true,
+          icon: '@mipmap/ic_launcher',
+          largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          color: Color(0xFF17493B),
+        );
 
     const DarwinNotificationDetails darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
@@ -176,7 +191,14 @@ class NotificationService {
 
   tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-    tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    tz.TZDateTime scheduledDate = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
@@ -194,7 +216,9 @@ class NotificationService {
     for (int i = 0; i < reminderHours.length; i++) {
       final hour = reminderHours[i];
       final notificationId = 100 + i;
-      final msg = friendlyMessages[(i * 4 + random.nextInt(4)) % friendlyMessages.length];
+      final msg =
+          friendlyMessages[(i * 4 + random.nextInt(4)) %
+              friendlyMessages.length];
 
       try {
         await _notificationsPlugin.zonedSchedule(
@@ -266,10 +290,12 @@ class NotificationService {
 
     if (loan.isReceivable) {
       title = 'Money Received Check 💰';
-      body = 'Was $currencySymbol${loan.amount.toStringAsFixed(0)} received from ${loan.personName} for "${loan.title}"?';
+      body =
+          'Was $currencySymbol${loan.amount.toStringAsFixed(0)} received from ${loan.personName} for "${loan.title}"?';
     } else {
       title = 'Payment Due Alert ⚠️';
-      body = 'Friendly alert: You need to pay ${loan.personName} $currencySymbol${loan.amount.toStringAsFixed(0)} for "${loan.title}" today!';
+      body =
+          'Friendly alert: You need to pay ${loan.personName} $currencySymbol${loan.amount.toStringAsFixed(0)} for "${loan.title}" today!';
     }
 
     try {
@@ -317,7 +343,8 @@ class NotificationService {
     final details = _buildNotificationDetails();
 
     final title = 'Planned Transaction Due 📅';
-    final body = 'Your planned ${plan.isIncome ? 'income' : 'expense'} "${plan.title}" of $currencySymbol${plan.amount.toStringAsFixed(0)} is due today!';
+    final body =
+        'Your planned ${plan.isIncome ? 'income' : 'expense'} "${plan.title}" of $currencySymbol${plan.amount.toStringAsFixed(0)} is due today!';
 
     try {
       final scheduledTz = tz.TZDateTime.from(plan.date, tz.local);
@@ -371,31 +398,44 @@ class NotificationService {
     return (goalId.hashCode.abs() % 40000) + 20000 + slot;
   }
 
-  /// Schedules mid-day (1 PM) and evening (7 PM) pacing reminders for active goals with due dates.
-  /// For daily goals: "Stash $X today for [Goal]"
-  /// For weekly/monthly/custom goals: "$X left to reach [Goal]. Save $Y/day to finish by [Date]!"
-  Future<void> scheduleGoalReminders(List<SavingsGoal> goals, String currencySymbol) async {
+  /// Schedules mid-day (1 PM) and evening (7 PM) pacing reminders for active goals.
+  /// Accurately indicates the exact amount left to reach the goal ($remaining left)
+  /// and recalculates required daily savings dynamically as deposits are made.
+  Future<void> scheduleGoalReminders(
+    List<SavingsGoal> goals,
+    String currencySymbol,
+  ) async {
     if (kIsWeb) return;
     final details = _buildNotificationDetails();
     const goalReminderHours = [13, 19]; // 1 PM and 7 PM
 
     for (final goal in goals) {
-      if (!goal.isActive || goal.dueDate == null) continue;
+      // If goal is completed or no money left to save, cancel any existing reminders
+      if (!goal.isActive || goal.remainingToSave <= 0) {
+        await cancelGoalReminders(goal.id);
+        continue;
+      }
+
+      final remaining = goal.remainingToSave;
+      final dailyNeeded = goal.dailySavingsNeeded;
+      final effectiveDue = goal.effectiveDueDate;
+      final isDueToday = goal.isDueToday;
 
       for (int slot = 0; slot < goalReminderHours.length; slot++) {
         final hour = goalReminderHours[slot];
         final notificationId = _getGoalNotificationId(goal.id, slot);
-        final remaining = goal.target - goal.saved;
 
         String title;
         String body;
 
-        if (goal.periodType == 'daily') {
-          title = '🎯 Today\'s Goal';
-          body = 'Don\'t forget to stash $currencySymbol${remaining.clamp(0, goal.target).toStringAsFixed(0)} today for "${goal.title}" from your daily allowance!';
+        if (goal.periodType == 'daily' || isDueToday) {
+          title = '🎯 Today\'s Goal: ${goal.title}';
+          body =
+              'You have $currencySymbol${remaining.toStringAsFixed(0)} left to save for "${goal.title}" ($currencySymbol${goal.saved.toStringAsFixed(0)} of $currencySymbol${goal.target.toStringAsFixed(0)} saved)!';
         } else {
-          title = '🎯 Goal Pacing';
-          body = '$currencySymbol${remaining.toStringAsFixed(0)} left to reach "${goal.title}". Save $currencySymbol${goal.dailySavingsNeeded.toStringAsFixed(0)}/day to complete it by ${_formatShortDate(goal.dueDate!)}!';
+          title = '🎯 Goal Pacing: ${goal.title}';
+          body =
+              '$currencySymbol${remaining.toStringAsFixed(0)} left to reach "${goal.title}". Save $currencySymbol${dailyNeeded.toStringAsFixed(0)}/day to finish by ${_formatShortDate(effectiveDue)}!';
         }
 
         try {
@@ -427,7 +467,20 @@ class NotificationService {
   }
 
   static String _formatShortDate(DateTime date) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return '${months[date.month - 1]} ${date.day}';
   }
 }

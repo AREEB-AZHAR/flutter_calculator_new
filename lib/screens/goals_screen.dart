@@ -397,8 +397,8 @@ class _GoalsScreenState extends State<GoalsScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Pacing info
-                  if (currentGoal.dueDate != null && currentGoal.isActive) ...[
+                  // Pacing info: Shown for all active goals
+                  if (currentGoal.isActive) ...[
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -414,16 +414,31 @@ class _GoalsScreenState extends State<GoalsScreen> {
                               Icon(Icons.speed, size: 18, color: primary),
                               const SizedBox(width: 8),
                               Text('Pacing', style: TextStyle(color: primary, fontSize: 14, fontWeight: FontWeight.bold)),
+                              const Spacer(),
+                              Text(
+                                currentGoal.remainingToSave <= 0
+                                    ? 'Target Met'
+                                    : '$currency${currentGoal.remainingToSave.toStringAsFixed(0)} left',
+                                style: TextStyle(
+                                  color: currentGoal.remainingToSave <= 0 ? Colors.greenAccent : primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Due: ${formatDateWithYear(currentGoal.dueDate!)} · ${currentGoal.daysRemaining} days left',
+                            'Due: ${formatDateWithYear(currentGoal.effectiveDueDate)} · ${currentGoal.daysRemaining} day${currentGoal.daysRemaining == 1 ? '' : 's'} left',
                             style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontSize: 13),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Save $currency${currentGoal.dailySavingsNeeded.toStringAsFixed(0)}/day to reach target on time',
+                            currentGoal.remainingToSave <= 0
+                                ? '🎉 Target reached! Stash more if you wish.'
+                                : (currentGoal.daysRemaining <= 1 || currentGoal.isDueToday
+                                    ? 'Save $currency${currentGoal.remainingToSave.toStringAsFixed(0)} today to reach target'
+                                    : 'Save $currency${currentGoal.dailySavingsNeeded.toStringAsFixed(0)}/day to reach target on time'),
                             style: TextStyle(color: onSurface, fontSize: 13, fontWeight: FontWeight.w600),
                           ),
                         ],
@@ -865,14 +880,47 @@ class _GoalsScreenState extends State<GoalsScreen> {
             ),
             const SizedBox(height: 14),
 
-            // Progress bar + numbers
+            // Progress bar + numbers with explicit Remaining Left badge
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('$currency${goal.saved.toStringAsFixed(0)}',
-                    style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 15)),
-                Text('$currency${goal.target.toStringAsFixed(0)}',
-                    style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 13)),
+                Row(
+                  children: [
+                    Text(
+                      '$currency${goal.saved.toStringAsFixed(0)}',
+                      style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'of $currency${goal.target.toStringAsFixed(0)}',
+                      style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 13),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: goal.remainingToSave <= 0
+                        ? Colors.greenAccent.withValues(alpha: 0.15)
+                        : primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: goal.remainingToSave <= 0
+                          ? Colors.greenAccent.withValues(alpha: 0.3)
+                          : primary.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Text(
+                    goal.remainingToSave <= 0
+                        ? '🎉 Target Met'
+                        : '$currency${goal.remainingToSave.toStringAsFixed(0)} left',
+                    style: TextStyle(
+                      color: goal.remainingToSave <= 0 ? Colors.greenAccent : primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -890,8 +938,8 @@ class _GoalsScreenState extends State<GoalsScreen> {
             const SizedBox(height: 6),
             Text('${(goal.progress * 100).toStringAsFixed(0)}% complete', style: TextStyle(color: onSurface.withValues(alpha: 0.4), fontSize: 12)),
 
-            // Pacing badge
-            if (goal.dueDate != null && goal.isActive) ...[
+            // Pacing badge: Shown for all active goals
+            if (goal.isActive) ...[
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -906,9 +954,11 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
-                        goal.periodType == 'daily'
-                            ? 'Stash $currency${(goal.target - goal.saved).clamp(0, goal.target).toStringAsFixed(0)} today'
-                            : 'Save $currency${goal.dailySavingsNeeded.toStringAsFixed(0)}/day · ${goal.daysRemaining}d left',
+                        goal.remainingToSave <= 0
+                            ? '🎉 Target Reached!'
+                            : (goal.daysRemaining <= 1 || goal.isDueToday
+                                ? 'Save $currency${goal.remainingToSave.toStringAsFixed(0)} today · Due Today'
+                                : 'Save $currency${goal.dailySavingsNeeded.toStringAsFixed(0)}/day · ${goal.daysRemaining}d left'),
                         style: TextStyle(color: primary, fontSize: 12, fontWeight: FontWeight.w600),
                         overflow: TextOverflow.ellipsis,
                       ),

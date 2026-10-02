@@ -418,6 +418,21 @@
   - Implemented a static concurrency mutex `_isTourOpen` with `try ... finally` safety in [`FeatureTourDialog.showFeatureTour()`](lib/widgets/feature_tour_dialog.dart), actively discarding duplicate dialog mount requests.
   - Removed duplicate calls in [`ProfileScreen`](lib/screens/profile_screen.dart) when switching tabs, preventing race conditions with `DashboardScreen._checkPostLoginPrompts()`.
 
+### 34. 🎯 Precision Goal Notifications, Live Daily Pacing & Dynamic Remaining Balance (v2.2.0)
+
+- **Accurate Goal Reminders with Dynamic Remaining Balance**:
+  - Eliminated stale notifications displaying the initial target amount (`goal_amount`) by rescheduling alarms dynamically whenever deposits, transactions, or deletions occur.
+  - Notification copy explicitly highlights the exact remaining balance left:
+    `"$currency${remaining.toStringAsFixed(0)} left to reach \"${goal.title}\". Save $currency${dailyNeeded.toStringAsFixed(0)}/day to finish by [Date]!"`
+  - Daily goals clearly communicate progress: `"You have $currency${remaining.toStringAsFixed(0)} left to save for \"${goal.title}\" ($currency${goal.saved.toStringAsFixed(0)} of $currency${goal.target.toStringAsFixed(0)} saved)!"`.
+  - Automatically cancels pacing reminders once a goal reaches 100% completion.
+- **Live Daily Savings Pacing on Goal Cards**:
+  - Prominent **Amount Left Badge** (`$currency${goal.remainingToSave.toStringAsFixed(0)} left`) displayed alongside saved and target values.
+  - Pacing badge (`Save $X/day · Yd left` or `Save $X today · Due Today`) is displayed for **all active goals**, including goals with transactions and goals created without an explicit due date (intelligently calculating period pacing).
+  - Recalculates dynamically in real time: as transactions or deposits are added, the daily required savings rate decreases instantaneously.
+- **End-of-Day Expiration Guard**:
+  - Protected `SavingsGoal.isExpired` from prematurely failing goals mid-day on their due date: goals remain active until 23:59:59 of their scheduled completion date.
+
 ---
 
 ## 🏗️ Clean Modular Architecture
@@ -631,7 +646,21 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 
 ## 📝 Recent Changelog
 
-- **v2.1.0 (Current)**:
+- **v2.2.0 (Current)**:
+  - **Precision Goal Reminders & Dynamic Remaining Balance**:
+    - Overhauled [`NotificationService.scheduleGoalReminders`](lib/services/notification_service.dart) to calculate the live remaining balance (`remainingToSave`) rather than retaining stale target amounts.
+    - Added reactive rescheduling across all goal mutations: creating goals, adding deposits, deleting transactions, and switching currencies immediately update notification alarms.
+    - Completed goals automatically cancel pacing reminders to prevent unwanted alerts.
+  - **Live Daily Savings Pacing & Amount Left Badge**:
+    - Enhanced [`GoalsScreen`](lib/screens/goals_screen.dart) goal cards and detail sheet with a prominent high-contrast **Amount Left** badge (`$X left`).
+    - Extended the pacing badge (`Save $X/day · Yd left` or `Save $X today · Due Today`) to **all active goals**, including goals with transactions and goals without explicit calendar dates.
+  - **End-of-Day Expiration Guard**:
+    - Updated [`SavingsGoal.isExpired`](lib/models/savings_goal.dart) to only expire goals past 23:59:59 on their due date, eliminating mid-day premature goal failure.
+  - **Automated Verification Suite**:
+    - Created comprehensive unit and widget tests in [`test/goal_pacing_and_notifications_test.dart`](test/goal_pacing_and_notifications_test.dart).
+    - All tests passing with 0 analyzer issues.
+
+- **v2.1.0**:
   - **Lock Screen Saved Accounts Manager & Fast Switcher**:
     - Built [`SavedAccountsScreen`](lib/screens/saved_accounts_screen.dart) and [`SavedAccountInfo`](lib/models/saved_account_info.dart) model.
     - Added [`AppDatabase.getAllSavedAccounts()`](lib/services/database/app_database.dart) and `deleteSavedAccount()`.

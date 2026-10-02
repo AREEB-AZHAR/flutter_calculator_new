@@ -364,6 +364,11 @@ class AppState {
     await AppDatabase.instance.saveGoals(username, goals);
     goalsNotifier.value = List.from(goals);
     CloudSyncService.syncGoalsToCloud(goals);
+    await checkGoalExpirations(username);
+    NotificationService.instance.scheduleGoalReminders(
+      goalsNotifier.value,
+      currencyNotifier.value,
+    );
   }
 
   static Future<List<SavingsGoal>> loadGoals(String username) async {
@@ -389,6 +394,16 @@ class AppState {
     transactionsNotifier.value = currentList;
     if (currentUser != null) {
       AppDatabase.instance.deleteSingleTransaction(tx.id);
+      if (tx.category == 'Savings Goal') {
+        AppDatabase.instance.deleteGoalEntryByTransactionId(currentUser!, tx.id).then((_) async {
+          goalsNotifier.value = await AppDatabase.instance.loadGoals(currentUser!);
+          await checkGoalExpirations(currentUser!);
+          NotificationService.instance.scheduleGoalReminders(
+            goalsNotifier.value,
+            currencyNotifier.value,
+          );
+        });
+      }
     }
     // Delete from Firestore immediately
     CloudSyncService.deleteTransactionFromCloud(tx.id);
@@ -418,6 +433,15 @@ class AppState {
                 transactionsNotifier.value = restoredList;
                 if (currentUser != null) {
                   AppDatabase.instance.insertTransaction(currentUser!, tx);
+                  if (tx.category == 'Savings Goal') {
+                    AppDatabase.instance.loadGoals(currentUser!).then((refreshedGoals) {
+                      goalsNotifier.value = refreshedGoals;
+                      NotificationService.instance.scheduleGoalReminders(
+                        refreshedGoals,
+                        currencyNotifier.value,
+                      );
+                    });
+                  }
                 }
                 // Re-sync restored transaction to cloud
                 CloudSyncService.syncTransactionToCloud(tx);
@@ -448,6 +472,8 @@ class AppState {
     if (currentUser != null) {
       AppDatabase.instance.softDeleteGoal(currentUser!, goal.id);
     }
+    // Cancel goal reminders immediately
+    NotificationService.instance.cancelGoalReminders(goal.id);
     // Delete from Firestore immediately
     CloudSyncService.deleteGoalFromCloud(goal.id);
 
@@ -477,6 +503,10 @@ class AppState {
                   // Re-upsert the goal (un-archive or re-insert)
                   AppDatabase.instance.upsertGoal(currentUser!, goal.copyWith(isArchived: false));
                 }
+                NotificationService.instance.scheduleGoalReminders(
+                  restoredGoals,
+                  currencyNotifier.value,
+                );
               }
             },
           ),
@@ -503,18 +533,48 @@ class AppState {
     await AppDatabase.instance.addGoalEntry(username, entry);
     // Reload goals to get updated saved amounts
     goalsNotifier.value = await AppDatabase.instance.loadGoals(username);
+    await checkGoalExpirations(username);
+    NotificationService.instance.scheduleGoalReminders(
+      goalsNotifier.value,
+      currencyNotifier.value,
+    );
+    CloudSyncService.syncGoalsToCloud(goalsNotifier.value);
   }
 
   /// Updates an existing goal entry and refreshes state.
   static Future<void> updateGoalEntry(String username, GoalEntry entry) async {
     await AppDatabase.instance.updateGoalEntry(username, entry);
     goalsNotifier.value = await AppDatabase.instance.loadGoals(username);
+    await checkGoalExpirations(username);
+    NotificationService.instance.scheduleGoalReminders(
+      goalsNotifier.value,
+      currencyNotifier.value,
+    );
+    CloudSyncService.syncGoalsToCloud(goalsNotifier.value);
   }
 
   /// Deletes a goal entry and refreshes state.
   static Future<void> deleteGoalEntry(String username, String entryId, String goalId) async {
     await AppDatabase.instance.deleteGoalEntry(username, entryId, goalId);
     goalsNotifier.value = await AppDatabase.instance.loadGoals(username);
+    await checkGoalExpirations(username);
+    NotificationService.instance.scheduleGoalReminders(
+      goalsNotifier.value,
+      currencyNotifier.value,
+    );
+    CloudSyncService.syncGoalsToCloud(goalsNotifier.value);
+  }
+
+  /// Removes any goal entry linked to a transaction and refreshes state.
+  static Future<void> removeGoalEntryForTransaction(String username, String txId) async {
+    await AppDatabase.instance.deleteGoalEntryByTransactionId(username, txId);
+    goalsNotifier.value = await AppDatabase.instance.loadGoals(username);
+    await checkGoalExpirations(username);
+    NotificationService.instance.scheduleGoalReminders(
+      goalsNotifier.value,
+      currencyNotifier.value,
+    );
+    CloudSyncService.syncGoalsToCloud(goalsNotifier.value);
   }
 
   /// Checks and marks expired/completed goals, triggers recurring cycles if enabled.
@@ -651,6 +711,10 @@ class AppState {
     if (currentUser != null) {
       final p = await AppDatabase.instance.loadProfile(currentUser!);
       await AppDatabase.instance.saveProfile(p.copyWith(currency: currency));
+      NotificationService.instance.scheduleGoalReminders(
+        goalsNotifier.value,
+        currency,
+      );
     }
   }
 
