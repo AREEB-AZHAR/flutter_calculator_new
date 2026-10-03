@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/monetization_service.dart';
 import '../services/in_app_purchase_service.dart';
+import '../services/language_service.dart';
 
 /// Dedicated Tally Pro & Ad-Free Upgrade Screen.
 ///
@@ -39,16 +40,16 @@ class _PremiumScreenState extends State<PremiumScreen> {
   String _getPlanTitleForTier(int tier) {
     switch (tier) {
       case 0:
-        return 'Tally Pro Monthly';
+        return LanguageService.tr('pro_monthly_title');
       case 1:
-        return 'Tally Pro Yearly (Save 44%)';
+        return LanguageService.tr('pro_yearly_title');
       case 2:
-        return 'Tally Pro Lifetime Access';
+        return LanguageService.tr('pro_lifetime_title');
       case 3:
-        return 'Remove Ads Only';
+        return LanguageService.tr('remove_ads_title');
       case 4:
       default:
-        return 'Buy Developer a Coffee & Ad-Free';
+        return LanguageService.tr('coffee_tip_title');
     }
   }
 
@@ -165,8 +166,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Google Play Billing',
+                          Text(
+                            LanguageService.tr('google_play_billing'),
                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                           Text(
@@ -197,7 +198,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Subscription / Item',
+                    LanguageService.tr('subscription_item'),
                     style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.7)),
                   ),
                   Text(
@@ -211,7 +212,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Billing System',
+                    LanguageService.tr('billing_system'),
                     style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.7)),
                   ),
                   const Row(
@@ -228,7 +229,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Encryption & Security',
+                    LanguageService.tr('encryption_security'),
                     style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.7)),
                   ),
                   const Row(
@@ -252,14 +253,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 2,
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.fingerprint, size: 22, color: Colors.white),
-                      SizedBox(width: 10),
+                      const Icon(Icons.fingerprint, size: 22, color: Colors.white),
+                      const SizedBox(width: 10),
                       Text(
-                        'Authenticate & Pay with Google Play',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        LanguageService.tr('authenticate_pay_google'),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                     ],
                   ),
@@ -270,7 +271,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 child: TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
                   child: Text(
-                    'Cancel',
+                    LanguageService.tr('cancel'),
                     style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.6)),
                   ),
                 ),
@@ -336,12 +337,15 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final surface = theme.colorScheme.surface;
-    final onSurface = theme.colorScheme.onSurface;
-    final primary = theme.colorScheme.primary;
+    return ValueListenableBuilder<String>(
+      valueListenable: LanguageService.currentLanguageNotifier,
+      builder: (context, currentLang, _) {
+        final theme = Theme.of(context);
+        final surface = theme.colorScheme.surface;
+        final onSurface = theme.colorScheme.onSurface;
+        final primary = theme.colorScheme.primary;
 
-    return ValueListenableBuilder<bool>(
+        return ValueListenableBuilder<bool>(
       valueListenable: MonetizationService.isProUnlockedNotifier,
       builder: (context, isPro, _) {
         return ValueListenableBuilder<bool>(
@@ -354,7 +358,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
                 return Scaffold(
                   appBar: AppBar(
-                    title: const Text('Tally Pro & VIP', style: TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(LanguageService.tr('tally_pro_and_vip'), style: const TextStyle(fontWeight: FontWeight.bold)),
                     backgroundColor: surface,
                     elevation: 0,
                     leading: IconButton(
@@ -371,13 +375,13 @@ class _PremiumScreenState extends State<PremiumScreen> {
                           await _iapService.restorePurchases();
                         },
                         icon: const Icon(Icons.restore_rounded, size: 16),
-                        label: const Text('Restore'),
+                        label: Text(LanguageService.tr('restore')),
                         style: TextButton.styleFrom(foregroundColor: onSurface.withValues(alpha: 0.8)),
                       ),
                       TextButton.icon(
                         onPressed: () => MonetizationService.showPromoCodeDialog(context),
                         icon: const Icon(Icons.vpn_key_rounded, size: 16),
-                        label: const Text('Promo Code'),
+                        label: Text(LanguageService.tr('promo_code')),
                         style: TextButton.styleFrom(foregroundColor: primary),
                       ),
                     ],
@@ -431,7 +435,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                                             ),
                                             const SizedBox(width: 6),
                                             Text(
-                                              isPro ? 'TALLY PRO MEMBER' : 'FREE TIER',
+                                              isPro ? LanguageService.tr('tally_pro_member') : LanguageService.tr('free_tier'),
                                               style: const TextStyle(
                                                 color: Colors.white,
                                                 fontWeight: FontWeight.bold,
@@ -456,8 +460,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
                                   const SizedBox(height: 16),
                                   Text(
                                     isPro
-                                        ? 'All Pro Features Unlocked'
-                                        : 'Supercharge Your Financial Intelligence',
+                                        ? LanguageService.tr('all_pro_features_unlocked')
+                                        : LanguageService.tr('supercharge_intelligence'),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 22,
@@ -484,7 +488,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
                             // 2. Feature Checklist Showcase
                             Text(
-                              'What\'s Included',
+                              LanguageService.tr('whats_included'),
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -495,48 +499,48 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
                             _buildFeatureRow(
                               icon: Icons.block_rounded,
-                              title: '100% Ad-Free Experience',
-                              subtitle: 'Zero banner ads, zero interruptions across all screens.',
+                              title: LanguageService.tr('ad_free_title'),
+                              subtitle: LanguageService.tr('ad_free_sub'),
                               isUnlocked: isPro || isAdsRemoved,
                               primary: primary,
                               onSurface: onSurface,
                             ),
                             _buildFeatureRow(
                               icon: Icons.trending_up_rounded,
-                              title: 'Predictive Insights & Velocity',
-                              subtitle: 'Daily spending run-rates, savings forecasting, and burn metrics.',
+                              title: LanguageService.tr('predictive_insights_title'),
+                              subtitle: LanguageService.tr('predictive_insights_sub'),
                               isUnlocked: isPro,
                               primary: primary,
                               onSurface: onSurface,
                             ),
                             _buildFeatureRow(
                               icon: Icons.palette_rounded,
-                              title: 'Theme Studio & All 9 Palettes',
-                              subtitle: 'HSV color sliders, hex input, custom text tones & all 9 premium presets.',
+                              title: LanguageService.tr('theme_studio_full_title'),
+                              subtitle: LanguageService.tr('theme_studio_full_sub'),
                               isUnlocked: isPro,
                               primary: primary,
                               onSurface: onSurface,
                             ),
                             _buildFeatureRow(
                               icon: Icons.movie_filter_rounded,
-                              title: '1-Time Theme Unlock with 30s Ad',
-                              subtitle: 'Free users can watch a short 30-sec ad anytime to unlock 1-time theme changes.',
+                              title: LanguageService.tr('theme_unlock_ad_title'),
+                              subtitle: LanguageService.tr('theme_unlock_ad_sub'),
                               isUnlocked: true,
                               primary: primary,
                               onSurface: onSurface,
                             ),
                             _buildFeatureRow(
                               icon: Icons.apps_rounded,
-                              title: 'Custom Dynamic Launcher Icons',
-                              subtitle: 'Switch homescreen brand marks to Ink, Paper, or Ledger.',
+                              title: LanguageService.tr('dynamic_icons_title'),
+                              subtitle: LanguageService.tr('dynamic_icons_sub'),
                               isUnlocked: isPro,
                               primary: primary,
                               onSurface: onSurface,
                             ),
                             _buildFeatureRow(
                               icon: Icons.cloud_done_rounded,
-                              title: 'Encrypted Google Cloud Sync',
-                              subtitle: 'Seamless real-time multi-device database synchronization.',
+                              title: LanguageService.tr('encrypted_sync_title'),
+                              subtitle: LanguageService.tr('encrypted_sync_sub'),
                               isUnlocked: true,
                               primary: primary,
                               onSurface: onSurface,
@@ -546,7 +550,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
                             // 3. Plan Selector (Recalculated Pro Pricing)
                             Text(
-                              'Select Your Plan (Google Official Payment)',
+                              LanguageService.tr('select_your_plan'),
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -558,10 +562,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
                             // Option 0: Pro Monthly ($2.99/mo)
                             _buildPlanCard(
                               index: 0,
-                              title: 'Tally Pro Monthly',
+                              title: LanguageService.tr('pro_monthly_title'),
                               price: '\$2.99 / mo',
-                              badge: 'FLEXIBLE',
-                              subtitle: 'Full month-to-month access to predictive analytics, Theme Studio & no ads.',
+                              badge: LanguageService.tr('pro_monthly_badge'),
+                              subtitle: LanguageService.tr('pro_monthly_sub'),
                               isSelected: _selectedTierIndex == 0,
                               isPurchased: isPro,
                               onTap: () => setState(() => _selectedTierIndex = 0),
@@ -575,10 +579,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
                             // Option 1: Pro Yearly ($19.99/yr -> Only $1.67/mo, Save 44%)
                             _buildPlanCard(
                               index: 1,
-                              title: 'Tally Pro Yearly',
+                              title: LanguageService.tr('pro_yearly_title'),
                               price: '\$19.99 / yr',
-                              badge: '⭐ BEST VALUE (SAVE 44%)',
-                              subtitle: 'Only \$1.67/mo! Pay once a year and save 44% compared to paying monthly.',
+                              badge: LanguageService.tr('pro_yearly_badge'),
+                              subtitle: LanguageService.tr('pro_yearly_sub'),
                               isSelected: _selectedTierIndex == 1,
                               isPurchased: isPro,
                               onTap: () => setState(() => _selectedTierIndex = 1),
@@ -592,10 +596,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
                             // Option 2: Pro Lifetime ($39.99 -> 2x Annual, Pay Once)
                             _buildPlanCard(
                               index: 2,
-                              title: 'Tally Pro Lifetime Access',
+                              title: LanguageService.tr('pro_lifetime_title'),
                               price: '\$39.99',
-                              badge: '👑 ULTIMATE PASS',
-                              subtitle: 'One-time payment (2× annual). Own all current & future Pro features forever.',
+                              badge: LanguageService.tr('pro_lifetime_badge'),
+                              subtitle: LanguageService.tr('pro_lifetime_sub'),
                               isSelected: _selectedTierIndex == 2,
                               isPurchased: isPro,
                               onTap: () => setState(() => _selectedTierIndex = 2),
@@ -609,10 +613,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
                             // Option 3: Remove Ads Only ($1.99)
                             _buildPlanCard(
                               index: 3,
-                              title: 'Remove Ads Only',
+                              title: LanguageService.tr('remove_ads_title'),
                               price: '\$1.99',
-                              badge: '⚡ STANDALONE PASS',
-                              subtitle: 'Clean, distraction-free budgeting. Permanently removes all banner ads.',
+                              badge: LanguageService.tr('remove_ads_badge'),
+                              subtitle: LanguageService.tr('remove_ads_sub'),
                               isSelected: _selectedTierIndex == 3,
                               isPurchased: isAdsRemoved || isPro,
                               onTap: () => setState(() => _selectedTierIndex = 3),
@@ -626,10 +630,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
                             // Option 4: Buy Me a Coffee ($2.99) -> Ad-Free for life + 7-Day Pro Trial Gift!
                             _buildPlanCard(
                               index: 4,
-                              title: '☕ Buy the Developer a Coffee',
+                              title: LanguageService.tr('coffee_tip_title'),
                               price: '\$2.99',
-                              badge: '🎁 BONUS GIFT',
-                              subtitle: 'Fuel independent development! Enjoy 100% Ad-Free Tally for life + a complimentary 7-Day Tally Pro VIP Trial gift included.',
+                              badge: LanguageService.tr('coffee_tip_badge'),
+                              subtitle: LanguageService.tr('coffee_tip_sub'),
                               isSelected: _selectedTierIndex == 4,
                               isPurchased: isAdsRemoved || isPro,
                               onTap: () => setState(() => _selectedTierIndex = 4),
@@ -710,8 +714,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
                                   }
                                 },
                                 icon: const Icon(Icons.restart_alt_rounded, size: 16, color: Colors.orangeAccent),
-                                label: const Text(
-                                  'Reset VIP Subscription (Developer Test Mode)',
+                                label: Text(
+                                  LanguageService.tr('reset_vip_subscription'),
                                   style: TextStyle(fontSize: 13, color: Colors.orangeAccent),
                                 ),
                                 style: OutlinedButton.styleFrom(
@@ -726,7 +730,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                             // 6. Security & Legal Notice
                             Center(
                               child: Text(
-                                'Official Google Play Billing & Apple In-App Purchase Integration • 256-bit TLS Encryption\nCancel subscriptions anytime in Google Play Store • Family Sharing ready',
+                                LanguageService.tr('security_legal_notice'),
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 11,
@@ -754,6 +758,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
             );
           },
         );
+      },
+    );
       },
     );
   }

@@ -7,6 +7,7 @@ import '../widgets/transaction_dialog.dart';
 import '../widgets/interactive_chart_card.dart';
 import '../widgets/ad_banner_widget.dart';
 import '../widgets/planned_transactions_sheet.dart';
+import '../services/language_service.dart';
 
 class AllTransactionsScreen extends StatefulWidget {
   const AllTransactionsScreen({super.key});
@@ -21,28 +22,31 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
-    final isLight = theme.brightness == Brightness.light;
-    final planAccent = isLight ? const Color(0xFFD97706) : const Color(0xFFFBBF24);
+    return ValueListenableBuilder<String>(
+      valueListenable: LanguageService.currentLanguageNotifier,
+      builder: (context, currentLanguage, _) {
+        final theme = Theme.of(context);
+        final onSurface = theme.colorScheme.onSurface;
+        final isLight = theme.brightness == Brightness.light;
+        final planAccent = isLight ? const Color(0xFFD97706) : const Color(0xFFFBBF24);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'All Transactions',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.event_note_rounded, color: planAccent),
-            tooltip: 'Planned & Future Sheet',
-            onPressed: () => showPlannedTransactionsSheet(context),
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              LanguageService.tr('all_transactions'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: theme.colorScheme.surface,
+            elevation: 0,
+            actions: [
+              IconButton(
+                icon: Icon(Icons.event_note_rounded, color: planAccent),
+                tooltip: LanguageService.tr('planned_future_sheet'),
+                onPressed: () => showPlannedTransactionsSheet(context),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: ValueListenableBuilder<String>(
+          body: ValueListenableBuilder<String>(
         valueListenable: AppState.currencyNotifier,
         builder: (context, currentCurrency, _) {
           return ValueListenableBuilder<List<Transaction>>(
@@ -75,7 +79,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                           child: TextField(
                             style: TextStyle(color: onSurface),
                             decoration: InputDecoration(
-                              hintText: 'Search transactions by title or category...',
+                              hintText: LanguageService.tr('search_transactions_hint'),
                               hintStyle: TextStyle(
                                 color: onSurface.withValues(alpha: 0.54),
                                 fontSize: 14,
@@ -111,11 +115,14 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                             children: [
                               ...['All', 'Income', 'Expense'].map((type) {
                                 final isSelected = _filter == type;
+                                final label = type == 'All'
+                                    ? LanguageService.tr('filter_all')
+                                    : (type == 'Income' ? LanguageService.tr('filter_income') : LanguageService.tr('filter_expense'));
                                 return Padding(
                                   padding: const EdgeInsets.only(right: 8),
                                   child: ChoiceChip(
                                     label: Text(
-                                      type,
+                                      label,
                                       style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -141,7 +148,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                                   return ActionChip(
                                     avatar: Icon(Icons.event_note_rounded, size: 16, color: planAccent),
                                     label: Text(
-                                      'Planned Sheet (${plans.length})',
+                                      '${LanguageService.tr('planned_future_sheet')} (${plans.length})',
                                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: planAccent),
                                     ),
                                     backgroundColor: planAccent.withValues(alpha: 0.12),
@@ -188,7 +195,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Transactions (${filtered.length})',
+                                '${LanguageService.tr('transactions_prefix')} (${filtered.length})',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -204,7 +211,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                                     });
                                   },
                                   child: Text(
-                                    'Clear Filters',
+                                    LanguageService.tr('clear_filters'),
                                     style: TextStyle(
                                       color: theme.colorScheme.primary,
                                       fontSize: 12,
@@ -237,8 +244,8 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                               const SizedBox(height: 12),
                               Text(
                                 _searchQuery.isNotEmpty
-                                    ? 'No transactions matching "$_searchQuery"'
-                                    : 'No transactions found',
+                                    ? '${LanguageService.tr('no_transactions_found')}: "$_searchQuery"'
+                                    : LanguageService.tr('no_transactions_found'),
                                 style: TextStyle(
                                   color: onSurface.withValues(alpha: 0.6),
                                   fontSize: 14,
@@ -275,6 +282,8 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
           );
         },
       ),
+    );
+      },
     );
   }
 }

@@ -7,6 +7,7 @@ import '../services/state.dart';
 import '../services/monetization_service.dart';
 import '../services/insights_engine.dart';
 import '../utils/constants.dart';
+import '../services/language_service.dart';
 
 class InsightsScreen extends StatefulWidget {
   const InsightsScreen({super.key});
@@ -47,14 +48,14 @@ class _InsightsScreenState extends State<InsightsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Set Budget for $category'),
+        title: Text('${LanguageService.tr('set_limit_for')} $category'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Set a monthly spending limit to receive pacing and overrun alerts for this category.',
-              style: TextStyle(fontSize: 13),
+            Text(
+              LanguageService.tr('set_limit_desc'),
+              style: const TextStyle(fontSize: 13),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -63,7 +64,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
               autofocus: true,
               decoration: InputDecoration(
                 prefixText: AppState.currencyNotifier.value,
-                labelText: 'Monthly Limit',
+                labelText: LanguageService.tr('monthly_limit'),
                 border: const OutlineInputBorder(),
               ),
             ),
@@ -72,7 +73,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(LanguageService.tr('cancel')),
           ),
           FilledButton(
             onPressed: () async {
@@ -90,7 +91,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 }
               }
             },
-            child: const Text('Save Limit'),
+            child: Text(LanguageService.tr('save_limit')),
           ),
         ],
       ),
@@ -99,17 +100,20 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
+    return ValueListenableBuilder<String>(
+      valueListenable: LanguageService.currentLanguageNotifier,
+      builder: (context, currentLang, _) {
+        final theme = Theme.of(context);
+        final onSurface = theme.colorScheme.onSurface;
 
-    return Scaffold(
+        return Scaffold(
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Smart Insights', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            Text(LanguageService.tr('smart_insights'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             Text(
-              'Personal Wealth Intelligence',
+              LanguageService.tr('personal_wealth_intelligence'),
               style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6), fontWeight: FontWeight.normal),
             ),
           ],
@@ -129,19 +133,19 @@ class _InsightsScreenState extends State<InsightsScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.workspace_premium, size: 14, color: Colors.amber),
-                      SizedBox(width: 4),
-                      Text('PRO ACTIVE', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.amber)),
+                      const Icon(Icons.workspace_premium, size: 14, color: Colors.amber),
+                      const SizedBox(width: 4),
+                      Text(LanguageService.tr('pro_active'), style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.amber)),
                     ],
                   ),
                 );
               }
               return TextButton.icon(
                 icon: const Icon(Icons.workspace_premium, size: 16, color: Colors.amber),
-                label: const Text('Upgrade', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber)),
+                label: Text(LanguageService.tr('upgrade'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber)),
                 onPressed: () => MonetizationService.showPaywallModal(
                   context,
                   featureTitle: 'Executive Wealth Intelligence',
@@ -168,7 +172,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   if (transactions.isEmpty) {
                     return Center(
                       child: Text(
-                        'Add some transactions to see insights!',
+                        LanguageService.tr('add_tx_to_see_insights'),
                         style: TextStyle(color: onSurface.withValues(alpha: 0.6)),
                       ),
                     );
@@ -212,6 +216,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                     const SizedBox(height: 20),
                                     _buildLoansAndDebtCard(theme, report, currentCurrency),
                                     const SizedBox(height: 20),
+                                    _buildTaxIntelligenceCard(theme, report, currentCurrency),
+                                    const SizedBox(height: 20),
                                     _buildPaymentTypeCard(theme, report, currentCurrency),
                                     const SizedBox(height: 32),
                                   ],
@@ -230,6 +236,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
         },
       ),
     );
+      },
+    );
   }
 
   Widget _buildHorizonSelector(ThemeData theme) {
@@ -238,10 +246,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
     final onSurface = theme.colorScheme.onSurface;
 
     final horizons = [
-      (TimeHorizon.daily, 'Daily'),
-      (TimeHorizon.weekly, 'Weekly'),
-      (TimeHorizon.monthly, 'Monthly'),
-      (TimeHorizon.yearly, 'Yearly'),
+      (TimeHorizon.daily, LanguageService.tr('daily')),
+      (TimeHorizon.weekly, LanguageService.tr('weekly')),
+      (TimeHorizon.monthly, LanguageService.tr('monthly')),
+      (TimeHorizon.yearly, LanguageService.tr('yearly')),
     ];
 
     return Container(
@@ -320,7 +328,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   child: Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
-                      'Back to Current',
+                      LanguageService.tr('back_to_current'),
                       style: TextStyle(
                         fontSize: 11,
                         color: theme.colorScheme.primary,
@@ -394,7 +402,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Executive Accountant's Take",
+                      LanguageService.tr('accountant_take'),
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
@@ -402,7 +410,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                       ),
                     ),
                     Text(
-                      'Automated CPA Financial Assessment',
+                      LanguageService.tr('automated_cpa_assessment'),
                       style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6)),
                     ),
                   ],
@@ -455,7 +463,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                       const Icon(Icons.lightbulb_outline, size: 16, color: Colors.amber),
                       const SizedBox(width: 6),
                       Text(
-                        'Accountant Action Items',
+                        LanguageService.tr('accountant_action_items'),
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: onSurface),
                       ),
                     ],
@@ -503,9 +511,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
             Expanded(
               child: _metricCard(
                 theme: theme,
-                title: 'Total Inflow',
+                title: LanguageService.tr('total_inflow'),
                 value: '$currency${report.totalInflow.toStringAsFixed(0)}',
-                subtitle: 'Income this period',
+                subtitle: LanguageService.tr('income_this_period'),
                 icon: Icons.trending_up,
                 accentColor: Colors.greenAccent.shade400,
               ),
@@ -514,9 +522,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
             Expanded(
               child: _metricCard(
                 theme: theme,
-                title: 'Total Outflow',
+                title: LanguageService.tr('total_outflow'),
                 value: '$currency${report.totalOutflow.toStringAsFixed(0)}',
-                subtitle: 'Expenses logged',
+                subtitle: LanguageService.tr('expenses_logged'),
                 icon: Icons.trending_down,
                 accentColor: Colors.orangeAccent,
               ),
@@ -529,9 +537,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
             Expanded(
               child: _metricCard(
                 theme: theme,
-                title: 'Net Savings',
+                title: LanguageService.tr('net_savings'),
                 value: '${report.netSavings >= 0 ? '+' : ''}$currency${report.netSavings.toStringAsFixed(0)}',
-                subtitle: 'Savings Rate: ${report.savingsRate.toStringAsFixed(0)}%',
+                subtitle: '${LanguageService.tr('savings_rate')}: ${report.savingsRate.toStringAsFixed(0)}%',
                 icon: Icons.savings_outlined,
                 accentColor: savingsRateColor,
               ),
@@ -540,7 +548,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
             Expanded(
               child: _metricCard(
                 theme: theme,
-                title: 'Daily Velocity',
+                title: LanguageService.tr('daily_velocity'),
                 value: '$currency${report.dailyVelocity.toStringAsFixed(0)}/day',
                 subtitle: 'vs Prev: $changeSign${report.spendingChangePercent.toStringAsFixed(0)}%',
                 icon: Icons.speed,
@@ -621,7 +629,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   const Icon(Icons.pie_chart, color: Colors.blueAccent, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'Future Planning: 50/30/20 Rule',
+                    LanguageService.tr('future_planning_503020'),
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: onSurface),
                   ),
                 ],
@@ -632,7 +640,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   color: Colors.blueAccent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text('Target 50/30/20', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+                child: Text(LanguageService.tr('target_503020'), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
               ),
             ],
           ),
@@ -664,9 +672,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _legendItem('Needs (50%)', '${r.needsPercent.toStringAsFixed(0)}%', Colors.blueAccent, onSurface),
-              _legendItem('Wants (30%)', '${r.wantsPercent.toStringAsFixed(0)}%', Colors.orangeAccent, onSurface),
-              _legendItem('Savings (20%)', '${r.savingsPercent.toStringAsFixed(0)}%', Colors.greenAccent.shade400, onSurface),
+              _legendItem(LanguageService.tr('needs_50'), '${r.needsPercent.toStringAsFixed(0)}%', Colors.blueAccent, onSurface),
+              _legendItem(LanguageService.tr('wants_30'), '${r.wantsPercent.toStringAsFixed(0)}%', Colors.orangeAccent, onSurface),
+              _legendItem(LanguageService.tr('savings_20'), '${r.savingsPercent.toStringAsFixed(0)}%', Colors.greenAccent.shade400, onSurface),
             ],
           ),
           const SizedBox(height: 12),
@@ -682,7 +690,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Safe-to-Spend Run Rate', style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6))),
+                    Text(LanguageService.tr('safe_to_spend_run_rate'), style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6))),
                     const SizedBox(height: 2),
                     Text(
                       '$currency${report.safeToSpendDaily.toStringAsFixed(0)}/day · $currency${report.safeToSpendWeekly.toStringAsFixed(0)}/wk',
@@ -695,7 +703,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('1-Year Projected Savings', style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6))),
+                    Text(LanguageService.tr('projected_1yr_savings'), style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6))),
                     const SizedBox(height: 2),
                     Text(
                       '$currency${report.projected1YearSavings.toStringAsFixed(0)}',
@@ -766,11 +774,11 @@ class _InsightsScreenState extends State<InsightsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Savings Vault & Goals',
+                        LanguageService.tr('savings_vault_and_goals'),
                         style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: onSurface),
                       ),
                       Text(
-                        'Period Momentum',
+                        LanguageService.tr('period_momentum'),
                         style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6)),
                       ),
                     ],
@@ -784,7 +792,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '${goal.activeGoalsCount} Active',
+                  '${goal.activeGoalsCount} ${LanguageService.tr('active_count')}',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: primary),
                 ),
               ),
@@ -804,7 +812,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   child: Column(
                     children: [
                       Text(
-                        'Stashed Period',
+                        LanguageService.tr('stashed_period'),
                         style: TextStyle(fontSize: 10.5, color: onSurface.withValues(alpha: 0.6)),
                       ),
                       const SizedBox(height: 4),
@@ -831,7 +839,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   child: Column(
                     children: [
                       Text(
-                        'Vault Total',
+                        LanguageService.tr('vault_total'),
                         style: TextStyle(fontSize: 10.5, color: onSurface.withValues(alpha: 0.6)),
                       ),
                       const SizedBox(height: 4),
@@ -854,7 +862,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   child: Column(
                     children: [
                       Text(
-                        'Completed',
+                        LanguageService.tr('completed'),
                         style: TextStyle(fontSize: 10.5, color: onSurface.withValues(alpha: 0.6)),
                       ),
                       const SizedBox(height: 4),
@@ -893,7 +901,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           if (goal.nearingCompletionGoals.isNotEmpty) ...[
             const SizedBox(height: 14),
             Text(
-              'Nearing Completion (Target In Reach)',
+              LanguageService.tr('nearing_completion'),
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: onSurface.withValues(alpha: 0.8)),
             ),
             const SizedBox(height: 8),
@@ -966,7 +974,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   Icon(Icons.category, color: primary, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'Category Spending & Budgets',
+                    LanguageService.tr('category_spending_budgets'),
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: onSurface),
                   ),
                 ],
@@ -1009,7 +1017,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                           Icon(categoryIcons[c.category] ?? Icons.circle, size: 16, color: primary),
                           const SizedBox(width: 8),
                           Text(
-                            c.category,
+                            LanguageService.trCategory(c.category),
                             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: onSurface),
                           ),
                           if (c.hasBudget && c.isOverBudget)
@@ -1020,7 +1028,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                 color: Colors.redAccent.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: const Text('OVER', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                              child: Text(LanguageService.tr('over_budget_tag'), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.redAccent)),
                             )
                           else if (!c.hasBudget)
                             Container(
@@ -1030,7 +1038,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                 color: onSurface.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: Text('Uncapped', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: onSurface.withValues(alpha: 0.6))),
+                              child: Text(LanguageService.tr('uncapped'), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: onSurface.withValues(alpha: 0.6))),
                             ),
                         ],
                       ),
@@ -1066,7 +1074,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                     Icon(Icons.add, size: 11, color: primary),
                                     const SizedBox(width: 2),
                                     Text(
-                                      'Set Limit',
+                                      LanguageService.tr('set_limit'),
                                       style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primary),
                                     ),
                                   ],
@@ -1158,7 +1166,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   const Icon(Icons.account_balance_wallet, color: Colors.purpleAccent, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'Loans & Liabilities Portfolio',
+                    LanguageService.tr('loans_liabilities_portfolio'),
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: onSurface),
                   ),
                 ],
@@ -1190,7 +1198,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Total Debt You Owe', style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6))),
+                      Text(LanguageService.tr('total_debt_you_owe'), style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6))),
                       const SizedBox(height: 4),
                       Text(
                         '$currency${loan.totalPayable.toStringAsFixed(0)}',
@@ -1211,7 +1219,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Money Owed to You', style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6))),
+                      Text(LanguageService.tr('money_owed_to_you'), style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6))),
                       const SizedBox(height: 4),
                       Text(
                         '$currency${loan.totalReceivable.toStringAsFixed(0)}',
@@ -1245,7 +1253,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           ),
           if (loan.upcomingDueLoans.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Text('Upcoming Loan Payments', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: onSurface)),
+            Text(LanguageService.tr('upcoming_loan_payments'), style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: onSurface)),
             const SizedBox(height: 6),
             ...loan.upcomingDueLoans.take(3).map((l) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
@@ -1266,6 +1274,109 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
+  Widget _buildTaxIntelligenceCard(ThemeData theme, InsightsReport report, String currency) {
+    final onSurface = theme.colorScheme.onSurface;
+    final tax = report.taxInsight;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: onSurface.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.receipt_long, color: Colors.tealAccent, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    LanguageService.tr('tax_return_tracker'),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: onSurface),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.teal.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  LanguageService.tr('tax_year_2026'),
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.tealAccent),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      LanguageService.tr('total_deductible_expenses'),
+                      style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$currency${tax.totalDeductible.toStringAsFixed(0)}',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.tealAccent),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      LanguageService.tr('est_tax_savings_22'),
+                      style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '~$currency${tax.estimatedSavings22Pct.toStringAsFixed(0)}',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.greenAccent.shade400),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.scaffoldBackgroundColor.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.info_outline, size: 16, color: Colors.tealAccent),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    LanguageService.trDynamic(tax.taxTip),
+                    style: TextStyle(fontSize: 12, height: 1.35, color: onSurface.withValues(alpha: 0.8)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildPaymentTypeCard(ThemeData theme, InsightsReport report, String currency) {
     final onSurface = theme.colorScheme.onSurface;
@@ -1290,7 +1401,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
               const Icon(Icons.credit_card, color: Colors.indigoAccent, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Payment Types & Liquidity Split',
+                LanguageService.tr('payment_types_liquidity'),
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: onSurface),
               ),
             ],

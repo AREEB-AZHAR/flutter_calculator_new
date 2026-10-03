@@ -188,11 +188,14 @@ class _SavedAccountsScreenState extends State<SavedAccountsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
+    return ValueListenableBuilder<String>(
+      valueListenable: LanguageService.currentLanguageNotifier,
+      builder: (context, currentLang, _) {
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+        final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
+        return Scaffold(
       appBar: AppBar(
         title: Text(
           LanguageService.tr('saved_accounts_title'),
@@ -218,14 +221,14 @@ class _SavedAccountsScreenState extends State<SavedAccountsScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No Saved Accounts',
+                            LanguageService.trDynamic('No Saved Accounts'),
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Accounts you sign into on this device will appear here for fast one-tap access.',
+                            LanguageService.trDynamic('Accounts you sign into on this device will appear here for fast one-tap access.'),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: colorScheme.onSurface.withValues(alpha: 0.6),
@@ -236,7 +239,7 @@ class _SavedAccountsScreenState extends State<SavedAccountsScreen> {
                           ElevatedButton.icon(
                             onPressed: () => Navigator.pop(context),
                             icon: const Icon(Icons.arrow_back),
-                            label: const Text('Return to Login'),
+                            label: Text(LanguageService.trDynamic('Return to Login')),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: colorScheme.primary,
                               foregroundColor: Colors.white,
@@ -423,6 +426,8 @@ class _SavedAccountsScreenState extends State<SavedAccountsScreen> {
                     ],
                   ),
       ),
+    );
+      },
     );
   }
 

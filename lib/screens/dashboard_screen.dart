@@ -109,7 +109,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Manage Budgets', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(LanguageService.tr('manage_budgets'), style: const TextStyle(fontWeight: FontWeight.bold)),
                   IconButton(
                     icon: Icon(Icons.add_circle, color: Theme.of(context).colorScheme.primary),
                     onPressed: () {
@@ -119,7 +119,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                         context: context,
                         builder: (innerCtx) => AlertDialog(
                           backgroundColor: Theme.of(context).colorScheme.surface,
-                          title: const Text('Add Budget'),
+                          title: Text(LanguageService.tr('add_budget')),
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -129,22 +129,22 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                 style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                                 items: categoryIcons.keys
                                     .where((cat) => !budgets.containsKey(cat))
-                                    .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                                    .map((cat) => DropdownMenuItem(value: cat, child: Text(LanguageService.trCategory(cat))))
                                     .toList(),
                                 onChanged: (val) { if (val != null) newCat = val; },
-                                decoration: const InputDecoration(labelText: 'Category'),
+                                decoration: InputDecoration(labelText: LanguageService.tr('category')),
                               ),
                               const SizedBox(height: 12),
                               TextField(
                                 style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-                                decoration: const InputDecoration(labelText: 'Limit Amount'),
+                                decoration: InputDecoration(labelText: LanguageService.tr('limit_amount')),
                                 keyboardType: TextInputType.number,
                                 onChanged: (v) => newLimit = v,
                               ),
                             ],
                           ),
                           actions: [
-                            TextButton(onPressed: () => Navigator.pop(innerCtx), child: const Text('Cancel')),
+                            TextButton(onPressed: () => Navigator.pop(innerCtx), child: Text(LanguageService.tr('cancel'))),
                             TextButton(
                               onPressed: () {
                                 final limit = double.tryParse(newLimit);
@@ -156,7 +156,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                   setDialogState(() {});
                                 }
                               },
-                              child: const Text('Add'),
+                              child: Text(LanguageService.tr('add')),
                             ),
                           ],
                         ),
@@ -168,14 +168,14 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               content: SizedBox(
                 width: double.maxFinite,
                 child: budgets.isEmpty
-                    ? Center(child: Text('No budgets set', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))))
+                    ? Center(child: Text(LanguageService.tr('no_budgets_set'), style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))))
                     : ListView(
                         shrinkWrap: true,
                         children: budgets.entries.map((entry) {
                           return ListTile(
                             dense: true,
                             leading: Icon(categoryIcons[entry.key] ?? Icons.category, color: Theme.of(context).colorScheme.primary, size: 20),
-                            title: Text(entry.key, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14)),
+                            title: Text(LanguageService.trCategory(entry.key), style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14)),
                             subtitle: Text('${AppState.currencyNotifier.value}${entry.value.toStringAsFixed(0)}', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 12)),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -188,16 +188,16 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                       context: context,
                                       builder: (innerCtx) => AlertDialog(
                                         backgroundColor: Theme.of(context).colorScheme.surface,
-                                        title: Text('Edit ${entry.key}'),
+                                        title: Text('${LanguageService.tr('edit')} ${LanguageService.trCategory(entry.key)}'),
                                         content: TextField(
                                           controller: TextEditingController(text: entry.value.toStringAsFixed(0)),
                                           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-                                          decoration: const InputDecoration(labelText: 'New Limit'),
+                                          decoration: InputDecoration(labelText: LanguageService.tr('new_limit')),
                                           keyboardType: TextInputType.number,
                                           onChanged: (v) => newLimit = v,
                                         ),
                                         actions: [
-                                          TextButton(onPressed: () => Navigator.pop(innerCtx), child: const Text('Cancel')),
+                                          TextButton(onPressed: () => Navigator.pop(innerCtx), child: Text(LanguageService.tr('cancel'))),
                                           TextButton(
                                             onPressed: () {
                                               final limit = double.tryParse(newLimit);
@@ -209,7 +209,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                                 setDialogState(() {});
                                               }
                                             },
-                                            child: const Text('Save'),
+                                            child: Text(LanguageService.tr('save')),
                                           ),
                                         ],
                                       ),
@@ -223,9 +223,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                     final budgetVal = entry.value;
                                     final confirmed = await showDeleteConfirmationDialog(
                                       context: context,
-                                      title: 'Delete Budget?',
-                                      message: 'Are you sure you want to remove the budget cap for $catName?',
-                                      itemDetail: '$catName • ${AppState.currencyNotifier.value}${budgetVal.toStringAsFixed(0)}',
+                                      title: LanguageService.tr('delete_budget_title'),
+                                      message: '${LanguageService.tr('delete_budget_msg')} ${LanguageService.trCategory(catName)}?',
+                                      itemDetail: '${LanguageService.trCategory(catName)} • ${AppState.currencyNotifier.value}${budgetVal.toStringAsFixed(0)}',
                                     );
                                     if (confirmed && context.mounted) {
                                       budgets.remove(catName);
@@ -235,10 +235,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                       AppState.showAutoDismissingSnackBar(
                                         context,
                                         SnackBar(
-                                          content: Text('Budget for "$catName" deleted'),
+                                          content: Text('Budget for "${LanguageService.trCategory(catName)}" deleted'),
                                           duration: const Duration(seconds: 5),
                                           action: SnackBarAction(
-                                            label: 'Undo',
+                                            label: LanguageService.tr('undo'),
                                             textColor: Colors.amberAccent,
                                             onPressed: () {
                                               budgets[catName] = budgetVal;
@@ -258,7 +258,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Done')),
+                TextButton(onPressed: () => Navigator.pop(ctx), child: Text(LanguageService.tr('done'))),
               ],
             );
           },
@@ -272,10 +272,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        title: const Text('Reset All?'),
-        content: const Text('This will clear all transactions and reset your balance to zero.'),
+        title: Text(LanguageService.tr('reset_confirm_title')),
+        content: Text(LanguageService.tr('reset_confirm_msg')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(LanguageService.tr('cancel'))),
           TextButton(
             onPressed: () {
               AppState.transactionsNotifier.value = [];
@@ -284,7 +284,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               }
               Navigator.pop(ctx);
             },
-            child: const Text('Reset', style: TextStyle(color: Colors.redAccent)),
+            child: Text(LanguageService.tr('reset_button'), style: const TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -299,120 +299,123 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-          title: Row(
-          children: [
-            GestureDetector(
-              onTap: () => AppState.activeTabNotifier.value = 4,
-              child: ValueListenableBuilder<String?>(
-                valueListenable: AppState.profilePhotoNotifier,
-                builder: (context, photoPath, _) {
-                  return ValueListenableBuilder<Color>(
-                    valueListenable: AppState.customPrimaryColorNotifier,
-                    builder: (context, primaryColor, _) {
-                      final imageProvider = getProfileImageProvider(photoPath);
-                      return CircleAvatar(
-                        radius: 20,
-                        backgroundColor: primaryColor.withValues(alpha: 0.3),
-                        backgroundImage: imageProvider,
-                        child: imageProvider == null
-                            ? ValueListenableBuilder<String>(
-                                valueListenable: AppState.displayNameNotifier,
-                                builder: (context, dispName, _) {
-                                  final name = dispName.isNotEmpty ? dispName : (AppState.currentUser ?? 'U');
-                                  return Text(
-                                    name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'U',
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor),
-                                  );
-                                },
-                              )
-                            : null,
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            GestureDetector(
-              onTap: () => AppState.activeTabNotifier.value = 4,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Welcome back,', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
-                  ValueListenableBuilder<String>(
-                    valueListenable: AppState.displayNameNotifier,
-                    builder: (context, dispName, _) {
-                      final name = dispName.isNotEmpty ? dispName : (AppState.currentUser ?? 'Guest');
-                      return Text(
-                        name,
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+    return ValueListenableBuilder<String>(
+      valueListenable: LanguageService.currentLanguageNotifier,
+      builder: (context, currentLanguage, _) {
+        return Scaffold(
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            title: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => AppState.activeTabNotifier.value = 4,
+                  child: ValueListenableBuilder<String?>(
+                    valueListenable: AppState.profilePhotoNotifier,
+                    builder: (context, photoPath, _) {
+                      return ValueListenableBuilder<Color>(
+                        valueListenable: AppState.customPrimaryColorNotifier,
+                        builder: (context, primaryColor, _) {
+                          final imageProvider = getProfileImageProvider(photoPath);
+                          return CircleAvatar(
+                            radius: 20,
+                            backgroundColor: primaryColor.withValues(alpha: 0.3),
+                            backgroundImage: imageProvider,
+                            child: imageProvider == null
+                                ? ValueListenableBuilder<String>(
+                                    valueListenable: AppState.displayNameNotifier,
+                                    builder: (context, dispName, _) {
+                                      final name = dispName.isNotEmpty ? dispName : (AppState.currentUser ?? 'U');
+                                      return Text(
+                                        name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'U',
+                                        style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor),
+                                      );
+                                    },
+                                  )
+                                : null,
+                          );
+                        },
                       );
                     },
                   ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.currency_exchange, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
-            tooltip: 'Currency',
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => ValueListenableBuilder<String>(
-                  valueListenable: AppState.currencyNotifier,
-                  builder: (context, activeCurrency, _) {
-                    return SimpleDialog(
-                      backgroundColor: Theme.of(context).colorScheme.surface,
-                      title: const Text('Select Currency'),
-                      children: currencyOptions.entries.map((entry) {
-                        final isSelected = activeCurrency == entry.value;
-                        return SimpleDialogOption(
-                          onPressed: () {
-                            AppState.setCurrency(entry.value);
-                            Navigator.pop(ctx);
-                          },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                entry.key,
-                                style: TextStyle(
-                                  color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(Icons.check, size: 18, color: Theme.of(context).colorScheme.primary),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    );
-                  },
                 ),
-              );
-            },
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () => AppState.activeTabNotifier.value = 4,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(LanguageService.tr('welcome_back_user'), style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
+                      ValueListenableBuilder<String>(
+                        valueListenable: AppState.displayNameNotifier,
+                        builder: (context, dispName, _) {
+                          final name = dispName.isNotEmpty ? dispName : (AppState.currentUser ?? 'Guest');
+                          return Text(
+                            name,
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.currency_exchange, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+                tooltip: LanguageService.tr('select_currency'),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => ValueListenableBuilder<String>(
+                      valueListenable: AppState.currencyNotifier,
+                      builder: (context, activeCurrency, _) {
+                        return SimpleDialog(
+                          backgroundColor: Theme.of(context).colorScheme.surface,
+                          title: Text(LanguageService.tr('select_currency')),
+                          children: currencyOptions.entries.map((entry) {
+                            final isSelected = activeCurrency == entry.value;
+                            return SimpleDialogOption(
+                              onPressed: () {
+                                AppState.setCurrency(entry.value);
+                                Navigator.pop(ctx);
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    entry.key,
+                                    style: TextStyle(
+                                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    Icon(Icons.check, size: 18, color: Theme.of(context).colorScheme.primary),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh, color: Colors.redAccent),
+                tooltip: LanguageService.tr('reset_all'),
+                onPressed: _resetData,
+              ),
+              IconButton(
+                icon: Icon(Icons.logout, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+                tooltip: LanguageService.tr('logout'),
+                onPressed: _logout,
+              ),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.redAccent),
-            tooltip: 'Reset All',
-            onPressed: _resetData,
-          ),
-          IconButton(
-            icon: Icon(Icons.logout, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
-            tooltip: 'Logout',
-            onPressed: _logout,
-          ),
-        ],
-      ),
       body: ValueListenableBuilder<String>(
         valueListenable: AppState.currencyNotifier,
         builder: (context, currentCurrency, _) {
@@ -614,7 +617,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                               const SizedBox(width: 6),
                                               Flexible(
                                                 child: Text(
-                                                  '${AppState.currencyNotifier.value}${vaultTotal.toStringAsFixed(0)} stashed${recentInfo != null ? ' · $recentInfo' : ''}',
+                                                  '${AppState.currencyNotifier.value}${vaultTotal.toStringAsFixed(0)} ${LanguageService.tr('stashed')}${recentInfo != null ? ' · $recentInfo' : ''}',
                                                   style: const TextStyle(color: Colors.teal, fontSize: 11, fontWeight: FontWeight.w600),
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
@@ -634,7 +637,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                           Icon(Icons.shield_outlined, size: 15, color: Theme.of(context).colorScheme.primary),
                                           const SizedBox(width: 6),
                                           Text(
-                                            'Tally Encrypted Vault',
+                                            LanguageService.tr('encrypted_vault'),
                                             style: TextStyle(
                                               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
                                               fontSize: 12,
@@ -664,7 +667,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                             ),
                                             const SizedBox(width: 6),
                                             Text(
-                                              'ACTIVE',
+                                              LanguageService.tr('vault_active'),
                                               style: TextStyle(
                                                 color: Theme.of(context).colorScheme.primary,
                                                 fontSize: 10,
@@ -727,7 +730,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                           Row(
                                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
-                                              Text(entry.key, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
+                                              Text(LanguageService.trCategory(entry.key), style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                                               Text('${AppState.currencyNotifier.value}${spent.toStringAsFixed(0)} / ${AppState.currencyNotifier.value}${limit.toStringAsFixed(0)}', style: TextStyle(color: percent > 0.9 ? Colors.redAccent : Theme.of(context).colorScheme.onSurface)),
                                             ],
                                           ),
@@ -756,7 +759,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       child: RepaintBoundary(
                         child: InteractiveChartCard(
                           transactions: transactions,
-                          title: 'Financial Flow & Analytics',
+                          title: LanguageService.tr('financial_flow_title'),
                         ),
                       ),
                     ),
@@ -783,7 +786,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.event_note_rounded, size: 20, color: Colors.amberAccent),
-                                tooltip: 'Planned & Future Sheet',
+                                tooltip: LanguageService.tr('planned_future_sheet'),
                                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                                 padding: EdgeInsets.zero,
                                 onPressed: () => showPlannedTransactionsSheet(context),
@@ -846,6 +849,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           );
         },
       ),
+    );
+      },
     );
   }
 }

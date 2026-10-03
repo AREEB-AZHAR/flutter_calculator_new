@@ -108,6 +108,24 @@ class GoalInsight {
   });
 }
 
+class TaxInsight {
+  final double totalDeductible;
+  final double estimatedSavings15Pct;
+  final double estimatedSavings22Pct;
+  final double estimatedSavings24Pct;
+  final Map<String, double> deductibleByCategory;
+  final String taxTip;
+
+  const TaxInsight({
+    required this.totalDeductible,
+    required this.estimatedSavings15Pct,
+    required this.estimatedSavings22Pct,
+    required this.estimatedSavings24Pct,
+    required this.deductibleByCategory,
+    required this.taxTip,
+  });
+}
+
 class FinancialHealthScore {
   final int score; // 0 - 100
   final String rating; // 'Excellent', 'Strong', 'Moderate', 'Needs Attention'
@@ -140,6 +158,7 @@ class InsightsReport {
   final LoanInsight loanInsight;
   final List<PaymentTypeInsight> paymentTypes;
   final GoalInsight goalInsight;
+  final TaxInsight taxInsight;
   final double safeToSpendDaily;
   final double safeToSpendWeekly;
   final double projected6MonthSavings;
@@ -165,6 +184,7 @@ class InsightsReport {
     required this.loanInsight,
     required this.paymentTypes,
     required this.goalInsight,
+    required this.taxInsight,
     required this.safeToSpendDaily,
     required this.safeToSpendWeekly,
     required this.projected6MonthSavings,
@@ -265,6 +285,9 @@ class InsightsEngine {
       horizon: horizon,
     );
 
+    // Tax Intelligence
+    final taxInsight = _calculateTaxInsight(transactions, periodRange.start.year);
+
     return InsightsReport(
       horizon: horizon,
       startDate: periodRange.start,
@@ -285,6 +308,7 @@ class InsightsEngine {
       loanInsight: loanInsight,
       paymentTypes: paymentTypes,
       goalInsight: goalInsight,
+      taxInsight: taxInsight,
       safeToSpendDaily: safeToSpendDaily,
       safeToSpendWeekly: safeToSpendWeekly,
       projected6MonthSavings: projected6MonthSavings,
@@ -557,6 +581,43 @@ class InsightsEngine {
 
     list.sort((a, b) => b.amount.compareTo(a.amount));
     return list;
+  }
+
+  static TaxInsight _calculateTaxInsight(List<Transaction> transactions, int currentYear) {
+    const deductibleCategories = {'Healthcare', 'Education', 'Gifts', 'Other'};
+    final yearTransactions = transactions.where((t) =>
+      !t.isIncome &&
+      t.date.year == currentYear &&
+      deductibleCategories.contains(t.category)
+    ).toList();
+
+    double totalDeductible = 0.0;
+    final Map<String, double> byCategory = {};
+
+    for (var t in yearTransactions) {
+      totalDeductible += t.amount;
+      byCategory[t.category] = (byCategory[t.category] ?? 0.0) + t.amount;
+    }
+
+    final savings15 = totalDeductible * 0.15;
+    final savings22 = totalDeductible * 0.22;
+    final savings24 = totalDeductible * 0.24;
+
+    String tip;
+    if (totalDeductible > 1000) {
+      tip = 'Keep detailed receipts and invoices for your Healthcare, Education, and Donation expenses to maximize itemized tax deductions.';
+    } else {
+      tip = 'Categorize recurring professional development, medical expenses, and charitable gifts to automatically unlock potential tax write-offs.';
+    }
+
+    return TaxInsight(
+      totalDeductible: totalDeductible,
+      estimatedSavings15Pct: savings15,
+      estimatedSavings22Pct: savings22,
+      estimatedSavings24Pct: savings24,
+      deductibleByCategory: byCategory,
+      taxTip: tip,
+    );
   }
 
   static FinancialHealthScore _calculateHealthScore({
