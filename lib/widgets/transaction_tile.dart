@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../services/state.dart';
+import '../services/language_service.dart';
 import '../utils/constants.dart';
 import 'delete_confirmation_dialog.dart';
 
@@ -39,9 +40,9 @@ class TransactionTile extends StatelessWidget {
         }
         return await showDeleteConfirmationDialog(
           context: context,
-          title: 'Delete Transaction?',
-          message: 'Are you sure you want to delete this transaction?',
-          itemDetail: '${tx.title} • ${tx.isIncome ? '+' : '-'}${AppState.currencyNotifier.value}${tx.amount.toStringAsFixed(0)}',
+          title: LanguageService.tr('delete_tx_title'),
+          message: LanguageService.tr('delete_tx_msg'),
+          itemDetail: '${LanguageService.trCategory(tx.title)} • ${tx.isIncome ? '+' : '-'}${AppState.currencyNotifier.value}${tx.amount.toStringAsFixed(0)}',
         );
       },
       onDismissed: (_) => onDelete(),
@@ -70,7 +71,7 @@ class TransactionTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(tx.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface)),
+                    Text(LanguageService.trDynamic(tx.title), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface)),
                     const SizedBox(height: 4),
                     Text('${formatDate(tx.date)} • ${tx.account}', style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.6))),
                   ],

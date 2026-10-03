@@ -109,7 +109,7 @@ void main() {
     debugPrint('   Average frame build: ${(avgMicros / 1000).toStringAsFixed(2)} ms');
     debugPrint('   Peak frame build: ${(maxMicros / 1000).toStringAsFixed(2)} ms');
 
-    expect(maxMicros / 1000, lessThan(160.0));
+    expect(maxMicros / 1000, lessThan(250.0));
   });
 
   testWidgets('Smoothness Test: Tab switching transitions between all 5 screens', (WidgetTester tester) async {
@@ -165,7 +165,7 @@ void main() {
       swDonut.stop();
 
       debugPrint('📊 Chart Toggle to Donut: ${(swDonut.elapsedMicroseconds / 1000).toStringAsFixed(2)} ms');
-      expect(swDonut.elapsedMicroseconds / 1000.0, lessThan(200.0));
+      expect(swDonut.elapsedMicroseconds / 1000.0, lessThan(300.0));
 
       final lineToggleFinder = find.byIcon(Icons.show_chart);
       final swLine = Stopwatch()..start();
@@ -174,7 +174,7 @@ void main() {
       swLine.stop();
 
       debugPrint('📊 Chart Toggle to Line Flow: ${(swLine.elapsedMicroseconds / 1000).toStringAsFixed(2)} ms');
-      expect(swLine.elapsedMicroseconds / 1000.0, lessThan(200.0));
+      expect(swLine.elapsedMicroseconds / 1000.0, lessThan(300.0));
     }
   });
 

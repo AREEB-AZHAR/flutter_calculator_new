@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../models/loan.dart';
 import '../services/state.dart';
+import '../services/language_service.dart';
 import '../services/tour_service.dart';
 import '../services/notification_service.dart';
 import '../widgets/feature_tour_dialog.dart';
@@ -47,11 +48,11 @@ class _AccountsScreenState extends State<AccountsScreen> {
       builder: (innerCtx) => AlertDialog(
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.add_card_rounded, color: Colors.blueAccent),
-            SizedBox(width: 8),
-            Text('New Account Type', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const Icon(Icons.add_card_rounded, color: Colors.blueAccent),
+            const SizedBox(width: 8),
+            Text(LanguageService.tr('new_account_title'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           ],
         ),
         content: Column(
@@ -59,7 +60,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Add a custom wallet or account (e.g., "Emergency Fund", "Crypto", "PayPal", "Business").',
+              LanguageService.tr('account_name_hint'),
               style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
             ),
             const SizedBox(height: 14),
@@ -68,8 +69,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
               autofocus: true,
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               decoration: InputDecoration(
-                labelText: 'Account Name',
-                hintText: 'e.g. Savings or Crypto',
+                labelText: LanguageService.tr('account_name_label'),
+                hintText: LanguageService.tr('account_name_hint'),
                 hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 13),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               ),
@@ -79,7 +80,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(innerCtx),
-            child: const Text('Cancel'),
+            child: Text(LanguageService.tr('cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -107,7 +108,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
               foregroundColor: Theme.of(context).colorScheme.onPrimary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Add Account', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(LanguageService.tr('add_account'), style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -124,7 +125,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
             return AlertDialog(
               backgroundColor: Theme.of(context).colorScheme.surface,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: const Text('Manage Accounts', style: TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(LanguageService.tr('manage_accounts'), style: const TextStyle(fontWeight: FontWeight.bold)),
               content: SizedBox(
                 width: double.maxFinite,
                 child: Column(
@@ -138,15 +139,15 @@ class _AccountsScreenState extends State<AccountsScreen> {
                           title: Text(accounts[i], style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
                           trailing: IconButton(
                             icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                            tooltip: 'Delete Account',
+                            tooltip: LanguageService.tr('delete'),
                             onPressed: () async {
                               if (accounts.length > 1) {
                                 final accName = accounts[i];
                                 final confirmed = await showDeleteConfirmationDialog(
-                                  context: context,
-                                  title: 'Delete Account?',
-                                  message: 'Are you sure you want to delete this account? Any transactions linked to this account will remain in your ledger.',
-                                  itemDetail: accName,
+                                    context: context,
+                                    title: LanguageService.tr('delete'),
+                                    message: LanguageService.tr('delete_budget_msg'),
+                                    itemDetail: accName,
                                 );
                                 if (confirmed && context.mounted) {
                                   final removedAcc = accounts.removeAt(i);
@@ -162,7 +163,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                       content: Text('Account "$removedAcc" deleted'),
                                       duration: const Duration(seconds: 5),
                                       action: SnackBarAction(
-                                        label: 'Undo',
+                                        label: LanguageService.tr('undo'),
                                         textColor: Colors.amberAccent,
                                         onPressed: () {
                                           accounts.insert(i, removedAcc);
@@ -186,7 +187,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     const SizedBox(height: 10),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Add New Account'),
+                      label: Text(LanguageService.tr('add_account')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                         foregroundColor: Theme.of(context).colorScheme.primary,
@@ -199,7 +200,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Done'))
+                TextButton(onPressed: () => Navigator.pop(ctx), child: Text(LanguageService.tr('done')))
               ],
             );
           },
@@ -242,7 +243,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    isReceivable ? 'New Receivable (Owed to Me)' : 'New Payable (I Owe)',
+                    isReceivable
+                        ? '${LanguageService.tr('receivable_short')} (${LanguageService.tr('owed_to_you')})'
+                        : '${LanguageService.tr('payable_short')} (${LanguageService.tr('you_owe')})',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: onSurface),
                   ),
                 ],
@@ -271,7 +274,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                 ),
                                 alignment: Alignment.center,
                                 child: Text(
-                                  'Receivable (Owed to Me)',
+                                  '${LanguageService.tr('receivable_short')} (${LanguageService.tr('owed_to_you')})',
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: isReceivable ? FontWeight.bold : FontWeight.normal,
@@ -292,7 +295,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                 ),
                                 alignment: Alignment.center,
                                 child: Text(
-                                  'Payable (I Owe)',
+                                  '${LanguageService.tr('payable_short')} (${LanguageService.tr('you_owe')})',
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: !isReceivable ? FontWeight.bold : FontWeight.normal,
@@ -312,7 +315,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       controller: personCtrl,
                       style: TextStyle(color: onSurface),
                       decoration: InputDecoration(
-                        labelText: isReceivable ? 'Who owes you? (Person Name)' : 'Who do you owe? (Person Name)',
+                        labelText: isReceivable ? LanguageService.tr('who_owes_you') : LanguageService.tr('who_do_you_owe'),
                         hintText: 'e.g. Alex Morgan or Landlord',
                         prefixIcon: const Icon(Icons.person_outline),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
@@ -325,7 +328,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       controller: titleCtrl,
                       style: TextStyle(color: onSurface),
                       decoration: InputDecoration(
-                        labelText: 'Title / Purpose',
+                        labelText: LanguageService.tr('title_purpose'),
                         hintText: 'e.g. Dinner bill split, Laptop loan',
                         prefixIcon: const Icon(Icons.description_outlined),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
@@ -339,7 +342,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       style: TextStyle(color: onSurface),
                       decoration: InputDecoration(
-                        labelText: 'Amount (${AppState.currencyNotifier.value})',
+                        labelText: '${LanguageService.tr('tx_amount_label')} (${AppState.currencyNotifier.value})',
                         prefixIcon: const Icon(Icons.attach_money),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                       ),
@@ -387,7 +390,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Reminder Due Date & Time', style: TextStyle(fontSize: 10, color: onSurface.withValues(alpha: 0.6))),
+                                  Text(LanguageService.tr('reminder_due_date_time'), style: TextStyle(fontSize: 10, color: onSurface.withValues(alpha: 0.6))),
                                   Text(
                                     '${formatDateWithYear(dueDate)} at ${dueTime.format(context)}',
                                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: onSurface),
@@ -438,7 +441,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancel'),
+                  child: Text(LanguageService.tr('cancel')),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -474,7 +477,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     foregroundColor: theme.colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Save Loan', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text(LanguageService.tr('save_loan'), style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             );
@@ -486,135 +489,140 @@ class _AccountsScreenState extends State<AccountsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
-    final primaryColor = theme.colorScheme.primary;
+    return ValueListenableBuilder<String>(
+      valueListenable: LanguageService.currentLanguageNotifier,
+      builder: (context, currentLanguage, _) {
+        final theme = Theme.of(context);
+        final onSurface = theme.colorScheme.onSurface;
+        final primaryColor = theme.colorScheme.primary;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _activeSegment == 'wallets' ? 'Accounts & Wallets' : 'Loans & Debts',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 0,
-        actions: [
-          if (_activeSegment == 'wallets') ...[
-            IconButton(
-              icon: const Icon(Icons.add_card_rounded),
-              tooltip: 'Add New Account',
-              onPressed: () => _showAddAccountDialog(),
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              _activeSegment == 'wallets' ? LanguageService.tr('accounts_title') : LanguageService.tr('loans_and_debts'),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            IconButton(
-              icon: const Icon(Icons.help_outline_rounded),
-              tooltip: 'Accounts Tour',
-              onPressed: () => showAccountsTour(context),
-            ),
-            IconButton(
-              icon: const Icon(Icons.settings_outlined),
-              tooltip: 'Manage Accounts',
-              onPressed: _showSettingsDialog,
-            ),
-          ] else ...[
-            IconButton(
-              icon: Icon(Icons.add_circle_outline_rounded, color: theme.colorScheme.primary),
-              tooltip: 'Add Loan / Debt',
-              onPressed: _showAddLoanDialog,
-            ),
-          ],
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-            child: Container(
-              height: 38,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: theme.scaffoldBackgroundColor,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: onSurface.withValues(alpha: 0.08)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _activeSegment = 'wallets'),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        decoration: BoxDecoration(
-                          color: _activeSegment == 'wallets' ? theme.colorScheme.surface : Colors.transparent,
-                          borderRadius: BorderRadius.circular(11),
-                          boxShadow: _activeSegment == 'wallets'
-                              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 1))]
-                              : null,
-                        ),
-                        alignment: Alignment.center,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.account_balance_wallet_outlined, size: 16, color: _activeSegment == 'wallets' ? primaryColor : onSurface.withValues(alpha: 0.6)),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Wallets & Accounts',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: _activeSegment == 'wallets' ? FontWeight.bold : FontWeight.w500,
-                                color: _activeSegment == 'wallets' ? onSurface : onSurface.withValues(alpha: 0.6),
-                              ),
+            backgroundColor: theme.colorScheme.surface,
+            elevation: 0,
+            actions: [
+              if (_activeSegment == 'wallets') ...[
+                IconButton(
+                  icon: const Icon(Icons.add_card_rounded),
+                  tooltip: LanguageService.tr('add_new_account'),
+                  onPressed: () => _showAddAccountDialog(),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.help_outline_rounded),
+                  tooltip: LanguageService.tr('accounts_tour'),
+                  onPressed: () => showAccountsTour(context),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.settings_outlined),
+                  tooltip: LanguageService.tr('manage_accounts'),
+                  onPressed: _showSettingsDialog,
+                ),
+              ] else ...[
+                IconButton(
+                  icon: Icon(Icons.add_circle_outline_rounded, color: theme.colorScheme.primary),
+                  tooltip: LanguageService.tr('add_loan_debt'),
+                  onPressed: _showAddLoanDialog,
+                ),
+              ],
+            ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(48),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                child: Container(
+                  height: 38,
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: theme.scaffoldBackgroundColor,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: onSurface.withValues(alpha: 0.08)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _activeSegment = 'wallets'),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            decoration: BoxDecoration(
+                              color: _activeSegment == 'wallets' ? theme.colorScheme.surface : Colors.transparent,
+                              borderRadius: BorderRadius.circular(11),
+                              boxShadow: _activeSegment == 'wallets'
+                                  ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 1))]
+                                  : null,
                             ),
-                          ],
+                            alignment: Alignment.center,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.account_balance_wallet_outlined, size: 16, color: _activeSegment == 'wallets' ? primaryColor : onSurface.withValues(alpha: 0.6)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  LanguageService.tr('wallets_and_accounts'),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: _activeSegment == 'wallets' ? FontWeight.bold : FontWeight.w500,
+                                    color: _activeSegment == 'wallets' ? onSurface : onSurface.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _activeSegment = 'loans'),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        decoration: BoxDecoration(
-                          color: _activeSegment == 'loans' ? theme.colorScheme.surface : Colors.transparent,
-                          borderRadius: BorderRadius.circular(11),
-                          boxShadow: _activeSegment == 'loans'
-                              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 1))]
-                              : null,
-                        ),
-                        alignment: Alignment.center,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.handshake_outlined, size: 16, color: _activeSegment == 'loans' ? primaryColor : onSurface.withValues(alpha: 0.6)),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Loans & Debts',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: _activeSegment == 'loans' ? FontWeight.bold : FontWeight.w500,
-                                color: _activeSegment == 'loans' ? onSurface : onSurface.withValues(alpha: 0.6),
-                              ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _activeSegment = 'loans'),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            decoration: BoxDecoration(
+                              color: _activeSegment == 'loans' ? theme.colorScheme.surface : Colors.transparent,
+                              borderRadius: BorderRadius.circular(11),
+                              boxShadow: _activeSegment == 'loans'
+                                  ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 1))]
+                                  : null,
                             ),
-                          ],
+                            alignment: Alignment.center,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.handshake_outlined, size: 16, color: _activeSegment == 'loans' ? primaryColor : onSurface.withValues(alpha: 0.6)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  LanguageService.tr('loans_and_debts'),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: _activeSegment == 'loans' ? FontWeight.bold : FontWeight.w500,
+                                    color: _activeSegment == 'loans' ? onSurface : onSurface.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
-      body: _activeSegment == 'wallets' ? _buildWalletsTab() : _buildLoansTab(),
-      floatingActionButton: _activeSegment == 'loans'
-          ? FloatingActionButton.extended(
-              onPressed: _showAddLoanDialog,
-              backgroundColor: primaryColor,
-              foregroundColor: theme.colorScheme.onPrimary,
-              icon: const Icon(Icons.add, size: 20),
-              label: const Text('Add Loan / Debt', style: TextStyle(fontWeight: FontWeight.bold)),
-            )
-          : null,
+          body: _activeSegment == 'wallets' ? _buildWalletsTab() : _buildLoansTab(),
+          floatingActionButton: _activeSegment == 'loans'
+              ? FloatingActionButton.extended(
+                  onPressed: _showAddLoanDialog,
+                  backgroundColor: primaryColor,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  icon: const Icon(Icons.add, size: 20),
+                  label: Text(LanguageService.tr('add_loan_debt'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                )
+              : null,
+        );
+      },
     );
   }
 
@@ -747,7 +755,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                           ),
                                         ),
                                         Text(
-                                          'Spent: $currentCurrency${spent.toStringAsFixed(0)}',
+                                          '${LanguageService.tr('spent')}: $currentCurrency${spent.toStringAsFixed(0)}',
                                           style: TextStyle(
                                             fontSize: 11,
                                             color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
@@ -772,7 +780,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                           child: InteractiveChartCard(
                             transactions: transactions,
                             accountFilter: _selectedAccount == 'Overall' ? null : _selectedAccount,
-                            title: _selectedAccount == 'Overall' ? 'Overall Flow & Analytics' : 'Analytics: $_selectedAccount',
+                            title: _selectedAccount == 'Overall' ? LanguageService.tr('overall_flow_and_analytics') : '${LanguageService.tr('analytics_prefix')}: $_selectedAccount',
                           ),
                         ),
                       ),
@@ -791,7 +799,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                         child: Text(
-                          _selectedAccount == 'Overall' ? 'All Transactions (Overall)' : 'Transactions: $_selectedAccount',
+                          _selectedAccount == 'Overall' ? LanguageService.tr('all_transactions_prefix') : '${LanguageService.tr('transactions_prefix')}: $_selectedAccount',
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                         ),
                       ),
@@ -802,7 +810,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         hasScrollBody: false,
                         child: Center(
                           child: Text(
-                            "No transactions for this account",
+                            LanguageService.tr('no_tx_for_account'),
                             style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                           ),
                         ),
@@ -914,7 +922,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                           Icon(Icons.call_received_rounded, size: 16, color: positiveColor),
                                           const SizedBox(width: 4),
                                           Text(
-                                            'Receivable',
+                                            LanguageService.tr('receivable_short'),
                                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: onSurface.withValues(alpha: 0.7)),
                                           ),
                                         ],
@@ -925,7 +933,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: positiveColor),
                                       ),
                                       Text(
-                                        'Owed to you',
+                                        LanguageService.tr('owed_to_you'),
                                         style: TextStyle(fontSize: 10, color: onSurface.withValues(alpha: 0.5)),
                                       ),
                                     ],
@@ -949,7 +957,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                           Icon(Icons.call_made_rounded, size: 16, color: negativeColor),
                                           const SizedBox(width: 4),
                                           Text(
-                                            'Payable',
+                                            LanguageService.tr('payable_short'),
                                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: onSurface.withValues(alpha: 0.7)),
                                           ),
                                         ],
@@ -960,7 +968,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: negativeColor),
                                       ),
                                       Text(
-                                        'You owe',
+                                        LanguageService.tr('you_owe'),
                                         style: TextStyle(fontSize: 10, color: onSurface.withValues(alpha: 0.5)),
                                       ),
                                     ],
@@ -980,7 +988,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Net Lending Position', style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.65))),
+                                Text(LanguageService.tr('net_lending_position'), style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.65))),
                                 Text(
                                   '${netLending >= 0 ? '+' : ''}$currency${netLending.toStringAsFixed(0)}',
                                   style: TextStyle(
@@ -1006,10 +1014,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
                       children: [
-                        _loanFilterChip('all', 'All (${loans.length})', onSurface),
-                        _loanFilterChip('receivable', 'Receivables', onSurface),
-                        _loanFilterChip('payable', 'Payables', onSurface),
-                        _loanFilterChip('settled', 'Settled / Paid', onSurface),
+                        _loanFilterChip('all', '${LanguageService.tr('filter_all')} (${loans.length})', onSurface),
+                        _loanFilterChip('receivable', LanguageService.tr('filter_receivable'), onSurface),
+                        _loanFilterChip('payable', LanguageService.tr('filter_payable'), onSurface),
+                        _loanFilterChip('settled', LanguageService.tr('filter_settled'), onSurface),
                       ],
                     ),
                   ),
@@ -1032,12 +1040,12 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Recorded Loans (${filteredLoans.length})',
+                          '${LanguageService.tr('recorded_loans')} (${filteredLoans.length})',
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface),
                         ),
                         TextButton.icon(
                           icon: const Icon(Icons.add, size: 16),
-                          label: const Text('New Loan'),
+                          label: Text(LanguageService.tr('new_loan')),
                           onPressed: _showAddLoanDialog,
                         ),
                       ],
@@ -1058,19 +1066,19 @@ class _AccountsScreenState extends State<AccountsScreen> {
                             Icon(Icons.handshake_outlined, size: 56, color: onSurface.withValues(alpha: 0.25)),
                             const SizedBox(height: 12),
                             Text(
-                              'No Loans or Debts in this filter',
+                              LanguageService.tr('no_loans_in_filter'),
                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: onSurface),
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Track money friends owe you or payments you need to make with automated reminder notifications.',
+                              LanguageService.tr('track_money_sub'),
                               textAlign: TextAlign.center,
                               style: TextStyle(fontSize: 13, color: onSurface.withValues(alpha: 0.6)),
                             ),
                             const SizedBox(height: 16),
                             ElevatedButton.icon(
                               icon: const Icon(Icons.add, size: 18),
-                              label: const Text('Add First Loan / Debt'),
+                              label: Text(LanguageService.tr('add_first_loan')),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: primary,
                                 foregroundColor: theme.colorScheme.onPrimary,
@@ -1144,19 +1152,19 @@ class _AccountsScreenState extends State<AccountsScreen> {
     Color statusColor;
 
     if (loan.isSettled) {
-      statusText = 'Settled';
+      statusText = LanguageService.tr('loan_settled');
       statusColor = onSurface.withValues(alpha: 0.5);
     } else if (daysDiff < 0) {
-      statusText = '⚠️ Overdue by ${daysDiff.abs()}d';
+      statusText = '⚠️ ${LanguageService.tr('overdue')} (${daysDiff.abs()} ${LanguageService.tr('per_day').replaceAll('/', '')})';
       statusColor = negativeColor;
     } else if (daysDiff == 0) {
-      statusText = '⚠️ Due Today';
+      statusText = '⚠️ ${LanguageService.tr('due_today')}';
       statusColor = warningColor;
     } else if (daysDiff == 1) {
-      statusText = 'Due Tomorrow';
+      statusText = LanguageService.tr('due_tomorrow');
       statusColor = theme.colorScheme.primary;
     } else {
-      statusText = 'Due in ${daysDiff}d';
+      statusText = '${LanguageService.tr('due_in')} $daysDiff ${LanguageService.tr('per_day').replaceAll('/', '')}';
       statusColor = theme.colorScheme.primary;
     }
 
@@ -1306,7 +1314,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       size: 20,
                       color: loan.isSettled ? positiveColor : onSurface.withValues(alpha: 0.5),
                     ),
-                    tooltip: loan.isSettled ? 'Mark as Unsettled' : 'Mark as Settled / Collected',
+                    tooltip: loan.isSettled ? LanguageService.tr('mark_as_unsettled') : LanguageService.tr('mark_as_settled'),
                     constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     padding: EdgeInsets.zero,
                     onPressed: () {
@@ -1325,23 +1333,23 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   // Delete Loan
                   IconButton(
                     icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.redAccent),
-                    tooltip: 'Delete Loan',
+                    tooltip: LanguageService.tr('delete_loan'),
                     constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     padding: EdgeInsets.zero,
                     onPressed: () async {
                       final confirmed = await showDeleteConfirmationDialog(
                         context: context,
-                        title: 'Delete Loan Record?',
-                        message: 'Are you sure you want to delete this loan record for ${loan.personName}?',
+                        title: LanguageService.tr('delete_loan_title'),
+                        message: '${LanguageService.tr('delete_loan_confirm')} ${loan.personName}?',
                         itemDetail: '${loan.title} • $currency${loan.amount.toStringAsFixed(0)}',
                       );
                       if (confirmed && mounted && AppState.currentUser != null) {
                         AppState.deleteLoan(AppState.currentUser!, loan.id);
                         AppState.showAutoDismissingSnackBar(
                           context,
-                          const SnackBar(
-                            content: Text('Loan record deleted'),
-                            duration: Duration(seconds: 5),
+                          SnackBar(
+                            content: Text(LanguageService.tr('loan_record_deleted')),
+                            duration: const Duration(seconds: 5),
                           ),
                         );
                       }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/savings_goal.dart';
 import '../models/goal_entry.dart';
 import '../services/state.dart';
+import '../services/language_service.dart';
 import '../utils/constants.dart';
 import '../widgets/delete_confirmation_dialog.dart';
 
@@ -36,7 +37,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: theme.colorScheme.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text('New Savings Goal', style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
+          title: Text(LanguageService.tr('new_goal_title'), style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -44,7 +45,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 TextField(
                   style: TextStyle(color: onSurface),
                   decoration: InputDecoration(
-                    labelText: 'Goal Name',
+                    labelText: LanguageService.tr('goal_name'),
                     labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
                     prefixIcon: Icon(Icons.flag_outlined, color: primary, size: 20),
                   ),
@@ -54,7 +55,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 TextField(
                   style: TextStyle(color: onSurface),
                   decoration: InputDecoration(
-                    labelText: 'Target Amount (${AppState.currencyNotifier.value})',
+                    labelText: '${LanguageService.tr('target_amount')} (${AppState.currencyNotifier.value})',
                     labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
                     prefixIcon: Icon(Icons.savings_outlined, color: primary, size: 20),
                   ),
@@ -66,33 +67,33 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 // Due Date Quick Chips
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: Text('Due Date', style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontSize: 13, fontWeight: FontWeight.w600)),
+                  child: Text(LanguageService.tr('due_date'), style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontSize: 13, fontWeight: FontWeight.w600)),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _dueDateChip('Today', () {
+                    _dueDateChip(LanguageService.tr('quick_today'), () {
                       setDialogState(() {
                         dueDate = DateTime.now();
                         periodType = 'daily';
                       });
                     }, dueDate != null && periodType == 'daily', primary, onSurface),
-                    _dueDateChip('1 Week', () {
+                    _dueDateChip(LanguageService.tr('quick_1week'), () {
                       setDialogState(() {
                         dueDate = DateTime.now().add(const Duration(days: 7));
                         periodType = 'weekly';
                       });
                     }, periodType == 'weekly', primary, onSurface),
-                    _dueDateChip('1 Month', () {
+                    _dueDateChip(LanguageService.tr('quick_1month'), () {
                       setDialogState(() {
                         final now = DateTime.now();
                         dueDate = DateTime(now.year, now.month + 1, now.day);
                         periodType = 'monthly';
                       });
                     }, periodType == 'monthly' && dueDate != null, primary, onSurface),
-                    _dueDateChip('Custom', () async {
+                    _dueDateChip(LanguageService.tr('quick_custom'), () async {
                       final picked = await showDatePicker(
                         context: ctx,
                         initialDate: DateTime.now().add(const Duration(days: 1)),
@@ -106,7 +107,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                         });
                       }
                     }, periodType == 'custom', primary, onSurface),
-                    _dueDateChip('No Date', () {
+                    _dueDateChip(LanguageService.tr('no_date'), () {
                       setDialogState(() {
                         dueDate = null;
                         periodType = 'monthly';
@@ -127,7 +128,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                         Icon(Icons.event, size: 16, color: primary),
                         const SizedBox(width: 8),
                         Text(
-                          'Due: ${formatDateWithYear(dueDate!)}',
+                          '${LanguageService.tr('due_date')}: ${formatDateWithYear(dueDate!)}',
                           style: TextStyle(color: primary, fontSize: 13, fontWeight: FontWeight.w600),
                         ),
                       ],
@@ -142,7 +143,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                   children: [
                     Icon(Icons.repeat, size: 18, color: onSurface.withValues(alpha: 0.7)),
                     const SizedBox(width: 8),
-                    Text('Recurring Goal', style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontSize: 13, fontWeight: FontWeight.w600)),
+                    Text(LanguageService.tr('recurring_goal'), style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontSize: 13, fontWeight: FontWeight.w600)),
                     const Spacer(),
                     Switch.adaptive(
                       value: isRecurring,
@@ -162,7 +163,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                   Wrap(
                     spacing: 8,
                     children: ['daily', 'weekly', 'monthly'].map((r) => ChoiceChip(
-                      label: Text(r[0].toUpperCase() + r.substring(1), style: TextStyle(color: recurrence == r ? Colors.white : onSurface, fontSize: 12)),
+                      label: Text(LanguageService.trRecurrence(r), style: TextStyle(color: recurrence == r ? Colors.white : onSurface, fontSize: 12)),
                       selected: recurrence == r,
                       selectedColor: primary,
                       backgroundColor: theme.colorScheme.surface,
@@ -177,7 +178,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('Cancel', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
+              child: Text(LanguageService.tr('cancel'), style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
             ),
             ElevatedButton(
               onPressed: () {
@@ -202,7 +203,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 backgroundColor: primary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Create', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: Text(LanguageService.tr('create'), style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -241,14 +242,14 @@ class _GoalsScreenState extends State<GoalsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: theme.colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('Deposit to "${goal.title}"', style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
+        title: Text('${LanguageService.tr('deposit_to')} "${goal.title}"', style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               style: TextStyle(color: onSurface),
               decoration: InputDecoration(
-                labelText: 'Amount (${AppState.currencyNotifier.value})',
+                labelText: '${LanguageService.tr('tx_amount_label')} (${AppState.currencyNotifier.value})',
                 labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
                 prefixIcon: Icon(Icons.attach_money, color: primary, size: 20),
               ),
@@ -259,7 +260,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
             TextField(
               style: TextStyle(color: onSurface),
               decoration: InputDecoration(
-                labelText: 'Note (optional)',
+                labelText: LanguageService.tr('note_optional'),
                 labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
                 prefixIcon: Icon(Icons.note_outlined, color: onSurface.withValues(alpha: 0.4), size: 20),
               ),
@@ -270,7 +271,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
+            child: Text(LanguageService.tr('cancel'), style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
           ),
           ElevatedButton(
             onPressed: () {
@@ -289,7 +290,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               backgroundColor: primary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Deposit', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(LanguageService.tr('deposit'), style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -353,9 +354,9 @@ class _GoalsScreenState extends State<GoalsScreen> {
                               ),
                             ),
                             if (currentGoal.isCompleted)
-                              Text('🎉 Goal Completed!', style: TextStyle(color: Colors.greenAccent, fontSize: 13, fontWeight: FontWeight.w600)),
+                              Text('🎉 ${LanguageService.tr('goal_completed_title')}', style: const TextStyle(color: Colors.greenAccent, fontSize: 13, fontWeight: FontWeight.w600)),
                             if (currentGoal.isFailed)
-                              Text('❌ Goal Expired', style: TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w600)),
+                              Text('❌ ${LanguageService.tr('goal_expired_title')}', style: const TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w600)),
                           ],
                         ),
                       ),
@@ -383,10 +384,10 @@ class _GoalsScreenState extends State<GoalsScreen> {
                               ),
                               Text(
                                 '$currency${currentGoal.saved.toStringAsFixed(0)}',
-                                style: TextStyle(fontSize: 14, color: Colors.greenAccent, fontWeight: FontWeight.w600),
+                                style: const TextStyle(fontSize: 14, color: Colors.greenAccent, fontWeight: FontWeight.w600),
                               ),
                               Text(
-                                'of $currency${currentGoal.target.toStringAsFixed(0)}',
+                                '${LanguageService.tr('of')} $currency${currentGoal.target.toStringAsFixed(0)}',
                                 style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.5)),
                               ),
                             ],
@@ -413,12 +414,12 @@ class _GoalsScreenState extends State<GoalsScreen> {
                             children: [
                               Icon(Icons.speed, size: 18, color: primary),
                               const SizedBox(width: 8),
-                              Text('Pacing', style: TextStyle(color: primary, fontSize: 14, fontWeight: FontWeight.bold)),
+                              Text(LanguageService.tr('pacing'), style: TextStyle(color: primary, fontSize: 14, fontWeight: FontWeight.bold)),
                               const Spacer(),
                               Text(
                                 currentGoal.remainingToSave <= 0
-                                    ? 'Target Met'
-                                    : '$currency${currentGoal.remainingToSave.toStringAsFixed(0)} left',
+                                    ? LanguageService.tr('target_met')
+                                    : '$currency${currentGoal.remainingToSave.toStringAsFixed(0)} ${LanguageService.tr('amount_left')}',
                                 style: TextStyle(
                                   color: currentGoal.remainingToSave <= 0 ? Colors.greenAccent : primary,
                                   fontSize: 12,
@@ -429,16 +430,16 @@ class _GoalsScreenState extends State<GoalsScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Due: ${formatDateWithYear(currentGoal.effectiveDueDate)} · ${currentGoal.daysRemaining} day${currentGoal.daysRemaining == 1 ? '' : 's'} left',
+                            '${LanguageService.tr('due_date')}: ${formatDateWithYear(currentGoal.effectiveDueDate)} · ${currentGoal.daysRemaining} ${LanguageService.tr('days_left')}',
                             style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontSize: 13),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             currentGoal.remainingToSave <= 0
-                                ? '🎉 Target reached! Stash more if you wish.'
+                                ? LanguageService.tr('target_reached_stash_more')
                                 : (currentGoal.daysRemaining <= 1 || currentGoal.isDueToday
-                                    ? 'Save $currency${currentGoal.remainingToSave.toStringAsFixed(0)} today to reach target'
-                                    : 'Save $currency${currentGoal.dailySavingsNeeded.toStringAsFixed(0)}/day to reach target on time'),
+                                    ? '${LanguageService.tr('save_amount')} $currency${currentGoal.remainingToSave.toStringAsFixed(0)} ${LanguageService.tr('save_today_due')}'
+                                    : '${LanguageService.tr('save_amount')} $currency${currentGoal.dailySavingsNeeded.toStringAsFixed(0)}${LanguageService.tr('per_day')} · ${currentGoal.daysRemaining}${LanguageService.tr('days_left')}'),
                             style: TextStyle(color: onSurface, fontSize: 13, fontWeight: FontWeight.w600),
                           ),
                         ],
@@ -462,7 +463,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                           const Icon(Icons.repeat, size: 18, color: Colors.teal),
                           const SizedBox(width: 8),
                           Text(
-                            'Recurring: ${currentGoal.recurrence[0].toUpperCase()}${currentGoal.recurrence.substring(1)}',
+                            '${LanguageService.tr('recurring_goal')}: ${LanguageService.trRecurrence(currentGoal.recurrence)}',
                             style: const TextStyle(color: Colors.teal, fontSize: 13, fontWeight: FontWeight.w600),
                           ),
                         ],
@@ -487,7 +488,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                           Navigator.pop(ctx);
                         },
                         icon: const Icon(Icons.refresh, size: 18),
-                        label: const Text('Start New Cycle', style: TextStyle(fontWeight: FontWeight.bold)),
+                        label: Text(LanguageService.tr('start_new_cycle'), style: const TextStyle(fontWeight: FontWeight.bold)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.teal,
                           foregroundColor: Colors.white,
@@ -500,9 +501,9 @@ class _GoalsScreenState extends State<GoalsScreen> {
                   // Contribution Entries
                   Row(
                     children: [
-                      Text('Contributions', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface)),
+                      Text(LanguageService.tr('contributions'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface)),
                       const Spacer(),
-                      Text('${currentGoal.entries.length} entries', style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 12)),
+                      Text('${currentGoal.entries.length} ${LanguageService.tr('entries')}', style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 12)),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -511,7 +512,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     Center(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 20),
-                        child: Text('No contributions yet', style: TextStyle(color: onSurface.withValues(alpha: 0.4))),
+                        child: Text(LanguageService.tr('no_contributions_yet'), style: TextStyle(color: onSurface.withValues(alpha: 0.4))),
                       ),
                     )
                   else
@@ -539,7 +540,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text('+$currency${entry.amount.toStringAsFixed(0)}',
-                                        style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 15)),
+                                        style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 15)),
                                     Text(
                                       '${formatDateWithYear(entry.date)}${entry.note != null ? ' · ${entry.note}' : ''}',
                                       style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 12),
@@ -559,8 +560,8 @@ class _GoalsScreenState extends State<GoalsScreen> {
                                   if (AppState.currentUser == null) return;
                                   final confirmed = await showDeleteConfirmationDialog(
                                     context: context,
-                                    title: 'Delete Entry?',
-                                    message: 'Remove this $currency${entry.amount.toStringAsFixed(0)} deposit?',
+                                    title: LanguageService.tr('delete_entry_title'),
+                                    message: LanguageService.tr('delete_deposit_confirm'),
                                   );
                                   if (confirmed) {
                                     AppState.deleteGoalEntry(AppState.currentUser!, entry.id, entry.goalId);
@@ -581,7 +582,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                         _showAddFundsDialog(context, currentGoal);
                       },
                       icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Add Deposit', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: Text(LanguageService.tr('add_deposit'), style: const TextStyle(fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -609,7 +610,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: theme.colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('Edit Entry', style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
+        title: Text(LanguageService.tr('edit_entry'), style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -617,7 +618,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               controller: amountCtrl,
               style: TextStyle(color: onSurface),
               decoration: InputDecoration(
-                labelText: 'Amount',
+                labelText: LanguageService.tr('tx_amount_label'),
                 labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
               ),
               keyboardType: TextInputType.number,
@@ -627,7 +628,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               controller: noteCtrl,
               style: TextStyle(color: onSurface),
               decoration: InputDecoration(
-                labelText: 'Note',
+                labelText: LanguageService.tr('note_optional'),
                 labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
               ),
             ),
@@ -636,7 +637,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
+            child: Text(LanguageService.tr('cancel'), style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
           ),
           ElevatedButton(
             onPressed: () {
@@ -654,7 +655,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               backgroundColor: primary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(LanguageService.tr('save'), style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -669,74 +670,79 @@ class _GoalsScreenState extends State<GoalsScreen> {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Savings Vault', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 0,
-      ),
-      body: ValueListenableBuilder<String>(
-        valueListenable: AppState.currencyNotifier,
-        builder: (context, currentCurrency, _) {
-          return ValueListenableBuilder<List<SavingsGoal>>(
-            valueListenable: AppState.goalsNotifier,
-            builder: (context, goals, _) {
-              if (goals.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+    return ValueListenableBuilder<String>(
+      valueListenable: LanguageService.currentLanguageNotifier,
+      builder: (context, lang, _) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(LanguageService.tr('savings_vault'), style: const TextStyle(fontWeight: FontWeight.bold)),
+            backgroundColor: theme.colorScheme.surface,
+            elevation: 0,
+          ),
+          body: ValueListenableBuilder<String>(
+            valueListenable: AppState.currencyNotifier,
+            builder: (context, currentCurrency, _) {
+              return ValueListenableBuilder<List<SavingsGoal>>(
+                valueListenable: AppState.goalsNotifier,
+                builder: (context, goals, _) {
+                  if (goals.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.savings_outlined, size: 60, color: onSurface.withValues(alpha: 0.2)),
+                          const SizedBox(height: 16),
+                          Text(LanguageService.tr('no_savings_goals_yet'), style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 16)),
+                          const SizedBox(height: 6),
+                          Text(LanguageService.tr('tap_to_create_goal'), style: TextStyle(color: onSurface.withValues(alpha: 0.35), fontSize: 13)),
+                        ],
+                      ),
+                    );
+                  }
+
+                  // Separate active and completed/failed goals
+                  final activeGoals = goals.where((g) => g.isActive).toList();
+                  final endedGoals = goals.where((g) => !g.isActive).toList();
+
+                  return ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 90),
                     children: [
-                      Icon(Icons.savings_outlined, size: 60, color: onSurface.withValues(alpha: 0.2)),
-                      const SizedBox(height: 16),
-                      Text('No savings goals yet', style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 16)),
-                      const SizedBox(height: 6),
-                      Text('Tap + to create your first goal!', style: TextStyle(color: onSurface.withValues(alpha: 0.35), fontSize: 13)),
+                      // Vault Summary Header
+                      _buildVaultSummary(context, goals, currentCurrency),
+                      const SizedBox(height: 20),
+
+                      if (activeGoals.isNotEmpty) ...[
+                        Text(LanguageService.tr('active_goals'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface)),
+                        const SizedBox(height: 12),
+                        ...activeGoals.map((g) => _buildGoalCard(context, g, currentCurrency)),
+                      ],
+                      if (endedGoals.isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        Text(LanguageService.tr('completed_and_expired'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface.withValues(alpha: 0.6))),
+                        const SizedBox(height: 12),
+                        ...endedGoals.map((g) => _buildGoalCard(context, g, currentCurrency)),
+                      ],
                     ],
-                  ),
-                );
-              }
-
-              // Separate active and completed/failed goals
-              final activeGoals = goals.where((g) => g.isActive).toList();
-              final endedGoals = goals.where((g) => !g.isActive).toList();
-
-              return ListView(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 90),
-                children: [
-                  // Vault Summary Header
-                  _buildVaultSummary(context, goals, currentCurrency),
-                  const SizedBox(height: 20),
-
-                  if (activeGoals.isNotEmpty) ...[
-                    Text('Active Goals', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface)),
-                    const SizedBox(height: 12),
-                    ...activeGoals.map((g) => _buildGoalCard(context, g, currentCurrency)),
-                  ],
-                  if (endedGoals.isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    Text('Completed & Expired', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface.withValues(alpha: 0.6))),
-                    const SizedBox(height: 12),
-                    ...endedGoals.map((g) => _buildGoalCard(context, g, currentCurrency)),
-                  ],
-                ],
+                  );
+                },
               );
             },
-          );
-        },
-      ),
-      floatingActionButton: Builder(
-        builder: (context) {
-          final fabBg = theme.colorScheme.primary;
-          final fabFg = fabBg.computeLuminance() > 0.5 ? const Color(0xFF152A22) : Colors.white;
-          return FloatingActionButton(
-            onPressed: () => _showAddGoalDialog(context),
-            backgroundColor: fabBg,
-            foregroundColor: fabFg,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Icon(Icons.add, color: fabFg),
-          );
-        },
-      ),
+          ),
+          floatingActionButton: Builder(
+            builder: (context) {
+              final fabBg = theme.colorScheme.primary;
+              final fabFg = fabBg.computeLuminance() > 0.5 ? const Color(0xFF152A22) : Colors.white;
+              return FloatingActionButton(
+                onPressed: () => _showAddGoalDialog(context),
+                backgroundColor: fabBg,
+                foregroundColor: fabFg,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Icon(Icons.add, color: fabFg),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -769,7 +775,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
             children: [
               Icon(Icons.account_balance, size: 20, color: primary),
               const SizedBox(width: 8),
-              Text('Savings Vault', style: TextStyle(color: primary, fontSize: 14, fontWeight: FontWeight.bold)),
+              Text(LanguageService.tr('savings_vault'), style: TextStyle(color: primary, fontSize: 14, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 12),
@@ -779,7 +785,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'of $currency${totalTarget.toStringAsFixed(0)} across $activeCount active goal${activeCount == 1 ? '' : 's'}',
+            '${LanguageService.tr('amount_left')} $currency${totalTarget.toStringAsFixed(0)} ($activeCount ${LanguageService.tr('active_goals')})',
             style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 13),
           ),
           if (totalTarget > 0) ...[
@@ -846,15 +852,15 @@ class _GoalsScreenState extends State<GoalsScreen> {
                         ),
                       ),
                       if (goal.isCompleted)
-                        const Text('🎉 Completed', style: TextStyle(color: Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.w600)),
+                        Text('🎉 ${LanguageService.tr('completed')}', style: const TextStyle(color: Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.w600)),
                       if (goal.isFailed)
-                        const Text('❌ Expired', style: TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.w600)),
+                        Text('❌ ${LanguageService.tr('overdue')}', style: const TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.w600)),
                       if (goal.isRecurring)
                         Row(
                           children: [
                             const Icon(Icons.repeat, size: 12, color: Colors.teal),
                             const SizedBox(width: 4),
-                            Text(goal.recurrence[0].toUpperCase() + goal.recurrence.substring(1),
+                            Text(LanguageService.trRecurrence(goal.recurrence),
                                 style: const TextStyle(color: Colors.teal, fontSize: 11)),
                           ],
                         ),
@@ -863,12 +869,12 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 18),
-                  tooltip: 'Delete Goal',
+                  tooltip: LanguageService.tr('delete_goal'),
                   onPressed: () async {
                     final confirmed = await showDeleteConfirmationDialog(
                       context: context,
-                      title: 'Delete Goal?',
-                      message: 'Are you sure you want to delete this savings goal?',
+                      title: LanguageService.tr('delete_goal'),
+                      message: LanguageService.tr('delete_goal_confirm'),
                       itemDetail: '${goal.title} · Target: $currency${goal.target.toStringAsFixed(0)}',
                     );
                     if (confirmed && context.mounted) {
@@ -892,7 +898,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'of $currency${goal.target.toStringAsFixed(0)}',
+                      '${LanguageService.tr('of')} $currency${goal.target.toStringAsFixed(0)}',
                       style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 13),
                     ),
                   ],
@@ -912,8 +918,8 @@ class _GoalsScreenState extends State<GoalsScreen> {
                   ),
                   child: Text(
                     goal.remainingToSave <= 0
-                        ? '🎉 Target Met'
-                        : '$currency${goal.remainingToSave.toStringAsFixed(0)} left',
+                        ? LanguageService.tr('target_met')
+                        : '$currency${goal.remainingToSave.toStringAsFixed(0)} ${LanguageService.tr('amount_left')}',
                     style: TextStyle(
                       color: goal.remainingToSave <= 0 ? Colors.greenAccent : primary,
                       fontSize: 12,
@@ -936,7 +942,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               ),
             ),
             const SizedBox(height: 6),
-            Text('${(goal.progress * 100).toStringAsFixed(0)}% complete', style: TextStyle(color: onSurface.withValues(alpha: 0.4), fontSize: 12)),
+            Text('${(goal.progress * 100).toStringAsFixed(0)}% ${LanguageService.tr('completed')}', style: TextStyle(color: onSurface.withValues(alpha: 0.4), fontSize: 12)),
 
             // Pacing badge: Shown for all active goals
             if (goal.isActive) ...[
@@ -955,10 +961,10 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     Flexible(
                       child: Text(
                         goal.remainingToSave <= 0
-                            ? '🎉 Target Reached!'
+                            ? LanguageService.tr('target_reached')
                             : (goal.daysRemaining <= 1 || goal.isDueToday
-                                ? 'Save $currency${goal.remainingToSave.toStringAsFixed(0)} today · Due Today'
-                                : 'Save $currency${goal.dailySavingsNeeded.toStringAsFixed(0)}/day · ${goal.daysRemaining}d left'),
+                                ? '${LanguageService.tr('save_amount')} $currency${goal.remainingToSave.toStringAsFixed(0)} ${LanguageService.tr('save_today_due')}'
+                                : '${LanguageService.tr('save_amount')} $currency${goal.dailySavingsNeeded.toStringAsFixed(0)}${LanguageService.tr('per_day')} · ${goal.daysRemaining}${LanguageService.tr('days_left')}'),
                         style: TextStyle(color: primary, fontSize: 12, fontWeight: FontWeight.w600),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -987,7 +993,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isExpanded ? 'Hide entries' : 'Recent ${min(2, goal.entries.length)} entries',
+                      isExpanded ? LanguageService.tr('hide_entries') : '${LanguageService.tr('recent_entries')} (${min(2, goal.entries.length)})',
                       style: TextStyle(color: onSurface.withValues(alpha: 0.4), fontSize: 12),
                     ),
                   ],
@@ -998,10 +1004,10 @@ class _GoalsScreenState extends State<GoalsScreen> {
                       padding: const EdgeInsets.only(top: 6, left: 22),
                       child: Row(
                         children: [
-                          Container(width: 6, height: 6, decoration: BoxDecoration(color: Colors.greenAccent, shape: BoxShape.circle)),
+                          Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.greenAccent, shape: BoxShape.circle)),
                           const SizedBox(width: 8),
                           Text('+$currency${e.amount.toStringAsFixed(0)}',
-                              style: TextStyle(color: Colors.greenAccent, fontSize: 13, fontWeight: FontWeight.w500)),
+                              style: const TextStyle(color: Colors.greenAccent, fontSize: 13, fontWeight: FontWeight.w500)),
                           const SizedBox(width: 8),
                           Text(formatDate(e.date), style: TextStyle(color: onSurface.withValues(alpha: 0.35), fontSize: 11)),
                           if (e.note != null) ...[
@@ -1028,7 +1034,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                       onPressed: goal.progress >= 1.0 ? null : () => _showAddFundsDialog(context, goal),
                       icon: Icon(goal.progress >= 1.0 ? Icons.check : Icons.add, size: 18, color: btnFg),
                       label: Text(
-                        goal.progress >= 1.0 ? 'Goal Reached!' : 'Add Deposit',
+                        goal.progress >= 1.0 ? LanguageService.tr('target_reached') : LanguageService.tr('add_deposit'),
                         style: TextStyle(color: btnFg, fontWeight: FontWeight.bold),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -1060,7 +1066,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     AppState.saveGoals(AppState.currentUser!, goals);
                   },
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Start New Cycle', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  label: Text(LanguageService.tr('start_new_cycle'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Colors.teal),
                     foregroundColor: Colors.teal,

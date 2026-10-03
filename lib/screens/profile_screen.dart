@@ -511,7 +511,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
-                                  'App & Account Settings',
+                                  LanguageService.tr('app_account_settings'),
                                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: onSurface),
                                 ),
                                 const SizedBox(height: 16),
@@ -543,11 +543,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       child: Icon(Icons.auto_stories_rounded, color: primary, size: 22),
                                     ),
                                     title: Text(
-                                      'What Each Setting Does',
+                                      LanguageService.tr('what_each_setting_does'),
                                       style: TextStyle(fontWeight: FontWeight.bold, color: onSurface, fontSize: 14.5),
                                     ),
                                     subtitle: Text(
-                                      'Explore all features, offline vault, biometrics & guides',
+                                      LanguageService.tr('features_guide_sub'),
                                       style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontSize: 11.5),
                                     ),
                                     trailing: Icon(Icons.arrow_forward_ios_rounded, size: 14, color: primary),
@@ -559,14 +559,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
 
                                 // Interactive Onboarding Tours
-                                _settingsSectionTitle('INTERACTIVE ONBOARDING TOURS', onSurface.withValues(alpha: 0.6)),
+                                _settingsSectionTitle(LanguageService.tr('interactive_tours_section'), onSurface.withValues(alpha: 0.6)),
                                 Card(
                                   color: cardBg,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                   child: ListTile(
                                     leading: const Icon(Icons.replay_rounded, color: Colors.cyanAccent),
-                                    title: Text('Replay Feature Tours', style: TextStyle(color: onSurface)),
-                                    subtitle: Text('Relaunch Home & Accounts walkthroughs anytime', style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                                    title: Text(LanguageService.tr('replay_tours'), style: TextStyle(color: onSurface)),
+                                    subtitle: Text(LanguageService.tr('replay_tours_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
                                     trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
                                     onTap: () async {
                                       await TourService.resetAllTours();
@@ -587,7 +587,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 const SizedBox(height: 20),
 
                                 // Pro & Ad-Free Membership Section
-                                _settingsSectionTitle('PRO & AD-FREE MEMBERSHIP', onSurface.withValues(alpha: 0.6)),
+                                _settingsSectionTitle(LanguageService.tr('pro_membership_section'), onSurface.withValues(alpha: 0.6)),
                                 Card(
                                   color: cardBg,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -601,11 +601,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       child: const Icon(Icons.workspace_premium, color: Colors.white, size: 20),
                                     ),
                                     title: Text(
-                                      'Tally Pro & Subscriptions',
+                                      LanguageService.tr('pro_subscriptions_title'),
                                       style: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
                                     ),
                                     subtitle: Text(
-                                      'Manage VIP features, remove ads, or pay with Google Pay',
+                                      LanguageService.tr('pro_subscriptions_sub'),
                                       style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12),
                                     ),
                                     trailing: const Icon(Icons.chevron_right),
@@ -619,7 +619,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 const SizedBox(height: 20),
 
                                 // Brand Palettes
-                                _settingsSectionTitle('BRAND PALETTES (INSTANT IN-APP)', onSurface.withValues(alpha: 0.6)),
+                                _settingsSectionTitle(LanguageService.tr('brand_palettes_section'), onSurface.withValues(alpha: 0.6)),
 
                                 // Theme Passes & 30s Ad Unlock Banner
                                 ValueListenableBuilder<int>(
@@ -829,20 +829,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 const SizedBox(height: 20),
 
                                 // Launcher App Icon with Restart Notice
-                                _settingsSectionTitle('LAUNCHER APP ICON (REQUIRES RESTART)', onSurface.withValues(alpha: 0.6)),
+                                _settingsSectionTitle(LanguageService.tr('launcher_icon_section'), onSurface.withValues(alpha: 0.6)),
                                 _launcherIconCard(cardBg, surface, onSurface, primary),
 
                                 const SizedBox(height: 20),
 
                                 // Theme Studio Tile
-                                _settingsSectionTitle('CUSTOM PALETTES & STUDIO', onSurface.withValues(alpha: 0.6)),
+                                _settingsSectionTitle(LanguageService.tr('custom_palettes_section'), onSurface.withValues(alpha: 0.6)),
                                 Card(
                                   color: cardBg,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                   child: ListTile(
                                     leading: const Icon(Icons.palette, color: Colors.purpleAccent),
-                                    title: Text('Graphic Theme Studio', style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
-                                    subtitle: Text('Custom RGB/HSV color picker & live preview', style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                                    title: Text(LanguageService.tr('theme_studio_title'), style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
+                                    subtitle: Text(LanguageService.tr('theme_studio_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -906,7 +906,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 const SizedBox(height: 20),
 
                                 // Profile Customization
-                                _settingsSectionTitle('PROFILE & IDENTITY', onSurface.withValues(alpha: 0.6)),
+                                _settingsSectionTitle(LanguageService.tr('profile_identity_section'), onSurface.withValues(alpha: 0.6)),
                                 Card(
                                   color: cardBg,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -914,8 +914,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     children: [
                                       ListTile(
                                         leading: const Icon(Icons.add_a_photo, color: Colors.blueAccent),
-                                        title: Text('Upload Profile Photo', style: TextStyle(color: onSurface)),
-                                        subtitle: Text('Select an image from device gallery', style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                                        title: Text(LanguageService.tr('upload_photo'), style: TextStyle(color: onSurface)),
+                                        subtitle: Text(LanguageService.tr('upload_photo_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
                                         trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
                                         onTap: () {
                                           Navigator.pop(ctx);
@@ -925,7 +925,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
                                       ListTile(
                                         leading: const Icon(Icons.badge_outlined, color: Colors.tealAccent),
-                                        title: Text('Edit Display Name & Bio', style: TextStyle(color: onSurface)),
+                                        title: Text(LanguageService.tr('edit_name_bio'), style: TextStyle(color: onSurface)),
                                         trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
                                         onTap: () {
                                           Navigator.pop(ctx);
@@ -939,7 +939,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 const SizedBox(height: 20),
 
                                 // Notifications & Reminders
-                                _settingsSectionTitle('NOTIFICATIONS & REMINDERS', onSurface.withValues(alpha: 0.6)),
+                                _settingsSectionTitle(LanguageService.tr('notifications_reminders_section'), onSurface.withValues(alpha: 0.6)),
                                 Card(
                                   color: cardBg,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -951,8 +951,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           final isEnabled = snapshot.data ?? true;
                                           return SwitchListTile(
                                             secondary: const Icon(Icons.notifications_active, color: Colors.indigoAccent),
-                                            title: Text('3-Hour Tally Reminders', style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
-                                            subtitle: Text('Active 9:00 AM – 11:00 PM (Quiet hours at night)', style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                                            title: Text(LanguageService.tr('three_hour_reminders'), style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
+                                            subtitle: Text(LanguageService.tr('quiet_hours_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
                                             activeThumbColor: primary,
                                             value: isEnabled,
                                             onChanged: (val) async {
@@ -983,7 +983,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 const SizedBox(height: 20),
 
                                 // Preferences & Security
-                                _settingsSectionTitle('LEDGER ARCHITECTURE & DATA', onSurface.withValues(alpha: 0.6)),
+                                _settingsSectionTitle(LanguageService.tr('ledger_architecture_section'), onSurface.withValues(alpha: 0.6)),
                                 Card(
                                   color: cardBg,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -991,7 +991,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     children: [
                                       ListTile(
                                         leading: const Icon(Icons.currency_exchange, color: Colors.amberAccent),
-                                        title: Text('Currency Symbol', style: TextStyle(color: onSurface)),
+                                        title: Text(LanguageService.tr('currency_symbol'), style: TextStyle(color: onSurface)),
                                         subtitle: ValueListenableBuilder<String>(
                                           valueListenable: AppState.currencyNotifier,
                                           builder: (context, cur, _) {
@@ -1008,7 +1008,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               builder: (context, activeCurrency, _) {
                                                 return SimpleDialog(
                                                   backgroundColor: surface,
-                                                  title: Text('Select Currency', style: TextStyle(color: onSurface)),
+                                                  title: Text(LanguageService.tr('select_currency'), style: TextStyle(color: onSurface)),
                                                   children: currencyOptions.entries.map((e) {
                                                     final isSelected = activeCurrency == e.value;
                                                     return SimpleDialogOption(
@@ -1041,7 +1041,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
                                       ListTile(
                                         leading: const Icon(Icons.language_rounded, color: Colors.blueAccent),
-                                        title: Text('App Language', style: TextStyle(color: onSurface)),
+                                        title: Text(LanguageService.tr('app_language'), style: TextStyle(color: onSurface)),
                                         subtitle: ValueListenableBuilder<String>(
                                           valueListenable: LanguageService.currentLanguageNotifier,
                                           builder: (context, langCode, _) {
@@ -1064,7 +1064,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               builder: (context, activeLang, _) {
                                                 return SimpleDialog(
                                                   backgroundColor: surface,
-                                                  title: Text('Select Language', style: TextStyle(color: onSurface)),
+                                                  title: Text(LanguageService.tr('select_language'), style: TextStyle(color: onSurface)),
                                                   children: LanguageService.supportedLanguages.map((l) {
                                                     final isSelected = activeLang == l.code;
                                                     return SimpleDialogOption(
@@ -1097,7 +1097,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
                                       ListTile(
                                         leading: const Icon(Icons.lock_reset, color: Colors.orangeAccent),
-                                        title: Text('Change Password', style: TextStyle(color: onSurface)),
+                                        title: Text(LanguageService.tr('change_password'), style: TextStyle(color: onSurface)),
                                         trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
                                         onTap: () {
                                           Navigator.pop(ctx);
@@ -1113,7 +1113,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               final isEnabled = snapshot.data ?? false;
                                               return SwitchListTile(
                                                 secondary: const Icon(Icons.fingerprint, color: Colors.tealAccent),
-                                                title: Text('Screen Lock / Biometrics', style: TextStyle(color: onSurface)),
+                                                title: Text(LanguageService.tr('screen_lock'), style: TextStyle(color: onSurface)),
                                                 subtitle: Text(
                                                   isEnabled
                                                       ? 'Quick unlock with Face ID, Fingerprint, or PIN'
@@ -1182,8 +1182,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
                                       ListTile(
                                         leading: const Icon(Icons.download_for_offline, color: Colors.greenAccent),
-                                        title: Text('Export SQL Ledger (.sql)', style: TextStyle(color: onSurface)),
-                                        subtitle: Text('Local SQLite backup with strict user isolation', style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                                        title: Text(LanguageService.tr('sql_backup'), style: TextStyle(color: onSurface)),
+                                        subtitle: Text(LanguageService.tr('sql_backup_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
                                         trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
                                         onTap: () {
                                           Navigator.pop(ctx);
@@ -1200,7 +1200,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               isCloudReady ? Icons.cloud_done : Icons.cloud_sync,
                                               color: isCloudReady ? Colors.greenAccent : Colors.blue,
                                             ),
-                                            title: Text('Cloud Sync (Firestore Vault)', style: TextStyle(color: onSurface)),
+                                            title: Text(LanguageService.tr('cloud_sync_title'), style: TextStyle(color: onSurface)),
                                             subtitle: Text(
                                               isSyncing
                                                   ? 'Syncing ledger with Google Cloud...'
@@ -1315,7 +1315,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 // Logout Button
                                 ElevatedButton.icon(
                                   icon: const Icon(Icons.logout, color: Colors.white),
-                                  label: const Text('Log Out', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                  label: Text(LanguageService.tr('logout'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.redAccent.withValues(alpha: 0.8),
                                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1427,7 +1427,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Features & Settings Guide',
+                            LanguageService.tr('features_guide'),
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -1435,7 +1435,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           Text(
-                            'Everything Tally has to offer & what each setting does',
+                            LanguageService.tr('features_guide_subtitle'),
                             style: TextStyle(
                               fontSize: 12,
                               color: onSurface.withValues(alpha: 0.65),
@@ -1596,7 +1596,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  title,
+                  LanguageService.trDynamic(title),
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: onSurface),
                 ),
               ),
@@ -1607,7 +1607,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  badge,
+                  LanguageService.trDynamic(badge),
                   style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primary),
                 ),
               ),
@@ -1615,7 +1615,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            description,
+            LanguageService.trDynamic(description),
             style: TextStyle(fontSize: 12.5, height: 1.45, color: onSurface.withValues(alpha: 0.75)),
           ),
         ],
@@ -1625,32 +1625,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
+    return ValueListenableBuilder<String>(
+      valueListenable: LanguageService.currentLanguageNotifier,
+      builder: (context, currentLanguage, _) {
+        final primaryColor = Theme.of(context).colorScheme.primary;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Financial Profile', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.auto_stories_rounded, color: Theme.of(context).colorScheme.onSurface),
-            tooltip: 'Features & Settings Guide',
-            onPressed: () => _showAllFeaturesGuide(context),
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(LanguageService.tr('profile_title'), style: const TextStyle(fontWeight: FontWeight.bold)),
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            elevation: 0,
+            actions: [
+              IconButton(
+                icon: Icon(Icons.auto_stories_rounded, color: Theme.of(context).colorScheme.onSurface),
+                tooltip: LanguageService.tr('features_guide'),
+                onPressed: () => _showAllFeaturesGuide(context),
+              ),
+              IconButton(
+                icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.onSurface),
+                tooltip: LanguageService.tr('settings'),
+                onPressed: _showSettingsPopup,
+              ),
+            ],
           ),
-          IconButton(
-            icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.onSurface),
-            tooltip: 'Settings & Theming',
-            onPressed: _showSettingsPopup,
+          body: ValueListenableBuilder<List<Transaction>>(
+            valueListenable: AppState.transactionsNotifier,
+            builder: (context, transactions, _) {
+              return _buildSpendingBehaviorSummary(transactions, primaryColor);
+            },
           ),
-        ],
-      ),
-      body: ValueListenableBuilder<List<Transaction>>(
-        valueListenable: AppState.transactionsNotifier,
-        builder: (context, transactions, _) {
-          return _buildSpendingBehaviorSummary(transactions, primaryColor);
-        },
-      ),
+        );
+      },
     );
   }
 
@@ -2044,8 +2049,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Row(
                       children: [
-                        Text('SPENDING PERSONA: ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), letterSpacing: 0.8)),
-                        Text('${savingsRate.toStringAsFixed(0)}% Savings Rate', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: personaColor)),
+                        Text('${LanguageService.tr('spending_persona')} ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), letterSpacing: 0.8)),
+                        Text('${savingsRate.toStringAsFixed(0)}% ${LanguageService.tr('savings_rate')}', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: personaColor)),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -2062,7 +2067,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 24),
 
         // Financial Vital Signs Grid
-        Text('EXECUTIVE FINANCIAL VITALS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), letterSpacing: 1)),
+        Text(LanguageService.tr('executive_financial_vitals'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), letterSpacing: 1)),
         const SizedBox(height: 12),
 
         GridView.count(
@@ -2074,28 +2079,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
           childAspectRatio: 1.45,
           children: [
             _vitalCard(
-              title: 'Lifetime Inflow',
+              title: LanguageService.tr('lifetime_inflow'),
               value: '+$currency${totalIncome.toStringAsFixed(0)}',
               subtitle: 'All recorded revenue',
               color: Colors.greenAccent,
               icon: Icons.south_west,
             ),
             _vitalCard(
-              title: 'Lifetime Outflow',
+              title: LanguageService.tr('lifetime_outflow'),
               value: '-$currency${totalExpense.toStringAsFixed(0)}',
               subtitle: 'All recorded spending',
               color: Colors.redAccent,
               icon: Icons.north_east,
             ),
             _vitalCard(
-              title: 'Retained Wealth',
+              title: LanguageService.tr('retained_wealth'),
               value: '$currency${netSavings.toStringAsFixed(0)}',
               subtitle: 'Accumulated net surplus',
               color: netSavings >= 0 ? Theme.of(context).colorScheme.onSurface : Colors.redAccent,
               icon: Icons.account_balance,
             ),
             _vitalCard(
-              title: 'Needs vs Wants',
+              title: LanguageService.tr('needs_vs_wants'),
               value: totalExpense > 0 ? '${((essentialSpending / totalExpense) * 100).toStringAsFixed(0)}% Needs' : '100% Needs',
               subtitle: totalExpense > 0 ? '${((discretionarySpending / totalExpense) * 100).toStringAsFixed(0)}% Wants' : '0% Wants',
               color: primaryColor,
@@ -2107,7 +2112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 24),
 
         // Top Spending Drivers Leaderboard
-        Text('TOP SPENDING DRIVERS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), letterSpacing: 1)),
+        Text(LanguageService.tr('top_spending_drivers'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), letterSpacing: 1)),
         const SizedBox(height: 12),
 
         if (topCategories.isEmpty)
@@ -2118,7 +2123,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               borderRadius: BorderRadius.circular(16),
             ),
             alignment: Alignment.center,
-            child: Text('No expense transactions recorded yet.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13)),
+            child: Text(LanguageService.tr('no_expense_recorded'), style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13)),
           )
         else
           Container(
@@ -2142,7 +2147,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Icon(icon, size: 18, color: primaryColor),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: Text(cat.key, style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface, fontSize: 13)),
+                            child: Text(LanguageService.trCategory(cat.key), style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface, fontSize: 13)),
                           ),
                           Text(
                             '$currency${cat.value.toStringAsFixed(0)} (${(pct * 100).toStringAsFixed(0)}%)',
@@ -2186,7 +2191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Peak Single Outflow', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 11, fontWeight: FontWeight.bold)),
+                      Text(LanguageService.tr('peak_single_outflow'), style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 11, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 2),
                       Text(largestExpenseTitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.bold)),
                     ],
@@ -2202,7 +2207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // Quick Settings Button
         OutlinedButton.icon(
           icon: Icon(Icons.tune, color: Theme.of(context).colorScheme.onSurface),
-          label: Text('Open Customization & App Settings', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
+          label: Text(LanguageService.tr('open_settings'), style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
             padding: const EdgeInsets.symmetric(vertical: 14),

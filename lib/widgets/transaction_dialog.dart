@@ -7,6 +7,7 @@ import '../services/state.dart';
 import '../services/database/app_database.dart';
 import '../utils/constants.dart';
 import 'delete_confirmation_dialog.dart';
+import '../services/language_service.dart';
 
 Future<void> showTransactionDialog(BuildContext context, {Transaction? existingTx}) async {
   await showDialog(
@@ -81,7 +82,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
         side: BorderSide(color: onSurface.withValues(alpha: 0.12), width: 1),
       ),
       title: Text(
-        widget.existingTx == null ? 'New Transaction' : 'Edit Transaction',
+        widget.existingTx == null ? LanguageService.tr('tx_new_title') : LanguageService.tr('tx_edit_title'),
         style: TextStyle(fontWeight: FontWeight.bold, color: onSurface),
       ),
       content: SingleChildScrollView(
@@ -92,8 +93,8 @@ class _TransactionDialogState extends State<_TransactionDialog> {
               controller: _titleCtrl,
               style: TextStyle(color: onSurface),
               decoration: InputDecoration(
-                labelText: 'Title',
-                hintText: 'Default: $_category',
+                labelText: LanguageService.tr('tx_desc_label'),
+                hintText: 'Default: ${LanguageService.trCategory(_category)}',
                 hintStyle: TextStyle(color: onSurface.withValues(alpha: 0.4), fontSize: 13),
                 labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
                 enabledBorder: OutlineInputBorder(
@@ -111,7 +112,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
               controller: _amountCtrl,
               style: TextStyle(color: onSurface),
               decoration: InputDecoration(
-                labelText: 'Amount (${AppState.currencyNotifier.value})',
+                labelText: '${LanguageService.tr('tx_amount_label')} (${AppState.currencyNotifier.value})',
                 labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -176,7 +177,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Transaction Date', style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6))),
+                          Text(LanguageService.tr('tx_date_label'), style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6))),
                           const SizedBox(height: 2),
                           Text(
                             formatDateWithYear(_selectedDate),
@@ -208,12 +209,12 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Future Date Detected',
+                            LanguageService.tr('tx_future_detected'),
                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: planAccent),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Plan for future: won\'t affect current balance until due date, then auto-adds & alerts you.',
+                            LanguageService.tr('tx_future_desc'),
                             style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.75)),
                           ),
                         ],
@@ -236,7 +237,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
               dropdownColor: surface,
               style: TextStyle(color: onSurface),
               decoration: InputDecoration(
-                labelText: 'Category',
+                labelText: LanguageService.tr('tx_category_label'),
                 labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -254,7 +255,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                     children: [
                       Icon(categoryIcons[cat], size: 16, color: primary),
                       const SizedBox(width: 8),
-                      Text(cat, style: TextStyle(color: onSurface)),
+                      Text(LanguageService.trCategory(cat), style: TextStyle(color: onSurface)),
                     ],
                   ),
                 );
@@ -303,7 +304,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                     dropdownColor: surface,
                     style: TextStyle(color: onSurface),
                     decoration: InputDecoration(
-                      labelText: 'Deposit to Goal',
+                      labelText: LanguageService.tr('deposit_to'),
                       labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
                       prefixIcon: Icon(Icons.savings, color: primary, size: 20),
                       enabledBorder: OutlineInputBorder(
@@ -358,7 +359,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
               dropdownColor: surface,
               style: TextStyle(color: onSurface),
               decoration: InputDecoration(
-                labelText: 'Account',
+                labelText: LanguageService.tr('tx_account_label'),
                 labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -386,7 +387,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
               dropdownColor: surface,
               style: TextStyle(color: onSurface),
               decoration: InputDecoration(
-                labelText: 'Recurrence',
+                labelText: LanguageService.tr('tx_recurrence_label'),
                 labelStyle: TextStyle(color: onSurface.withValues(alpha: 0.6)),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -400,7 +401,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
               items: ['None', 'Daily', 'Weekly', 'Monthly'].map((String rec) {
                 return DropdownMenuItem<String>(
                   value: rec,
-                  child: Text(rec, style: TextStyle(color: onSurface)),
+                  child: Text(LanguageService.trRecurrence(rec), style: TextStyle(color: onSurface)),
                 );
               }).toList(),
               onChanged: (val) {
@@ -429,7 +430,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                           color: !_isIncome ? negativeColor : onSurface.withValues(alpha: 0.2),
                         ),
                       ),
-                      child: Text('Expense', style: TextStyle(color: !_isIncome ? negativeColor : onSurface.withValues(alpha: 0.7))),
+                      child: Text(LanguageService.tr('tx_expense_tab'), style: TextStyle(color: !_isIncome ? negativeColor : onSurface.withValues(alpha: 0.7))),
                     ),
                   ),
                 ),
@@ -451,7 +452,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                           color: _isIncome ? positiveColor : onSurface.withValues(alpha: 0.2),
                         ),
                       ),
-                      child: Text('Income', style: TextStyle(color: _isIncome ? positiveColor : onSurface.withValues(alpha: 0.7))),
+                      child: Text(LanguageService.tr('tx_income_tab'), style: TextStyle(color: _isIncome ? positiveColor : onSurface.withValues(alpha: 0.7))),
                     ),
                   ),
                 ),
@@ -464,13 +465,13 @@ class _TransactionDialogState extends State<_TransactionDialog> {
         if (widget.existingTx != null)
           TextButton.icon(
             icon: Icon(Icons.delete_outline_rounded, size: 16, color: negativeColor),
-            label: Text('Delete', style: TextStyle(color: negativeColor, fontWeight: FontWeight.bold)),
+            label: Text(LanguageService.tr('delete'), style: TextStyle(color: negativeColor, fontWeight: FontWeight.bold)),
             onPressed: () async {
               final tx = widget.existingTx!;
               final confirmed = await showDeleteConfirmationDialog(
                 context: context,
-                title: 'Delete Transaction?',
-                message: 'Are you sure you want to delete this transaction?',
+                title: LanguageService.tr('delete_tx_title'),
+                message: LanguageService.tr('delete_tx_msg'),
                 itemDetail: '${tx.title} • ${tx.isIncome ? '+' : '-'}${AppState.currencyNotifier.value}${tx.amount.toStringAsFixed(0)}',
               );
               if (confirmed && context.mounted) {
@@ -481,7 +482,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
           ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text('Cancel', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
+          child: Text(LanguageService.tr('cancel'), style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
         ),
         ElevatedButton(
           onPressed: () async {
@@ -562,7 +563,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
             foregroundColor: theme.colorScheme.onPrimary,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          child: Text(widget.existingTx == null ? 'Add' : 'Save', style: const TextStyle(fontWeight: FontWeight.bold)),
+          child: Text(widget.existingTx == null ? LanguageService.tr('add') : LanguageService.tr('save'), style: const TextStyle(fontWeight: FontWeight.bold)),
         ),
       ],
     );

@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../services/state.dart';
+import '../services/language_service.dart';
 import 'custom_painters.dart';
 
 class InteractiveChartCard extends StatefulWidget {
@@ -168,8 +169,8 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _scopeButton('month', 'Month', onSurface),
-                        _scopeButton('year', 'Year', onSurface),
+                        _scopeButton('month', LanguageService.tr('scope_month'), onSurface),
+                        _scopeButton('year', LanguageService.tr('scope_year'), onSurface),
                       ],
                     ),
                   ),
@@ -225,9 +226,9 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _filterButton('all', 'All (Net)', onSurface),
-                        _filterButton('spend', 'Spend', onSurface),
-                        _filterButton('income', 'Income', onSurface),
+                        _filterButton('all', LanguageService.tr('all_net'), onSurface),
+                        _filterButton('spend', LanguageService.tr('spend'), onSurface),
+                        _filterButton('income', LanguageService.tr('income'), onSurface),
                       ],
                     ),
                   ),
@@ -243,21 +244,21 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
                       children: [
                         IconButton(
                           icon: Icon(Icons.show_chart, size: 18, color: _chartType == 'line' ? primaryColor : onSurface.withValues(alpha: 0.38)),
-                          tooltip: 'Line Graph',
+                          tooltip: LanguageService.tr('line_graph'),
                           constraints: const BoxConstraints(minWidth: 32, minHeight: 30),
                           padding: EdgeInsets.zero,
                           onPressed: () => setState(() => _chartType = 'line'),
                         ),
                         IconButton(
                           icon: Icon(Icons.bar_chart_rounded, size: 18, color: _chartType == 'bar' ? primaryColor : onSurface.withValues(alpha: 0.38)),
-                          tooltip: 'Bar Chart',
+                          tooltip: LanguageService.tr('bar_chart'),
                           constraints: const BoxConstraints(minWidth: 32, minHeight: 30),
                           padding: EdgeInsets.zero,
                           onPressed: () => setState(() => _chartType = 'bar'),
                         ),
                         IconButton(
                           icon: Icon(Icons.pie_chart_outline, size: 18, color: _chartType == 'pie' ? primaryColor : onSurface.withValues(alpha: 0.38)),
-                          tooltip: 'Pie / Donut Breakdown',
+                          tooltip: LanguageService.tr('pie_chart'),
                           constraints: const BoxConstraints(minWidth: 32, minHeight: 30),
                           padding: EdgeInsets.zero,
                           onPressed: () => setState(() => _chartType = 'pie'),
@@ -299,11 +300,11 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _statItem('Received', '+$currency${income.toStringAsFixed(0)}', positiveColor, onSurface),
+                    _statItem(LanguageService.tr('received'), '+$currency${income.toStringAsFixed(0)}', positiveColor, onSurface),
                     Container(height: 24, width: 1, color: onSurface.withValues(alpha: 0.12)),
-                    _statItem('Spent', '-$currency${expense.toStringAsFixed(0)}', negativeColor, onSurface),
+                    _statItem(LanguageService.tr('spent'), '-$currency${expense.toStringAsFixed(0)}', negativeColor, onSurface),
                     Container(height: 24, width: 1, color: onSurface.withValues(alpha: 0.12)),
-                    _statItem('Net Balance', '$currency${net.toStringAsFixed(0)}', net >= 0 ? positiveColor : negativeColor, onSurface),
+                    _statItem(LanguageService.tr('net_balance'), '$currency${net.toStringAsFixed(0)}', net >= 0 ? positiveColor : negativeColor, onSurface),
                   ],
                 ),
               ),

@@ -224,6 +224,10 @@ void main() {
       for (int i = 0; i < 60; i++) {
         await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 100)));
         await tester.pump(const Duration(milliseconds: 50));
+        if (find.text('Get Started').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Get Started'));
+          await tester.pump(const Duration(milliseconds: 300));
+        }
         if (find.byType(MainNavScreen).evaluate().isNotEmpty) break;
       }
 
