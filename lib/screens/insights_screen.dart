@@ -1366,7 +1366,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    LanguageService.trDynamic(tax.taxTip),
+                    LanguageService.tr(tax.taxTip, fallback: tax.taxTip),
                     style: TextStyle(fontSize: 12, height: 1.35, color: onSurface.withValues(alpha: 0.8)),
                   ),
                 ),

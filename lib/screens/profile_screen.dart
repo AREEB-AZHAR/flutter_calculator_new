@@ -1596,7 +1596,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  LanguageService.trDynamic(title),
+                  LanguageService.tr(title, fallback: title),
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: onSurface),
                 ),
               ),
@@ -1607,7 +1607,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  LanguageService.trDynamic(badge),
+                  LanguageService.tr(badge, fallback: badge),
                   style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primary),
                 ),
               ),
@@ -1615,7 +1615,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            LanguageService.trDynamic(description),
+            LanguageService.tr(description, fallback: description),
             style: TextStyle(fontSize: 12.5, height: 1.45, color: onSurface.withValues(alpha: 0.75)),
           ),
         ],
