@@ -95,13 +95,13 @@ class TallyApp extends StatelessWidget {
         AppState.customSecondaryColorNotifier,
         AppState.customTextColorNotifier,
         LanguageService.currentLanguageNotifier,
+        AppState.currencyNotifier,
       ]),
       builder: (context, _) {
         final themeName = AppState.themeNameNotifier.value;
         final primaryColor = AppState.customPrimaryColorNotifier.value;
         final secondaryColor = AppState.customSecondaryColorNotifier.value;
         final textColor = AppState.customTextColorNotifier.value;
-        final isRtl = LanguageService.isRtl;
 
         return MaterialApp(
           title: 'Tally',
@@ -119,7 +119,7 @@ class TallyApp extends StatelessWidget {
           builder: (context, child) {
             final mediaQuery = MediaQuery.of(context);
             return Directionality(
-              textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+              textDirection: TextDirection.ltr, // Permanently standard LTR: no UI layout mirroring per user request
               child: MediaQuery(
                 data: mediaQuery.copyWith(
                   textScaler: mediaQuery.textScaler.clamp(

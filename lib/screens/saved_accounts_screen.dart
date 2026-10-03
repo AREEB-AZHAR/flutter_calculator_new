@@ -221,14 +221,14 @@ class _SavedAccountsScreenState extends State<SavedAccountsScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            LanguageService.trDynamic('No Saved Accounts'),
+                            LanguageService.tr('no_saved_accounts', fallback: 'No Saved Accounts'),
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            LanguageService.trDynamic('Accounts you sign into on this device will appear here for fast one-tap access.'),
+                            LanguageService.tr('saved_accounts_empty_desc', fallback: 'Accounts you sign into on this device will appear here for fast one-tap access.'),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: colorScheme.onSurface.withValues(alpha: 0.6),
@@ -239,7 +239,7 @@ class _SavedAccountsScreenState extends State<SavedAccountsScreen> {
                           ElevatedButton.icon(
                             onPressed: () => Navigator.pop(context),
                             icon: const Icon(Icons.arrow_back),
-                            label: Text(LanguageService.trDynamic('Return to Login')),
+                            label: Text(LanguageService.tr('return_to_login', fallback: 'Return to Login')),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: colorScheme.primary,
                               foregroundColor: Colors.white,
