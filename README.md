@@ -525,6 +525,30 @@
 - **Intelligent Category & Dynamic Title Preservation**:
   - `LanguageService.trDynamic()` distinguishes standard system categories from custom user-entered titles (e.g. "Salary Deposit"), translating standard keys while faithfully preserving personalized titles and notes.
 
+### 39. 🚀 Deep Scroll Stutter Investigation & Frame Drop Elimination (Pre-Translation Bottlenecks)
+
+- **Comprehensive Render & Build Pipeline Audit**:
+  - Investigated frame drops that were occurring on fling scrolling even before the live translation feature was introduced.
+  - Identified and resolved 6 deep architectural bottlenecks across the main UI thread and GPU rasterizer:
+    1. **InsightsScreen Heavy Math in `build()`**:
+       - *Pre-existing Bottleneck*: `InsightsEngine.generateReport()` was executing directly in the `build()` method on every layout pass. Every scroll event re-ran iterative month-by-month loan amortization simulations (Debt Avalanche vs Snowball while-loops), DTI ratios, and 6-factor health score matrixes.
+       - *Resolution*: Memoized report generation with `_getOrComputeReport()` using input state hashing (transaction count, loan count, horizon, currency). Re-computation now occurs strictly when underlying data changes.
+    2. **Unbounded Analytical Card Rasterization (GPU Raster Churn)**:
+       - *Pre-existing Bottleneck*: 10 complex analytical cards in `InsightsScreen` and goal cards in `GoalsScreen` featured layered linear gradients, borders, and custom painters without boundary isolation. The GPU was forced to re-rasterize all paths and gradients on every 16ms scroll frame.
+       - *Resolution*: Wrapped all 10 analytical cards in `InsightsScreen`, `_buildVaultSummary`, and each goal card in [`RepaintBoundary`](lib/screens/insights_screen.dart), enabling the GPU to cache the display list textures.
+    3. **AccountsScreen Quadratic $O(Accounts \times Transactions)$ Nested Loops**:
+       - *Pre-existing Bottleneck*: `_buildWalletsTab` executed nested `.where().fold()` loops over all transactions for every single account on every frame, creating dozens of intermediate closures and list allocations.
+       - *Resolution*: Converted to a single linear $O(T)$ pass accumulating balances and spent totals into hash maps in a single traversal.
+    4. **DashboardScreen Budget Category Aggregation**:
+       - *Pre-existing Bottleneck*: `budgets.entries.map` executed a nested `.where().fold()` pass over monthly transactions for every budget entry ($O(B \times T)$).
+       - *Resolution*: Replaced with a single linear $O(T)$ pass pre-aggregating monthly expenditures by category.
+    5. **List Tile `ValueListenableBuilder` GC Churn**:
+       - *Pre-existing Bottleneck*: Every `TransactionTile` in long lists instantiated its own inner `ValueListenableBuilder<String>` listening to `AppState.currencyNotifier`. Scrolling a 100-item list created and discarded hundreds of subscription nodes, inducing Garbage Collection (GC) pauses.
+       - *Resolution*: `TransactionTile` now accepts `currency` directly from the parent scroll view, bypassing the builder and maintaining instant $O(1)$ rendering during scrolling while preserving reactive fallback for isolated tests.
+    6. **CustomPainter Redundant List Allocation**:
+       - *Pre-existing Bottleneck*: `MonthChartPainter` constructor allocated an intermediate filtered list (`monthTxs`) on every paint pass.
+       - *Resolution*: Iterates directly over transactions with inline boundary checks, eliminating transient list allocations.
+
 ---
 
 ## 🏗️ Clean Modular Architecture

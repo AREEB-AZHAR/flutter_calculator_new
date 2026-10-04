@@ -644,28 +644,31 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   _selectedAccount = 'Overall';
                 }
 
-                final Map<String, double> balances = {};
-                final Map<String, double> spentMap = {};
+                final Map<String, double> balances = {'Overall': 0.0};
+                final Map<String, double> spentMap = {'Overall': 0.0};
+                for (var acc in accounts) {
+                  balances[acc] = 0.0;
+                  spentMap[acc] = 0.0;
+                }
 
                 double overallIncome = 0;
                 double overallExpense = 0;
                 for (var t in transactions) {
                   if (t.isIncome) {
                     overallIncome += t.amount;
+                    if (balances.containsKey(t.account)) {
+                      balances[t.account] = (balances[t.account] ?? 0.0) + t.amount;
+                    }
                   } else {
                     overallExpense += t.amount;
+                    if (balances.containsKey(t.account)) {
+                      balances[t.account] = (balances[t.account] ?? 0.0) - t.amount;
+                      spentMap[t.account] = (spentMap[t.account] ?? 0.0) + t.amount;
+                    }
                   }
                 }
                 balances['Overall'] = overallIncome - overallExpense;
                 spentMap['Overall'] = overallExpense;
-
-                for (var acc in accounts) {
-                  final accTxs = transactions.where((t) => t.account == acc).toList();
-                  final income = accTxs.where((t) => t.isIncome).fold(0.0, (sum, t) => sum + t.amount);
-                  final expense = accTxs.where((t) => !t.isIncome).fold(0.0, (sum, t) => sum + t.amount);
-                  balances[acc] = income - expense;
-                  spentMap[acc] = expense;
-                }
 
                 final filteredTxs = _selectedAccount == 'Overall'
                     ? transactions
@@ -826,6 +829,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                 key: ValueKey('acc_tx_${tx.id}'),
                                 child: TransactionTile(
                                   tx: tx,
+                                  currency: currentCurrency,
                                   onTap: () => showTransactionDialog(context, existingTx: tx),
                                   onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
                                 ),

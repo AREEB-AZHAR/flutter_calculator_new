@@ -30,17 +30,17 @@ class MonthChartPainter extends CustomPainter {
     _activeDays = isCurrentMonth ? now.day : _daysInMonth;
     _dailyValues = List.filled(_daysInMonth, 0.0);
 
-    final monthTxs = transactions.where((t) => t.date.year == year && t.date.month == month).toList();
-
-    for (var tx in monthTxs) {
-      final dayIndex = tx.date.day - 1;
-      if (dayIndex >= 0 && dayIndex < _daysInMonth) {
-        if (filter == 'spend') {
-          if (!tx.isIncome) _dailyValues[dayIndex] += tx.amount;
-        } else if (filter == 'income') {
-          if (tx.isIncome) _dailyValues[dayIndex] += tx.amount;
-        } else {
-          _dailyValues[dayIndex] += tx.isIncome ? tx.amount : -tx.amount;
+    for (var tx in transactions) {
+      if (tx.date.year == year && tx.date.month == month) {
+        final dayIndex = tx.date.day - 1;
+        if (dayIndex >= 0 && dayIndex < _daysInMonth) {
+          if (filter == 'spend') {
+            if (!tx.isIncome) _dailyValues[dayIndex] += tx.amount;
+          } else if (filter == 'income') {
+            if (tx.isIncome) _dailyValues[dayIndex] += tx.amount;
+          } else {
+            _dailyValues[dayIndex] += tx.isIncome ? tx.amount : -tx.amount;
+          }
         }
       }
     }

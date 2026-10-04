@@ -708,19 +708,21 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 10, 20, 90),
                     children: [
                       // Vault Summary Header
-                      _buildVaultSummary(context, goals, currentCurrency),
+                      RepaintBoundary(
+                        child: _buildVaultSummary(context, goals, currentCurrency),
+                      ),
                       const SizedBox(height: 20),
 
                       if (activeGoals.isNotEmpty) ...[
                         Text(LanguageService.tr('active_goals'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface)),
                         const SizedBox(height: 12),
-                        ...activeGoals.map((g) => _buildGoalCard(context, g, currentCurrency)),
+                        ...activeGoals.map((g) => RepaintBoundary(key: ValueKey('goal_${g.id}'), child: _buildGoalCard(context, g, currentCurrency))),
                       ],
                       if (endedGoals.isNotEmpty) ...[
                         const SizedBox(height: 20),
                         Text(LanguageService.tr('completed_and_expired'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface.withValues(alpha: 0.6))),
                         const SizedBox(height: 12),
-                        ...endedGoals.map((g) => _buildGoalCard(context, g, currentCurrency)),
+                        ...endedGoals.map((g) => RepaintBoundary(key: ValueKey('goal_${g.id}'), child: _buildGoalCard(context, g, currentCurrency))),
                       ],
                     ],
                   );

@@ -20,6 +20,54 @@ class _InsightsScreenState extends State<InsightsScreen> {
   TimeHorizon _selectedHorizon = TimeHorizon.monthly;
   int _periodOffset = 0; // 0 = current, -1 = previous, etc.
 
+  InsightsReport? _lastReport;
+  int? _lastTxHash;
+  int? _lastLoansHash;
+  int? _lastBudgetsHash;
+  int? _lastGoalsHash;
+  TimeHorizon? _lastHorizon;
+  int? _lastPeriodOffset;
+
+  InsightsReport _getOrComputeReport({
+    required List<Transaction> transactions,
+    required List<Loan> loans,
+    required Map<String, double> budgets,
+    required List<SavingsGoal> goals,
+    required TimeHorizon horizon,
+    required int periodOffset,
+  }) {
+    final txHash = Object.hashAll(transactions);
+    final loansHash = Object.hashAll(loans);
+    final budgetsHash = Object.hashAll(budgets.entries);
+    final goalsHash = Object.hashAll(goals);
+
+    if (_lastReport != null &&
+        _lastTxHash == txHash &&
+        _lastLoansHash == loansHash &&
+        _lastBudgetsHash == budgetsHash &&
+        _lastGoalsHash == goalsHash &&
+        _lastHorizon == horizon &&
+        _lastPeriodOffset == periodOffset) {
+      return _lastReport!;
+    }
+
+    _lastTxHash = txHash;
+    _lastLoansHash = loansHash;
+    _lastBudgetsHash = budgetsHash;
+    _lastGoalsHash = goalsHash;
+    _lastHorizon = horizon;
+    _lastPeriodOffset = periodOffset;
+
+    return _lastReport = InsightsEngine.generateReport(
+      transactions: transactions,
+      loans: loans,
+      budgets: budgets,
+      goals: goals,
+      horizon: horizon,
+      periodOffset: periodOffset,
+    );
+  }
+
   void _changeHorizon(TimeHorizon horizon) {
     if (_selectedHorizon != horizon) {
       setState(() {
@@ -186,7 +234,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                           return ValueListenableBuilder<List<SavingsGoal>>(
                             valueListenable: AppState.goalsNotifier,
                             builder: (context, goals, _) {
-                              final report = InsightsEngine.generateReport(
+                              final report = _getOrComputeReport(
                                 transactions: transactions,
                                 loans: loans,
                                 budgets: budgets,
@@ -200,25 +248,25 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildHorizonSelector(theme),
+                                    RepaintBoundary(child: _buildHorizonSelector(theme)),
                                     const SizedBox(height: 12),
-                                    _buildPeriodNavigator(theme, report),
+                                    RepaintBoundary(child: _buildPeriodNavigator(theme, report)),
                                     const SizedBox(height: 16),
-                                    _buildAccountantBriefCard(theme, report),
+                                    RepaintBoundary(child: _buildAccountantBriefCard(theme, report)),
                                     const SizedBox(height: 16),
-                                    _buildSavingsVaultAndGoalsCard(theme, report, currentCurrency),
+                                    RepaintBoundary(child: _buildSavingsVaultAndGoalsCard(theme, report, currentCurrency)),
                                     const SizedBox(height: 16),
-                                    _buildVelocitySummaryGrid(theme, report, currentCurrency),
+                                    RepaintBoundary(child: _buildVelocitySummaryGrid(theme, report, currentCurrency)),
                                     const SizedBox(height: 20),
-                                    _build503020PlanningCard(theme, report, currentCurrency),
+                                    RepaintBoundary(child: _build503020PlanningCard(theme, report, currentCurrency)),
                                     const SizedBox(height: 20),
-                                    _buildCategoryMatrix(theme, report, currentCurrency),
+                                    RepaintBoundary(child: _buildCategoryMatrix(theme, report, currentCurrency)),
                                     const SizedBox(height: 20),
-                                    _buildLoansAndDebtCard(theme, report, currentCurrency),
+                                    RepaintBoundary(child: _buildLoansAndDebtCard(theme, report, currentCurrency)),
                                     const SizedBox(height: 20),
-                                    _buildTaxIntelligenceCard(theme, report, currentCurrency),
+                                    RepaintBoundary(child: _buildTaxIntelligenceCard(theme, report, currentCurrency)),
                                     const SizedBox(height: 20),
-                                    _buildPaymentTypeCard(theme, report, currentCurrency),
+                                    RepaintBoundary(child: _buildPaymentTypeCard(theme, report, currentCurrency)),
                                     const SizedBox(height: 32),
                                   ],
                                 ),

@@ -10,6 +10,7 @@ class TransactionTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onDelete;
   final Future<bool> Function()? confirmDelete;
+  final String? currency;
 
   const TransactionTile({
     super.key,
@@ -17,10 +18,23 @@ class TransactionTile extends StatelessWidget {
     required this.onTap,
     required this.onDelete,
     this.confirmDelete,
+    this.currency,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (currency != null) {
+      return _buildTile(context, currency!);
+    }
+    return ValueListenableBuilder<String>(
+      valueListenable: AppState.currencyNotifier,
+      builder: (context, activeCurrency, _) {
+        return _buildTile(context, activeCurrency);
+      },
+    );
+  }
+
+  Widget _buildTile(BuildContext context, String activeCurrency) {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
     final color = tx.isIncome ? const Color(0xFF10B981) : onSurface;
@@ -42,7 +56,7 @@ class TransactionTile extends StatelessWidget {
           context: context,
           title: LanguageService.tr('delete_tx_title'),
           message: LanguageService.tr('delete_tx_msg'),
-          itemDetail: '${LanguageService.trCategory(tx.title)} • ${tx.isIncome ? '+' : '-'}${AppState.currencyNotifier.value}${tx.amount.toStringAsFixed(0)}',
+          itemDetail: '${LanguageService.trCategory(tx.title)} • ${tx.isIncome ? '+' : '-'}$activeCurrency${tx.amount.toStringAsFixed(0)}',
         );
       },
       onDismissed: (_) => onDelete(),
@@ -77,14 +91,9 @@ class TransactionTile extends StatelessWidget {
                   ],
                 ),
               ),
-              ValueListenableBuilder<String>(
-                valueListenable: AppState.currencyNotifier,
-                builder: (context, cur, _) {
-                  return Text(
-                    '${tx.isIncome ? '+' : '-'}$cur${tx.amount.toStringAsFixed(0)}',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
-                  );
-                },
+              Text(
+                '${tx.isIncome ? '+' : '-'}$activeCurrency${tx.amount.toStringAsFixed(0)}',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
               ),
             ],
           ),

@@ -714,13 +714,18 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                               valueListenable: AppState.budgetsNotifier,
                               builder: (context, budgets, _) {
                                 final now = DateTime.now();
-                                final monthTx = transactions.where((t) => t.date.year == now.year && t.date.month == now.month && !t.isIncome).toList();
+                                final Map<String, double> categorySpent = {};
+                                for (var t in transactions) {
+                                  if (!t.isIncome && t.date.year == now.year && t.date.month == now.month) {
+                                    categorySpent[t.category] = (categorySpent[t.category] ?? 0.0) + t.amount;
+                                  }
+                                }
                                 
                                 return Column(
                                   children: budgets.entries.map((entry) {
-                                    final spent = monthTx.where((t) => t.category == entry.key).fold(0.0, (sum, t) => sum + t.amount);
+                                    final spent = categorySpent[entry.key] ?? 0.0;
                                     final limit = entry.value;
-                                    final percent = (spent / limit).clamp(0.0, 1.0);
+                                    final percent = limit > 0 ? (spent / limit).clamp(0.0, 1.0) : 0.0;
                                     
                                     return Padding(
                                       padding: const EdgeInsets.only(bottom: 12.0),
@@ -731,7 +736,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(LanguageService.trCategory(entry.key), style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
-                                              Text('${AppState.currencyNotifier.value}${spent.toStringAsFixed(0)} / ${AppState.currencyNotifier.value}${limit.toStringAsFixed(0)}', style: TextStyle(color: percent > 0.9 ? Colors.redAccent : Theme.of(context).colorScheme.onSurface)),
+                                              Text('$currentCurrency${spent.toStringAsFixed(0)} / $currentCurrency${limit.toStringAsFixed(0)}', style: TextStyle(color: percent > 0.9 ? Colors.redAccent : Theme.of(context).colorScheme.onSurface)),
                                             ],
                                           ),
                                           const SizedBox(height: 6),
@@ -817,6 +822,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                               return RepaintBoundary(
                                 child: TransactionTile(
                                   tx: tx,
+                                  currency: currentCurrency,
                                   onTap: () => showTransactionDialog(context, existingTx: tx),
                                   onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
                                 ),
