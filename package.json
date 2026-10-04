@@ -1,0 +1,20 @@
+{
+  "name": "balance_tracker_higgsfield",
+  "version": "1.0.0",
+  "description": "Higgsfield API integration for Seedance 2.5 video generation",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "generate": "tsx index.ts",
+    "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "@higgsfield/client": "^0.2.6",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}

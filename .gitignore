@@ -45,3 +45,15 @@ app.*.map.json
 /android/app/release
 /android/build/
 .vscode/settings.json
+
+# Node & Environment Variables
+node_modules/
+npm-debug.log*
+.env
+.env*.local
+.env.local
+.env.*
+!.env.example
+!.env.local.example
+
+
