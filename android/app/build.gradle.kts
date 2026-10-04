@@ -36,8 +36,12 @@ android {
         release {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // Use baseline ProGuard (not -optimize) to skip ~5 extra R8 passes
+            // Switch to proguard-android-optimize.txt only for Play Store submissions
+            minifyEnabled = false
+            shrinkResources = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
+                getDefaultProguardFile("proguard-android.txt"),
                 "proguard-rules.pro"
             )
         }
