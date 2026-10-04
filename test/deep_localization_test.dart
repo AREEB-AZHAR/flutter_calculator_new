@@ -193,5 +193,28 @@ void main() {
       final nearestDirectionality = tester.widget<Directionality>(directionalityFinder.first);
       expect(nearestDirectionality.textDirection, TextDirection.ltr);
     });
+
+    test('All 7 languages have 100% key parity with English dictionary (417 keys each)', () {
+      final enKeys = LanguageService.getKeysForLanguage('en');
+      expect(enKeys.length, greaterThanOrEqualTo(417));
+
+      for (final lang in LanguageService.supportedLanguages) {
+        final langKeys = LanguageService.getKeysForLanguage(lang.code);
+        final missing = enKeys.difference(langKeys);
+        final extra = langKeys.difference(enKeys);
+
+        expect(
+          missing,
+          isEmpty,
+          reason: 'Language "${lang.code}" is missing keys from English: $missing',
+        );
+        expect(
+          extra,
+          isEmpty,
+          reason: 'Language "${lang.code}" has extra keys not in English: $extra',
+        );
+        expect(langKeys.length, enKeys.length);
+      }
+    });
   });
 }

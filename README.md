@@ -764,7 +764,28 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 
 ## 📝 Recent Changelog
 
-- **v1.8.9 (Current - Lazy-Loading, Scroll Stutter Elimination & Regional Currency PPP)**:
+- **v1.8.10 (Current - 100% Full 7-Language Deep Translation Parity & Key Audit)**:
+  - **100% Translation Key Parity Across All 7 Languages (417 Keys Each)**:
+    - Performed comprehensive parity audits across all 7 supported international languages in [`LanguageService`](lib/services/language_service.dart):
+      * **English (`en`)**: 417 keys (Canonical baseline)
+      * **Spanish (`es`)**: 417 keys (100% parity)
+      * **French (`fr`)**: 417 keys (100% parity)
+      * **German (`de`)**: 417 keys (100% parity)
+      * **Urdu (`ur`, RTL)**: 417 keys (100% parity)
+      * **Arabic (`ar`, RTL)**: 417 keys (100% parity)
+      * **Hindi (`hi`)**: 417 keys (100% parity)
+    - Eliminated all missing keys and duplicate entries, ensuring complete UI translation coverage across navigation, dashboard vitals, settings tabs, insights CPA assessment, goals, recurring schedules, and offline sync modals.
+  - **Static Code Key Reference Audit**:
+    - Scanned all 325 code-referenced translation keys in `lib/` invoked via `LanguageService.tr(...)` and `trParam(...)`. Verified that every single key exists in the canonical translation dictionary.
+  - **Exposed `LanguageService.getKeysForLanguage`**:
+    - Added [`LanguageService.getKeysForLanguage(String code)`](lib/services/language_service.dart) returning immutable key sets for real-time validation and automated CI assertions.
+  - **Automated CI Parity Test Suite**:
+    - Added automated unit test in [`test/deep_localization_test.dart`](test/deep_localization_test.dart) checking key parity across all 7 supported languages.
+    - Verified all test suites pass with 0 analyzer issues: `deep_localization_test.dart`, `google_live_translate_test.dart`, `offline_localization_sync_test.dart`, and `app_version_test.dart`.
+  - **Version Parity**:
+    - Incremented version to `v1.8.10+20` across `pubspec.yaml`, `AppVersion` service, and automated test suite per the strict +0.0.1 incremental patch policy.
+
+- **v1.8.9 (Lazy-Loading, Scroll Stutter Elimination & Regional Currency PPP)**:
   - **Settings Menu Scroll Stutter Elimination (`ProfileScreen` `_showSettingsPopup`)**:
     - Identified that the monolithic 17-card settings modal with 9 active custom `TallyIconPainter` canvases and dozens of asynchronous listeners caused layout and GPU thread jank during menu scrolling.
     - Re-architected settings into 3 focused, categorized segmented tabs:

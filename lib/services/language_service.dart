@@ -181,6 +181,10 @@ class LanguageService {
     }
   }
 
+  /// Returns all available translation keys for a given language code.
+  static Set<String> getKeysForLanguage(String code) =>
+      _translations[code]?.keys.toSet() ?? {};
+
   static final Map<String, Map<String, String>> _translations = {
     'en': {
       'smart_insights': 'Smart Insights',
@@ -594,6 +598,13 @@ class LanguageService {
       'tax_year_2026': 'Tax Year 2026',
       'total_deductible_expenses': 'Total Deductible Expenses',
       'est_tax_savings_22': 'Est. Tax Savings (22% Bracket)',
+      'username': 'Username',
+      'note_optional': 'Note (Optional)',
+      'edit_entry': 'Edit Entry',
+      'return_to_login': 'Return to Login',
+      'no_saved_accounts': 'No Saved Accounts',
+      'saved_accounts_empty_desc': 'Log in to an account and it will appear here for fast 1-tap access next time.',
+      'no_savings_goals_yet': 'No savings goals yet. Tap + to create one!',
   },
     'es': {
       'smart_insights': 'Estadísticas Inteligentes',
@@ -1007,6 +1018,13 @@ class LanguageService {
       'tax_year_2026': 'Año Fiscal 2026',
       'total_deductible_expenses': 'Gastos Deducibles Totales',
       'est_tax_savings_22': 'Ahorro Fiscal Est. (Tramo 22%)',
+      'username': 'Nombre de Usuario',
+      'note_optional': 'Nota (Opcional)',
+      'edit_entry': 'Editar Entrada',
+      'return_to_login': 'Volver al Inicio de Sesión',
+      'no_saved_accounts': 'Sin Cuentas Guardadas',
+      'saved_accounts_empty_desc': 'Inicia sesión y la cuenta aparecerá aquí para acceso rápido.',
+      'no_savings_goals_yet': 'Aún no hay metas de ahorro. ¡Toca + para crear una!',
   },
     'fr': {
       'smart_insights': 'Aperçus Intelligents',
@@ -1420,6 +1438,13 @@ class LanguageService {
       'tax_year_2026': 'Année Fiscale 2026',
       'total_deductible_expenses': 'Dépenses Déductibles Totales',
       'est_tax_savings_22': 'Écon. Fiscale Est. (Tranche 22%)',
+      'username': 'Nom d\'utilisateur',
+      'note_optional': 'Note (Facultatif)',
+      'edit_entry': 'Modifier l\'entrée',
+      'return_to_login': 'Retour à la connexion',
+      'no_saved_accounts': 'Aucun compte mémorisé',
+      'saved_accounts_empty_desc': 'Connectez-vous et le compte apparaîtra ici pour un accès rapide.',
+      'no_savings_goals_yet': 'Aucun objectif d\'épargne. Appuyez sur + pour en créer un !',
   },
     'de': {
       'smart_insights': 'Intelligente Einblicke',
@@ -1833,6 +1858,13 @@ class LanguageService {
       'tax_year_2026': 'Steuerjahr 2026',
       'total_deductible_expenses': 'Gesamte Abzugsfähige Ausgaben',
       'est_tax_savings_22': 'Geschätzte Steuerersparnis (22%)',
+      'username': 'Benutzername',
+      'note_optional': 'Notiz (Optional)',
+      'edit_entry': 'Eintrag bearbeiten',
+      'return_to_login': 'Zurück zur Anmeldung',
+      'no_saved_accounts': 'Keine gespeicherten Konten',
+      'saved_accounts_empty_desc': 'Melden Sie sich an und das Konto erscheint hier für schnellen Zugriff.',
+      'no_savings_goals_yet': 'Noch keine Sparziele. Tippen Sie auf + um eines zu erstellen!',
   },
     'ur': {
       'smart_insights': 'اسمارٹ بصیرت',
@@ -2246,6 +2278,13 @@ class LanguageService {
       'tax_year_2026': 'ٹیکس سال 2026',
       'total_deductible_expenses': 'کل کٹوتی کے قابل اخراجات',
       'est_tax_savings_22': 'تخمینہ ٹیکس بچت (22% بریکٹ)',
+      'username': 'صارف نام',
+      'note_optional': 'نوٹ (اختیاری)',
+      'edit_entry': 'اندراج میں ترمیم کریں',
+      'return_to_login': 'لاگ ان پر واپس جائیں',
+      'no_saved_accounts': 'کوئی محفوظ اکاؤنٹ نہیں',
+      'saved_accounts_empty_desc': 'لاگ ان کریں اور اگلی بار فوری رسائی کے لیے اکاؤنٹ یہاں نظر آئے گا۔',
+      'no_savings_goals_yet': 'ابھی تک کوئی بچت ہدف نہیں۔ + دبا کر بنائیں!',
   },
     'ar': {
       'smart_insights': 'رؤى ذكية',
@@ -2659,6 +2698,13 @@ class LanguageService {
       'tax_year_2026': 'السنة الضريبية 2026',
       'total_deductible_expenses': 'إجمالي النفقات القابلة للخصم',
       'est_tax_savings_22': 'التوفير الضريبي المقدر (شريحة 22%)',
+      'username': 'اسم المستخدم',
+      'note_optional': 'ملاحظة (اختياري)',
+      'edit_entry': 'تعديل الإدخال',
+      'return_to_login': 'العودة إلى تسجيل الدخول',
+      'no_saved_accounts': 'لا توجد حسابات محفوظة',
+      'saved_accounts_empty_desc': 'سجّل دخولك وسيظهر الحساب هنا للوصول السريع في المرة القادمة.',
+      'no_savings_goals_yet': 'لا توجد أهداف ادخار بعد. اضغط + لإنشاء هدف!',
   },
     'hi': {
       'smart_insights': 'स्मार्ट इनसाइट्स',
@@ -3072,6 +3118,13 @@ class LanguageService {
       'tax_year_2026': 'कर वर्ष 2026',
       'total_deductible_expenses': 'कुल कटौती योग्य खर्च',
       'est_tax_savings_22': 'अनुमानित कर बचत (22% ब्रैकेट)',
+      'username': 'उपयोगकर्ता नाम',
+      'note_optional': 'नोट (वैकल्पिक)',
+      'edit_entry': 'प्रविष्टि संपादित करें',
+      'return_to_login': 'लॉगिन पर वापस जाएं',
+      'no_saved_accounts': 'कोई सहेजा गया खाता नहीं',
+      'saved_accounts_empty_desc': 'लॉगिन करें और अगली बार त्वरित पहुंच के लिए खाता यहां दिखेगा।',
+      'no_savings_goals_yet': 'अभी कोई बचत लक्ष्य नहीं है। + दबाकर बनाएं!',
   },
   };
 }
