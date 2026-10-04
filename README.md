@@ -764,7 +764,17 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 
 ## 📝 Recent Changelog
 
-- **v1.8.10 (Current - 100% Full 7-Language Deep Translation Parity & Key Audit)**:
+- **v1.8.11 (Current - Android Gradle Kotlin DSL & CompilerOptions Modernization)**:
+  - **Android Gradle Kotlin DSL Compatibility (`android/app/build.gradle.kts`)**:
+    - Fixed 3 script compilation errors causing Gradle evaluation failure on Android root and app projects:
+      * Migrated deprecated Groovy-style `minifyEnabled = false` to Kotlin DSL property `isMinifyEnabled = false`.
+      * Migrated `shrinkResources = false` to Kotlin DSL property `isShrinkResources = false`.
+      * Resolved `jvmTarget: String is deprecated` warning by migrating from `android { kotlinOptions { jvmTarget = ... } }` to modern Kotlin 2.0+ `kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }` with `import org.jetbrains.kotlin.gradle.dsl.JvmTarget`.
+    - Validated clean configuration with Gradle 8.14 and Flutter Android build pipeline (`flutter build apk --config-only` succeeded with `Config complete`).
+  - **Single Source of Truth Version Bump**:
+    - Incremented version to `v1.8.11+21` across `pubspec.yaml`, `AppVersion` service, and automated test suite per the strict +0.0.1 incremental patch policy.
+
+- **v1.8.10 (100% Full 7-Language Deep Translation Parity & Key Audit)**:
   - **100% Translation Key Parity Across All 7 Languages (417 Keys Each)**:
     - Performed comprehensive parity audits across all 7 supported international languages in [`LanguageService`](lib/services/language_service.dart):
       * **English (`en`)**: 417 keys (Canonical baseline)

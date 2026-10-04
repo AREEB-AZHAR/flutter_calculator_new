@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -14,10 +16,6 @@ android {
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     defaultConfig {
@@ -38,8 +36,8 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             // Use baseline ProGuard (not -optimize) to skip ~5 extra R8 passes
             // Switch to proguard-android-optimize.txt only for Play Store submissions
-            minifyEnabled = false
-            shrinkResources = false
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android.txt"),
                 "proguard-rules.pro"
@@ -50,6 +48,12 @@ android {
     lint {
         checkReleaseBuilds = false
         abortOnError = false
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
