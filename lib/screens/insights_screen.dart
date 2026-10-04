@@ -19,6 +19,7 @@ class InsightsScreen extends StatefulWidget {
 class _InsightsScreenState extends State<InsightsScreen> {
   TimeHorizon _selectedHorizon = TimeHorizon.monthly;
   int _periodOffset = 0; // 0 = current, -1 = previous, etc.
+  String _activeInsightTab = 'all';
 
   InsightsReport? _lastReport;
   int? _lastTxHash;
@@ -27,6 +28,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   int? _lastGoalsHash;
   TimeHorizon? _lastHorizon;
   int? _lastPeriodOffset;
+  String? _lastCurrency;
 
   InsightsReport _getOrComputeReport({
     required List<Transaction> transactions,
@@ -35,6 +37,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     required List<SavingsGoal> goals,
     required TimeHorizon horizon,
     required int periodOffset,
+    String currency = '\$',
   }) {
     final txHash = Object.hashAll(transactions);
     final loansHash = Object.hashAll(loans);
@@ -47,7 +50,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
         _lastBudgetsHash == budgetsHash &&
         _lastGoalsHash == goalsHash &&
         _lastHorizon == horizon &&
-        _lastPeriodOffset == periodOffset) {
+        _lastPeriodOffset == periodOffset &&
+        _lastCurrency == currency) {
       return _lastReport!;
     }
 
@@ -57,6 +61,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     _lastGoalsHash = goalsHash;
     _lastHorizon = horizon;
     _lastPeriodOffset = periodOffset;
+    _lastCurrency = currency;
 
     return _lastReport = InsightsEngine.generateReport(
       transactions: transactions,
@@ -65,6 +70,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       goals: goals,
       horizon: horizon,
       periodOffset: periodOffset,
+      currency: currency,
     );
   }
 
@@ -241,6 +247,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                 goals: goals,
                                 horizon: _selectedHorizon,
                                 periodOffset: _periodOffset,
+                                currency: currentCurrency,
                               );
 
                               return SingleChildScrollView(
@@ -251,23 +258,37 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                     RepaintBoundary(child: _buildHorizonSelector(theme)),
                                     const SizedBox(height: 12),
                                     RepaintBoundary(child: _buildPeriodNavigator(theme, report)),
-                                    const SizedBox(height: 16),
-                                    RepaintBoundary(child: _buildAccountantBriefCard(theme, report)),
-                                    const SizedBox(height: 16),
-                                    RepaintBoundary(child: _buildSavingsVaultAndGoalsCard(theme, report, currentCurrency)),
-                                    const SizedBox(height: 16),
-                                    RepaintBoundary(child: _buildVelocitySummaryGrid(theme, report, currentCurrency)),
-                                    const SizedBox(height: 20),
-                                    RepaintBoundary(child: _build503020PlanningCard(theme, report, currentCurrency)),
-                                    const SizedBox(height: 20),
-                                    RepaintBoundary(child: _buildCategoryMatrix(theme, report, currentCurrency)),
-                                    const SizedBox(height: 20),
-                                    RepaintBoundary(child: _buildLoansAndDebtCard(theme, report, currentCurrency)),
-                                    const SizedBox(height: 20),
-                                    RepaintBoundary(child: _buildTaxIntelligenceCard(theme, report, currentCurrency)),
-                                    const SizedBox(height: 20),
-                                    RepaintBoundary(child: _buildPaymentTypeCard(theme, report, currentCurrency)),
-                                    const SizedBox(height: 32),
+                                    const SizedBox(height: 12),
+                                    _buildInsightSubTabBar(theme),
+                                    const SizedBox(height: 14),
+
+                                    // Tab: Overview / All
+                                    if (_activeInsightTab == 'all' || _activeInsightTab == 'overview') ...[
+                                      RepaintBoundary(child: _buildAccountantBriefCard(theme, report)),
+                                      const SizedBox(height: 16),
+                                      RepaintBoundary(child: _buildSavingsVaultAndGoalsCard(theme, report, currentCurrency)),
+                                      const SizedBox(height: 16),
+                                      RepaintBoundary(child: _buildVelocitySummaryGrid(theme, report, currentCurrency)),
+                                      const SizedBox(height: 20),
+                                    ],
+
+                                    // Tab: Budget & Debts / All
+                                    if (_activeInsightTab == 'all' || _activeInsightTab == 'planning') ...[
+                                      RepaintBoundary(child: _build503020PlanningCard(theme, report, currentCurrency)),
+                                      const SizedBox(height: 20),
+                                      RepaintBoundary(child: _buildCategoryMatrix(theme, report, currentCurrency)),
+                                      const SizedBox(height: 20),
+                                      RepaintBoundary(child: _buildLoansAndDebtCard(theme, report, currentCurrency)),
+                                      const SizedBox(height: 20),
+                                    ],
+
+                                    // Tab: Tax & Liquidity / All
+                                    if (_activeInsightTab == 'all' || _activeInsightTab == 'tax') ...[
+                                      RepaintBoundary(child: _buildTaxIntelligenceCard(theme, report, currentCurrency)),
+                                      const SizedBox(height: 20),
+                                      RepaintBoundary(child: _buildPaymentTypeCard(theme, report, currentCurrency)),
+                                      const SizedBox(height: 32),
+                                    ],
                                   ],
                                 ),
                               );
@@ -285,6 +306,82 @@ class _InsightsScreenState extends State<InsightsScreen> {
       ),
     );
       },
+    );
+  }
+
+  Widget _buildInsightSubTabBar(ThemeData theme) {
+    final primary = theme.colorScheme.primary;
+    final surface = theme.colorScheme.surface;
+    final onSurface = theme.colorScheme.onSurface;
+
+    final tabs = [
+      ('all', 'All', Icons.dashboard_outlined),
+      ('overview', 'Overview', Icons.analytics_outlined),
+      ('planning', 'Budget & Debt', Icons.account_balance_wallet_outlined),
+      ('tax', 'Tax & Liquidity', Icons.receipt_long_outlined),
+    ];
+
+    return SizedBox(
+      height: 38,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: tabs.length,
+        separatorBuilder: (_, i) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final tab = tabs[index];
+          final isSelected = _activeInsightTab == tab.$1;
+
+          return GestureDetector(
+            onTap: () {
+              if (_activeInsightTab != tab.$1) {
+                setState(() {
+                  _activeInsightTab = tab.$1;
+                });
+              }
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected ? primary : surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected ? primary : onSurface.withValues(alpha: 0.14),
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: primary.withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    tab.$3,
+                    size: 15,
+                    color: isSelected ? theme.colorScheme.onPrimary : onSurface.withValues(alpha: 0.7),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    tab.$2,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected ? theme.colorScheme.onPrimary : onSurface.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1637,7 +1734,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                           children: [
                             Text('Tax Write-offs', style: TextStyle(fontSize: 10.5, color: onSurface.withValues(alpha: 0.6))),
                             const SizedBox(height: 2),
-                            const Text('\$1,850 Est.', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+                            Text('${AppState.currencyNotifier.value}1,850 Est.', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
                           ],
                         ),
                       ),

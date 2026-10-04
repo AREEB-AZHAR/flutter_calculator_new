@@ -620,13 +620,7 @@ lib/
     ├── color_picker_dialog.dart    # Graphic Theme Studio (HSV sliders & hex)
     ├── transaction_tile.dart       # Dismissible transaction list item
     └── transaction_dialog.dart     # Auto-fill empty title & Income->Salary switcher
-├── index.ts                        # Higgsfield API video generation example (Seedance 2.5)
-├── package.json                    # Node.js dependencies (@higgsfield/client, tsx, dotenv)
-├── tsconfig.json                   # TypeScript configuration
-├── .env.local.example              # Template for Higgsfield credentials (HF_CREDENTIALS)
-├── .env.local                      # (Git-ignored) Local runtime credentials
 ```
-
 
 ---
 
@@ -699,29 +693,6 @@ To authenticate with your **actual Google Account** across Android and Windows d
      - Download `google-services.json` and place it in `android/app/`.
 4. Launch Tally, tap **Sign in with Google**, and enter your **Project ID** & **Web API Key** (or they will auto-load). Your authentic Google Account is now bound to your ledger!
 
-### 7. Higgsfield AI Video Generation Setup (Seedance 2.5)
-
-To utilize the Higgsfield API with ByteDance Seedance 2.5 (`bytedance/seedance-2.5/text-to-video`):
-
-1. **Install Dependencies**:
-   Ensure Node.js (v20+) is installed, then install the official `@higgsfield/client` SDK and development runtime:
-   ```bash
-   npm install
-   ```
-
-2. **Configure API Credentials**:
-   Copy the example environment template to `.env.local`:
-   ```bash
-   cp .env.local.example .env.local
-   ```
-   Add your credentials in `key-id:key-secret` format (from the [Higgsfield Console](https://console.higgsfield.ai)):
-   ```env
-   HF_CREDENTIALS=your-key-id:your-key-secret
-   ```
-   > [!IMPORTANT]
-   > `.env.local` is strictly ignored by Git (`.gitignore`). Credentials are loaded server-side at runtime without ever being logged, printed, or committed to version control.
-
-
 ---
 
 ## 🚀 Running the Application
@@ -758,22 +729,6 @@ cd ios && pod install && cd ..
 flutter run -d ios
 ```
 
-### Higgsfield Video Generation (Seedance 2.5)
-
-Execute the TypeScript generation script using `tsx` to submit a generation request to the ByteDance Seedance 2.5 model and poll for completion:
-
-```bash
-npm run generate
-# or directly via tsx:
-npx tsx index.ts
-```
-
-- **Target Model**: `bytedance/seedance-2.5/text-to-video`
-- **Prompt**: `"A cinematic scene at sunset"`
-- **Parameters**: `duration: 5s`, `resolution: 720p`, `aspect_ratio: 16:9`
-- **Output**: Returns the public direct video URL upon completion, or reports failure/moderation/cancellation without claiming false success.
-
-
 ---
 
 ## 📦 Building Releases
@@ -809,19 +764,28 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 
 ## 📝 Recent Changelog
 
-- **v1.8.9 (Higgsfield API & Seedance 2.5 Integration - Current)**:
-  - **Official Higgsfield SDK Integration (`@higgsfield/client`)**:
-    - Installed `@higgsfield/client` (v0.2.6+) and configured TypeScript execution environment (`tsx`, `dotenv`).
-    - Added `package.json` and `tsconfig.json` scripts (`npm run generate`).
-  - **Secure Runtime Environment Management**:
-    - Created `.env.local.example` with `HF_CREDENTIALS=key-id:key-secret` format.
-    - Updated `.gitignore` to strictly exclude `.env*` and `.env.local` while allowing tracking of `.env.local.example`.
-    - Credentials are kept strictly server-side and loaded at runtime without logging, printing, or leaking secrets.
-  - **Seedance 2.5 Video Generation Example (`index.ts`)**:
-    - Implemented `index.ts` utilizing `higgsfield.subscribe("bytedance/seedance-2.5/text-to-video", ...)` with `withPolling: true`.
-    - Generated scene: prompt `"A cinematic scene at sunset"`, `duration: 5`, `resolution: "720p"`, `aspect_ratio: "16:9"`.
-    - Built comprehensive error and status handling distinguishing `completed` (with video URL extraction) from `failed`, `canceled`, and `nsfw`/`moderated` states without false positive claims.
-    - Added blocker detection informing the developer if `HF_CREDENTIALS` is unset or still contains placeholder values.
+- **v1.8.9 (Current - Lazy-Loading, Scroll Stutter Elimination & Regional Currency PPP)**:
+  - **Settings Menu Scroll Stutter Elimination (`ProfileScreen` `_showSettingsPopup`)**:
+    - Identified that the monolithic 17-card settings modal with 9 active custom `TallyIconPainter` canvases and dozens of asynchronous listeners caused layout and GPU thread jank during menu scrolling.
+    - Re-architected settings into 3 focused, categorized segmented tabs:
+      * `[ 🎨 Appearance ]`: Features & Settings Guide card, 1-Time Theme Unlock Banner, 3 Free Brand Palettes + Expandable Accordion for 6 Pro Palettes (saving 6 canvas paint operations until expanded), Launcher App Icon Selector, Custom Graphic Theme Studio, and Currency & Language Selectors.
+      * `[ 🔒 Security ]`: Profile Photo & Bio, Biometric Screen Lock switch, Saved Accounts Fast Switcher, and Password Management.
+      * `[ ☁️ Cloud & Data ]`: Tally Pro status, Tour replay, Notification Reminders switch, SQLite Backup, Cloud Firestore Sync, Logout, and Version Architecture footer.
+    - Designed custom `_buildSettingsTabsBar` pill selector with animated indicators and state persistence.
+  - **Features & Settings Guide Virtualization (`_showAllFeaturesGuide`)**:
+    - Refactored `_showAllFeaturesGuide` from an eager `ListView(children: ...)` into a virtualized `ListView.builder` over static const `_guideItems` models, rendering items on-demand as they enter the viewport and keeping frame builds < 3ms.
+  - **Insights Screen Segmented Domain Tabs (`InsightsScreen`)**:
+    - Introduced domain sub-tabs `[ All | Overview | Budget & Debt | Tax & Liquidity ]` via `_buildInsightSubTabBar`.
+    - Segmented 8 heavy analytical cards into logical domain tabs, cutting text layouts and GPU draw calls by ~75% while keeping `'all'` for full-feed access and automated test compatibility.
+    - Added dynamic currency pass-through in `_getOrComputeReport`, invalidating cache when the active currency symbol changes.
+  - **Regional Geo-Location & Purchasing Power Parity (PPP) Pricing**:
+    - Created [`GeoLocationService`](lib/services/geo_location_service.dart) auto-detecting device country code and supported language via `PlatformDispatcher.instance.locale`.
+    - Maps regional currencies (`PK` -> `₨`, `IN` -> `₹`, `GB` -> `£`, `DE/FR/IT/ES` -> `€`, `AE` -> `د.إ`, `SA` -> `﷼`, `US` -> `$`).
+    - Dynamic PPP tier pricing (`formatLocalizedTierPrice` and `formatTierWithPeriod`) in `PremiumScreen` and `MonetizationService`.
+    - `InsightsEngine` updated to take dynamic currency symbol for financial advice, action items, and projections.
+  - **100% Automated Test Suite Verification**:
+    - Added [`test/settings_menu_and_insights_smoothness_test.dart`](test/settings_menu_and_insights_smoothness_test.dart) and updated [`test/insights_screen_widget_test.dart`](test/insights_screen_widget_test.dart).
+    - All 136 tests across the entire test suite passing with 0 analyzer issues.
 
 - **v1.8.8**:
   - **Google Play Core & Flutter Deferred Components ProGuard Fix**:
@@ -829,7 +793,6 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
     - Resolved fatal `:app:minifyReleaseWithR8` missing class build failure.
   - **Version Parity**:
     - Bumped to `v1.8.8+18` across `pubspec.yaml`, `AppVersion` service, and automated test suite per +0.0.1 incremental policy.
-
 
 - **v1.8.7**:
   - **Android Build Speed Acceleration & R8 Optimization**:

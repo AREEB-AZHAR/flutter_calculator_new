@@ -33,6 +33,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final ImagePicker _picker = ImagePicker();
   int _devToggleCount = 0;
 
+  static const List<({IconData icon, String title, String badge, String description})> _guideItems = [
+    (
+      icon: Icons.palette_outlined,
+      title: 'Brand Palettes & Themes',
+      badge: 'Instant Styling',
+      description: 'Switch seamlessly between 3 curated design systems:\n• Ledger: Classic Dark Emerald & Slash Coral on White Paper.\n• Paper: Vintage editorial Warm Cream Paper.\n• Ink: Deep OLED Carbon Black & Warm Amber.\nChanges take effect instantly across the whole app, charts, and login screen.',
+    ),
+    (
+      icon: Icons.app_shortcut_rounded,
+      title: 'Launcher App Icons',
+      badge: 'Home Screen Icon',
+      description: 'Change your physical Android / iOS home screen app icon to match your preferred theme (Ledger, Paper, or Ink). Requires an app restart to reload OS launcher shortcuts safely.',
+    ),
+    (
+      icon: Icons.color_lens_outlined,
+      title: 'Theme Studio (Custom Colors)',
+      badge: 'Personalize',
+      description: 'Customize your primary accent color, secondary accent color, and typography font color using the interactive color wheel.',
+    ),
+    (
+      icon: Icons.fingerprint_rounded,
+      title: 'Biometric & Screen Lock Unlock',
+      badge: 'Quick Security',
+      description: 'Enable instant, effortless vault access with Fingerprint, Face ID, or your phone’s screen lock PIN. Kept 100% on your device for absolute privacy.',
+    ),
+    (
+      icon: Icons.storage_rounded,
+      title: 'Offline SQLite Vault & SQL Export',
+      badge: 'Privacy-First',
+      description: 'All accounts, transactions, and preferences are stored in an encrypted local SQLite database isolated per user. You can export a full .sql dump anytime for permanent backups.',
+    ),
+    (
+      icon: Icons.cloud_sync_outlined,
+      title: 'Cloud Sync (Firebase Ready)',
+      badge: 'Sync Architecture',
+      description: 'Sync your SQLite database to Google Firebase Firestore across multiple devices. The hybrid repository layer coordinates offline and online sync seamlessly.',
+    ),
+    (
+      icon: Icons.notifications_active_outlined,
+      title: 'Daily Reminders & Notifications',
+      badge: 'Habits',
+      description: 'Set scheduled local reminders so you never forget to log your daily expenses and maintain financial accountability.',
+    ),
+    (
+      icon: Icons.currency_exchange_rounded,
+      title: 'Currency Switcher',
+      badge: 'Global Units',
+      description: 'Select your currency symbol (\$, €, £, ¥, ₹, ₨, etc.). The entire app updates all balances, cards, and graphs instantly without needing a relaunch.',
+    ),
+    (
+      icon: Icons.auto_awesome_rounded,
+      title: 'Transaction Auto-Fill & Category Switching',
+      badge: 'Smart Entry',
+      description: '• Empty Title Auto-Fill: Leave the Title field empty and Tally automatically names the transaction using your selected category!\n• Income Auto-Switch: Choosing "Income" automatically switches the category to "Salary".\n• Custom Dates: Tap the calendar button to record past or future transaction dates.',
+    ),
+    (
+      icon: Icons.account_balance_wallet_outlined,
+      title: 'Multi-Account & Custom Wallets',
+      badge: 'Accounts Hub',
+      description: 'Track cash, bank accounts, and credit cards separately. In the Accounts tab, tap "+ Add Account" or the Settings icon to create unlimited custom wallet types.',
+    ),
+  ];
+
   Future<void> _logout() async {
     await AppState.logout(context);
   }
@@ -453,6 +516,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showSettingsPopup() {
+    int activeSettingsTab = 0;
+    bool allThemesExpanded = false;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -478,889 +544,1026 @@ class _ProfileScreenState extends State<ProfileScreen> {
             textColor: textColor,
             themeName: themeName,
           );
-                      final surface = activeTheme.colorScheme.surface;
-                      final onSurface = activeTheme.colorScheme.onSurface;
-                      final cardBg = activeTheme.scaffoldBackgroundColor;
-                      final primary = activeTheme.colorScheme.primary;
+          final surface = activeTheme.colorScheme.surface;
+          final onSurface = activeTheme.colorScheme.onSurface;
+          final cardBg = activeTheme.scaffoldBackgroundColor;
+          final primary = activeTheme.colorScheme.primary;
 
-                      return Theme(
-                        data: activeTheme,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: surface,
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          return Theme(
+            data: activeTheme,
+            child: Container(
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: StatefulBuilder(
+                builder: (ctx, setSheetState) {
+                  return DraggableScrollableSheet(
+                    initialChildSize: 0.75,
+                    maxChildSize: 0.92,
+                    minChildSize: 0.5,
+                    expand: false,
+                    builder: (c, scrollController) => ListView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.all(24),
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: onSurface.withValues(alpha: 0.24),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
                           ),
-                          child: DraggableScrollableSheet(
-                            initialChildSize: 0.75,
-                            maxChildSize: 0.92,
-                            minChildSize: 0.5,
-                            expand: false,
-                            builder: (c, scrollController) => ListView(
-                              controller: scrollController,
-                              padding: const EdgeInsets.all(24),
-                              children: [
-                                Center(
-                                  child: Container(
-                                    width: 40,
-                                    height: 4,
-                                    decoration: BoxDecoration(
-                                      color: onSurface.withValues(alpha: 0.24),
-                                      borderRadius: BorderRadius.circular(2),
-                                    ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          LanguageService.tr('app_account_settings'),
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: onSurface),
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Categorized Segmented Tabs (Eliminates menu scroll stutter)
+                        _buildSettingsTabsBar(
+                          activeTab: activeSettingsTab,
+                          primary: primary,
+                          onSurface: onSurface,
+                          onTabSelected: (tab) => setSheetState(() => activeSettingsTab = tab),
+                        ),
+                        const SizedBox(height: 16),
+
+                        if (activeSettingsTab == 0) ...[
+                          // --- TAB 0: APPEARANCE & STYLING ---
+                          // Features & Settings Guide Banner Card
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  primary.withValues(alpha: 0.16),
+                                  primary.withValues(alpha: 0.04),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: primary.withValues(alpha: 0.3)),
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                              leading: Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  color: primary.withValues(alpha: 0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(Icons.auto_stories_rounded, color: primary, size: 22),
+                              ),
+                              title: Text(
+                                LanguageService.tr('what_each_setting_does'),
+                                style: TextStyle(fontWeight: FontWeight.bold, color: onSurface, fontSize: 14.5),
+                              ),
+                              subtitle: Text(
+                                LanguageService.tr('features_guide_sub'),
+                                style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontSize: 11.5),
+                              ),
+                              trailing: Icon(Icons.arrow_forward_ios_rounded, size: 14, color: primary),
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                _showAllFeaturesGuide(context);
+                              },
+                            ),
+                          ),
+
+                          // Brand Palettes
+                          _settingsSectionTitle(LanguageService.tr('brand_palettes_section'), onSurface.withValues(alpha: 0.6)),
+
+                          // Theme Passes & 30s Ad Unlock Banner
+                          ValueListenableBuilder<int>(
+                            valueListenable: MonetizationService.themePassesNotifier,
+                            builder: (context, themePasses, _) {
+                              final isPro = MonetizationService.isPro;
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: isPro
+                                      ? Colors.teal.withValues(alpha: 0.12)
+                                      : (themePasses > 0
+                                          ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                                          : primary.withValues(alpha: 0.08)),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: isPro
+                                        ? Colors.teal.withValues(alpha: 0.35)
+                                        : (themePasses > 0
+                                            ? const Color(0xFF10B981).withValues(alpha: 0.4)
+                                            : primary.withValues(alpha: 0.25)),
                                   ),
                                 ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  LanguageService.tr('app_account_settings'),
-                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: onSurface),
-                                ),
-                                const SizedBox(height: 16),
-
-                                // Features & Settings Guide Banner Card
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 20),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        primary.withValues(alpha: 0.16),
-                                        primary.withValues(alpha: 0.04),
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(color: primary.withValues(alpha: 0.3)),
-                                  ),
-                                  child: ListTile(
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                                    leading: Container(
-                                      width: 42,
-                                      height: 42,
-                                      decoration: BoxDecoration(
-                                        color: primary.withValues(alpha: 0.2),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(Icons.auto_stories_rounded, color: primary, size: 22),
-                                    ),
-                                    title: Text(
-                                      LanguageService.tr('what_each_setting_does'),
-                                      style: TextStyle(fontWeight: FontWeight.bold, color: onSurface, fontSize: 14.5),
-                                    ),
-                                    subtitle: Text(
-                                      LanguageService.tr('features_guide_sub'),
-                                      style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontSize: 11.5),
-                                    ),
-                                    trailing: Icon(Icons.arrow_forward_ios_rounded, size: 14, color: primary),
-                                    onTap: () {
-                                      Navigator.pop(ctx);
-                                      _showAllFeaturesGuide(context);
-                                    },
-                                  ),
-                                ),
-
-                                // Interactive Onboarding Tours
-                                _settingsSectionTitle(LanguageService.tr('interactive_tours_section'), onSurface.withValues(alpha: 0.6)),
-                                Card(
-                                  color: cardBg,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  child: ListTile(
-                                    leading: const Icon(Icons.replay_rounded, color: Colors.cyanAccent),
-                                    title: Text(LanguageService.tr('replay_tours'), style: TextStyle(color: onSurface)),
-                                    subtitle: Text(LanguageService.tr('replay_tours_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
-                                    trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
-                                    onTap: () async {
-                                      await TourService.resetAllTours();
-                                      if (context.mounted) {
-                                        Navigator.pop(ctx);
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Tours reset! Switching to Home and launching walkthrough...'),
-                                            backgroundColor: Colors.teal,
-                                          ),
-                                        );
-                                        AppState.activeTabNotifier.value = 0;
-                                      }
-                                    },
-                                  ),
-                                ),
-
-                                const SizedBox(height: 20),
-
-                                // Pro & Ad-Free Membership Section
-                                _settingsSectionTitle(LanguageService.tr('pro_membership_section'), onSurface.withValues(alpha: 0.6)),
-                                Card(
-                                  color: cardBg,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  child: ListTile(
-                                    leading: Container(
+                                child: Row(
+                                  children: [
+                                    Container(
                                       padding: const EdgeInsets.all(8),
-                                      decoration: const BoxDecoration(
-                                        gradient: LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFEF4444)]),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.workspace_premium, color: Colors.white, size: 20),
-                                    ),
-                                    title: Text(
-                                      LanguageService.tr('pro_subscriptions_title'),
-                                      style: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
-                                    ),
-                                    subtitle: Text(
-                                      LanguageService.tr('pro_subscriptions_sub'),
-                                      style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12),
-                                    ),
-                                    trailing: const Icon(Icons.chevron_right),
-                                    onTap: () {
-                                      Navigator.pop(ctx);
-                                      Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen()));
-                                    },
-                                  ),
-                                ),
-
-                                const SizedBox(height: 20),
-
-                                // Brand Palettes
-                                _settingsSectionTitle(LanguageService.tr('brand_palettes_section'), onSurface.withValues(alpha: 0.6)),
-
-                                // Theme Passes & 30s Ad Unlock Banner
-                                ValueListenableBuilder<int>(
-                                  valueListenable: MonetizationService.themePassesNotifier,
-                                  builder: (context, themePasses, _) {
-                                    final isPro = MonetizationService.isPro;
-                                    return Container(
-                                      margin: const EdgeInsets.only(bottom: 12),
-                                      padding: const EdgeInsets.all(14),
                                       decoration: BoxDecoration(
                                         color: isPro
-                                            ? Colors.teal.withValues(alpha: 0.12)
-                                            : (themePasses > 0
-                                                ? const Color(0xFF10B981).withValues(alpha: 0.15)
-                                                : primary.withValues(alpha: 0.08)),
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: isPro
-                                              ? Colors.teal.withValues(alpha: 0.35)
-                                              : (themePasses > 0
-                                                  ? const Color(0xFF10B981).withValues(alpha: 0.4)
-                                                  : primary.withValues(alpha: 0.25)),
-                                        ),
+                                            ? Colors.teal
+                                            : (themePasses > 0 ? const Color(0xFF10B981) : primary),
+                                        shape: BoxShape.circle,
                                       ),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.all(8),
-                                            decoration: BoxDecoration(
-                                              color: isPro
-                                                  ? Colors.teal
-                                                  : (themePasses > 0 ? const Color(0xFF10B981) : primary),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: Icon(
-                                              isPro
-                                                  ? Icons.workspace_premium
-                                                  : (themePasses > 0 ? Icons.check_circle : Icons.movie_filter_rounded),
-                                              color: Colors.white,
-                                              size: 20,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  isPro
-                                                      ? 'Tally Pro Member'
-                                                      : (themePasses > 0
-                                                          ? '1-Time Theme Pass Available ($themePasses)'
-                                                          : '1-Time Theme Unlock'),
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 13,
-                                                    color: onSurface,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  isPro
-                                                      ? 'Unlimited access to all 9 brand themes & Graphic Studio'
-                                                      : (themePasses > 0
-                                                          ? 'Ready to apply any premium theme or custom studio palette'
-                                                          : 'Watch a 30s ad to unlock a 1-time theme change'),
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    color: onSurface.withValues(alpha: 0.65),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          if (!isPro) ...[
-                                            const SizedBox(width: 8),
-                                            ElevatedButton.icon(
-                                              onPressed: () async {
-                                                await AdService.showRewardedThemeAd(
-                                                  context: context,
-                                                  onRewardEarned: () async {
-                                                    await MonetizationService.grantThemePass(1);
-                                                    if (context.mounted) {
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        const SnackBar(
-                                                          content: Text('🎉 Rewarded! 1-Time Theme Change Pass added to vault!'),
-                                                          backgroundColor: Colors.teal,
-                                                        ),
-                                                      );
-                                                    }
-                                                  },
-                                                );
-                                              },
-                                              icon: const Icon(Icons.play_circle_fill_rounded, size: 16),
-                                              label: const Text('Watch 30s Ad', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFF10B981),
-                                                foregroundColor: Colors.white,
-                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
+                                      child: Icon(
+                                        isPro
+                                            ? Icons.workspace_premium
+                                            : (themePasses > 0 ? Icons.check_circle : Icons.movie_filter_rounded),
+                                        color: Colors.white,
+                                        size: 20,
                                       ),
-                                    );
-                                  },
-                                ),
-
-                                Card(
-                                  color: cardBg,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  child: Column(
-                                    children: [
-                                      // 3 Base Free Palettes
-                                      _brandPaletteTile(
-                                        name: 'Ledger',
-                                        tagline: 'Forest Green & Slash Coral (Classic White Paper)',
-                                        bgColor: const Color(0xFF17493B),
-                                        strokeColor: const Color(0xFFF6F0E1),
-                                        slashColor: const Color(0xFFE4572E),
-                                        preset: themePresets[0],
-                                      ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      _brandPaletteTile(
-                                        name: 'Paper',
-                                        tagline: 'Cream Paper & Forest Green (Vintage Editorial)',
-                                        bgColor: const Color(0xFFF6F0E1),
-                                        strokeColor: const Color(0xFF17493B),
-                                        slashColor: const Color(0xFFE4572E),
-                                        preset: themePresets[1],
-                                      ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      _brandPaletteTile(
-                                        name: 'Ink',
-                                        tagline: 'Carbon Black & Amber Slash (Ink Typography)',
-                                        bgColor: const Color(0xFF191915),
-                                        strokeColor: const Color(0xFFF3EDE0),
-                                        slashColor: const Color(0xFFE8A13C),
-                                        preset: themePresets[2],
-                                      ),
-
-                                      // 6 Premium Pro / 30s Rewarded Ad Palettes
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      _brandPaletteTile(
-                                        name: 'Violet Night',
-                                        tagline: 'Deep Midnight & Neon Violet (Pro Aesthetic)',
-                                        bgColor: const Color(0xFF0B0E14),
-                                        strokeColor: const Color(0xFF151A22),
-                                        slashColor: const Color(0xFF8B5CF6),
-                                        preset: themePresets[3],
-                                        isProOnly: true,
-                                      ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      _brandPaletteTile(
-                                        name: 'Ocean Blue',
-                                        tagline: 'Deep Navy & Electric Cyan (Fintech Precision)',
-                                        bgColor: const Color(0xFF020617),
-                                        strokeColor: const Color(0xFF0F172A),
-                                        slashColor: const Color(0xFF3B82F6),
-                                        preset: themePresets[4],
-                                        isProOnly: true,
-                                      ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      _brandPaletteTile(
-                                        name: 'Emerald Dark',
-                                        tagline: 'Dark Forest & Matrix Emerald (Cyber Wealth)',
-                                        bgColor: const Color(0xFF060F11),
-                                        strokeColor: const Color(0xFF0D1B1E),
-                                        slashColor: const Color(0xFF10B981),
-                                        preset: themePresets[5],
-                                        isProOnly: true,
-                                      ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      _brandPaletteTile(
-                                        name: 'Rose Gold',
-                                        tagline: 'Velvet Rose & Warm Amber (Luxury Minimalist)',
-                                        bgColor: const Color(0xFF0F090C),
-                                        strokeColor: const Color(0xFF1C1017),
-                                        slashColor: const Color(0xFFF43F5E),
-                                        preset: themePresets[6],
-                                        isProOnly: true,
-                                      ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      _brandPaletteTile(
-                                        name: 'Sunset Orange',
-                                        tagline: 'Solar Orange & Sky Blue (Vibrant Ledger)',
-                                        bgColor: const Color(0xFF0D0A08),
-                                        strokeColor: const Color(0xFF1A1410),
-                                        slashColor: const Color(0xFFF97316),
-                                        preset: themePresets[7],
-                                        isProOnly: true,
-                                      ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      _brandPaletteTile(
-                                        name: 'Midnight Teal',
-                                        tagline: 'Cyber Teal & Fuchsia Accent (Modern Neon)',
-                                        bgColor: const Color(0xFF060F0F),
-                                        strokeColor: const Color(0xFF0B1A1A),
-                                        slashColor: const Color(0xFF14B8A6),
-                                        preset: themePresets[8],
-                                        isProOnly: true,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                const SizedBox(height: 20),
-
-                                // Launcher App Icon with Restart Notice
-                                _settingsSectionTitle(LanguageService.tr('launcher_icon_section'), onSurface.withValues(alpha: 0.6)),
-                                _launcherIconCard(cardBg, surface, onSurface, primary),
-
-                                const SizedBox(height: 20),
-
-                                // Theme Studio Tile
-                                _settingsSectionTitle(LanguageService.tr('custom_palettes_section'), onSurface.withValues(alpha: 0.6)),
-                                Card(
-                                  color: cardBg,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  child: ListTile(
-                                    leading: const Icon(Icons.palette, color: Colors.purpleAccent),
-                                    title: Text(LanguageService.tr('theme_studio_title'), style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
-                                    subtitle: Text(LanguageService.tr('theme_studio_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        if (!MonetizationService.isPro) ...[
-                                          ValueListenableBuilder<int>(
-                                            valueListenable: MonetizationService.themePassesNotifier,
-                                            builder: (context, passes, _) {
-                                              final hasPass = passes > 0;
-                                              return Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: (hasPass ? Colors.teal : Colors.amber).withValues(alpha: 0.2),
-                                                  borderRadius: BorderRadius.circular(6),
-                                                  border: Border.all(color: (hasPass ? Colors.teal : Colors.amber).withValues(alpha: 0.5)),
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Icon(
-                                                      hasPass ? Icons.check_circle_outline : Icons.lock_outline,
-                                                      size: 10,
-                                                      color: hasPass ? Colors.teal : Colors.amber,
-                                                    ),
-                                                    const SizedBox(width: 3),
-                                                    Text(
-                                                      hasPass ? '$passes PASS' : 'PRO / 30s AD',
-                                                      style: TextStyle(
-                                                        color: hasPass ? Colors.teal : Colors.amber,
-                                                        fontSize: 9,
-                                                        fontWeight: FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                          const SizedBox(width: 8),
-                                        ],
-                                        Container(
-                                          width: 18,
-                                          height: 18,
-                                          decoration: BoxDecoration(color: primaryColor, shape: BoxShape.circle),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          width: 18,
-                                          height: 18,
-                                          decoration: BoxDecoration(color: secondaryColor, shape: BoxShape.circle),
-                                        ),
-                                        Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
-                                      ],
                                     ),
-                                    onTap: () {
-                                      Navigator.pop(ctx);
-                                      ColorPickerDialog.show(context);
-                                    },
-                                  ),
-                                ),
-
-                                const SizedBox(height: 20),
-
-                                // Profile Customization
-                                _settingsSectionTitle(LanguageService.tr('profile_identity_section'), onSurface.withValues(alpha: 0.6)),
-                                Card(
-                                  color: cardBg,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  child: Column(
-                                    children: [
-                                      ListTile(
-                                        leading: const Icon(Icons.add_a_photo, color: Colors.blueAccent),
-                                        title: Text(LanguageService.tr('upload_photo'), style: TextStyle(color: onSurface)),
-                                        subtitle: Text(LanguageService.tr('upload_photo_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
-                                        trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
-                                        onTap: () {
-                                          Navigator.pop(ctx);
-                                          _pickProfilePhoto();
-                                        },
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            isPro
+                                                ? 'Tally Pro Member'
+                                                : (themePasses > 0
+                                                    ? '1-Time Theme Pass Available ($themePasses)'
+                                                    : '1-Time Theme Unlock'),
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                              color: onSurface,
+                                            ),
+                                          ),
+                                          Text(
+                                            isPro
+                                                ? 'Unlimited access to all 9 brand themes & Graphic Studio'
+                                                : (themePasses > 0
+                                                    ? 'Ready to apply any premium theme or custom studio palette'
+                                                    : 'Watch a 30s ad to unlock a 1-time theme change'),
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: onSurface.withValues(alpha: 0.65),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      ListTile(
-                                        leading: const Icon(Icons.badge_outlined, color: Colors.tealAccent),
-                                        title: Text(LanguageService.tr('edit_name_bio'), style: TextStyle(color: onSurface)),
-                                        trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
-                                        onTap: () {
-                                          Navigator.pop(ctx);
-                                          _editProfileText();
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                const SizedBox(height: 20),
-
-                                // Notifications & Reminders
-                                _settingsSectionTitle(LanguageService.tr('notifications_reminders_section'), onSurface.withValues(alpha: 0.6)),
-                                Card(
-                                  color: cardBg,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  child: StatefulBuilder(
-                                    builder: (context, setCardState) {
-                                      return FutureBuilder<bool>(
-                                        future: NotificationService.instance.areRemindersEnabled(AppState.currentUser),
-                                        builder: (context, snapshot) {
-                                          final isEnabled = snapshot.data ?? true;
-                                          return SwitchListTile(
-                                            secondary: const Icon(Icons.notifications_active, color: Colors.indigoAccent),
-                                            title: Text(LanguageService.tr('three_hour_reminders'), style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
-                                            subtitle: Text(LanguageService.tr('quiet_hours_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
-                                            activeThumbColor: primary,
-                                            value: isEnabled,
-                                            onChanged: (val) async {
-                                              _devToggleCount++;
-                                              await NotificationService.instance.setRemindersEnabled(val, AppState.currentUser);
-                                              setCardState(() {});
-                                              if (_devToggleCount >= 10) {
-                                                _devToggleCount = 0;
-                                                await NotificationService.instance.showInstantFriendlyReminder();
-                                                if (context.mounted) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                    const SnackBar(
-                                                      content: Text('🕵️ Secret Dev Mode Unlocked! Test reminder sent.'),
-                                                      backgroundColor: Colors.indigoAccent,
-                                                      duration: Duration(seconds: 3),
-                                                    ),
-                                                  );
-                                                }
+                                    ),
+                                    if (!isPro) ...[
+                                      const SizedBox(width: 8),
+                                      ElevatedButton.icon(
+                                        onPressed: () async {
+                                          await AdService.showRewardedThemeAd(
+                                            context: context,
+                                            onRewardEarned: () async {
+                                              await MonetizationService.grantThemePass(1);
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text('🎉 Rewarded! 1-Time Theme Change Pass added to vault!'),
+                                                    backgroundColor: Colors.teal,
+                                                  ),
+                                                );
                                               }
                                             },
                                           );
                                         },
-                                      );
-                                    },
-                                  ),
-                                ),
-
-                                const SizedBox(height: 20),
-
-                                // Preferences & Security
-                                _settingsSectionTitle(LanguageService.tr('ledger_architecture_section'), onSurface.withValues(alpha: 0.6)),
-                                Card(
-                                  color: cardBg,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  child: Column(
-                                    children: [
-                                      ListTile(
-                                        leading: const Icon(Icons.currency_exchange, color: Colors.amberAccent),
-                                        title: Text(LanguageService.tr('currency_symbol'), style: TextStyle(color: onSurface)),
-                                        subtitle: ValueListenableBuilder<String>(
-                                          valueListenable: AppState.currencyNotifier,
-                                          builder: (context, cur, _) {
-                                            final match = currencyOptions.entries.firstWhere((e) => e.value == cur, orElse: () => currencyOptions.entries.first);
-                                            return Text(match.key, style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12));
-                                          },
-                                        ),
-                                        trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
-                                        onTap: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (inner) => ValueListenableBuilder<String>(
-                                              valueListenable: AppState.currencyNotifier,
-                                              builder: (context, activeCurrency, _) {
-                                                return SimpleDialog(
-                                                  backgroundColor: surface,
-                                                  title: Text(LanguageService.tr('select_currency'), style: TextStyle(color: onSurface)),
-                                                  children: currencyOptions.entries.map((e) {
-                                                    final isSelected = activeCurrency == e.value;
-                                                    return SimpleDialogOption(
-                                                      onPressed: () {
-                                                        AppState.setCurrency(e.value);
-                                                        Navigator.pop(inner);
-                                                      },
-                                                      child: Row(
-                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                            e.key,
-                                                            style: TextStyle(
-                                                              color: isSelected ? primary : onSurface,
-                                                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                                            ),
-                                                          ),
-                                                          if (isSelected)
-                                                            Icon(Icons.check, size: 18, color: primary),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  }).toList(),
-                                                );
-                                              },
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      ListTile(
-                                        leading: const Icon(Icons.language_rounded, color: Colors.blueAccent),
-                                        title: Text(LanguageService.tr('app_language'), style: TextStyle(color: onSurface)),
-                                        subtitle: ValueListenableBuilder<String>(
-                                          valueListenable: LanguageService.currentLanguageNotifier,
-                                          builder: (context, langCode, _) {
-                                            final opt = LanguageService.supportedLanguages.firstWhere(
-                                              (l) => l.code == langCode,
-                                              orElse: () => LanguageService.supportedLanguages.first,
-                                            );
-                                            return Text(
-                                              '${opt.englishName} (${opt.nativeName})',
-                                              style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12),
-                                            );
-                                          },
-                                        ),
-                                        trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
-                                        onTap: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (inner) => ValueListenableBuilder<String>(
-                                              valueListenable: LanguageService.currentLanguageNotifier,
-                                              builder: (context, activeLang, _) {
-                                                return SimpleDialog(
-                                                  backgroundColor: surface,
-                                                  title: Text(LanguageService.tr('select_language'), style: TextStyle(color: onSurface)),
-                                                  children: LanguageService.supportedLanguages.map((l) {
-                                                    final isSelected = activeLang == l.code;
-                                                    return SimpleDialogOption(
-                                                      onPressed: () {
-                                                        LanguageService.setLanguage(l.code);
-                                                        Navigator.pop(inner);
-                                                      },
-                                                      child: Row(
-                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                            '${l.englishName} (${l.nativeName})',
-                                                            style: TextStyle(
-                                                              color: isSelected ? primary : onSurface,
-                                                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                                            ),
-                                                          ),
-                                                          if (isSelected)
-                                                            Icon(Icons.check, size: 18, color: primary),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  }).toList(),
-                                                );
-                                              },
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      ListTile(
-                                        leading: const Icon(Icons.lock_reset, color: Colors.orangeAccent),
-                                        title: Text(LanguageService.tr('change_password'), style: TextStyle(color: onSurface)),
-                                        trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
-                                        onTap: () {
-                                          Navigator.pop(ctx);
-                                          _changePassword();
-                                        },
-                                      ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      StatefulBuilder(
-                                        builder: (context, setTileState) {
-                                          return FutureBuilder<bool>(
-                                            future: BiometricService.isBiometricEnabled(username: AppState.currentUser),
-                                            builder: (context, snapshot) {
-                                              final isEnabled = snapshot.data ?? false;
-                                              return SwitchListTile(
-                                                secondary: const Icon(Icons.fingerprint, color: Colors.tealAccent),
-                                                title: Text(LanguageService.tr('screen_lock'), style: TextStyle(color: onSurface)),
-                                                subtitle: Text(
-                                                  isEnabled
-                                                      ? 'Quick unlock with Face ID, Fingerprint, or PIN'
-                                                      : 'Use mobile screen lock to unlock Tally',
-                                                  style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12),
-                                                ),
-                                                value: isEnabled,
-                                                activeThumbColor: primary,
-                                                onChanged: (val) async {
-                                                  if (val) {
-                                                    final supported = await BiometricService.isDeviceSupported();
-                                                    if (!supported) {
-                                                      if (!context.mounted) return;
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        const SnackBar(
-                                                          content: Text('Screen lock or biometrics are not configured on this device.'),
-                                                          backgroundColor: Colors.redAccent,
-                                                        ),
-                                                      );
-                                                      return;
-                                                    }
-                                                    final authSuccess = await BiometricService.authenticate(
-                                                      reason: 'Confirm your screen lock to enable fast unlock',
-                                                    );
-                                                    if (authSuccess) {
-                                                      await BiometricService.setBiometricEnabled(true, username: AppState.currentUser);
-                                                      setTileState(() {});
-                                                      if (!context.mounted) return;
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        const SnackBar(
-                                                          content: Text('Biometric / screen lock unlock enabled!'),
-                                                          backgroundColor: Colors.teal,
-                                                        ),
-                                                      );
-                                                    }
-                                                  } else {
-                                                    await BiometricService.setBiometricEnabled(false, username: AppState.currentUser);
-                                                    setTileState(() {});
-                                                    if (!context.mounted) return;
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      const SnackBar(
-                                                        content: Text('Biometric unlock disabled'),
-                                                      ),
-                                                    );
-                                                  }
-                                                },
-                                              );
-                                            },
-                                          );
-                                        },
-                                      ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      ListTile(
-                                        leading: const Icon(Icons.manage_accounts_rounded, color: Colors.teal),
-                                        title: Text(LanguageService.tr('saved_accounts_title'), style: TextStyle(color: onSurface)),
-                                        subtitle: Text(LanguageService.tr('saved_accounts_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
-                                        trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
-                                        onTap: () {
-                                          Navigator.pop(ctx);
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(builder: (_) => const SavedAccountsScreen()),
-                                          );
-                                        },
-                                      ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      ListTile(
-                                        leading: const Icon(Icons.download_for_offline, color: Colors.greenAccent),
-                                        title: Text(LanguageService.tr('sql_backup'), style: TextStyle(color: onSurface)),
-                                        subtitle: Text(LanguageService.tr('sql_backup_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
-                                        trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
-                                        onTap: () {
-                                          Navigator.pop(ctx);
-                                          _exportSqlBackup();
-                                        },
-                                      ),
-                                      Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
-                                      ValueListenableBuilder<bool>(
-                                        valueListenable: CloudSyncService.isSyncingNotifier,
-                                        builder: (context, isSyncing, _) {
-                                          final isCloudReady = CloudSyncService.isCloudAvailable;
-                                          return ListTile(
-                                            leading: Icon(
-                                              isCloudReady ? Icons.cloud_done : Icons.cloud_sync,
-                                              color: isCloudReady ? Colors.greenAccent : Colors.blue,
-                                            ),
-                                            title: Text(LanguageService.tr('cloud_sync_title'), style: TextStyle(color: onSurface)),
-                                            subtitle: Text(
-                                              isSyncing
-                                                  ? 'Syncing ledger with Google Cloud...'
-                                                  : (isCloudReady
-                                                      ? 'Connected to Project tally-b3652'
-                                                      : 'Hybrid offline-first architecture'),
-                                              style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12),
-                                            ),
-                                            trailing: isSyncing
-                                                ? Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                    decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
-                                                    child: const Row(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        SizedBox(width: 10, height: 10, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blue)),
-                                                        SizedBox(width: 6),
-                                                        Text('SYNCING', style: TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold)),
-                                                      ],
-                                                    ),
-                                                  )
-                                                : Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                    decoration: BoxDecoration(
-                                                      color: (isCloudReady ? Colors.green : Colors.blue).withValues(alpha: 0.2),
-                                                      borderRadius: BorderRadius.circular(8),
-                                                    ),
-                                                    child: Text(
-                                                      isCloudReady ? 'CONNECTED' : 'READY',
-                                                      style: TextStyle(
-                                                        color: isCloudReady ? Colors.greenAccent : Colors.blue,
-                                                        fontSize: 10,
-                                                        fontWeight: FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                            onTap: () {
-                                              showDialog(
-                                                context: context,
-                                                builder: (c) => AlertDialog(
-                                                  backgroundColor: surface,
-                                                  title: Row(
-                                                    children: [
-                                                      Icon(
-                                                        isCloudReady ? Icons.verified_user : Icons.cloud_sync,
-                                                        color: isCloudReady ? Colors.greenAccent : Colors.blue,
-                                                      ),
-                                                      const SizedBox(width: 8),
-                                                      Text('Cloud Vault Security', style: TextStyle(color: onSurface, fontSize: 17)),
-                                                    ],
-                                                  ),
-                                                  content: Column(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text(
-                                                        isCloudReady
-                                                            ? 'Your local encrypted SQLite ledger is actively paired with Google Cloud Firestore (Project tally-b3652).\n\n'
-                                                              '• Strict Isolation: Path /users/{uid}/ protects your private documents.\n'
-                                                              '• Two-Way Sync: Transactions, goals, accounts, and budgets are backed up automatically.'
-                                                            : 'Your data is securely stored in a local SQLite file on your device.\n\n'
-                                                              'Sign in with your Google account to automatically back up your financial records to your private Google Cloud Firestore vault.',
-                                                        style: TextStyle(color: onSurface.withValues(alpha: 0.75), fontSize: 13, height: 1.4),
-                                                      ),
-                                                      if (CloudSyncService.lastSyncTimeNotifier.value != null) ...[
-                                                        const SizedBox(height: 12),
-                                                        Text(
-                                                          'Last synced: ${CloudSyncService.lastSyncTimeNotifier.value!.toLocal().toString().split(".").first}',
-                                                          style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 11),
-                                                        ),
-                                                      ],
-                                                    ],
-                                                  ),
-                                                  actions: [
-                                                    if (isCloudReady)
-                                                      ElevatedButton.icon(
-                                                        icon: const Icon(Icons.sync, size: 16),
-                                                        label: const Text('Sync Now'),
-                                                        style: ElevatedButton.styleFrom(
-                                                          backgroundColor: primary,
-                                                          foregroundColor: Colors.white,
-                                                        ),
-                                                        onPressed: () async {
-                                                          Navigator.pop(c);
-                                                          final messenger = ScaffoldMessenger.of(context);
-                                                          final user = AppState.currentUser;
-                                                          if (user != null) {
-                                                            final ok = await CloudSyncService.sync(user);
-                                                            messenger.showSnackBar(
-                                                              SnackBar(
-                                                                content: Text(ok ? 'Cloud Vault synced successfully' : 'Sync completed or queued'),
-                                                                backgroundColor: ok ? Colors.green.shade700 : Colors.blueGrey,
-                                                              ),
-                                                            );
-                                                          }
-                                                        },
-                                                      ),
-                                                    TextButton(onPressed: () => Navigator.pop(c), child: Text('Close', style: TextStyle(color: onSurface))),
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                const SizedBox(height: 28),
-
-                                // Logout Button
-                                ElevatedButton.icon(
-                                  icon: const Icon(Icons.logout, color: Colors.white),
-                                  label: Text(LanguageService.tr('logout'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.redAccent.withValues(alpha: 0.8),
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  ),
-                                  onPressed: () {
-                                    Navigator.pop(ctx);
-                                    _logout();
-                                  },
-                                ),
-
-                                const SizedBox(height: 24),
-
-                                // App Version & Security Architecture Footer
-                                Center(
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        AppVersion.displayString,
-                                        style: TextStyle(
-                                          color: onSurface.withValues(alpha: 0.7),
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Offline-First • Local Encrypted Vault',
-                                        style: TextStyle(
-                                          color: onSurface.withValues(alpha: 0.4),
-                                          fontSize: 11,
+                                        icon: const Icon(Icons.play_circle_fill_rounded, size: 16),
+                                        label: const Text('Watch 30s Ad', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF10B981),
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                         ),
                                       ),
                                     ],
-                                  ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+
+                          Card(
+                            color: cardBg,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            child: Column(
+                              children: [
+                                // 3 Base Free Palettes
+                                _brandPaletteTile(
+                                  name: 'Ledger',
+                                  tagline: 'Forest Green & Slash Coral (Classic White Paper)',
+                                  bgColor: const Color(0xFF17493B),
+                                  strokeColor: const Color(0xFFF6F0E1),
+                                  slashColor: const Color(0xFFE4572E),
+                                  preset: themePresets[0],
+                                ),
+                                Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                _brandPaletteTile(
+                                  name: 'Paper',
+                                  tagline: 'Cream Paper & Forest Green (Vintage Editorial)',
+                                  bgColor: const Color(0xFFF6F0E1),
+                                  strokeColor: const Color(0xFF17493B),
+                                  slashColor: const Color(0xFFE4572E),
+                                  preset: themePresets[1],
+                                ),
+                                Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                _brandPaletteTile(
+                                  name: 'Ink',
+                                  tagline: 'Carbon Black & Amber Slash (Ink Typography)',
+                                  bgColor: const Color(0xFF191915),
+                                  strokeColor: const Color(0xFFF3EDE0),
+                                  slashColor: const Color(0xFFE8A13C),
+                                  preset: themePresets[2],
                                 ),
 
-                                const SizedBox(height: 16),
+                                // Expandable Accordion for 6 Pro Palettes (Saves 6 custom painters during scroll)
+                                if (!allThemesExpanded) ...[
+                                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                  ListTile(
+                                    leading: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: primary.withValues(alpha: 0.12),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(Icons.palette_outlined, color: primary, size: 20),
+                                    ),
+                                    title: Text(
+                                      'Explore 6 Pro Brand Themes',
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: onSurface),
+                                    ),
+                                    subtitle: Text(
+                                      'Violet Night, Ocean Blue, Emerald Dark, Rose Gold...',
+                                      style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 11),
+                                    ),
+                                    trailing: Icon(Icons.keyboard_arrow_down, color: primary),
+                                    onTap: () => setSheetState(() => allThemesExpanded = true),
+                                  ),
+                                ] else ...[
+                                  // 6 Premium Pro / 30s Rewarded Ad Palettes
+                                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                  _brandPaletteTile(
+                                    name: 'Violet Night',
+                                    tagline: 'Deep Midnight & Neon Violet (Pro Aesthetic)',
+                                    bgColor: const Color(0xFF0B0E14),
+                                    strokeColor: const Color(0xFF151A22),
+                                    slashColor: const Color(0xFF8B5CF6),
+                                    preset: themePresets[3],
+                                    isProOnly: true,
+                                  ),
+                                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                  _brandPaletteTile(
+                                    name: 'Ocean Blue',
+                                    tagline: 'Deep Navy & Electric Cyan (Fintech Precision)',
+                                    bgColor: const Color(0xFF020617),
+                                    strokeColor: const Color(0xFF0F172A),
+                                    slashColor: const Color(0xFF3B82F6),
+                                    preset: themePresets[4],
+                                    isProOnly: true,
+                                  ),
+                                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                  _brandPaletteTile(
+                                    name: 'Emerald Dark',
+                                    tagline: 'Dark Forest & Matrix Emerald (Cyber Wealth)',
+                                    bgColor: const Color(0xFF060F11),
+                                    strokeColor: const Color(0xFF0D1B1E),
+                                    slashColor: const Color(0xFF10B981),
+                                    preset: themePresets[5],
+                                    isProOnly: true,
+                                  ),
+                                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                  _brandPaletteTile(
+                                    name: 'Rose Gold',
+                                    tagline: 'Velvet Rose & Warm Amber (Luxury Minimalist)',
+                                    bgColor: const Color(0xFF0F090C),
+                                    strokeColor: const Color(0xFF1C1017),
+                                    slashColor: const Color(0xFFF43F5E),
+                                    preset: themePresets[6],
+                                    isProOnly: true,
+                                  ),
+                                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                  _brandPaletteTile(
+                                    name: 'Sunset Orange',
+                                    tagline: 'Solar Orange & Sky Blue (Vibrant Ledger)',
+                                    bgColor: const Color(0xFF0D0A08),
+                                    strokeColor: const Color(0xFF1A1410),
+                                    slashColor: const Color(0xFFF97316),
+                                    preset: themePresets[7],
+                                    isProOnly: true,
+                                  ),
+                                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                  _brandPaletteTile(
+                                    name: 'Midnight Teal',
+                                    tagline: 'Cyber Teal & Fuchsia Accent (Modern Neon)',
+                                    bgColor: const Color(0xFF060F0F),
+                                    strokeColor: const Color(0xFF0B1A1A),
+                                    slashColor: const Color(0xFF14B8A6),
+                                    preset: themePresets[8],
+                                    isProOnly: true,
+                                  ),
+                                  Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                  ListTile(
+                                    leading: const Icon(Icons.expand_less, color: Colors.grey),
+                                    title: Text(
+                                      'Collapse Pro Themes',
+                                      style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.7)),
+                                    ),
+                                    onTap: () => setSheetState(() => allThemesExpanded = false),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
-                        ),
-                      );
+
+                          const SizedBox(height: 20),
+
+                          // Launcher App Icon with Restart Notice
+                          _settingsSectionTitle(LanguageService.tr('launcher_icon_section'), onSurface.withValues(alpha: 0.6)),
+                          _launcherIconCard(cardBg, surface, onSurface, primary),
+
+                          const SizedBox(height: 20),
+
+                          // Theme Studio Tile
+                          _settingsSectionTitle(LanguageService.tr('custom_palettes_section'), onSurface.withValues(alpha: 0.6)),
+                          Card(
+                            color: cardBg,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            child: ListTile(
+                              leading: const Icon(Icons.palette, color: Colors.purpleAccent),
+                              title: Text(LanguageService.tr('theme_studio_title'), style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
+                              subtitle: Text(LanguageService.tr('theme_studio_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (!MonetizationService.isPro) ...[
+                                    ValueListenableBuilder<int>(
+                                      valueListenable: MonetizationService.themePassesNotifier,
+                                      builder: (context, passes, _) {
+                                        final hasPass = passes > 0;
+                                        return Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: (hasPass ? Colors.teal : Colors.amber).withValues(alpha: 0.2),
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: (hasPass ? Colors.teal : Colors.amber).withValues(alpha: 0.5)),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                hasPass ? Icons.check_circle_outline : Icons.lock_outline,
+                                                size: 10,
+                                                color: hasPass ? Colors.teal : Colors.amber,
+                                              ),
+                                              const SizedBox(width: 3),
+                                              Text(
+                                                hasPass ? '$passes PASS' : 'PRO / 30s AD',
+                                                style: TextStyle(
+                                                  color: hasPass ? Colors.teal : Colors.amber,
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                  Container(
+                                    width: 18,
+                                    height: 18,
+                                    decoration: BoxDecoration(color: primaryColor, shape: BoxShape.circle),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    width: 18,
+                                    height: 18,
+                                    decoration: BoxDecoration(color: secondaryColor, shape: BoxShape.circle),
+                                  ),
+                                  Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
+                                ],
+                              ),
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                ColorPickerDialog.show(context);
+                              },
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // Currency & Language Preferences
+                          _settingsSectionTitle(LanguageService.tr('ledger_architecture_section'), onSurface.withValues(alpha: 0.6)),
+                          Card(
+                            color: cardBg,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            child: Column(
+                              children: [
+                                ListTile(
+                                  leading: const Icon(Icons.currency_exchange, color: Colors.amberAccent),
+                                  title: Text(LanguageService.tr('currency_symbol'), style: TextStyle(color: onSurface)),
+                                  subtitle: ValueListenableBuilder<String>(
+                                    valueListenable: AppState.currencyNotifier,
+                                    builder: (context, cur, _) {
+                                      final match = currencyOptions.entries.firstWhere((e) => e.value == cur, orElse: () => currencyOptions.entries.first);
+                                      return Text(match.key, style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12));
+                                    },
+                                  ),
+                                  trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
+                                  onTap: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (inner) => ValueListenableBuilder<String>(
+                                        valueListenable: AppState.currencyNotifier,
+                                        builder: (context, activeCurrency, _) {
+                                          return SimpleDialog(
+                                            backgroundColor: surface,
+                                            title: Text(LanguageService.tr('select_currency'), style: TextStyle(color: onSurface)),
+                                            children: currencyOptions.entries.map((e) {
+                                              final isSelected = activeCurrency == e.value;
+                                              return SimpleDialogOption(
+                                                onPressed: () {
+                                                  AppState.setCurrency(e.value);
+                                                  Navigator.pop(inner);
+                                                },
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Text(
+                                                      e.key,
+                                                      style: TextStyle(
+                                                        color: isSelected ? primary : onSurface,
+                                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                                      ),
+                                                    ),
+                                                    if (isSelected)
+                                                      Icon(Icons.check, size: 18, color: primary),
+                                                  ],
+                                                ),
+                                              );
+                                            }).toList(),
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                ListTile(
+                                  leading: const Icon(Icons.language_rounded, color: Colors.blueAccent),
+                                  title: Text(LanguageService.tr('app_language'), style: TextStyle(color: onSurface)),
+                                  subtitle: ValueListenableBuilder<String>(
+                                    valueListenable: LanguageService.currentLanguageNotifier,
+                                    builder: (context, langCode, _) {
+                                      final opt = LanguageService.supportedLanguages.firstWhere(
+                                        (l) => l.code == langCode,
+                                        orElse: () => LanguageService.supportedLanguages.first,
+                                      );
+                                      return Text(
+                                        '${opt.englishName} (${opt.nativeName})',
+                                        style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12),
+                                      );
+                                    },
+                                  ),
+                                  trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
+                                  onTap: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (inner) => ValueListenableBuilder<String>(
+                                        valueListenable: LanguageService.currentLanguageNotifier,
+                                        builder: (context, activeLang, _) {
+                                          return SimpleDialog(
+                                            backgroundColor: surface,
+                                            title: Text(LanguageService.tr('select_language'), style: TextStyle(color: onSurface)),
+                                            children: LanguageService.supportedLanguages.map((l) {
+                                              final isSelected = activeLang == l.code;
+                                              return SimpleDialogOption(
+                                                onPressed: () {
+                                                  LanguageService.setLanguage(l.code);
+                                                  Navigator.pop(inner);
+                                                },
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Text(
+                                                      '${l.englishName} (${l.nativeName})',
+                                                      style: TextStyle(
+                                                        color: isSelected ? primary : onSurface,
+                                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                                      ),
+                                                    ),
+                                                    if (isSelected)
+                                                      Icon(Icons.check, size: 18, color: primary),
+                                                  ],
+                                                ),
+                                              );
+                                            }).toList(),
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ] else if (activeSettingsTab == 1) ...[
+                          // --- TAB 1: SECURITY & PROFILE ---
+                          _settingsSectionTitle(LanguageService.tr('profile_identity_section'), onSurface.withValues(alpha: 0.6)),
+                          Card(
+                            color: cardBg,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            child: Column(
+                              children: [
+                                ListTile(
+                                  leading: const Icon(Icons.add_a_photo, color: Colors.blueAccent),
+                                  title: Text(LanguageService.tr('upload_photo'), style: TextStyle(color: onSurface)),
+                                  subtitle: Text(LanguageService.tr('upload_photo_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                                  trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
+                                  onTap: () {
+                                    Navigator.pop(ctx);
+                                    _pickProfilePhoto();
+                                  },
+                                ),
+                                Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                ListTile(
+                                  leading: const Icon(Icons.badge_outlined, color: Colors.tealAccent),
+                                  title: Text(LanguageService.tr('edit_name_bio'), style: TextStyle(color: onSurface)),
+                                  trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
+                                  onTap: () {
+                                    Navigator.pop(ctx);
+                                    _editProfileText();
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          _settingsSectionTitle('Account Security & Lock', onSurface.withValues(alpha: 0.6)),
+                          Card(
+                            color: cardBg,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            child: Column(
+                              children: [
+                                StatefulBuilder(
+                                  builder: (context, setTileState) {
+                                    return FutureBuilder<bool>(
+                                      future: BiometricService.isBiometricEnabled(username: AppState.currentUser),
+                                      builder: (context, snapshot) {
+                                        final isEnabled = snapshot.data ?? false;
+                                        return SwitchListTile(
+                                          secondary: const Icon(Icons.fingerprint, color: Colors.tealAccent),
+                                          title: Text(LanguageService.tr('screen_lock'), style: TextStyle(color: onSurface)),
+                                          subtitle: Text(
+                                            isEnabled
+                                                ? 'Quick unlock with Face ID, Fingerprint, or PIN'
+                                                : 'Use mobile screen lock to unlock Tally',
+                                            style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12),
+                                          ),
+                                          value: isEnabled,
+                                          activeThumbColor: primary,
+                                          onChanged: (val) async {
+                                            if (val) {
+                                              final supported = await BiometricService.isDeviceSupported();
+                                              if (!supported) {
+                                                if (!context.mounted) return;
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text('Screen lock or biometrics are not configured on this device.'),
+                                                    backgroundColor: Colors.redAccent,
+                                                  ),
+                                                );
+                                                return;
+                                              }
+                                              final authSuccess = await BiometricService.authenticate(
+                                                reason: 'Confirm your screen lock to enable fast unlock',
+                                              );
+                                              if (authSuccess) {
+                                                await BiometricService.setBiometricEnabled(true, username: AppState.currentUser);
+                                                setTileState(() {});
+                                                if (!context.mounted) return;
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text('Biometric / screen lock unlock enabled!'),
+                                                    backgroundColor: Colors.teal,
+                                                  ),
+                                                );
+                                              }
+                                            } else {
+                                              await BiometricService.setBiometricEnabled(false, username: AppState.currentUser);
+                                              setTileState(() {});
+                                              if (!context.mounted) return;
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text('Biometric unlock disabled'),
+                                                ),
+                                              );
+                                            }
+                                          },
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                                Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                ListTile(
+                                  leading: const Icon(Icons.manage_accounts_rounded, color: Colors.teal),
+                                  title: Text(LanguageService.tr('saved_accounts_title'), style: TextStyle(color: onSurface)),
+                                  subtitle: Text(LanguageService.tr('saved_accounts_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                                  trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
+                                  onTap: () {
+                                    Navigator.pop(ctx);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const SavedAccountsScreen()),
+                                    );
+                                  },
+                                ),
+                                Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                ListTile(
+                                  leading: const Icon(Icons.lock_reset, color: Colors.orangeAccent),
+                                  title: Text(LanguageService.tr('change_password'), style: TextStyle(color: onSurface)),
+                                  trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
+                                  onTap: () {
+                                    Navigator.pop(ctx);
+                                    _changePassword();
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          // --- TAB 2: CLOUD & DATA ---
+                          _settingsSectionTitle(LanguageService.tr('pro_membership_section'), onSurface.withValues(alpha: 0.6)),
+                          Card(
+                            color: cardBg,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            child: ListTile(
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: const BoxDecoration(
+                                  gradient: LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFEF4444)]),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.workspace_premium, color: Colors.white, size: 20),
+                              ),
+                              title: Text(
+                                LanguageService.tr('pro_subscriptions_title'),
+                                style: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Text(
+                                LanguageService.tr('pro_subscriptions_sub'),
+                                style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12),
+                              ),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen()));
+                              },
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          _settingsSectionTitle(LanguageService.tr('interactive_tours_section'), onSurface.withValues(alpha: 0.6)),
+                          Card(
+                            color: cardBg,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            child: ListTile(
+                              leading: const Icon(Icons.replay_rounded, color: Colors.cyanAccent),
+                              title: Text(LanguageService.tr('replay_tours'), style: TextStyle(color: onSurface)),
+                              subtitle: Text(LanguageService.tr('replay_tours_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                              trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
+                              onTap: () async {
+                                await TourService.resetAllTours();
+                                if (context.mounted) {
+                                  Navigator.pop(ctx);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Tours reset! Switching to Home and launching walkthrough...'),
+                                      backgroundColor: Colors.teal,
+                                    ),
+                                  );
+                                  AppState.activeTabNotifier.value = 0;
+                                }
+                              },
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          _settingsSectionTitle(LanguageService.tr('notifications_reminders_section'), onSurface.withValues(alpha: 0.6)),
+                          Card(
+                            color: cardBg,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            child: StatefulBuilder(
+                              builder: (context, setCardState) {
+                                return FutureBuilder<bool>(
+                                  future: NotificationService.instance.areRemindersEnabled(AppState.currentUser),
+                                  builder: (context, snapshot) {
+                                    final isEnabled = snapshot.data ?? true;
+                                    return SwitchListTile(
+                                      secondary: const Icon(Icons.notifications_active, color: Colors.indigoAccent),
+                                      title: Text(LanguageService.tr('three_hour_reminders'), style: TextStyle(color: onSurface, fontWeight: FontWeight.bold)),
+                                      subtitle: Text(LanguageService.tr('quiet_hours_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                                      activeThumbColor: primary,
+                                      value: isEnabled,
+                                      onChanged: (val) async {
+                                        _devToggleCount++;
+                                        await NotificationService.instance.setRemindersEnabled(val, AppState.currentUser);
+                                        setCardState(() {});
+                                        if (_devToggleCount >= 10) {
+                                          _devToggleCount = 0;
+                                          await NotificationService.instance.showInstantFriendlyReminder();
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('🕵️ Secret Dev Mode Unlocked! Test reminder sent.'),
+                                                backgroundColor: Colors.indigoAccent,
+                                                duration: Duration(seconds: 3),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      },
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          _settingsSectionTitle('Cloud & Local Vault', onSurface.withValues(alpha: 0.6)),
+                          Card(
+                            color: cardBg,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            child: Column(
+                              children: [
+                                ListTile(
+                                  leading: const Icon(Icons.download_for_offline, color: Colors.greenAccent),
+                                  title: Text(LanguageService.tr('sql_backup'), style: TextStyle(color: onSurface)),
+                                  subtitle: Text(LanguageService.tr('sql_backup_desc'), style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                                  trailing: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.54)),
+                                  onTap: () {
+                                    Navigator.pop(ctx);
+                                    _exportSqlBackup();
+                                  },
+                                ),
+                                Divider(height: 1, color: onSurface.withValues(alpha: 0.1)),
+                                ValueListenableBuilder<bool>(
+                                  valueListenable: CloudSyncService.isSyncingNotifier,
+                                  builder: (context, isSyncing, _) {
+                                    final isCloudReady = CloudSyncService.isCloudAvailable;
+                                    return ListTile(
+                                      leading: Icon(
+                                        isCloudReady ? Icons.cloud_done : Icons.cloud_sync,
+                                        color: isCloudReady ? Colors.greenAccent : Colors.blue,
+                                      ),
+                                      title: Text(LanguageService.tr('cloud_sync_title'), style: TextStyle(color: onSurface)),
+                                      subtitle: Text(
+                                        isSyncing
+                                            ? 'Syncing ledger with Google Cloud...'
+                                            : (isCloudReady
+                                                ? 'Connected to Project tally-b3652'
+                                                : 'Hybrid offline-first architecture'),
+                                        style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12),
+                                      ),
+                                      trailing: isSyncing
+                                          ? Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
+                                              child: const Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  SizedBox(width: 10, height: 10, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blue)),
+                                                  SizedBox(width: 6),
+                                                  Text('SYNCING', style: TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold)),
+                                                ],
+                                              ),
+                                            )
+                                          : Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: (isCloudReady ? Colors.green : Colors.blue).withValues(alpha: 0.2),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                isCloudReady ? 'CONNECTED' : 'READY',
+                                                style: TextStyle(
+                                                  color: isCloudReady ? Colors.greenAccent : Colors.blue,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                      onTap: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (c) => AlertDialog(
+                                            backgroundColor: surface,
+                                            title: Row(
+                                              children: [
+                                                Icon(
+                                                  isCloudReady ? Icons.verified_user : Icons.cloud_sync,
+                                                  color: isCloudReady ? Colors.greenAccent : Colors.blue,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text('Cloud Vault Security', style: TextStyle(color: onSurface, fontSize: 17)),
+                                              ],
+                                            ),
+                                            content: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  isCloudReady
+                                                      ? 'Your local encrypted SQLite ledger is actively paired with Google Cloud Firestore (Project tally-b3652).\n\n'
+                                                        '• Strict Isolation: Path /users/{uid}/ protects your private documents.\n'
+                                                        '• Two-Way Sync: Transactions, goals, accounts, and budgets are backed up automatically.'
+                                                      : 'Your data is securely stored in a local SQLite file on your device.\n\n'
+                                                        'Sign in with your Google account to automatically back up your financial records to your private Google Cloud Firestore vault.',
+                                                  style: TextStyle(color: onSurface.withValues(alpha: 0.75), fontSize: 13, height: 1.4),
+                                                ),
+                                                if (CloudSyncService.lastSyncTimeNotifier.value != null) ...[
+                                                  const SizedBox(height: 12),
+                                                  Text(
+                                                    'Last synced: ${CloudSyncService.lastSyncTimeNotifier.value!.toLocal().toString().split(".").first}',
+                                                    style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 11),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                            actions: [
+                                              if (isCloudReady)
+                                                ElevatedButton.icon(
+                                                  icon: const Icon(Icons.sync, size: 16),
+                                                  label: const Text('Sync Now'),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: primary,
+                                                    foregroundColor: Colors.white,
+                                                  ),
+                                                  onPressed: () async {
+                                                    Navigator.pop(c);
+                                                    final messenger = ScaffoldMessenger.of(context);
+                                                    final user = AppState.currentUser;
+                                                    if (user != null) {
+                                                      final ok = await CloudSyncService.sync(user);
+                                                      messenger.showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(ok ? 'Cloud Vault synced successfully' : 'Sync completed or queued'),
+                                                          backgroundColor: ok ? Colors.green.shade700 : Colors.blueGrey,
+                                                        ),
+                                                      );
+                                                    }
+                                                  },
+                                                ),
+                                              TextButton(onPressed: () => Navigator.pop(c), child: Text('Close', style: TextStyle(color: onSurface))),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 28),
+
+                          // Logout Button
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.logout, color: Colors.white),
+                            label: Text(LanguageService.tr('logout'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.redAccent.withValues(alpha: 0.8),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              _logout();
+                            },
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // App Version & Security Architecture Footer
+                          Center(
+                            child: Column(
+                              children: [
+                                Text(
+                                  AppVersion.displayString,
+                                  style: TextStyle(
+                                    color: onSurface.withValues(alpha: 0.7),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Offline-First • Local Encrypted Vault',
+                                  style: TextStyle(
+                                    color: onSurface.withValues(alpha: 0.4),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
         },
+      ),
+    );
+  }
+
+  Widget _buildSettingsTabsBar({
+    required int activeTab,
+    required Color primary,
+    required Color onSurface,
+    required ValueChanged<int> onTabSelected,
+  }) {
+    final tabs = [
+      (label: 'Appearance', icon: Icons.palette_outlined),
+      (label: 'Security', icon: Icons.shield_outlined),
+      (label: 'Cloud & Data', icon: Icons.cloud_outlined),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: onSurface.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: List.generate(tabs.length, (index) {
+          final isSelected = activeTab == index;
+          final item = tabs[index];
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onTabSelected(index),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: primary.withValues(alpha: 0.35),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      item.icon,
+                      size: 15,
+                      color: isSelected ? Colors.white : onSurface.withValues(alpha: 0.6),
+                    ),
+                    const SizedBox(width: 5),
+                    Flexible(
+                      child: Text(
+                        item.label,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          color: isSelected ? Colors.white : onSurface.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }
@@ -1453,108 +1656,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const Divider(height: 1),
               Expanded(
-                child: ListView(
+                child: ListView.builder(
                   controller: scrollCtrl,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  children: [
-                    _guideItem(
-                      icon: Icons.palette_outlined,
-                      title: 'Brand Palettes & Themes',
-                      badge: 'Instant Styling',
-                      description:
-                          'Switch seamlessly between 3 curated design systems:\n'
-                          '• Ledger: Classic Dark Emerald & Slash Coral on White Paper.\n'
-                          '• Paper: Vintage editorial Warm Cream Paper.\n'
-                          '• Ink: Deep OLED Carbon Black & Warm Amber.\n'
-                          'Changes take effect instantly across the whole app, charts, and login screen.',
+                  itemCount: _guideItems.length,
+                  itemBuilder: (context, index) {
+                    final item = _guideItems[index];
+                    return _guideItem(
+                      icon: item.icon,
+                      title: item.title,
+                      badge: item.badge,
+                      description: item.description,
                       primary: primary,
                       onSurface: onSurface,
-                    ),
-                    _guideItem(
-                      icon: Icons.app_shortcut_rounded,
-                      title: 'Launcher App Icons',
-                      badge: 'Home Screen Icon',
-                      description:
-                          'Change your physical Android / iOS home screen app icon to match your preferred theme (Ledger, Paper, or Ink). Requires an app restart to reload OS launcher shortcuts safely.',
-                      primary: primary,
-                      onSurface: onSurface,
-                    ),
-                    _guideItem(
-                      icon: Icons.color_lens_outlined,
-                      title: 'Theme Studio (Custom Colors)',
-                      badge: 'Personalize',
-                      description:
-                          'Customize your primary accent color, secondary accent color, and typography font color using the interactive color wheel.',
-                      primary: primary,
-                      onSurface: onSurface,
-                    ),
-                    _guideItem(
-                      icon: Icons.fingerprint_rounded,
-                      title: 'Biometric & Screen Lock Unlock',
-                      badge: 'Quick Security',
-                      description:
-                          'Enable instant, effortless vault access with Fingerprint, Face ID, or your phone’s screen lock PIN. Kept 100% on your device for absolute privacy.',
-                      primary: primary,
-                      onSurface: onSurface,
-                    ),
-                    _guideItem(
-                      icon: Icons.storage_rounded,
-                      title: 'Offline SQLite Vault & SQL Export',
-                      badge: 'Privacy-First',
-                      description:
-                          'All accounts, transactions, and preferences are stored in an encrypted local SQLite database isolated per user. You can export a full .sql dump anytime for permanent backups.',
-                      primary: primary,
-                      onSurface: onSurface,
-                    ),
-                    _guideItem(
-                      icon: Icons.cloud_sync_outlined,
-                      title: 'Cloud Sync (Firebase Ready)',
-                      badge: 'Sync Architecture',
-                      description:
-                          'Sync your SQLite database to Google Firebase Firestore across multiple devices. The hybrid repository layer coordinates offline and online sync seamlessly.',
-                      primary: primary,
-                      onSurface: onSurface,
-                    ),
-                    _guideItem(
-                      icon: Icons.notifications_active_outlined,
-                      title: 'Daily Reminders & Notifications',
-                      badge: 'Habits',
-                      description:
-                          'Set scheduled local reminders so you never forget to log your daily expenses and maintain financial accountability.',
-                      primary: primary,
-                      onSurface: onSurface,
-                    ),
-                    _guideItem(
-                      icon: Icons.currency_exchange_rounded,
-                      title: 'Currency Switcher',
-                      badge: 'Global Units',
-                      description:
-                          'Select your currency symbol (\$, €, £, ¥, ₹, ₩, etc.). The entire app updates all balances, cards, and graphs instantly without needing a relaunch.',
-                      primary: primary,
-                      onSurface: onSurface,
-                    ),
-                    _guideItem(
-                      icon: Icons.auto_awesome_rounded,
-                      title: 'Transaction Auto-Fill & Category Switching',
-                      badge: 'Smart Entry',
-                      description:
-                          '• Empty Title Auto-Fill: Leave the Title field empty and Tally automatically names the transaction using your selected category!\n'
-                          '• Income Auto-Switch: Choosing "Income" automatically switches the category to "Salary".\n'
-                          '• Custom Dates: Tap the calendar button to record past or future transaction dates.',
-                      primary: primary,
-                      onSurface: onSurface,
-                    ),
-                    _guideItem(
-                      icon: Icons.account_balance_wallet_outlined,
-                      title: 'Multi-Account & Custom Wallets',
-                      badge: 'Accounts Hub',
-                      description:
-                          'Track cash, bank accounts, and credit cards separately. In the Accounts tab, tap "+ Add Account" or the Settings icon to create unlimited custom wallet types.',
-                      primary: primary,
-                      onSurface: onSurface,
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+                    );
+                  },
                 ),
               ),
             ],

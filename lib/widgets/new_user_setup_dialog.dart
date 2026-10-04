@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/geo_location_service.dart';
 import '../services/language_service.dart';
 import '../services/notification_service.dart';
 import '../services/state.dart';
@@ -57,11 +58,19 @@ class _NewUserSetupDialogState extends State<NewUserSetupDialog> {
   @override
   void initState() {
     super.initState();
-    _selectedCurrency = AppState.currencyNotifier.value;
-    if (!_currencies.any((c) => c.symbol == _selectedCurrency)) {
-      _selectedCurrency = '\$';
+    // Auto-detect currency based on user device location / country code
+    final detectedCur = GeoLocationService.detectedCurrencySymbol;
+    if (_currencies.any((c) => c.symbol == detectedCur)) {
+      _selectedCurrency = detectedCur;
+    } else {
+      _selectedCurrency = AppState.currencyNotifier.value;
+      if (!_currencies.any((c) => c.symbol == _selectedCurrency)) {
+        _selectedCurrency = '\$';
+      }
     }
-    _selectedLanguage = LanguageService.currentLanguageNotifier.value;
+    // Auto-detect preferred supported language based on device locale
+    final detectedLang = GeoLocationService.detectedSupportedLanguage;
+    _selectedLanguage = detectedLang;
   }
 
   Future<void> _saveAndContinue() async {
