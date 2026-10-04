@@ -764,7 +764,15 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 
 ## 📝 Recent Changelog
 
-- **v1.8.11 (Current - Android Gradle Kotlin DSL & CompilerOptions Modernization)**:
+- **v1.8.12 (Current - Gradle Configuration Cache Resolution & Build Pipeline Stabilization)**:
+  - **Resolved Flutter ReleaseMinSdkCheck Configuration Cache Serialization Failure**:
+    - Diagnosed fatal `assembleRelease` build failure caused by Gradle Configuration Cache attempting to serialize `com.flutter.gradle.DependencyVersionChecker$configureMinSdkCheck` / `:app:ReleaseMinSdkCheck`, which references `ApplicationVariantImpl` and throws `error writing value of type 'kotlin.SynchronizedLazyImpl'`.
+    - Explicitly set `org.gradle.configuration-cache=false` in [`android/gradle.properties`](android/gradle.properties) to adhere to Flutter's official Gradle plugin requirements until upstream configuration cache support matures.
+    - Verified task graph execution via `.\gradlew.bat :app:assembleRelease --dry-run` (`BUILD SUCCESSFUL in 16s`) and `flutter build apk --config-only` (`Config complete.`).
+  - **Single Source of Truth Version Bump**:
+    - Incremented version to `v1.8.12+22` across `pubspec.yaml`, `AppVersion` service, and automated test suite per the strict +0.0.1 incremental patch policy.
+
+- **v1.8.11 (Android Gradle Kotlin DSL & CompilerOptions Modernization)**:
   - **Android Gradle Kotlin DSL Compatibility (`android/app/build.gradle.kts`)**:
     - Fixed 3 script compilation errors causing Gradle evaluation failure on Android root and app projects:
       * Migrated deprecated Groovy-style `minifyEnabled = false` to Kotlin DSL property `isMinifyEnabled = false`.
