@@ -267,6 +267,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                               key: ValueKey('tx_tile_${tx.id}'),
                               child: TransactionTile(
                                 tx: tx,
+                                currency: currentCurrency,
                                 onTap: () => showTransactionDialog(context, existingTx: tx),
                                 onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
                               ),
