@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/monetization_service.dart';
 import '../services/in_app_purchase_service.dart';
 import '../services/language_service.dart';
+import '../services/geo_location_service.dart';
+import '../services/state.dart';
 
 /// Dedicated Tally Pro & Ad-Free Upgrade Screen.
 ///
@@ -182,7 +184,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     ],
                   ),
                   Text(
-                    '\$${price.toStringAsFixed(2)}',
+                    GeoLocationService.formatLocalizedTierPrice(price, AppState.currencyNotifier.value),
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -559,11 +561,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
                             ),
                             const SizedBox(height: 14),
 
-                            // Option 0: Pro Monthly ($2.99/mo)
+                            // Option 0: Pro Monthly
                             _buildPlanCard(
                               index: 0,
                               title: LanguageService.tr('pro_monthly_title'),
-                              price: '\$2.99 / mo',
+                              price: GeoLocationService.formatTierWithPeriod(MonetizationService.proMonthlyPrice, '/ mo', AppState.currencyNotifier.value),
                               badge: LanguageService.tr('pro_monthly_badge'),
                               subtitle: LanguageService.tr('pro_monthly_sub'),
                               isSelected: _selectedTierIndex == 0,
@@ -576,11 +578,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
                             const SizedBox(height: 12),
 
-                            // Option 1: Pro Yearly ($19.99/yr -> Only $1.67/mo, Save 44%)
+                            // Option 1: Pro Yearly
                             _buildPlanCard(
                               index: 1,
                               title: LanguageService.tr('pro_yearly_title'),
-                              price: '\$19.99 / yr',
+                              price: GeoLocationService.formatTierWithPeriod(MonetizationService.proYearlyPrice, '/ yr', AppState.currencyNotifier.value),
                               badge: LanguageService.tr('pro_yearly_badge'),
                               subtitle: LanguageService.tr('pro_yearly_sub'),
                               isSelected: _selectedTierIndex == 1,
@@ -593,11 +595,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
                             const SizedBox(height: 12),
 
-                            // Option 2: Pro Lifetime ($39.99 -> 2x Annual, Pay Once)
+                            // Option 2: Pro Lifetime
                             _buildPlanCard(
                               index: 2,
                               title: LanguageService.tr('pro_lifetime_title'),
-                              price: '\$39.99',
+                              price: GeoLocationService.formatLocalizedTierPrice(MonetizationService.proLifetimePrice, AppState.currencyNotifier.value),
                               badge: LanguageService.tr('pro_lifetime_badge'),
                               subtitle: LanguageService.tr('pro_lifetime_sub'),
                               isSelected: _selectedTierIndex == 2,
@@ -610,11 +612,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
                             const SizedBox(height: 12),
 
-                            // Option 3: Remove Ads Only ($1.99)
+                            // Option 3: Remove Ads Only
                             _buildPlanCard(
                               index: 3,
                               title: LanguageService.tr('remove_ads_title'),
-                              price: '\$1.99',
+                              price: GeoLocationService.formatLocalizedTierPrice(MonetizationService.removeAdsPrice, AppState.currencyNotifier.value),
                               badge: LanguageService.tr('remove_ads_badge'),
                               subtitle: LanguageService.tr('remove_ads_sub'),
                               isSelected: _selectedTierIndex == 3,
@@ -627,11 +629,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
                             const SizedBox(height: 12),
 
-                            // Option 4: Buy Me a Coffee ($2.99) -> Ad-Free for life + 7-Day Pro Trial Gift!
+                            // Option 4: Buy Me a Coffee
                             _buildPlanCard(
                               index: 4,
                               title: LanguageService.tr('coffee_tip_title'),
-                              price: '\$2.99',
+                              price: GeoLocationService.formatLocalizedTierPrice(MonetizationService.coffeeTipPrice, AppState.currencyNotifier.value),
                               badge: LanguageService.tr('coffee_tip_badge'),
                               subtitle: LanguageService.tr('coffee_tip_sub'),
                               isSelected: _selectedTierIndex == 4,

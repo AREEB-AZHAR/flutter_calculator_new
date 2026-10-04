@@ -145,4 +145,61 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('This Week'), findsOneWidget);
   });
+
+  testWidgets('InsightsScreen segmented domain sub-tabs filter analytical cards', (tester) async {
+    MonetizationService.isProUnlockedNotifier.value = true;
+    final now = DateTime.now();
+    AppState.transactionsNotifier.value = [
+      Transaction(
+        id: 't1',
+        title: 'Salary',
+        amount: 3000.0,
+        date: DateTime(now.year, now.month, 1),
+        isIncome: true,
+        category: 'Salary',
+        account: 'Main',
+      ),
+    ];
+    AppState.loansNotifier.value = [];
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: InsightsScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // In 'All' tab by default:
+    expect(find.text("Executive Accountant's Take"), findsOneWidget);
+    expect(find.text('Future Planning: 50/30/20 Rule'), findsOneWidget);
+    expect(find.text('Tax Return & Deductions Tracker'), findsOneWidget);
+
+    // Switch to 'Overview' tab
+    await tester.tap(find.text('Overview'));
+    await tester.pumpAndSettle();
+    expect(find.text("Executive Accountant's Take"), findsOneWidget);
+    expect(find.text('Future Planning: 50/30/20 Rule'), findsNothing);
+    expect(find.text('Tax Return & Deductions Tracker'), findsNothing);
+
+    // Switch to 'Budget & Debt' tab
+    await tester.tap(find.text('Budget & Debt'));
+    await tester.pumpAndSettle();
+    expect(find.text("Executive Accountant's Take"), findsNothing);
+    expect(find.text('Future Planning: 50/30/20 Rule'), findsOneWidget);
+    expect(find.text('Tax Return & Deductions Tracker'), findsNothing);
+
+    // Switch to 'Tax & Liquidity' tab
+    await tester.tap(find.text('Tax & Liquidity'));
+    await tester.pumpAndSettle();
+    expect(find.text("Executive Accountant's Take"), findsNothing);
+    expect(find.text('Future Planning: 50/30/20 Rule'), findsNothing);
+    expect(find.text('Tax Return & Deductions Tracker'), findsOneWidget);
+
+    // Switch back to 'All' tab
+    await tester.tap(find.text('All'));
+    await tester.pumpAndSettle();
+    expect(find.text("Executive Accountant's Take"), findsOneWidget);
+    expect(find.text('Future Planning: 50/30/20 Rule'), findsOneWidget);
+    expect(find.text('Tax Return & Deductions Tracker'), findsOneWidget);
+  });
 }

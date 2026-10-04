@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'ad_service.dart';
+import 'geo_location_service.dart';
 
 class MonetizationService {
   static const String _prefProUnlockedKey = 'tally_pro_unlocked';
@@ -364,19 +365,19 @@ class MonetizationService {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   padding: const EdgeInsets.symmetric(vertical: 15),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.bolt_rounded, size: 20),
-                    SizedBox(width: 8),
-                    Text('Unlock Tally Pro — \$19.99 / yr (\$1.67/mo)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const Icon(Icons.bolt_rounded, size: 20),
+                    const SizedBox(width: 8),
+                    Text('Unlock Tally Pro — ${GeoLocationService.formatTierWithPeriod(proYearlyPrice, "/ yr")} (${GeoLocationService.formatTierWithPeriod(1.67, "/mo")})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                   ],
                 ),
               ),
 
               const SizedBox(height: 12),
 
-              // Secondary Action: Remove Ads Only ($1.99)
+              // Secondary Action: Remove Ads Only
               OutlinedButton(
                 onPressed: () async {
                   await removeAds();
@@ -396,7 +397,7 @@ class MonetizationService {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   padding: const EdgeInsets.symmetric(vertical: 13),
                 ),
-                child: const Text('Remove Ads Only — \$1.99', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
+                child: Text('Remove Ads Only — ${GeoLocationService.formatLocalizedTierPrice(removeAdsPrice)}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
               ),
 
               const SizedBox(height: 12),

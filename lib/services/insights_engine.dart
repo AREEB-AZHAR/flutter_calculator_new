@@ -203,6 +203,7 @@ class InsightsEngine {
     required TimeHorizon horizon,
     int periodOffset = 0,
     DateTime? anchorDate,
+    String currency = '\$',
   }) {
     final now = anchorDate ?? DateTime.now();
     final periodRange = _calculateDateRange(now, horizon, periodOffset);
@@ -242,7 +243,7 @@ class InsightsEngine {
     );
 
     // Loans and Liabilities
-    final loanInsight = _calculateLoanInsight(loans, totalInflow, totalOutflow);
+    final loanInsight = _calculateLoanInsight(loans, totalInflow, totalOutflow, currency);
 
     // 50/30/20 Rule & Safe to Spend
     final rule503020 = _calculateRule503020(currentTransactions, totalInflow, totalOutflow);
@@ -269,7 +270,7 @@ class InsightsEngine {
     );
 
     // Goal Momentum & Savings Vault
-    final goalInsight = _calculateGoalInsight(goals, currentTransactions, periodRange);
+    final goalInsight = _calculateGoalInsight(goals, currentTransactions, periodRange, currency);
 
     // Executive Accountant Commentary & Recommendations
     final commentary = _generateAccountantCommentary(
@@ -283,6 +284,7 @@ class InsightsEngine {
       goalInsight: goalInsight,
       healthScore: healthScore,
       horizon: horizon,
+      currency: currency,
     );
 
     // Tax Intelligence
@@ -459,7 +461,7 @@ class InsightsEngine {
     return result;
   }
 
-  static LoanInsight _calculateLoanInsight(List<Loan> loans, double totalInflow, double totalOutflow) {
+  static LoanInsight _calculateLoanInsight(List<Loan> loans, double totalInflow, double totalOutflow, [String currency = '\$']) {
     double payableTotal = 0.0;
     double receivableTotal = 0.0;
     final List<Loan> upcoming = [];
@@ -499,7 +501,7 @@ class InsightsEngine {
     } else if (upcoming.length > 1) {
       payoffAdvice = 'Debt Avalanche Recommended: Target your highest-balance loan while making minimums on others to minimize interest drag and achieve debt freedom faster.';
     } else {
-      payoffAdvice = 'Prioritize settling your outstanding payable of \$${payableTotal.toStringAsFixed(0)} to eliminate liabilities and improve borrowing capacity.';
+      payoffAdvice = 'Prioritize settling your outstanding payable of $currency${payableTotal.toStringAsFixed(0)} to eliminate liabilities and improve borrowing capacity.';
     }
 
     return LoanInsight(
@@ -699,8 +701,9 @@ class InsightsEngine {
   static GoalInsight _calculateGoalInsight(
     List<SavingsGoal> goals,
     List<Transaction> currentTransactions,
-    _DateRange periodRange,
-  ) {
+    _DateRange periodRange, [
+    String currency = '\$',
+  ]) {
     double periodStashed = 0.0;
     for (final goal in goals) {
       for (final entry in goal.entries) {
@@ -726,12 +729,12 @@ class InsightsEngine {
     String motivationalSummary;
     if (periodStashed > 0) {
       if (nearingCompletion.isNotEmpty) {
-        motivationalSummary = 'You locked away \$${periodStashed.toStringAsFixed(0)} this period! ${nearingCompletion.length} goal(s) are over 70% funded and close to completion.';
+        motivationalSummary = 'You locked away $currency${periodStashed.toStringAsFixed(0)} this period! ${nearingCompletion.length} goal(s) are over 70% funded and close to completion.';
       } else {
-        motivationalSummary = 'You locked away \$${periodStashed.toStringAsFixed(0)} into your Savings Vault this period! Consistent contributions build long-term freedom.';
+        motivationalSummary = 'You locked away $currency${periodStashed.toStringAsFixed(0)} into your Savings Vault this period! Consistent contributions build long-term freedom.';
       }
     } else if (activeGoals.isNotEmpty) {
-      motivationalSummary = 'You have ${activeGoals.length} active goal(s) with \$${totalVaultBalance.toStringAsFixed(0)} saved. Stash a small amount today to keep pacing on track.';
+      motivationalSummary = 'You have ${activeGoals.length} active goal(s) with $currency${totalVaultBalance.toStringAsFixed(0)} saved. Stash a small amount today to keep pacing on track.';
     } else {
       motivationalSummary = 'Set a savings goal with a target deadline to automate your wealth-building pacing.';
     }
@@ -757,6 +760,7 @@ class InsightsEngine {
     required GoalInsight goalInsight,
     required FinancialHealthScore healthScore,
     required TimeHorizon horizon,
+    String currency = '\$',
   }) {
     final topCategory = categories.isNotEmpty && categories.first.spent > 0
         ? categories.first
@@ -783,7 +787,7 @@ class InsightsEngine {
     if (netSavings >= 0) {
       summary = 'Your cash flow is in positive territory with a ${savingsRate.toStringAsFixed(0)}% savings rate. Net surplus for this period is healthy.';
     } else {
-      summary = 'Outflow exceeded income by \$${netSavings.abs().toStringAsFixed(0)}. Deficit spending weakens long-term liquidity.';
+      summary = 'Outflow exceeded income by $currency${netSavings.abs().toStringAsFixed(0)}. Deficit spending weakens long-term liquidity.';
     }
 
     if (topCategory != null) {
@@ -804,11 +808,11 @@ class InsightsEngine {
       final pct = (goal.progress * 100).toStringAsFixed(0);
       actionItems.add('Goal Momentum: "${goal.title}" is within reach at $pct% funded. Allocate extra surplus to complete this target!');
     } else if (goalInsight.periodStashed > 0) {
-      actionItems.add('Savings Vault: Stashed \$${goalInsight.periodStashed.toStringAsFixed(0)} this period. Keep your scheduled pacing cadence active.');
+      actionItems.add('Savings Vault: Stashed $currency${goalInsight.periodStashed.toStringAsFixed(0)} this period. Keep your scheduled pacing cadence active.');
     }
 
     if (loanInsight.totalPayable > 0) {
-      actionItems.add('Liabilities: Allocate \$${min(loanInsight.totalPayable, 150.0).toStringAsFixed(0)} towards your highest-priority loan to accelerate your debt-free milestone.');
+      actionItems.add('Liabilities: Allocate $currency${min(loanInsight.totalPayable, 150.0).toStringAsFixed(0)} towards your highest-priority loan to accelerate your debt-free milestone.');
     } else {
       actionItems.add('Wealth Accelerator: Direct at least 15% of your surplus into emergency reserves or diversified index investments.');
     }
