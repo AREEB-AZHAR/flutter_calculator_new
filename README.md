@@ -551,6 +551,25 @@
 
 ---
 
+### 40. 🛡️ Account Deletion Persistence, FNV-1a Alarm Deduplication & Days-Remaining Goal Notifications (v1.8.13)
+
+- **Permanent Account Deletion & Resurrection Prevention**:
+  - **Root Cause Resolution**: Previously, deleting a saved login account via [`AppDatabase.deleteSavedAccount()`](lib/services/database/app_database.dart) wiped the SQLite `users` row, but on subsequent app launches, legacy migration (`_migrateLegacyPrefs`) re-read legacy `users` JSON from `SharedPreferences`. Because SQLite had no matching row, it treated the user as unmigrated and reinserted them right back into SQLite, causing deleted accounts to reappear perpetually in quick login and saved accounts.
+  - **Migration Sentinel Guard**: Added a permanent boolean sentinel `legacy_prefs_migrated` in `SharedPreferences`. Once migration runs once, it removes the legacy `users` key and sets the sentinel to `true`. Further database initializations immediately return without inspecting legacy preferences.
+  - **Cascading SQLite Wipe & Comprehensive Cache Purge**: [`AppDatabase.deleteSavedAccount(username)`](lib/services/database/app_database.dart) now executes an atomic SQLite transaction deleting all user rows across 9 tables (`users`, `profiles`, `transactions`, `accounts`, `budgets`, `goals`, `goal_entries`, `loans`, `planned_transactions`). It simultaneously scrubs `tally_last_logged_in_user`, biometric credentials (`tally_biometric_username`), Google auth email caches, theme/ledger keys, and strips the user from legacy JSON if present.
+- **Deterministic 32-bit FNV-1a Alarm Deduplication (Double Notification Fix)**:
+  - **Entropy-Seeded Hash Bug**: Dart's default `String.hashCode` is randomized per process run on mobile devices. When a goal was saved with `0` balance, `remaining` equaled `target`, scheduling an alarm with ID $A$. Upon app restart, `goal.id.hashCode` produced a completely different ID $B$ for the remaining amount. Android's `AlarmManager` retained both alarms, triggering duplicate notifications simultaneously.
+  - **Deterministic Hashing**: Implemented a platform-independent 32-bit FNV-1a hash algorithm ([`NotificationService.stableHash`](lib/services/notification_service.dart)) that produces identical, positive integer IDs across restarts, isolates, and platforms.
+  - **Explicit Alarm Eviction Before Scheduling**: [`NotificationService.scheduleGoalReminders`](lib/services/notification_service.dart) now invokes `cancelGoalReminders(goal.id)` before scheduling new alarms, guaranteeing zero stacked duplicate alarms.
+  - **Scoped User Reminders**: Goal reminder scheduling in `AppState` is strictly scoped inside `areRemindersEnabled(username)` checks across `loadAllUserData`, `saveGoals`, and deposit ledger mutations.
+- **Days-Remaining Pacing Notification Copy**:
+  - Replaced calendar due date strings (e.g. `finish by Oct 15`) with intuitive **days remaining** phrasing:
+    - Multi-Day Goals (`daysRemaining > 1`): `"$remaining left to reach \"$title\". Save $dailyNeeded/day ($daysRemaining days remaining)!"`
+    - Urgency Goals (`daysRemaining <= 1` or `isDueToday`): `"You have $remaining left to save for \"$title\" (1 day remaining · Due today)!"`
+  - Encapsulated formatting in a pure, testable method ([`NotificationService.formatGoalReminderContent`](lib/services/notification_service.dart)) backed by comprehensive unit tests.
+
+---
+
 ## 🏗️ Clean Modular Architecture
 
 ```
@@ -1201,6 +1220,16 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
     - Implemented null-safe `(LPCSTR)CW2A(args, CP_UTF8)` string conversion.
     - Integrated automated CMake hotfix patch in `windows/CMakeLists.txt` guaranteeing reproducible, flawless Windows compilation across all clean builds.
     - Successfully compiled and verified clean Windows release executable (`build/windows/x64/runner/Release/balance_tracker.exe`).
+- **v1.8.13**:
+  - **Account Deletion Persistence & SharedPreferences Sentinel**:
+    - Added `legacy_prefs_migrated` sentinel guard preventing `_migrateLegacyPrefs` from resurrecting deleted user accounts.
+    - Enhanced `deleteSavedAccount` with atomic cascading wipe across 9 SQLite tables and complete SharedPreferences cache purge.
+  - **Deterministic FNV-1a Notification ID Deduplication**:
+    - Replaced process-seeded `String.hashCode` with deterministic 32-bit FNV-1a hash algorithm in `NotificationService`.
+    - Added alarm pre-cancellation before scheduling to prevent double notification stacking.
+  - **Days Remaining Pacing Copy**:
+    - Formatted goal notification copy to state exact days remaining (`$daysRemaining days remaining` or `1 day remaining · Due today`) instead of calendar due date strings.
+    - Added automated unit test suite covering deterministic ID generation, copy formatting, and deletion persistence.
 - **v1.7.2**:
   - **Fluid 60fps/120fps Login & Animation Smoothness**:
     - **Eliminated Post-Login Frame Drops**: Removed aggressive post-login background timer loop that previously fired repeated root `setState()` rebuilds every 300ms across 1.5s immediately after authentication.

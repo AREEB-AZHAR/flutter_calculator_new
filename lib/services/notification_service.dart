@@ -237,12 +237,16 @@ class NotificationService {
   }
 
   /// Cancels all scheduled reminder notifications
+  /// Cancels all scheduled reminder notifications (daily check-ins and active goals).
   Future<void> cancelAllReminders() async {
     if (kIsWeb) return;
     try {
       for (int i = 0; i < reminderHours.length; i++) {
         final notificationId = 100 + i;
         await _notificationsPlugin.cancel(id: notificationId);
+      }
+      for (final goal in AppState.goalsNotifier.value) {
+        await cancelGoalReminders(goal.id);
       }
     } catch (e) {
       debugPrint('NotificationService.cancelAllReminders notice: $e');
@@ -268,12 +272,23 @@ class NotificationService {
     }
   }
 
+  /// Deterministic 32-bit FNV-1a hash algorithm guaranteeing stable notification IDs
+  /// across app launches, process restarts, isolates, and devices.
+  static int stableHash(String str) {
+    var hash = 0x811c9dc5;
+    for (var i = 0; i < str.length; i++) {
+      hash ^= str.codeUnitAt(i);
+      hash = (hash * 0x01000193) & 0x7fffffff;
+    }
+    return hash;
+  }
+
   int _getLoanNotificationId(String loanId) {
-    return (loanId.hashCode.abs() % 50000) + 10000;
+    return (stableHash(loanId) % 50000) + 10000;
   }
 
   int _getPlanNotificationId(String planId) {
-    return (planId.hashCode.abs() % 50000) + 60000;
+    return (stableHash(planId) % 50000) + 60000;
   }
 
   /// Schedules a loan reminder notification on the user-defined reminder due date & time
@@ -394,13 +409,42 @@ class NotificationService {
     }
   }
 
-  int _getGoalNotificationId(String goalId, int slot) {
-    return (goalId.hashCode.abs() % 40000) + 20000 + slot;
+  /// Generates a deterministic notification ID for a goal and time slot.
+  static int getGoalNotificationId(String goalId, int slot) {
+    return (stableHash(goalId) % 40000) + 20000 + slot;
   }
+
+  /// Formats the notification title and body text for a goal reminder based on remaining days.
+  static ({String title, String body}) formatGoalReminderContent({
+    required SavingsGoal goal,
+    required String currencySymbol,
+  }) {
+    final remaining = goal.remainingToSave;
+    final dailyNeeded = goal.dailySavingsNeeded;
+    final isDueToday = goal.isDueToday;
+    final daysRemaining = goal.daysRemaining;
+
+    String title;
+    String body;
+
+    if (goal.periodType == 'daily' || isDueToday || daysRemaining <= 1) {
+      title = '🎯 Today\'s Goal: ${goal.title}';
+      body =
+          'You have $currencySymbol${remaining.toStringAsFixed(0)} left to save for "${goal.title}" (1 day remaining · Due today)!';
+    } else {
+      final daysText = '$daysRemaining days remaining';
+      title = '🎯 Goal Pacing: ${goal.title}';
+      body =
+          '$currencySymbol${remaining.toStringAsFixed(0)} left to reach "${goal.title}". Save $currencySymbol${dailyNeeded.toStringAsFixed(0)}/day ($daysText)!';
+    }
+    return (title: title, body: body);
+  }
+
+  int _getGoalNotificationId(String goalId, int slot) => getGoalNotificationId(goalId, slot);
 
   /// Schedules mid-day (1 PM) and evening (7 PM) pacing reminders for active goals.
   /// Accurately indicates the exact amount left to reach the goal ($remaining left)
-  /// and recalculates required daily savings dynamically as deposits are made.
+  /// and displays the number of days remaining instead of calendar due dates.
   Future<void> scheduleGoalReminders(
     List<SavingsGoal> goals,
     String currencySymbol,
@@ -410,39 +454,28 @@ class NotificationService {
     const goalReminderHours = [13, 19]; // 1 PM and 7 PM
 
     for (final goal in goals) {
-      // If goal is completed or no money left to save, cancel any existing reminders
+      // First cancel any existing alarms for this goal to avoid stacking duplicates
+      await cancelGoalReminders(goal.id);
+
+      // If goal is completed, failed, archived, or no money left to save, do not schedule
       if (!goal.isActive || goal.remainingToSave <= 0) {
-        await cancelGoalReminders(goal.id);
         continue;
       }
 
-      final remaining = goal.remainingToSave;
-      final dailyNeeded = goal.dailySavingsNeeded;
-      final effectiveDue = goal.effectiveDueDate;
-      final isDueToday = goal.isDueToday;
+      final content = formatGoalReminderContent(
+        goal: goal,
+        currencySymbol: currencySymbol,
+      );
 
       for (int slot = 0; slot < goalReminderHours.length; slot++) {
         final hour = goalReminderHours[slot];
         final notificationId = _getGoalNotificationId(goal.id, slot);
 
-        String title;
-        String body;
-
-        if (goal.periodType == 'daily' || isDueToday) {
-          title = '🎯 Today\'s Goal: ${goal.title}';
-          body =
-              'You have $currencySymbol${remaining.toStringAsFixed(0)} left to save for "${goal.title}" ($currencySymbol${goal.saved.toStringAsFixed(0)} of $currencySymbol${goal.target.toStringAsFixed(0)} saved)!';
-        } else {
-          title = '🎯 Goal Pacing: ${goal.title}';
-          body =
-              '$currencySymbol${remaining.toStringAsFixed(0)} left to reach "${goal.title}". Save $currencySymbol${dailyNeeded.toStringAsFixed(0)}/day to finish by ${_formatShortDate(effectiveDue)}!';
-        }
-
         try {
           await _notificationsPlugin.zonedSchedule(
             id: notificationId,
-            title: title,
-            body: body,
+            title: content.title,
+            body: content.body,
             scheduledDate: _nextInstanceOfTime(hour, 0),
             notificationDetails: details,
             androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -464,23 +497,5 @@ class NotificationService {
         await _notificationsPlugin.cancel(id: notificationId);
       } catch (_) {}
     }
-  }
-
-  static String _formatShortDate(DateTime date) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${months[date.month - 1]} ${date.day}';
   }
 }

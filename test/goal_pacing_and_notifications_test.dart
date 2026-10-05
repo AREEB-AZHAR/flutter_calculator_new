@@ -4,6 +4,7 @@ import 'package:balance_tracker/models/savings_goal.dart';
 import 'package:balance_tracker/models/goal_entry.dart';
 import 'package:balance_tracker/services/state.dart';
 import 'package:balance_tracker/screens/goals_screen.dart';
+import 'package:balance_tracker/services/notification_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -137,6 +138,82 @@ void main() {
       // Check pacing badge appears despite having transactions
       expect(find.textContaining('Save \$150/day'), findsOneWidget);
       expect(find.textContaining('10d left'), findsOneWidget);
+    });
+  });
+
+  group('NotificationService Deterministic ID & Pacing Copy Tests', () {
+    test('stableHash produces deterministic, non-negative 32-bit values', () {
+      final id1 = NotificationService.stableHash('goal_emergency_fund');
+      final id2 = NotificationService.stableHash('goal_emergency_fund');
+      final idOther = NotificationService.stableHash('goal_vacation');
+
+      expect(id1, equals(id2), reason: 'stableHash must return identical results for identical strings');
+      expect(id1, greaterThanOrEqualTo(0));
+      expect(id1, lessThanOrEqualTo(0x7fffffff));
+      expect(id1, isNot(equals(idOther)), reason: 'Distinct strings should yield different hashes');
+
+      // Test slot IDs differ by slot offset
+      final slot0 = NotificationService.getGoalNotificationId('goal_test', 0);
+      final slot1 = NotificationService.getGoalNotificationId('goal_test', 1);
+      expect(slot1 - slot0, equals(1));
+    });
+
+    test('formatGoalReminderContent uses days remaining instead of calendar due date for multi-day goals', () {
+      final goal = SavingsGoal(
+        title: 'New Car',
+        target: 1000,
+        saved: 200, // 800 left
+        dueDate: DateTime.now().add(const Duration(days: 4)),
+      );
+
+      final content = NotificationService.formatGoalReminderContent(
+        goal: goal,
+        currencySymbol: '\$',
+      );
+
+      expect(content.title, '🎯 Goal Pacing: New Car');
+      expect(content.body, contains('\$800 left to reach "New Car"'));
+      expect(content.body, contains('Save \$200/day'));
+      expect(content.body, contains('(4 days remaining)!'));
+      // Ensure calendar dates like month names or "finish by" do not appear
+      expect(content.body, isNot(contains('finish by')));
+      expect(content.body, isNot(contains('Jan')));
+      expect(content.body, isNot(contains('Dec')));
+    });
+
+    test('formatGoalReminderContent formats due today or 1 day remaining with urgency text', () {
+      final todayGoal = SavingsGoal(
+        title: 'Rent Stash',
+        target: 500,
+        saved: 450, // 50 left
+        dueDate: DateTime.now(), // Due today
+      );
+
+      final content = NotificationService.formatGoalReminderContent(
+        goal: todayGoal,
+        currencySymbol: '€',
+      );
+
+      expect(content.title, '🎯 Today\'s Goal: Rent Stash');
+      expect(content.body, contains('You have €50 left to save for "Rent Stash" (1 day remaining · Due today)!'));
+    });
+
+    test('formatGoalReminderContent handles daily periodType accurately', () {
+      final dailyGoal = SavingsGoal(
+        title: 'Daily Lunch',
+        target: 25,
+        saved: 10,
+        dueDate: null,
+        periodType: 'daily',
+      );
+
+      final content = NotificationService.formatGoalReminderContent(
+        goal: dailyGoal,
+        currencySymbol: '£',
+      );
+
+      expect(content.title, '🎯 Today\'s Goal: Daily Lunch');
+      expect(content.body, contains('You have £15 left to save for "Daily Lunch" (1 day remaining · Due today)!'));
     });
   });
 }

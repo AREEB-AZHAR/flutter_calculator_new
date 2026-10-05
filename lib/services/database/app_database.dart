@@ -223,8 +223,13 @@ class AppDatabase {
   Future<void> _migrateLegacyPrefs(Database db) async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool('legacy_prefs_migrated') == true) return;
+
       final usersStr = prefs.getString('users');
-      if (usersStr == null || usersStr.isEmpty) return;
+      if (usersStr == null || usersStr.isEmpty) {
+        await prefs.setBool('legacy_prefs_migrated', true);
+        return;
+      }
 
       final Map<String, dynamic> legacyUsers = jsonDecode(usersStr);
       for (var entry in legacyUsers.entries) {
@@ -302,6 +307,10 @@ class AppDatabase {
           }
         }
       }
+
+      // Mark migration completed and clear legacy user map so it never resurrects deleted accounts
+      await prefs.remove('users');
+      await prefs.setBool('legacy_prefs_migrated', true);
     } catch (e) {
       debugPrint('Legacy migration note: $e');
     }
@@ -543,12 +552,80 @@ class AppDatabase {
     }
   }
 
-  /// Removes a saved user account and its profile from this device.
+  /// Removes a saved user account and all its data and settings from this device.
   Future<bool> deleteSavedAccount(String username) async {
     final db = await database;
     try {
-      await db.delete('users', where: 'username = ?', whereArgs: [username]);
-      await db.delete('profiles', where: 'username = ?', whereArgs: [username]);
+      // 1. Cascading SQLite wipe of all records tied to this username
+      await db.transaction((txn) async {
+        await txn.delete('users', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
+        await txn.delete('profiles', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
+        await txn.delete('transactions', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
+        await txn.delete('accounts', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
+        await txn.delete('budgets', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
+        await txn.delete('goals', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
+        await txn.delete('goal_entries', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
+        await txn.delete('loans', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
+        await txn.delete('planned_transactions', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
+      });
+
+      // 2. Clear any lingering SharedPreferences caches for this user
+      try {
+        final prefs = await SharedPreferences.getInstance();
+
+        // Remove from legacy SharedPreferences users JSON if present
+        final usersStr = prefs.getString('users');
+        if (usersStr != null && usersStr.isNotEmpty) {
+          try {
+            final Map<String, dynamic> legacyUsers = jsonDecode(usersStr);
+            legacyUsers.removeWhere((k, v) => k.toLowerCase() == username.toLowerCase());
+            if (legacyUsers.isEmpty) {
+              await prefs.remove('users');
+            } else {
+              await prefs.setString('users', jsonEncode(legacyUsers));
+            }
+          } catch (_) {}
+        }
+        await prefs.setBool('legacy_prefs_migrated', true);
+
+        // Biometric / Last login preferences
+        final lastUser = prefs.getString('tally_last_logged_in_user');
+        if (lastUser != null && lastUser.toLowerCase() == username.toLowerCase()) {
+          await prefs.remove('tally_last_logged_in_user');
+        }
+        final bioUser = prefs.getString('tally_biometric_username');
+        if (bioUser != null && bioUser.toLowerCase() == username.toLowerCase()) {
+          await prefs.remove('tally_biometric_username');
+          await prefs.setBool('tally_biometric_enabled', false);
+        }
+        await prefs.remove('tally_biometric_enabled_$username');
+        await prefs.remove('tally_biometric_prompted_$username');
+
+        // Google Auth cache
+        final googleEmail = prefs.getString('tally_last_google_email');
+        if (googleEmail != null && googleEmail.toLowerCase() == username.toLowerCase()) {
+          await prefs.remove('tally_last_google_email');
+          await prefs.remove('tally_last_google_name');
+        }
+
+        // Ledger & Theme preferences
+        await prefs.remove('tx_$username');
+        await prefs.remove('currency_$username');
+        await prefs.remove('tally_reminders_enabled_$username');
+        await prefs.remove('tally_theme_$username');
+        await prefs.remove('tally_primary_color_$username');
+        await prefs.remove('tally_secondary_color_$username');
+        await prefs.remove('tally_text_color_$username');
+        await prefs.remove('tally_currency_$username');
+        await prefs.remove('has_seen_tour_$username');
+        await prefs.remove('tally_theme_passes_$username');
+        await prefs.remove('tally_pro_unlocked_$username');
+        await prefs.remove('tally_ads_removed_$username');
+        await prefs.remove('tally_pro_trial_expiry_$username');
+      } catch (pe) {
+        debugPrint('deleteSavedAccount prefs cleanup notice: $pe');
+      }
+
       return true;
     } catch (e) {
       debugPrint('AppDatabase.deleteSavedAccount error: $e');

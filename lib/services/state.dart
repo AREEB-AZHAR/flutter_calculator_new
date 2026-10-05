@@ -266,17 +266,16 @@ class AppState {
     loansNotifier.value = await db.loadLoans(username);
     plannedTransactionsNotifier.value = await db.loadPlannedTransactions(username);
     await checkGoalExpirations(username);
-    // Schedule goal pacing reminders for active goals with due dates
-    NotificationService.instance.scheduleGoalReminders(
-      goalsNotifier.value,
-      currencyNotifier.value,
-    );
     await checkAndProcessPlannedAndRecurring(username);
 
     // Schedule active user reminders if enabled
     final remindersOn = await NotificationService.instance.areRemindersEnabled(username);
     if (remindersOn) {
       await NotificationService.instance.scheduleAllDailyReminders();
+      await NotificationService.instance.scheduleGoalReminders(
+        goalsNotifier.value,
+        currencyNotifier.value,
+      );
       for (final loan in loansNotifier.value) {
         if (!loan.isSettled) {
           await NotificationService.instance.scheduleLoanReminder(
@@ -365,10 +364,13 @@ class AppState {
     goalsNotifier.value = List.from(goals);
     CloudSyncService.syncGoalsToCloud(goals);
     await checkGoalExpirations(username);
-    NotificationService.instance.scheduleGoalReminders(
-      goalsNotifier.value,
-      currencyNotifier.value,
-    );
+    final remindersOn = await NotificationService.instance.areRemindersEnabled(username);
+    if (remindersOn) {
+      NotificationService.instance.scheduleGoalReminders(
+        goalsNotifier.value,
+        currencyNotifier.value,
+      );
+    }
   }
 
   static Future<List<SavingsGoal>> loadGoals(String username) async {
@@ -534,10 +536,13 @@ class AppState {
     // Reload goals to get updated saved amounts
     goalsNotifier.value = await AppDatabase.instance.loadGoals(username);
     await checkGoalExpirations(username);
-    NotificationService.instance.scheduleGoalReminders(
-      goalsNotifier.value,
-      currencyNotifier.value,
-    );
+    final remindersOn = await NotificationService.instance.areRemindersEnabled(username);
+    if (remindersOn) {
+      NotificationService.instance.scheduleGoalReminders(
+        goalsNotifier.value,
+        currencyNotifier.value,
+      );
+    }
     CloudSyncService.syncGoalsToCloud(goalsNotifier.value);
   }
 
@@ -546,10 +551,13 @@ class AppState {
     await AppDatabase.instance.updateGoalEntry(username, entry);
     goalsNotifier.value = await AppDatabase.instance.loadGoals(username);
     await checkGoalExpirations(username);
-    NotificationService.instance.scheduleGoalReminders(
-      goalsNotifier.value,
-      currencyNotifier.value,
-    );
+    final remindersOn = await NotificationService.instance.areRemindersEnabled(username);
+    if (remindersOn) {
+      NotificationService.instance.scheduleGoalReminders(
+        goalsNotifier.value,
+        currencyNotifier.value,
+      );
+    }
     CloudSyncService.syncGoalsToCloud(goalsNotifier.value);
   }
 
@@ -558,10 +566,13 @@ class AppState {
     await AppDatabase.instance.deleteGoalEntry(username, entryId, goalId);
     goalsNotifier.value = await AppDatabase.instance.loadGoals(username);
     await checkGoalExpirations(username);
-    NotificationService.instance.scheduleGoalReminders(
-      goalsNotifier.value,
-      currencyNotifier.value,
-    );
+    final remindersOn = await NotificationService.instance.areRemindersEnabled(username);
+    if (remindersOn) {
+      NotificationService.instance.scheduleGoalReminders(
+        goalsNotifier.value,
+        currencyNotifier.value,
+      );
+    }
     CloudSyncService.syncGoalsToCloud(goalsNotifier.value);
   }
 
@@ -570,10 +581,13 @@ class AppState {
     await AppDatabase.instance.deleteGoalEntryByTransactionId(username, txId);
     goalsNotifier.value = await AppDatabase.instance.loadGoals(username);
     await checkGoalExpirations(username);
-    NotificationService.instance.scheduleGoalReminders(
-      goalsNotifier.value,
-      currencyNotifier.value,
-    );
+    final remindersOn = await NotificationService.instance.areRemindersEnabled(username);
+    if (remindersOn) {
+      NotificationService.instance.scheduleGoalReminders(
+        goalsNotifier.value,
+        currencyNotifier.value,
+      );
+    }
     CloudSyncService.syncGoalsToCloud(goalsNotifier.value);
   }
 
