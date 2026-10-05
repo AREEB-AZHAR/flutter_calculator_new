@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -253,6 +254,78 @@ void main() {
       expect(find.textContaining('OldAccount'), findsNothing);
       expect(find.textContaining('Unlock with Screen Lock'), findsNothing,
           reason: 'Biometric unlock button should not appear for an account that does not have biometrics enabled');
+    });
+  });
+
+  group('Account Deletion & Legacy Migration Resilience Tests', () {
+    test('deleteSavedAccount permanently wipes SQLite and SharedPreferences, preventing resurrection', () async {
+      final db = AppDatabase.instance;
+      final uniqueId = DateTime.now().millisecondsSinceEpoch;
+      final username = 'DeleteTester_$uniqueId';
+      final email = 'delete_$uniqueId@test.com';
+      const password = 'Password!123';
+
+      // 1. Register the user
+      final registered = await db.registerUser(
+        username: username,
+        password: password,
+        email: email,
+      );
+      expect(registered, isTrue);
+
+      // Verify user appears in saved accounts
+      final savedBefore = await db.getAllSavedAccounts();
+      expect(savedBefore.any((a) => a.username == username), isTrue);
+
+      // 2. Set up biometric and legacy preferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('tally_last_logged_in_user', username);
+      await prefs.setString('tally_biometric_username', username);
+      await prefs.setBool('tally_biometric_enabled', true);
+      await prefs.setBool('tally_biometric_enabled_$username', true);
+      await prefs.setString('currency_$username', 'EUR');
+
+      // Also simulate a legacy users JSON that contains this user
+      final legacyMap = {
+        username: {
+          'password': 'hashed_legacy_password',
+          'profile': {'displayName': username},
+        }
+      };
+      await prefs.setString('users', jsonEncode(legacyMap));
+
+      // 3. Perform account deletion
+      final deleted = await db.deleteSavedAccount(username);
+      expect(deleted, isTrue);
+
+      // 4. Verify user is removed from SQLite
+      final savedAfter = await db.getAllSavedAccounts();
+      expect(savedAfter.any((a) => a.username == username), isFalse);
+
+      final rawDb = await db.database;
+      final userRows = await rawDb.query('users', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
+      expect(userRows.isEmpty, isTrue, reason: 'users table row must be wiped');
+      final profileRows = await rawDb.query('profiles', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
+      expect(profileRows.isEmpty, isTrue, reason: 'profiles table row must be wiped');
+
+      // 5. Verify user and biometric credentials removed from SharedPreferences
+      expect(prefs.getString('tally_last_logged_in_user'), isNull);
+      expect(prefs.getString('tally_biometric_username'), isNull);
+      expect(prefs.getBool('tally_biometric_enabled'), isFalse);
+      expect(prefs.getBool('tally_biometric_enabled_$username'), isNull);
+      expect(prefs.getString('currency_$username'), isNull);
+
+      // 6. Verify legacy users string was cleaned and migration sentinel is set
+      final remainingUsersJson = prefs.getString('users');
+      if (remainingUsersJson != null) {
+        final Map<String, dynamic> remainingMap = jsonDecode(remainingUsersJson);
+        expect(remainingMap.containsKey(username), isFalse, reason: 'Legacy users map must not contain deleted user');
+      }
+      expect(prefs.getBool('legacy_prefs_migrated'), isTrue, reason: 'legacy_prefs_migrated sentinel must be true');
+
+      // 7. Test migration resilience: even if app database re-loads, account never resurrects
+      final savedRecheck = await db.getAllSavedAccounts();
+      expect(savedRecheck.any((a) => a.username == username), isFalse);
     });
   });
 }
