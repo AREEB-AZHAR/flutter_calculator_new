@@ -697,20 +697,46 @@ flutter analyze
 flutter test
 ```
 
-### 6. Firebase Authentication Setup (Google Sign-In)
+### 6. Official Firebase & FlutterFire CLI Setup (`tally-b3652`)
 
-To authenticate with your **actual Google Account** across Android and Windows desktop:
+Tally is integrated with Firebase for Google Authentication, Cloud Firestore multi-device ledger sync, and Cloud Functions (OTP emails). All platforms (**Android**, **iOS**, **macOS**, **Web**, and **Windows**) are registered under Firebase project `tally-b3652`.
 
-1. Go to the [Firebase Console](https://console.firebase.google.com/) and click **Add Project** (e.g. `tally-finance`).
-2. Navigate to **Build > Authentication** and enable the **Google** sign-in provider.
-3. In **Project Settings > General**:
-   - Copy your **Project ID** and **Web API Key**.
-   - Under **Your apps**, click **Add app > Android**:
-     - **Package Name**: `com.areeb.balance_tracker`
-     - **Debug SHA-1**: `B7:71:9D:F2:CA:FE:82:46:4A:B9:91:40:59:C1:72:0B:8E:96:BD:CB`
-     - **Debug SHA-256**: `82:E4:2C:AE:78:94:99:F4:F9:7D:3A:8B:16:D9:CB:F9:71:5D:F5:0A:A7:D4:77:E8:FF:1E:67:6C:41:21:EA:99`
-     - Download `google-services.json` and place it in `android/app/`.
-4. Launch Tally, tap **Sign in with Google**, and enter your **Project ID** & **Web API Key** (or they will auto-load). Your authentic Google Account is now bound to your ledger!
+#### Quick Configuration via FlutterFire CLI
+
+If you need to reconfigure or link another Firebase project:
+
+1. **Install Firebase CLI & FlutterFire CLI**:
+   ```bash
+   npm install -g firebase-tools
+   firebase login
+   dart pub global activate flutterfire_cli
+   ```
+
+2. **Run FlutterFire Configure**:
+   From the root of your Flutter project directory:
+   ```bash
+   flutterfire configure --project=tally-b3652
+   ```
+   This automatically registers your per-platform apps with Firebase, generates/updates [`lib/firebase_options.dart`](lib/firebase_options.dart), and configures [`firebase.json`](firebase.json).
+
+3. **Active Registered Firebase Apps (`tally-b3652`)**:
+   - **Android**: `com.areeb.balance_tracker` (App ID: `1:494819662703:android:1eed08eedd66202a07e69a`)
+   - **iOS**: `com.areeb.balanceTracker` (App ID: `1:494819662703:ios:7f09b58fb0a29c8b07e69a`)
+   - **macOS**: `com.areeb.balanceTracker` (App ID: `1:494819662703:ios:7f09b58fb0a29c8b07e69a`)
+   - **Web**: `balance_tracker (web)` (App ID: `1:494819662703:web:b8c4d6a048754dfa07e69a`)
+   - **Windows**: `balance_tracker (windows)` (App ID: `1:494819662703:web:92d94f9d4fbb185f07e69a`)
+
+4. **Firebase Initialization in App**:
+   Firebase initializes on application boot in [`lib/main.dart`](lib/main.dart) via:
+   ```dart
+   import 'package:firebase_core/firebase_core.dart';
+   import 'firebase_options.dart';
+
+   await Firebase.initializeApp(
+     options: DefaultFirebaseOptions.currentPlatform,
+   );
+   ```
+   Tally also includes dynamic runtime configuration capabilities (`DefaultFirebaseOptions.saveConfig`, `DefaultFirebaseOptions.loadSavedConfig`), allowing in-app credential updates and seamless fallback.
 
 ---
 
@@ -783,7 +809,24 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 
 ## 📝 Recent Changelog
 
-- **v1.8.12 (Current - Gradle Configuration Cache Resolution & Build Pipeline Stabilization)**:
+- **v1.8.14 (Current - Official FlutterFire CLI Multi-Platform Configuration & Project Registration)**:
+  - **FlutterFire Multi-Platform Project Registration (`tally-b3652`)**:
+    - Ran official FlutterFire CLI workflow (`flutterfire configure --project=tally-b3652`) registering apps across **Android**, **iOS**, **macOS**, **Web**, and **Windows**.
+    - Generated and configured [`lib/firebase_options.dart`](lib/firebase_options.dart) with compiled platform credentials:
+      * Android: `1:494819662703:android:1eed08eedd66202a07e69a` (`com.areeb.balance_tracker`)
+      * iOS: `1:494819662703:ios:7f09b58fb0a29c8b07e69a` (`com.areeb.balanceTracker`)
+      * macOS: `1:494819662703:ios:7f09b58fb0a29c8b07e69a` (`com.areeb.balanceTracker`)
+      * Web: `1:494819662703:web:b8c4d6a048754dfa07e69a` (`balance_tracker (web)`)
+      * Windows: `1:494819662703:web:92d94f9d4fbb185f07e69a` (`balance_tracker (windows)`)
+    - Preserved backwards-compatible runtime persistence and dynamic SharedPreferences configuration methods (`isConfigured`, `loadSavedConfig`, `saveConfig`, `apiKey`, `projectId`, `appId`).
+    - Updated [`firebase.json`](firebase.json) with automated platform mappings for all Flutter build targets.
+  - **App Initialization Verification & Dart Analysis**:
+    - Confirmed `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)` in [`lib/main.dart`](lib/main.dart) and [`GoogleAuthService`](lib/services/google_auth_service.dart).
+    - Validated all tests and static analysis: 0 errors and 0 warnings across all modified targets.
+  - **Single Source of Truth Version Bump**:
+    - Incremented version to `v1.8.14+24` across `pubspec.yaml`, `AppVersion` service, and automated test suite per the strict +0.0.1 incremental patch policy.
+
+- **v1.8.12 (Gradle Configuration Cache Resolution & Build Pipeline Stabilization)**:
   - **Resolved Flutter ReleaseMinSdkCheck Configuration Cache Serialization Failure**:
     - Diagnosed fatal `assembleRelease` build failure caused by Gradle Configuration Cache attempting to serialize `com.flutter.gradle.DependencyVersionChecker$configureMinSdkCheck` / `:app:ReleaseMinSdkCheck`, which references `ApplicationVariantImpl` and throws `error writing value of type 'kotlin.SynchronizedLazyImpl'`.
     - Explicitly set `org.gradle.configuration-cache=false` in [`android/gradle.properties`](android/gradle.properties) to adhere to Flutter's official Gradle plugin requirements until upstream configuration cache support matures.
