@@ -474,8 +474,12 @@ class AppState {
     if (currentUser != null) {
       AppDatabase.instance.softDeleteGoal(currentUser!, goal.id);
     }
-    // Cancel goal reminders immediately
-    NotificationService.instance.cancelGoalReminders(goal.id);
+    // Cancel goal reminders immediately and purge orphaned alarms
+    unawaited(NotificationService.instance.cancelGoalReminders(goal.id));
+    unawaited(NotificationService.instance.scheduleGoalReminders(
+      currentGoals,
+      currencyNotifier.value,
+    ));
     // Delete from Firestore immediately
     CloudSyncService.deleteGoalFromCloud(goal.id);
 
