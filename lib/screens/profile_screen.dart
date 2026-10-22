@@ -21,6 +21,7 @@ import '../utils/password_validator.dart';
 import '../utils/image_helper.dart';
 import 'premium_screen.dart';
 import 'saved_accounts_screen.dart';
+import '../widgets/cloud_sync_modal.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -1366,75 +1367,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                 ),
                                               ),
                                             ),
-                                      onTap: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (c) => AlertDialog(
-                                            backgroundColor: surface,
-                                            title: Row(
-                                              children: [
-                                                Icon(
-                                                  isCloudReady ? Icons.verified_user : Icons.cloud_sync,
-                                                  color: isCloudReady ? Colors.greenAccent : Colors.blue,
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Text('Cloud Vault Security', style: TextStyle(color: onSurface, fontSize: 17)),
-                                              ],
-                                            ),
-                                            content: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  isCloudReady
-                                                      ? 'Your local encrypted SQLite ledger is actively paired with Google Cloud Firestore (Project tally-b3652).\n\n'
-                                                        '• Strict Isolation: Path /users/{uid}/ protects your private documents.\n'
-                                                        '• Two-Way Sync: Transactions, goals, accounts, and budgets are backed up automatically.'
-                                                      : 'Your data is securely stored in a local SQLite file on your device.\n\n'
-                                                        'Sign in with your Google account to automatically back up your financial records to your private Google Cloud Firestore vault.',
-                                                  style: TextStyle(color: onSurface.withValues(alpha: 0.75), fontSize: 13, height: 1.4),
-                                                ),
-                                                if (CloudSyncService.lastSyncTimeNotifier.value != null) ...[
-                                                  const SizedBox(height: 12),
-                                                  Text(
-                                                    'Last synced: ${CloudSyncService.lastSyncTimeNotifier.value!.toLocal().toString().split(".").first}',
-                                                    style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 11),
-                                                  ),
-                                                ],
-                                              ],
-                                            ),
-                                            actions: [
-                                              if (isCloudReady)
-                                                ElevatedButton.icon(
-                                                  icon: const Icon(Icons.sync, size: 16),
-                                                  label: const Text('Sync Now'),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: primary,
-                                                    foregroundColor: Colors.white,
-                                                  ),
-                                                  onPressed: () async {
-                                                    Navigator.pop(c);
-                                                    final messenger = ScaffoldMessenger.of(context);
-                                                    final user = AppState.currentUser;
-                                                    if (user != null) {
-                                                      final ok = await CloudSyncService.sync(user);
-                                                      messenger.showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(ok ? 'Cloud Vault synced successfully' : 'Sync completed or queued'),
-                                                          backgroundColor: ok ? Colors.green.shade700 : Colors.blueGrey,
-                                                        ),
-                                                      );
-                                                    }
-                                                  },
-                                                ),
-                                              TextButton(onPressed: () => Navigator.pop(c), child: Text('Close', style: TextStyle(color: onSurface))),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
+                                       onTap: () {
+                                         CloudSyncModal.show(context);
+                                       },
+                                     );
+                                   },
+                                 ),
                               ],
                             ),
                           ),

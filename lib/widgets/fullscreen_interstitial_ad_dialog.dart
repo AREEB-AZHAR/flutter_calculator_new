@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../services/monetization_service.dart';
 import '../screens/premium_screen.dart';
 
 /// Fullscreen Interstitial Ad Dialog for Screen and Tab Transitions.

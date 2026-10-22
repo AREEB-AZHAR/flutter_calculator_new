@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/state.dart';
 import '../services/language_service.dart';
 import '../services/ad_service.dart';
@@ -16,10 +17,20 @@ class MainNavScreen extends StatefulWidget {
 }
 
 class _MainNavScreenState extends State<MainNavScreen> {
+  final Map<int, Widget> _cachedScreens = {};
+
   @override
   void initState() {
     super.initState();
     AppState.activeTabNotifier.addListener(_onTabChanged);
+    _persistDeviceScreenCacheFlag();
+  }
+
+  Future<void> _persistDeviceScreenCacheFlag() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('tally_device_screen_cache_warmed', true);
+    } catch (_) {}
   }
 
   @override
@@ -32,21 +43,23 @@ class _MainNavScreenState extends State<MainNavScreen> {
     if (mounted) setState(() {});
   }
 
-  Widget _buildActiveScreen(int index) {
-    switch (index) {
-      case 0:
-        return const DashboardScreen(key: ValueKey('tab_dashboard'));
-      case 1:
-        return const InsightsScreen(key: ValueKey('tab_insights'));
-      case 2:
-        return const GoalsScreen(key: ValueKey('tab_goals'));
-      case 3:
-        return const AccountsScreen(key: ValueKey('tab_accounts'));
-      case 4:
-        return const ProfileScreen(key: ValueKey('tab_profile'));
-      default:
-        return const DashboardScreen(key: ValueKey('tab_dashboard'));
-    }
+  Widget _buildScreen(int index) {
+    return _cachedScreens.putIfAbsent(index, () {
+      switch (index) {
+        case 0:
+          return const DashboardScreen(key: ValueKey('tab_dashboard'));
+        case 1:
+          return const InsightsScreen(key: ValueKey('tab_insights'));
+        case 2:
+          return const GoalsScreen(key: ValueKey('tab_goals'));
+        case 3:
+          return const AccountsScreen(key: ValueKey('tab_accounts'));
+        case 4:
+          return const ProfileScreen(key: ValueKey('tab_profile'));
+        default:
+          return const DashboardScreen(key: ValueKey('tab_dashboard'));
+      }
+    });
   }
 
   @override
@@ -56,6 +69,8 @@ class _MainNavScreenState extends State<MainNavScreen> {
     }
 
     final currentIndex = AppState.activeTabNotifier.value;
+    // Ensure current screen is initialized and cached
+    _buildScreen(currentIndex);
 
     return Scaffold(
       body: SafeArea(
@@ -65,7 +80,14 @@ class _MainNavScreenState extends State<MainNavScreen> {
           children: [
             const OfflineBanner(),
             Expanded(
-              child: _buildActiveScreen(currentIndex),
+              child: IndexedStack(
+                index: currentIndex,
+                children: List.generate(5, (i) {
+                  return _cachedScreens.containsKey(i)
+                      ? _cachedScreens[i]!
+                      : const SizedBox.shrink();
+                }),
+              ),
             ),
           ],
         ),
@@ -80,10 +102,13 @@ class _MainNavScreenState extends State<MainNavScreen> {
               selectedIndex: currentIndex,
               onDestinationSelected: (i) {
                 if (i == currentIndex) return;
+                // 1. Immediately switch tab so the target screen builds in the background during ad time!
+                AppState.activeTabNotifier.value = i;
+                // 2. Trigger full-screen interstitial ad over the background-rendered screen
                 AdService.showTabSwitchInterstitialAd(
                   context: context,
                   onComplete: () {
-                    AppState.activeTabNotifier.value = i;
+                    // Screen was pre-built in background during ad playback
                   },
                 );
               },
