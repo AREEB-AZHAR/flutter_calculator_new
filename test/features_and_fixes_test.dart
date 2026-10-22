@@ -301,7 +301,7 @@ void main() {
     expect(GoogleAuthService.isCurrentGoogleUser, false);
   });
 
-  testWidgets('AdBannerWidget: displays banner for free users and hides when ad-free or pro', (WidgetTester tester) async {
+  testWidgets('AdBannerWidget: shows labeled partner fallback and hides it when ad-free', (WidgetTester tester) async {
     await MonetizationService.resetPurchases();
 
     await tester.pumpWidget(
@@ -315,8 +315,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Banner should be visible with "Ad" badge and sponsor text
-    expect(find.text('Ad'), findsOneWidget);
+    // Desktop uses the partner fallback; its badge differs from a loaded ad.
+    expect(find.text('Ad • Partner'), findsOneWidget);
     expect(find.text('Test Fintech Partner'), findsOneWidget);
     expect(find.text('Hide'), findsOneWidget);
 
