@@ -807,7 +807,13 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 
 ---
 
-- **v1.8.16 (Current - Background Tab Pre-Build Under Ads, Screen Caching, User-Centric Cloud Sync Modal & Ad Density)**:
+- **v1.8.16 (Current - Goal Reminder Purge Bugfix, Local Timezone Auto-Configuration, Tab Pre-Build & Cloud Sync Modal)**:
+  - **Phantom Goal Reminder Bugfix & Midnight (00:00) Elimination**:
+    - **Local Timezone Offset Resolution (`configureLocalTimeZone`)**: Resolved critical defect where `timezone` package defaulted `tz.local` to UTC (+0). In UTC+5 regions (e.g. Pakistan Standard Time), the 7:00 PM (19:00 UTC) goal pacing reminder fired at **00:00:00 (midnight)** on users' phones. Dynamically detects `DateTime.now().timeZoneOffset` and configures `tz.local` to match the device's actual offset so reminders always trigger at local 1:00 PM and 7:00 PM.
+    - **Orphaned Goal Alarm Purge**: Fixed bug where deleting a goal left alarms repeating daily in the operating system's AlarmManager. Implemented `cancelAllGoalReminders()` which queries `_notificationsPlugin.pendingNotificationRequests()`, purges all goal notification IDs (`20000..60000`), and cancels any reminder matching deleted goal IDs.
+    - **Persistent Scheduled Goal Tracking**: Tracks active scheduled goal IDs in `SharedPreferences` (`tally_scheduled_goal_ids`) across app sessions and automatically cancels any goal ID that is no longer in the active goal set.
+    - **Awaited Goal Deletion Cleanup**: In [`AppState.deleteGoalWithUndo`](lib/services/state.dart), immediately unawaits asynchronous cancellation and re-evaluates the active goal set. If the user has 0 active goals, all goal notifications are purged from the OS immediately.
+    - **Goal-Aware Daily Friendly Check-in Filter**: In `scheduleAllDailyReminders()`, checks `AppState.goalsNotifier.value.any((g) => g.isActive)`. If no goals exist, daily check-ins strictly filter out prompts referencing goals (*"Remember that goal you're saving for?"* and *"Checking in on your budget goals!"*), eliminating false goal impressions.
   - **Background Destination Screen Pre-Build During Full-Screen Ad Playback**:
     - Modeled tab navigation in [`MainNavScreen`](lib/screens/main_nav_screen.dart) so that the moment a user taps a destination tab, `AppState.activeTabNotifier.value = targetIndex` triggers immediately underneath the full-screen interstitial ad dialog.
     - The destination screen compiles its widget tree, registers state listeners, and builds in the background during ad playback, resulting in **0 ms perceived latency** and zero post-dismissal transition hitch.

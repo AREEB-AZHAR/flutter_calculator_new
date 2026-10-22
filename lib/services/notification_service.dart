@@ -20,6 +20,7 @@ class NotificationService {
   bool _isInitialized = false;
 
   static const String _prefRemindersEnabledKey = 'tally_reminders_enabled';
+  static const String _prefScheduledGoalIdsKey = 'tally_scheduled_goal_ids';
   static const String _channelId = 'expense_tally_reminders';
   static const String _channelName = 'Expense Tally Reminders';
   static const String _channelDescription =
@@ -52,6 +53,24 @@ class NotificationService {
   // Active check-in hours: 9:00 AM, 12:00 PM, 3:00 PM, 6:00 PM, 9:00 PM (Quiet hours: 11 PM – 9 AM)
   static const List<int> reminderHours = [9, 12, 15, 18, 21];
 
+  /// Automatically detects and sets the local timezone matching the device's clock offset,
+  /// preventing UTC fallback which causes 7 PM reminders to fire at 00:00 midnight in UTC+5.
+  static void configureLocalTimeZone() {
+    try {
+      tz.initializeTimeZones();
+      final now = DateTime.now();
+      final offset = now.timeZoneOffset;
+      for (final loc in tz.timeZoneDatabase.locations.values) {
+        if (loc.currentTimeZone.offset == offset) {
+          tz.setLocalLocation(loc);
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('configureLocalTimeZone notice: $e');
+    }
+  }
+
   Future<void> init() async {
     if (_isInitialized) return;
     if (kIsWeb) {
@@ -59,11 +78,7 @@ class NotificationService {
       return;
     }
 
-    try {
-      tz.initializeTimeZones();
-    } catch (e) {
-      debugPrint('Error initializing timezones: $e');
-    }
+    configureLocalTimeZone();
 
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -213,12 +228,22 @@ class NotificationService {
     final details = _buildNotificationDetails();
     final random = Random();
 
+    // Only include goal-referencing check-in messages if the user currently has active goals
+    final hasActiveGoals = AppState.goalsNotifier.value
+        .any((g) => g.isActive && g.remainingToSave > 0);
+    final availableMessages = hasActiveGoals
+        ? friendlyMessages
+        : friendlyMessages
+            .where((m) =>
+                !m.toLowerCase().contains('goal') && !m.contains('🎯'))
+            .toList();
+
     for (int i = 0; i < reminderHours.length; i++) {
       final hour = reminderHours[i];
       final notificationId = 100 + i;
       final msg =
-          friendlyMessages[(i * 4 + random.nextInt(4)) %
-              friendlyMessages.length];
+          availableMessages[(i * 4 + random.nextInt(4)) %
+              availableMessages.length];
 
       try {
         await _notificationsPlugin.zonedSchedule(
@@ -236,7 +261,6 @@ class NotificationService {
     }
   }
 
-  /// Cancels all scheduled reminder notifications
   /// Cancels all scheduled reminder notifications (daily check-ins and active goals).
   Future<void> cancelAllReminders() async {
     if (kIsWeb) return;
@@ -245,9 +269,7 @@ class NotificationService {
         final notificationId = 100 + i;
         await _notificationsPlugin.cancel(id: notificationId);
       }
-      for (final goal in AppState.goalsNotifier.value) {
-        await cancelGoalReminders(goal.id);
-      }
+      await cancelAllGoalReminders();
     } catch (e) {
       debugPrint('NotificationService.cancelAllReminders notice: $e');
     }
@@ -442,6 +464,58 @@ class NotificationService {
 
   int _getGoalNotificationId(String goalId, int slot) => getGoalNotificationId(goalId, slot);
 
+  Future<Set<String>> _getTrackedGoalIds() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = prefs.getStringList(_prefScheduledGoalIdsKey) ?? [];
+      return list.toSet();
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<void> _saveTrackedGoalIds(Set<String> ids) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_prefScheduledGoalIdsKey, ids.toList());
+    } catch (_) {}
+  }
+
+  /// Completely cancels all scheduled goal reminders in the OS and clears tracked goal IDs.
+  Future<void> cancelAllGoalReminders() async {
+    if (kIsWeb) return;
+    try {
+      // 1. Cancel all tracked goal IDs
+      final trackedIds = await _getTrackedGoalIds();
+      for (final goalId in trackedIds) {
+        for (int slot = 0; slot < 2; slot++) {
+          final id = _getGoalNotificationId(goalId, slot);
+          try {
+            await _notificationsPlugin.cancel(id: id);
+          } catch (_) {}
+        }
+      }
+      await _saveTrackedGoalIds({});
+
+      // 2. Query OS for any pending notification in the goal ID range (20000..60000)
+      //    or with goal titles/icons and cancel them to eliminate any orphaned alarms.
+      try {
+        final pending = await _notificationsPlugin.pendingNotificationRequests();
+        for (final req in pending) {
+          if ((req.id >= 20000 && req.id < 60000) ||
+              (req.title != null &&
+                  (req.title!.contains('Goal') || req.title!.contains('🎯')))) {
+            try {
+              await _notificationsPlugin.cancel(id: req.id);
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
+    } catch (e) {
+      debugPrint('NotificationService.cancelAllGoalReminders notice: $e');
+    }
+  }
+
   /// Schedules mid-day (1 PM) and evening (7 PM) pacing reminders for active goals.
   /// Accurately indicates the exact amount left to reach the goal ($remaining left)
   /// and displays the number of days remaining instead of calendar due dates.
@@ -450,16 +524,53 @@ class NotificationService {
     String currencySymbol,
   ) async {
     if (kIsWeb) return;
+
+    // Filter to only active goals that still have money left to save
+    final activeGoals = goals
+        .where((g) => g.isActive && g.remainingToSave > 0)
+        .toList();
+
+    // If there are NO active goals, purge all goal notifications from OS immediately
+    if (activeGoals.isEmpty) {
+      await cancelAllGoalReminders();
+      return;
+    }
+
+    // Cancel any previously tracked goals that are no longer active or have been deleted
+    final trackedIds = await _getTrackedGoalIds();
+    final currentActiveIds = activeGoals.map((g) => g.id).toSet();
+    for (final oldId in trackedIds) {
+      if (!currentActiveIds.contains(oldId)) {
+        await cancelGoalReminders(oldId);
+      }
+    }
+
+    // Inspect pending notifications in OS and cancel any orphaned goal reminder
+    try {
+      final pending = await _notificationsPlugin.pendingNotificationRequests();
+      for (final req in pending) {
+        if (req.id >= 20000 && req.id < 60000) {
+          final isStillValid = activeGoals.any((g) =>
+              _getGoalNotificationId(g.id, 0) == req.id ||
+              _getGoalNotificationId(g.id, 1) == req.id);
+          if (!isStillValid) {
+            await _notificationsPlugin.cancel(id: req.id);
+          }
+        }
+      }
+    } catch (_) {}
+
     final details = _buildNotificationDetails();
-    const goalReminderHours = [13, 19]; // 1 PM and 7 PM
+    const goalReminderHours = [13, 19]; // 1 PM and 7 PM local time
 
-    for (final goal in goals) {
-      // First cancel any existing alarms for this goal to avoid stacking duplicates
-      await cancelGoalReminders(goal.id);
-
-      // If goal is completed, failed, archived, or no money left to save, do not schedule
-      if (!goal.isActive || goal.remainingToSave <= 0) {
-        continue;
+    final newlyScheduled = <String>{};
+    for (final goal in activeGoals) {
+      // First cancel existing alarms for this goal to avoid stacking duplicates
+      for (int slot = 0; slot < goalReminderHours.length; slot++) {
+        final notificationId = _getGoalNotificationId(goal.id, slot);
+        try {
+          await _notificationsPlugin.cancel(id: notificationId);
+        } catch (_) {}
       }
 
       final content = formatGoalReminderContent(
@@ -485,7 +596,10 @@ class NotificationService {
           debugPrint('scheduleGoalReminders notice: $e');
         }
       }
+      newlyScheduled.add(goal.id);
     }
+
+    await _saveTrackedGoalIds(newlyScheduled);
   }
 
   /// Cancels goal pacing reminders for a specific goal.
@@ -496,6 +610,10 @@ class NotificationService {
       try {
         await _notificationsPlugin.cancel(id: notificationId);
       } catch (_) {}
+    }
+    final tracked = await _getTrackedGoalIds();
+    if (tracked.remove(goalId)) {
+      await _saveTrackedGoalIds(tracked);
     }
   }
 }
