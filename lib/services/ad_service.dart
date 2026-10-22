@@ -20,6 +20,17 @@ class AdService {
   static InterstitialAd? _interstitialAd;
   static bool _isLoadingInterstitialAd = false;
 
+  static bool _hasPerformedFirstTabSwitch = false;
+  static int _tabSwitchesSinceLastAd = 0;
+  static int _nextTabAdThreshold = 4; // Alternates between 4 and 5 tab switches
+
+  /// Resets tab-switch ad tracking counters (used in testing and session resets).
+  static void resetTabAdCountersForTesting() {
+    _hasPerformedFirstTabSwitch = false;
+    _tabSwitchesSinceLastAd = 0;
+    _nextTabAdThreshold = 4;
+  }
+
   /// True if Google Mobile Ads is supported on the current platform (Android / iOS).
   static bool get isSupportedPlatform {
     if (kIsWeb) return false;
@@ -105,6 +116,7 @@ class AdService {
   }
 
   /// Displays a full-screen interstitial ad upon changing tabs for free users.
+  /// Always triggers on the first tab switch, then triggers on every 4th to 5th tab switch.
   /// Pro & Ad-Free users bypass this immediately with 0 delay.
   static Future<void> showTabSwitchInterstitialAd({
     required BuildContext context,
@@ -112,6 +124,28 @@ class AdService {
   }) async {
     // Pro and Ad-Free subscribers never see transition ads
     if (MonetizationService.isAdFree) {
+      onComplete();
+      return;
+    }
+
+    bool shouldTriggerAd = false;
+    if (!_hasPerformedFirstTabSwitch) {
+      // Rule: ALWAYS trigger on first tab switch
+      _hasPerformedFirstTabSwitch = true;
+      _tabSwitchesSinceLastAd = 0;
+      _nextTabAdThreshold = 4;
+      shouldTriggerAd = true;
+    } else {
+      _tabSwitchesSinceLastAd++;
+      if (_tabSwitchesSinceLastAd >= _nextTabAdThreshold) {
+        shouldTriggerAd = true;
+        _tabSwitchesSinceLastAd = 0;
+        // Alternate threshold between 4 and 5 tab switches
+        _nextTabAdThreshold = (_nextTabAdThreshold == 4) ? 5 : 4;
+      }
+    }
+
+    if (!shouldTriggerAd) {
       onComplete();
       return;
     }
