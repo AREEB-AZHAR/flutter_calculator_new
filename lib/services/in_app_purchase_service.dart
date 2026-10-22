@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'monetization_service.dart';
@@ -8,7 +11,7 @@ import 'monetization_service.dart';
 ///
 /// Integrates the official `in_app_purchase` plugin from flutter.dev to handle
 /// Google Play Billing subscriptions, one-time in-app purchases, purchase restoration,
-/// and graceful local fallback for developer/testing environments.
+/// and secure cloud transaction synchronization with anti-tamper protections.
 class InAppPurchaseService {
   InAppPurchaseService._();
   static final InAppPurchaseService instance = InAppPurchaseService._();
@@ -41,7 +44,7 @@ class InAppPurchaseService {
   Future<void> initialize() async {
     // In-App Purchase plugin is designed for mobile platforms (Android & iOS).
     if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
-      debugPrint('InAppPurchaseService: Desktop/Web platform detected; using simulated Google Play mode.');
+      debugPrint('InAppPurchaseService: Desktop/Web platform detected; In-App Purchases require Android or iOS.');
       isStoreAvailableNotifier.value = false;
       return;
     }
@@ -128,9 +131,13 @@ class InAppPurchaseService {
     }
   }
 
-  /// Delivers entitlement based on product ID.
+  /// Delivers verified entitlement based on purchase details and syncs proof to Cloud Firestore.
   Future<void> _deliverProduct(PurchaseDetails purchaseDetails) async {
     final id = purchaseDetails.productID;
+
+    // Securely log purchase transaction proof to Cloud Firestore if connected
+    _recordPurchaseInFirestore(purchaseDetails);
+
     if (id == proMonthlyId || id == proYearlyId || id == proLifetimeId) {
       await MonetizationService.unlockPro();
       debugPrint('InAppPurchaseService: Tally Pro unlocked via official Google Play payment.');
@@ -143,8 +150,37 @@ class InAppPurchaseService {
     }
   }
 
+  /// Records purchase verification tokens in Firestore for backend auditing
+  void _recordPurchaseInFirestore(PurchaseDetails details) {
+    try {
+      if (Firebase.apps.isEmpty) return;
+      final fbUser = FirebaseAuth.instance.currentUser;
+      if (fbUser == null) return;
+
+      final docId = details.purchaseID ?? DateTime.now().millisecondsSinceEpoch.toString();
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(fbUser.uid)
+          .collection('purchases')
+          .doc(docId)
+          .set({
+        'productId': details.productID,
+        'purchaseId': details.purchaseID,
+        'source': details.verificationData.source,
+        'serverVerificationData': details.verificationData.serverVerificationData,
+        'status': details.status.name,
+        'transactionDate': details.transactionDate,
+        'recordedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)).catchError((e) {
+        debugPrint('InAppPurchaseService._recordPurchaseInFirestore error: $e');
+      });
+    } catch (e) {
+      debugPrint('InAppPurchaseService._recordPurchaseInFirestore exception: $e');
+    }
+  }
+
   /// Initiates an official purchase through Google Play Billing.
-  /// If running in a test or unconfigured store environment, provides a seamless fallback.
+  /// In release mode, unauthenticated store bypass is strictly prevented.
   Future<bool> buyProduct(String productId) async {
     final product = productsNotifier.value[productId];
 
@@ -168,10 +204,17 @@ class InAppPurchaseService {
         return false;
       }
     } else {
-      // Graceful test / simulation mode (desktop, emulator without Play Services, or pending Play Console review)
-      debugPrint('InAppPurchaseService: Using official Google Pay simulation flow for $productId');
+      // In production release builds, do NOT unlock features if the store is unavailable.
+      if (kReleaseMode) {
+        debugPrint('InAppPurchaseService: Store unavailable or product not found for $productId in release mode.');
+        lastErrorNotifier.value = 'Google Play Store is unavailable on this device. Please check your network and Google Play connection.';
+        return false;
+      }
+
+      // Safe developer test-mode simulation (for automated flutter_test suites only)
+      debugPrint('InAppPurchaseService: Test mode simulation for $productId');
       isPurchasePendingNotifier.value = true;
-      await Future.delayed(const Duration(milliseconds: 650));
+      await Future.delayed(const Duration(milliseconds: 50));
       isPurchasePendingNotifier.value = false;
 
       if (productId == proMonthlyId || productId == proYearlyId || productId == proLifetimeId) {
@@ -207,3 +250,4 @@ class InAppPurchaseService {
     _subscription?.cancel();
   }
 }
+
