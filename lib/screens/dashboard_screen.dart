@@ -774,6 +774,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       child: AdBannerWidget(
                         margin: EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
                         sponsorCategory: 'YieldMax High-Yield Savings (5.2% APY)',
+                        size: AdBannerSize.large,
                       ),
                     ),
 

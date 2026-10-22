@@ -6,6 +6,7 @@ import '../services/state.dart';
 import '../services/language_service.dart';
 import '../utils/constants.dart';
 import '../widgets/delete_confirmation_dialog.dart';
+import '../widgets/ad_banner_widget.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -686,17 +687,30 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 valueListenable: AppState.goalsNotifier,
                 builder: (context, goals, _) {
                   if (goals.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.savings_outlined, size: 60, color: onSurface.withValues(alpha: 0.2)),
-                          const SizedBox(height: 16),
-                          Text(LanguageService.tr('no_savings_goals_yet'), style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 16)),
-                          const SizedBox(height: 6),
-                          Text(LanguageService.tr('tap_to_create_goal'), style: TextStyle(color: onSurface.withValues(alpha: 0.35), fontSize: 13)),
-                        ],
-                      ),
+                    return ListView(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 90),
+                      children: [
+                        const RepaintBoundary(
+                          child: AdBannerWidget(
+                            margin: EdgeInsets.only(bottom: 20.0),
+                            sponsorCategory: 'Apex High-Yield Savings (5.4% APY)',
+                            size: AdBannerSize.large,
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.savings_outlined, size: 60, color: onSurface.withValues(alpha: 0.2)),
+                              const SizedBox(height: 16),
+                              Text(LanguageService.tr('no_savings_goals_yet'), style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 16)),
+                              const SizedBox(height: 6),
+                              Text(LanguageService.tr('tap_to_create_goal'), style: TextStyle(color: onSurface.withValues(alpha: 0.35), fontSize: 13)),
+                            ],
+                          ),
+                        ),
+                      ],
                     );
                   }
 
@@ -711,7 +725,16 @@ class _GoalsScreenState extends State<GoalsScreen> {
                       RepaintBoundary(
                         child: _buildVaultSummary(context, goals, currentCurrency),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
+
+                      // Enlarged Banner Ad for Free Users
+                      const RepaintBoundary(
+                        child: AdBannerWidget(
+                          margin: EdgeInsets.only(bottom: 16.0),
+                          sponsorCategory: 'YieldMax High-Yield Savings (5.2% APY)',
+                          size: AdBannerSize.large,
+                        ),
+                      ),
 
                       if (activeGoals.isNotEmpty) ...[
                         Text(LanguageService.tr('active_goals'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface)),

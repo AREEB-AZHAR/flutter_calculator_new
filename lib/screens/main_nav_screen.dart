@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/state.dart';
 import '../services/language_service.dart';
+import '../services/ad_service.dart';
 import '../widgets/offline_banner.dart';
 import 'dashboard_screen.dart';
 import 'insights_screen.dart';
@@ -77,7 +78,15 @@ class _MainNavScreenState extends State<MainNavScreen> {
             textDirection: TextDirection.ltr,
             child: NavigationBar(
               selectedIndex: currentIndex,
-              onDestinationSelected: (i) => AppState.activeTabNotifier.value = i,
+              onDestinationSelected: (i) {
+                if (i == currentIndex) return;
+                AdService.showTabSwitchInterstitialAd(
+                  context: context,
+                  onComplete: () {
+                    AppState.activeTabNotifier.value = i;
+                  },
+                );
+              },
               backgroundColor: Theme.of(context).colorScheme.surface,
               indicatorColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
               destinations: [

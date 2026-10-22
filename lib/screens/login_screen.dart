@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -537,7 +538,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 children: [
                   if (resetStep == 0) ...[
                     Text(
-                      'Enter your registered or bound email address to receive a 6-digit verification code:',
+                      'Enter your registered email address to receive a secure password reset link & verification code:',
                       style: TextStyle(fontSize: 12.5, color: onSurface.withValues(alpha: 0.7)),
                     ),
                     const SizedBox(height: 16),
@@ -617,16 +618,18 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 generatedSecurityCode = newCode;
                                 codeGeneratedAt = DateTime.now();
                                 try {
-                                  if (Firebase.apps.isNotEmpty) {
-                                    final callable = FirebaseFunctions.instance.httpsCallable('sendOtpEmail');
-                                    await callable.call({'email': resolvedEmail!, 'otp': newCode});
+                                  if (Firebase.apps.isNotEmpty && resolvedEmail != null) {
+                                    await FirebaseAuth.instance.sendPasswordResetEmail(email: resolvedEmail!);
+                                    debugPrint('FirebaseAuth password reset email resent to $resolvedEmail');
                                   }
+                                } on FirebaseAuthException catch (fe) {
+                                  debugPrint('FirebaseAuthException during resend: ${fe.code} - ${fe.message}');
                                 } catch (e) {
-                                  debugPrint('Cloud Function sendOtpEmail resend note: $e');
+                                  debugPrint('Firebase sendPasswordResetEmail resend note: $e');
                                 }
                                 setDialogState(() {
                                   isVerifying = false;
-                                  dialogError = 'New verification code sent! Valid for 10 minutes.';
+                                  dialogError = 'New password reset email sent! Please check your inbox.';
                                 });
                               },
                       ),
@@ -737,6 +740,24 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
                           final user = await AppDatabase.instance.getUserByEmail(emailInput);
                           if (user == null) {
+                            bool fbSent = false;
+                            try {
+                              if (Firebase.apps.isNotEmpty) {
+                                await FirebaseAuth.instance.sendPasswordResetEmail(email: emailInput);
+                                fbSent = true;
+                              }
+                            } catch (e) {
+                              debugPrint('FirebaseAuth check for cloud user: $e');
+                            }
+
+                            if (fbSent) {
+                              setDialogState(() {
+                                isVerifying = false;
+                                dialogError = 'A password reset link has been dispatched to your Firebase account email.';
+                              });
+                              return;
+                            }
+
                             setDialogState(() {
                               isVerifying = false;
                               dialogError = 'No account found with this email address.';
@@ -748,14 +769,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           generatedSecurityCode = secureOtp;
                           codeGeneratedAt = DateTime.now();
 
-                          // Send OTP verification code via Cloud Function
+                          // Send official Firebase Password Reset Email
                           try {
                             if (Firebase.apps.isNotEmpty) {
-                              final callable = FirebaseFunctions.instance.httpsCallable('sendOtpEmail');
-                              await callable.call({'email': emailInput, 'otp': secureOtp});
+                              await FirebaseAuth.instance.sendPasswordResetEmail(email: emailInput);
+                              debugPrint('FirebaseAuth password reset email dispatched to $emailInput');
                             }
+                          } on FirebaseAuthException catch (fe) {
+                            debugPrint('FirebaseAuthException during sendPasswordResetEmail: ${fe.code} - ${fe.message}');
                           } catch (e) {
-                            debugPrint('Cloud Function sendOtpEmail note: $e');
+                            debugPrint('Firebase sendPasswordResetEmail note: $e');
                           }
 
                           setDialogState(() {

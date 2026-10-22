@@ -3,18 +3,22 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../widgets/fullscreen_30sec_ad_dialog.dart';
+import '../widgets/fullscreen_interstitial_ad_dialog.dart';
+import 'monetization_service.dart';
 
 /// Centralized Google Mobile Ads (AdMob) Integration Service.
 ///
 /// Handles SDK initialization, official Google test ad unit IDs, authentic
-/// Google Banner ads, and official Rewarded Ads with a 30-second non-skippable
-/// fullscreen player for unlocking 1-time theme changes.
+/// Google Banner ads, Fullscreen Interstitial ads for tab transitions, and
+/// official Rewarded Ads with a 30-second non-skippable player.
 class AdService {
   AdService._();
 
   static bool _isInitialized = false;
   static RewardedAd? _rewardedAd;
   static bool _isLoadingRewardedAd = false;
+  static InterstitialAd? _interstitialAd;
+  static bool _isLoadingInterstitialAd = false;
 
   /// True if Google Mobile Ads is supported on the current platform (Android / iOS).
   static bool get isSupportedPlatform {
@@ -46,7 +50,19 @@ class AdService {
     return '';
   }
 
-  /// Initializes the Google Mobile Ads SDK on supported platforms and preloads rewarded ads.
+  /// Official Google AdMob Test Interstitial Ad Unit IDs (Screen / Tab Transitions)
+  static String get interstitialAdUnitId {
+    if (!kIsWeb && Platform.isAndroid) {
+      // Official Google Android test interstitial ad unit ID
+      return 'ca-app-pub-3940256099942544/1033173712';
+    } else if (!kIsWeb && Platform.isIOS) {
+      // Official Google iOS test interstitial ad unit ID
+      return 'ca-app-pub-3940256099942544/4411468910';
+    }
+    return '';
+  }
+
+  /// Initializes the Google Mobile Ads SDK on supported platforms and preloads ads.
   static Future<void> initialize() async {
     if (_isInitialized) return;
     if (!isSupportedPlatform) {
@@ -59,8 +75,80 @@ class AdService {
       _isInitialized = true;
       debugPrint('AdService: Google Mobile Ads SDK initialized successfully.');
       loadRewardedAd();
+      loadInterstitialAd();
     } catch (e) {
       debugPrint('AdService.initialize notice: $e');
+    }
+  }
+
+  /// Preloads an official Google AdMob Interstitial Ad for seamless tab transitions.
+  static void loadInterstitialAd() {
+    if (!isSupportedPlatform || _isLoadingInterstitialAd || _interstitialAd != null) return;
+
+    _isLoadingInterstitialAd = true;
+    InterstitialAd.load(
+      adUnitId: interstitialAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          _interstitialAd = ad;
+          _isLoadingInterstitialAd = false;
+          debugPrint('AdService: Google AdMob InterstitialAd loaded successfully.');
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          _interstitialAd = null;
+          _isLoadingInterstitialAd = false;
+          debugPrint('AdService: Failed to load Google AdMob InterstitialAd: $error');
+        },
+      ),
+    );
+  }
+
+  /// Displays a full-screen interstitial ad upon changing tabs for free users.
+  /// Pro & Ad-Free users bypass this immediately with 0 delay.
+  static Future<void> showTabSwitchInterstitialAd({
+    required BuildContext context,
+    required VoidCallback onComplete,
+  }) async {
+    // Pro and Ad-Free subscribers never see transition ads
+    if (MonetizationService.isAdFree) {
+      onComplete();
+      return;
+    }
+
+    // 1. If native Google AdMob InterstitialAd is preloaded on mobile, show it
+    if (isSupportedPlatform && _interstitialAd != null) {
+      final ad = _interstitialAd!;
+      _interstitialAd = null; // Consume reference
+
+      ad.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          debugPrint('AdService: InterstitialAd dismissed.');
+          ad.dispose();
+          loadInterstitialAd(); // Preload next
+          onComplete();
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          debugPrint('AdService: Failed to show InterstitialAd: $error');
+          ad.dispose();
+          loadInterstitialAd();
+          onComplete();
+        },
+      );
+
+      ad.show();
+      return;
+    }
+
+    // 2. Cross-platform fallback: High-craft full-screen interstitial dialog
+    if (context.mounted) {
+      await FullscreenInterstitialAdDialog.show(
+        context,
+        onDismissed: onComplete,
+      );
+      loadInterstitialAd();
+    } else {
+      onComplete();
     }
   }
 
