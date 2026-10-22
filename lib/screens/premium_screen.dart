@@ -286,9 +286,20 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
     if (confirmed == true && mounted) {
       setState(() => _isProcessingLocal = true);
-      await _iapService.buyProduct(productId);
+      final success = await _iapService.buyProduct(productId);
       if (!mounted) return;
       setState(() => _isProcessingLocal = false);
+
+      if (!success) {
+        final err = _iapService.lastErrorNotifier.value ?? 'Payment could not be completed.';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(err),
+            backgroundColor: Colors.orangeAccent,
+          ),
+        );
+        return;
+      }
 
       showDialog(
         context: context,

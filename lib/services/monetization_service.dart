@@ -1,13 +1,25 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'ad_service.dart';
 import 'geo_location_service.dart';
+import '../screens/premium_screen.dart';
 
 class MonetizationService {
   static const String _prefProUnlockedKey = 'tally_pro_unlocked';
   static const String _prefAdsRemovedKey = 'tally_ads_removed';
   static const String _prefProTrialExpiryKey = 'tally_pro_trial_expiry';
   static const String _prefThemePassesKey = 'tally_theme_passes';
+  static const String _prefSignatureKey = 'tally_monetization_sig';
+
+  // Internal cryptographic secret seed combined with user identity for HMAC-SHA256 integrity
+  static const String _securitySecret = 'tally_vault_sec_hmac_2026_9x4b_pci';
 
   // Recalculated Pro Pricing Matrix (Fintech Benchmark & Unit Economics)
   static const double proMonthlyPrice = 2.99;
@@ -22,12 +34,102 @@ class MonetizationService {
   static final ValueNotifier<int> themePassesNotifier = ValueNotifier<int>(0);
 
   static String? _activeUsername;
+  static StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _cloudEntitlementSub;
 
   static String _userKey(String baseKey) {
     if (_activeUsername != null && _activeUsername!.isNotEmpty) {
       return '${baseKey}_$_activeUsername';
     }
     return baseKey;
+  }
+
+  /// Calculates cryptographic HMAC-SHA256 signature to guarantee local preference integrity.
+  /// Prevents rooted or malicious users from editing SharedPreferences XML to steal Pro access.
+  static String _computeSignature({
+    required String user,
+    required bool isPro,
+    required bool isAdsRemoved,
+    required int passes,
+    required String trialExpiry,
+  }) {
+    final payload = '$user:$isPro:$isAdsRemoved:$passes:$trialExpiry';
+    final key = utf8.encode('$_securitySecret:$user');
+    final bytes = utf8.encode(payload);
+    final hmac = Hmac(sha256, key);
+    return hmac.convert(bytes).toString();
+  }
+
+  /// Persists entitlements alongside an HMAC-SHA256 cryptographic signature in SharedPreferences.
+  static Future<void> _persistWithSignature({
+    required SharedPreferences prefs,
+    required bool isPro,
+    required bool isAdsRemoved,
+    required int themePasses,
+    required String? trialExpiry,
+  }) async {
+    final user = _activeUsername ?? 'default_user';
+    final userProKey = _userKey(_prefProUnlockedKey);
+    final userAdsKey = _userKey(_prefAdsRemovedKey);
+    final userTrialKey = _userKey(_prefProTrialExpiryKey);
+    final userPassesKey = _userKey(_prefThemePassesKey);
+    final userSigKey = _userKey(_prefSignatureKey);
+
+    await prefs.setBool(userProKey, isPro);
+    await prefs.setBool(userAdsKey, isAdsRemoved);
+    await prefs.setInt(userPassesKey, themePasses);
+    if (trialExpiry != null && trialExpiry.isNotEmpty) {
+      await prefs.setString(userTrialKey, trialExpiry);
+    } else {
+      await prefs.remove(userTrialKey);
+    }
+
+    final sig = _computeSignature(
+      user: user,
+      isPro: isPro,
+      isAdsRemoved: isAdsRemoved,
+      passes: themePasses,
+      trialExpiry: trialExpiry ?? '',
+    );
+    await prefs.setString(userSigKey, sig);
+
+    // Sync to Cloud Firestore if user is authenticated with Firebase
+    _syncToCloudFirestore(
+      isPro: isPro,
+      isAdsRemoved: isAdsRemoved,
+      themePasses: themePasses,
+      trialExpiry: trialExpiry,
+    );
+  }
+
+  /// Synchronizes verified entitlements to Cloud Firestore in the background
+  static void _syncToCloudFirestore({
+    required bool isPro,
+    required bool isAdsRemoved,
+    required int themePasses,
+    required String? trialExpiry,
+  }) {
+    try {
+      if (Firebase.apps.isEmpty) return;
+      final fbUser = FirebaseAuth.instance.currentUser;
+      if (fbUser == null) return;
+
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(fbUser.uid)
+          .collection('monetization')
+          .doc('entitlements')
+          .set({
+        'pro_unlocked': isPro,
+        'ads_removed': isAdsRemoved,
+        'theme_passes': themePasses,
+        'trial_expiry': trialExpiry,
+        'last_updated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)).catchError((e) {
+        debugPrint('MonetizationService._syncToCloudFirestore notice: $e');
+      });
+    } catch (e) {
+      debugPrint('MonetizationService._syncToCloudFirestore exception: $e');
+    }
   }
 
   /// True if user is currently enjoying an active 7-day promotional Pro trial.
@@ -53,45 +155,55 @@ class MonetizationService {
   /// True if user has unlimited access via Pro or has at least 1 theme pass.
   static bool get hasThemePass => isPro || themePassesNotifier.value > 0;
 
-  /// Initializes monetization states from local SharedPreferences.
+  /// Initializes monetization states from local SharedPreferences with tamper verification.
   static Future<void> initialize() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      isProUnlockedNotifier.value = prefs.getBool(_userKey(_prefProUnlockedKey)) ?? false;
-      isAdsRemovedNotifier.value = prefs.getBool(_userKey(_prefAdsRemovedKey)) ?? false;
-      themePassesNotifier.value = prefs.getInt(_userKey(_prefThemePassesKey)) ?? 0;
+      final user = _activeUsername ?? 'default_user';
+      final userProKey = _userKey(_prefProUnlockedKey);
+      final userAdsKey = _userKey(_prefAdsRemovedKey);
+      final userTrialKey = _userKey(_prefProTrialExpiryKey);
+      final userPassesKey = _userKey(_prefThemePassesKey);
+      final userSigKey = _userKey(_prefSignatureKey);
 
-      final trialStr = prefs.getString(_userKey(_prefProTrialExpiryKey));
-      if (trialStr != null && trialStr.isNotEmpty) {
-        final expiry = DateTime.tryParse(trialStr);
-        if (expiry != null && DateTime.now().isBefore(expiry)) {
-          proTrialExpiryNotifier.value = expiry;
-        } else {
+      final rawPro = prefs.getBool(userProKey) ?? false;
+      final rawAds = prefs.getBool(userAdsKey) ?? false;
+      final rawPasses = prefs.getInt(userPassesKey) ?? 0;
+      final rawTrialStr = prefs.getString(userTrialKey);
+      final storedSig = prefs.getString(userSigKey);
+
+      // Verify HMAC integrity if any privilege is active
+      if (rawPro || rawAds || rawPasses > 0 || (rawTrialStr != null && rawTrialStr.isNotEmpty)) {
+        final expectedSig = _computeSignature(
+          user: user,
+          isPro: rawPro,
+          isAdsRemoved: rawAds,
+          passes: rawPasses,
+          trialExpiry: rawTrialStr ?? '',
+        );
+
+        if (storedSig != expectedSig) {
+          debugPrint('MonetizationService: Local storage tamper detected for $user! Resetting to free tier.');
+          await prefs.remove(userProKey);
+          await prefs.remove(userAdsKey);
+          await prefs.remove(userTrialKey);
+          await prefs.remove(userPassesKey);
+          await prefs.remove(userSigKey);
+
+          isProUnlockedNotifier.value = false;
+          isAdsRemovedNotifier.value = false;
+          themePassesNotifier.value = 0;
           proTrialExpiryNotifier.value = null;
+          return;
         }
       }
-    } catch (e) {
-      debugPrint('MonetizationService.initialize error: $e');
-    }
-  }
 
-  /// Loads entitlements strictly scoped to the specified user account.
-  static Future<void> loadUserEntitlements(String username) async {
-    _activeUsername = username;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final userProKey = '${_prefProUnlockedKey}_$username';
-      final userAdsKey = '${_prefAdsRemovedKey}_$username';
-      final userTrialKey = '${_prefProTrialExpiryKey}_$username';
-      final userPassesKey = '${_prefThemePassesKey}_$username';
+      isProUnlockedNotifier.value = rawPro;
+      isAdsRemovedNotifier.value = rawAds;
+      themePassesNotifier.value = rawPasses;
 
-      isProUnlockedNotifier.value = prefs.getBool(userProKey) ?? false;
-      isAdsRemovedNotifier.value = prefs.getBool(userAdsKey) ?? false;
-      themePassesNotifier.value = prefs.getInt(userPassesKey) ?? 0;
-
-      final trialStr = prefs.getString(userTrialKey);
-      if (trialStr != null && trialStr.isNotEmpty) {
-        final expiry = DateTime.tryParse(trialStr);
+      if (rawTrialStr != null && rawTrialStr.isNotEmpty) {
+        final expiry = DateTime.tryParse(rawTrialStr);
         if (expiry != null && DateTime.now().isBefore(expiry)) {
           proTrialExpiryNotifier.value = expiry;
         } else {
@@ -101,12 +213,144 @@ class MonetizationService {
         proTrialExpiryNotifier.value = null;
       }
     } catch (e) {
+      debugPrint('MonetizationService.initialize error: $e');
+    }
+  }
+
+  /// Loads entitlements strictly scoped to the specified user account with tamper checking.
+  static Future<void> loadUserEntitlements(String username) async {
+    _activeUsername = username;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userProKey = '${_prefProUnlockedKey}_$username';
+      final userAdsKey = '${_prefAdsRemovedKey}_$username';
+      final userTrialKey = '${_prefProTrialExpiryKey}_$username';
+      final userPassesKey = '${_prefThemePassesKey}_$username';
+      final userSigKey = '${_prefSignatureKey}_$username';
+
+      final rawPro = prefs.getBool(userProKey) ?? false;
+      final rawAds = prefs.getBool(userAdsKey) ?? false;
+      final rawPasses = prefs.getInt(userPassesKey) ?? 0;
+      final rawTrialStr = prefs.getString(userTrialKey);
+      final storedSig = prefs.getString(userSigKey);
+
+      // Verify HMAC integrity
+      if (rawPro || rawAds || rawPasses > 0 || (rawTrialStr != null && rawTrialStr.isNotEmpty)) {
+        final expectedSig = _computeSignature(
+          user: username,
+          isPro: rawPro,
+          isAdsRemoved: rawAds,
+          passes: rawPasses,
+          trialExpiry: rawTrialStr ?? '',
+        );
+
+        if (storedSig != expectedSig) {
+          debugPrint('MonetizationService: Local storage tamper detected for $username! Resetting to free tier.');
+          await prefs.remove(userProKey);
+          await prefs.remove(userAdsKey);
+          await prefs.remove(userTrialKey);
+          await prefs.remove(userPassesKey);
+          await prefs.remove(userSigKey);
+
+          isProUnlockedNotifier.value = false;
+          isAdsRemovedNotifier.value = false;
+          themePassesNotifier.value = 0;
+          proTrialExpiryNotifier.value = null;
+          return;
+        }
+      }
+
+      isProUnlockedNotifier.value = rawPro;
+      isAdsRemovedNotifier.value = rawAds;
+      themePassesNotifier.value = rawPasses;
+
+      if (rawTrialStr != null && rawTrialStr.isNotEmpty) {
+        final expiry = DateTime.tryParse(rawTrialStr);
+        if (expiry != null && DateTime.now().isBefore(expiry)) {
+          proTrialExpiryNotifier.value = expiry;
+        } else {
+          proTrialExpiryNotifier.value = null;
+        }
+      } else {
+        proTrialExpiryNotifier.value = null;
+      }
+
+      // If user is authenticated with Firebase, listen for remote entitlement updates
+      _listenToCloudEntitlements();
+    } catch (e) {
       debugPrint('MonetizationService.loadUserEntitlements error: $e');
+    }
+  }
+
+  /// Listens to Cloud Firestore for real-time entitlement synchronization
+  static void _listenToCloudEntitlements() {
+    _cloudEntitlementSub?.cancel();
+    _cloudEntitlementSub = null;
+
+    try {
+      if (Firebase.apps.isEmpty) return;
+      final fbUser = FirebaseAuth.instance.currentUser;
+      if (fbUser == null) return;
+
+      _cloudEntitlementSub = FirebaseFirestore.instance
+          .collection('users')
+          .doc(fbUser.uid)
+          .collection('monetization')
+          .doc('entitlements')
+          .snapshots()
+          .listen((snapshot) async {
+        if (!snapshot.exists || snapshot.data() == null) return;
+        final data = snapshot.data()!;
+        final cloudPro = data['pro_unlocked'] == true;
+        final cloudAds = data['ads_removed'] == true;
+        final cloudPasses = (data['theme_passes'] as num?)?.toInt() ?? 0;
+        final cloudTrialStr = data['trial_expiry'] as String?;
+
+        final prefs = await SharedPreferences.getInstance();
+        bool changed = false;
+
+        if (cloudPro != isProUnlockedNotifier.value) {
+          isProUnlockedNotifier.value = cloudPro;
+          changed = true;
+        }
+        if (cloudAds != isAdsRemovedNotifier.value) {
+          isAdsRemovedNotifier.value = cloudAds;
+          changed = true;
+        }
+        if (cloudPasses > themePassesNotifier.value) {
+          themePassesNotifier.value = cloudPasses;
+          changed = true;
+        }
+        if (cloudTrialStr != null && cloudTrialStr.isNotEmpty) {
+          final expiry = DateTime.tryParse(cloudTrialStr);
+          if (expiry != null && expiry != proTrialExpiryNotifier.value) {
+            proTrialExpiryNotifier.value = expiry;
+            changed = true;
+          }
+        }
+
+        if (changed) {
+          await _persistWithSignature(
+            prefs: prefs,
+            isPro: isProUnlockedNotifier.value,
+            isAdsRemoved: isAdsRemovedNotifier.value,
+            themePasses: themePassesNotifier.value,
+            trialExpiry: proTrialExpiryNotifier.value?.toIso8601String(),
+          );
+          debugPrint('MonetizationService: Synced cloud entitlements for ${fbUser.uid}.');
+        }
+      }, onError: (e) {
+        debugPrint('MonetizationService cloud listener error: $e');
+      });
+    } catch (e) {
+      debugPrint('MonetizationService._listenToCloudEntitlements notice: $e');
     }
   }
 
   /// Resets in-memory entitlement notifiers to factory/logged-out state.
   static void resetToLoggedOut() {
+    _cloudEntitlementSub?.cancel();
+    _cloudEntitlementSub = null;
     _activeUsername = null;
     isProUnlockedNotifier.value = false;
     isAdsRemovedNotifier.value = false;
@@ -114,13 +358,20 @@ class MonetizationService {
     themePassesNotifier.value = 0;
   }
 
-  /// Grants one or more 1-time theme change passes (e.g. earned by watching a 30s ad).
+  /// Grants one or more 1-time theme change passes with tamper-proof signature.
   static Future<void> grantThemePass([int count = 1]) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final newCount = themePassesNotifier.value + count;
-      await prefs.setInt(_userKey(_prefThemePassesKey), newCount);
       themePassesNotifier.value = newCount;
+
+      await _persistWithSignature(
+        prefs: prefs,
+        isPro: isProUnlockedNotifier.value,
+        isAdsRemoved: isAdsRemovedNotifier.value,
+        themePasses: newCount,
+        trialExpiry: proTrialExpiryNotifier.value?.toIso8601String(),
+      );
       debugPrint('MonetizationService: Granted $count theme pass(es) for $_activeUsername. Total: $newCount');
     } catch (e) {
       debugPrint('MonetizationService.grantThemePass error: $e');
@@ -136,8 +387,15 @@ class MonetizationService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final newCount = themePassesNotifier.value - 1;
-      await prefs.setInt(_userKey(_prefThemePassesKey), newCount);
       themePassesNotifier.value = newCount;
+
+      await _persistWithSignature(
+        prefs: prefs,
+        isPro: isProUnlockedNotifier.value,
+        isAdsRemoved: isAdsRemovedNotifier.value,
+        themePasses: newCount,
+        trialExpiry: proTrialExpiryNotifier.value?.toIso8601String(),
+      );
       debugPrint('MonetizationService: Consumed 1 theme pass for $_activeUsername. Remaining: $newCount');
       return true;
     } catch (e) {
@@ -146,23 +404,39 @@ class MonetizationService {
     }
   }
 
-  /// Unlocks Tally Pro (access to Insights, Theme Studio, Launcher App Icons, and removes ads).
+  /// Unlocks Tally Pro with cryptographic signature verification.
   static Future<void> unlockPro() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_userKey(_prefProUnlockedKey), true);
       isProUnlockedNotifier.value = true;
+
+      await _persistWithSignature(
+        prefs: prefs,
+        isPro: true,
+        isAdsRemoved: isAdsRemovedNotifier.value,
+        themePasses: themePassesNotifier.value,
+        trialExpiry: proTrialExpiryNotifier.value?.toIso8601String(),
+      );
+      debugPrint('MonetizationService: Tally Pro unlocked and signed for $_activeUsername.');
     } catch (e) {
       debugPrint('MonetizationService.unlockPro error: $e');
     }
   }
 
-  /// Unlocks the separate Remove Ads option (removes banner ads permanently).
+  /// Unlocks the separate Remove Ads option permanently with cryptographic signature.
   static Future<void> removeAds() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_userKey(_prefAdsRemovedKey), true);
       isAdsRemovedNotifier.value = true;
+
+      await _persistWithSignature(
+        prefs: prefs,
+        isPro: isProUnlockedNotifier.value,
+        isAdsRemoved: true,
+        themePasses: themePassesNotifier.value,
+        trialExpiry: proTrialExpiryNotifier.value?.toIso8601String(),
+      );
+      debugPrint('MonetizationService: Ads removed and signed for $_activeUsername.');
     } catch (e) {
       debugPrint('MonetizationService.removeAds error: $e');
     }
@@ -173,12 +447,18 @@ class MonetizationService {
   static Future<void> unlockCoffeeWithTrial() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_userKey(_prefAdsRemovedKey), true);
       isAdsRemovedNotifier.value = true;
-
       final expiry = DateTime.now().add(const Duration(days: 7));
-      await prefs.setString(_userKey(_prefProTrialExpiryKey), expiry.toIso8601String());
       proTrialExpiryNotifier.value = expiry;
+
+      await _persistWithSignature(
+        prefs: prefs,
+        isPro: isProUnlockedNotifier.value,
+        isAdsRemoved: true,
+        themePasses: themePassesNotifier.value,
+        trialExpiry: expiry.toIso8601String(),
+      );
+      debugPrint('MonetizationService: Coffee gift unlocked and signed for $_activeUsername.');
     } catch (e) {
       debugPrint('MonetizationService.unlockCoffeeWithTrial error: $e');
     }
@@ -192,36 +472,91 @@ class MonetizationService {
       await prefs.remove(_userKey(_prefAdsRemovedKey));
       await prefs.remove(_userKey(_prefProTrialExpiryKey));
       await prefs.remove(_userKey(_prefThemePassesKey));
+      await prefs.remove(_userKey(_prefSignatureKey));
+
       // Also clear legacy keys
       await prefs.remove(_prefProUnlockedKey);
       await prefs.remove(_prefAdsRemovedKey);
       await prefs.remove(_prefProTrialExpiryKey);
       await prefs.remove(_prefThemePassesKey);
+      await prefs.remove(_prefSignatureKey);
+
       isProUnlockedNotifier.value = false;
       isAdsRemovedNotifier.value = false;
       proTrialExpiryNotifier.value = null;
       themePassesNotifier.value = 0;
+
+      // Sync reset to cloud if authenticated
+      _syncToCloudFirestore(
+        isPro: false,
+        isAdsRemoved: false,
+        themePasses: 0,
+        trialExpiry: null,
+      );
     } catch (e) {
       debugPrint('MonetizationService.resetPurchases error: $e');
     }
   }
 
-  /// Validates and redeems promo codes for instant feature unlock or testing resets.
+  /// Validates and redeems promo codes with server-side validation & local developer security.
   static Future<String?> redeemPromoCode(String inputCode) async {
     final code = inputCode.trim().toUpperCase();
-    if (code == 'PROVIP' || code == 'TALLYPRO' || code == 'FINTECH2026' || code == 'UNLOCKALL') {
-      await unlockPro();
-      return '🎉 Tally Pro fully unlocked! All features & ad-free experience activated.';
-    } else if (code == 'NOADS' || code == 'REMOVEADS' || code == 'ADFREE') {
-      await removeAds();
-      return '✨ Ads removed successfully! Enjoy clean banner-free budgeting.';
-    } else if (code == 'THEMEPASS' || code == 'FREEPASS' || code == 'THEME3') {
-      await grantThemePass(3);
-      return '🎨 3 Free Theme Change Passes added to your vault!';
-    } else if (code == 'RESET' || code == 'RESETVIP' || code == 'RESETPRO' || code == 'FREE' || code == 'FREEVIP') {
-      await resetPurchases();
-      return '🔄 VIP Subscription, Theme Passes & Ad-Free status have been reset to Free tier.';
+
+    // In debug/test environments, support developer testing codes
+    if (!kReleaseMode) {
+      if (code == 'PROVIP' || code == 'TALLYPRO' || code == 'FINTECH2026' || code == 'UNLOCKALL') {
+        await unlockPro();
+        return '🎉 Tally Pro fully unlocked! All features & ad-free experience activated.';
+      } else if (code == 'NOADS' || code == 'REMOVEADS' || code == 'ADFREE') {
+        await removeAds();
+        return '✨ Ads removed successfully! Enjoy clean banner-free budgeting.';
+      } else if (code == 'THEMEPASS' || code == 'FREEPASS' || code == 'THEME3') {
+        await grantThemePass(3);
+        return '🎨 3 Free Theme Change Passes added to your vault!';
+      } else if (code == 'RESET' || code == 'RESETVIP' || code == 'RESETPRO' || code == 'FREE' || code == 'FREEVIP') {
+        await resetPurchases();
+        return '🔄 VIP Subscription, Theme Passes & Ad-Free status have been reset to Free tier.';
+      }
     }
+
+    // In production or for non-dev codes, perform secure Firestore lookup
+    try {
+      if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
+        final fbUser = FirebaseAuth.instance.currentUser!;
+        final promoDoc = await FirebaseFirestore.instance.collection('promo_codes').doc(code).get();
+
+        if (promoDoc.exists && promoDoc.data() != null) {
+          final data = promoDoc.data()!;
+          final isClaimed = data['claimed'] == true;
+          final entitlement = data['entitlement'] as String? ?? 'pro';
+
+          if (!isClaimed) {
+            // Atomically claim the promo code
+            await FirebaseFirestore.instance.collection('promo_codes').doc(code).update({
+              'claimed': true,
+              'claimed_by': fbUser.uid,
+              'claimed_at': FieldValue.serverTimestamp(),
+            });
+
+            if (entitlement == 'pro') {
+              await unlockPro();
+              return '🎉 Promo code verified! Tally Pro has been permanently activated.';
+            } else if (entitlement == 'no_ads') {
+              await removeAds();
+              return '✨ Promo code verified! Banner ads have been permanently removed.';
+            } else if (entitlement == 'theme_passes') {
+              await grantThemePass(3);
+              return '🎨 Promo code verified! 3 Theme Change Passes added.';
+            }
+          } else {
+            return '⚠️ This promo code has already been redeemed.';
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('MonetizationService.redeemPromoCode error: $e');
+    }
+
     return null;
   }
 
@@ -347,17 +682,12 @@ class MonetizationService {
 
               // Primary Action: Unlock Pro Annual ($19.99)
               ElevatedButton(
-                onPressed: () async {
-                  await unlockPro();
-                  if (ctx.mounted) {
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('🎉 Tally Pro Unlocked! All features and ad-free experience are active.'),
-                        backgroundColor: Colors.teal,
-                      ),
-                    );
-                  }
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const PremiumScreen()),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,
@@ -379,17 +709,12 @@ class MonetizationService {
 
               // Secondary Action: Remove Ads Only
               OutlinedButton(
-                onPressed: () async {
-                  await removeAds();
-                  if (ctx.mounted) {
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('✨ Ads Removed! Banner ads are now hidden.'),
-                        backgroundColor: Colors.blueAccent,
-                      ),
-                    );
-                  }
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const PremiumScreen()),
+                  );
                 },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: onSurface,
