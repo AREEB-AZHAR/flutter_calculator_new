@@ -1,5 +1,23 @@
 # 💰 Tally — Smart Personal Finance & Expense Tracker
 
+## Current audit and optimization roadmap — 23 October 2026
+
+The [audit and implementation plan](docs/AUDIT_AND_OPTIMIZATION_PLAN.md) records source evidence, priorities, acceptance tests, effort estimates, and measurement targets for version **1.8.16+26**. This task produced an audit and documentation; runtime fixes are still pending.
+
+**Current findings take precedence over historical feature descriptions below:** normal sync can delete cloud-only records and skips uploads beyond 400 transactions; production sandbox paths can grant paid access; local password recovery expects a code that its email flow does not send; recurring processing is not atomic. SQLite is **not configured for database encryption**, and the existing headless timing tests do not establish mobile 60/120 fps performance. Visited tabs are retained in a lazy `IndexedStack`.
+
+Recommended sequence: establish a deterministic test/device baseline → repair sync and recurring ledger safety → verify payments and repair recovery/storage protection → optimize startup and bounded ledger queries → validate signed release builds. See the plan for exit criteria and primary-source research.
+
+Verification: static analysis passed with no issues; full test runs had **166 passed / 5 failed**, then **168 passed / 3 failed** ([repeat log](docs/audit-evidence/flutter-test.txt)). A serial rerun of the two repeat-failing files had **24 passed / 1 failed** ([diagnostic log](docs/audit-evidence/targeted-tests.txt)): database-lock errors did not recur, while an ad-banner assertion still failed. Native rendering, real billing, deployed Firebase rules, and physical-device performance remain unverified.
+
+**Setup corrections:** use Flutter **3.41.3 / Dart 3.11.1** as the audited toolchain baseline; the manifest requires Dart `^3.11.1`. Older Flutter/Dart minimums in historical notes do not satisfy this manifest. Android uses AGP **8.11.1**, Kotlin **2.2.20**, Gradle **8.14**, and Java 17 compilation. Install a compatible JDK 17/21 and confirm its actual path with `flutter doctor -v`; replace the example JDK path below with your installed location. `android/local.properties` must contain the local `flutter.sdk` and Android `sdk.dir` paths and stay untracked. Windows builds require Visual Studio's Desktop development with C++ workload. iOS builds require macOS/Xcode/CocoaPods. Browser support needs a real web build and runtime test.
+
+After cloning, run `flutter doctor -v`, `flutter pub get`, `flutter analyze`, then `flutter test`. Configure your own Firebase development project using the instructions below for cloud/auth testing; email functions additionally require Node 20 per `functions/package.json`, `npm ci` inside `functions`, and the `EMAIL_USER` / `EMAIL_PASS` Firebase secrets. Native Google sign-in needs the signing certificate fingerprints for your build. Store billing needs configured products and a store test account. Never use sandbox unlocks as purchase-verification evidence. Current release Gradle settings use debug signing and disable shrinking/release lint; address these before store distribution.
+
+Architecture: `lib/main.dart` boots the app; `lib/screens/` and `lib/widgets/` implement UI; `lib/services/state.dart` owns reactive session state; `lib/services/database/` persists the local ledger; `lib/services/cloud_sync_service.dart` synchronizes Firebase; `functions/` contains email backend code; `test/` contains host tests; `android/`, `ios/`, `windows/`, `macos/`, `linux/`, and `web/` contain platform hosts.
+
+**Real screenshots requested:** capture the dashboard with sample transactions, the full transaction search results, Insights, Goals, the sync comparison dialog, and the purchase screen on a running device. Use fictitious names/amounts and hide account identifiers; place images in `assets/screenshots/` with descriptive filenames. Capture Ledger and Paper themes on a narrow phone so layout/contrast can also be reviewed. Existing launcher icons are not substitutes for screenshots.
+
 > *"Just tally it up!"* — A blazing-fast, modern personal finance manager built with **Flutter** & **Material 3**. Designed with fluid micro-interactions, dark glassmorphism styling, graphic theme customization, offline-first encrypted SQLite storage, and stutter-free 60/120fps mobile rendering.
 
 ---
@@ -661,8 +679,8 @@ Follow these steps to clone and run the project locally on your machine.
 
 ### 1. Prerequisites
 
-- **Flutter SDK**: 3.24.0 or higher (`Channel stable`)
-- **Dart SDK**: 3.5.0 or higher
+- **Flutter SDK**: audited with 3.41.3 (`Channel stable`); use a version bundling a Dart SDK compatible with the manifest.
+- **Dart SDK**: `^3.11.1` (current manifest constraint).
 - **Java Development Kit (JDK)**: **Java 17 or Java 21 LTS** (⚠️ *Do NOT use Java 25+, as Gradle 8.14 is incompatible with Java 25*).
 - **Android Studio** (for Android emulator / device deployment) or **Visual Studio** (for Windows desktop deployment).
 
