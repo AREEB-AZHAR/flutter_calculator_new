@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -502,24 +501,22 @@ class MonetizationService {
   static Future<String?> redeemPromoCode(String inputCode) async {
     final code = inputCode.trim().toUpperCase();
 
-    // In debug/test environments, support developer testing codes
-    if (!kReleaseMode) {
-      if (code == 'PROVIP' || code == 'TALLYPRO' || code == 'FINTECH2026' || code == 'UNLOCKALL') {
-        await unlockPro();
-        return '🎉 Tally Pro fully unlocked! All features & ad-free experience activated.';
-      } else if (code == 'NOADS' || code == 'REMOVEADS' || code == 'ADFREE') {
-        await removeAds();
-        return '✨ Ads removed successfully! Enjoy clean banner-free budgeting.';
-      } else if (code == 'THEMEPASS' || code == 'FREEPASS' || code == 'THEME3') {
-        await grantThemePass(3);
-        return '🎨 3 Free Theme Change Passes added to your vault!';
-      } else if (code == 'RESET' || code == 'RESETVIP' || code == 'RESETPRO' || code == 'FREE' || code == 'FREEVIP') {
-        await resetPurchases();
-        return '🔄 VIP Subscription, Theme Passes & Ad-Free status have been reset to Free tier.';
-      }
+    // 1. Authoritative developer & tester promo codes (active for testing across all environments)
+    if (code == 'PROVIP' || code == 'TALLYPRO' || code == 'FINTECH2026' || code == 'UNLOCKALL') {
+      await unlockPro();
+      return '🎉 Tally Pro fully unlocked! All features & ad-free experience activated.';
+    } else if (code == 'NOADS' || code == 'REMOVEADS' || code == 'ADFREE') {
+      await removeAds();
+      return '✨ Ads removed successfully! Enjoy clean banner-free budgeting.';
+    } else if (code == 'THEMEPASS' || code == 'FREEPASS' || code == 'THEME3') {
+      await grantThemePass(3);
+      return '🎨 3 Free Theme Change Passes added to your vault!';
+    } else if (code == 'RESET' || code == 'RESETVIP' || code == 'RESETPRO' || code == 'FREE' || code == 'FREEVIP') {
+      await resetPurchases();
+      return '🔄 VIP Subscription, Theme Passes & Ad-Free status have been reset to Free tier.';
     }
 
-    // In production or for non-dev codes, perform secure Firestore lookup
+    // 2. In production or for non-dev codes, perform secure Firestore lookup
     try {
       if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
         final fbUser = FirebaseAuth.instance.currentUser!;

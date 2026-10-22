@@ -83,9 +83,11 @@ class _MainNavScreenState extends State<MainNavScreen> {
               child: IndexedStack(
                 index: currentIndex,
                 children: List.generate(5, (i) {
-                  return _cachedScreens.containsKey(i)
-                      ? _cachedScreens[i]!
-                      : const SizedBox.shrink();
+                  return RepaintBoundary(
+                    child: _cachedScreens.containsKey(i)
+                        ? _cachedScreens[i]!
+                        : const SizedBox.shrink(),
+                  );
                 }),
               ),
             ),
@@ -102,15 +104,16 @@ class _MainNavScreenState extends State<MainNavScreen> {
               selectedIndex: currentIndex,
               onDestinationSelected: (i) {
                 if (i == currentIndex) return;
-                // 1. Immediately switch tab so the target screen builds in the background during ad time!
+                // 1. Immediately switch tab so the target screen renders smoothly
                 AppState.activeTabNotifier.value = i;
-                // 2. Trigger full-screen interstitial ad over the background-rendered screen
-                AdService.showTabSwitchInterstitialAd(
-                  context: context,
-                  onComplete: () {
-                    // Screen was pre-built in background during ad playback
-                  },
-                );
+                // 2. Schedule interstitial ad check after the frame renders to eliminate frame drops & jank
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!mounted) return;
+                  AdService.showTabSwitchInterstitialAd(
+                    context: context,
+                    onComplete: () {},
+                  );
+                });
               },
               backgroundColor: Theme.of(context).colorScheme.surface,
               indicatorColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),

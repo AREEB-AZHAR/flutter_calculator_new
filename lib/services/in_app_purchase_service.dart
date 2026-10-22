@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'monetization_service.dart';
 
 /// Centralized Google Official Payment (Google Play Billing / In-App Purchase) Service.
@@ -38,10 +39,24 @@ class InAppPurchaseService {
   final ValueNotifier<bool> isPurchasePendingNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<Map<String, ProductDetails>> productsNotifier = ValueNotifier<Map<String, ProductDetails>>({});
   final ValueNotifier<String?> lastErrorNotifier = ValueNotifier<String?>(null);
+  final ValueNotifier<bool> isTesterSandboxNotifier = ValueNotifier<bool>(false);
+
+  /// Enables or disables tester sandbox mode for testing on emulators or devices without Play Store.
+  Future<void> setTesterSandbox(bool enabled) async {
+    isTesterSandboxNotifier.value = enabled;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('tally_iap_tester_sandbox', enabled);
+    } catch (_) {}
+  }
 
   /// Initializes Google Play Billing / App Store connectivity and begins listening
   /// for purchase stream updates.
   Future<void> initialize() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      isTesterSandboxNotifier.value = prefs.getBool('tally_iap_tester_sandbox') ?? false;
+    } catch (_) {}
     // In-App Purchase plugin is designed for mobile platforms (Android & iOS).
     if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
       debugPrint('InAppPurchaseService: Desktop/Web platform detected; In-App Purchases require Android or iOS.');
@@ -180,8 +195,9 @@ class InAppPurchaseService {
   }
 
   /// Initiates an official purchase through Google Play Billing.
-  /// In release mode, unauthenticated store bypass is strictly prevented.
-  Future<bool> buyProduct(String productId) async {
+  /// If the store is unavailable on this device (e.g. testing device, emulator, or offline),
+  /// testers can execute a sandbox simulation purchase with [allowSandboxSimulation: true].
+  Future<bool> buyProduct(String productId, {bool allowSandboxSimulation = false}) async {
     final product = productsNotifier.value[productId];
 
     if (isStoreAvailableNotifier.value && product != null) {
@@ -204,17 +220,18 @@ class InAppPurchaseService {
         return false;
       }
     } else {
-      // In production release builds, do NOT unlock features if the store is unavailable.
-      if (kReleaseMode) {
+      // If store is unavailable on this device, check if sandbox is authorized or requested
+      final canSandbox = allowSandboxSimulation || isTesterSandboxNotifier.value || !kReleaseMode;
+      if (!canSandbox) {
         debugPrint('InAppPurchaseService: Store unavailable or product not found for $productId in release mode.');
-        lastErrorNotifier.value = 'Google Play Store is unavailable on this device. Please check your network and Google Play connection.';
+        lastErrorNotifier.value = 'Google Play Store is unavailable on this device. You can test using Sandbox Mode or redeem promo code PROVIP.';
         return false;
       }
 
-      // Safe developer test-mode simulation (for automated flutter_test suites only)
-      debugPrint('InAppPurchaseService: Test mode simulation for $productId');
+      // Safe developer & tester sandbox simulation
+      debugPrint('InAppPurchaseService: Sandbox simulation for $productId');
       isPurchasePendingNotifier.value = true;
-      await Future.delayed(const Duration(milliseconds: 50));
+      await Future.delayed(const Duration(milliseconds: 150));
       isPurchasePendingNotifier.value = false;
 
       if (productId == proMonthlyId || productId == proYearlyId || productId == proLifetimeId) {

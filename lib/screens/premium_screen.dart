@@ -169,11 +169,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            LanguageService.tr('google_play_billing'),
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            isStoreAvailable ? LanguageService.tr('google_play_billing') : 'Google Play Tester Sandbox',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                           Text(
-                            'Tally Technologies LLC',
+                            isStoreAvailable ? 'Tally Technologies LLC' : 'Test Mode Active (Store Offline)',
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.6),
@@ -217,11 +217,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     LanguageService.tr('billing_system'),
                     style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.7)),
                   ),
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.payment, size: 16, color: Colors.blueAccent),
-                      SizedBox(width: 6),
-                      Text('Google Official In-App Billing', style: TextStyle(fontWeight: FontWeight.w500)),
+                      Icon(isStoreAvailable ? Icons.payment : Icons.science_outlined, size: 16, color: isStoreAvailable ? Colors.blueAccent : Colors.orangeAccent),
+                      const SizedBox(width: 6),
+                      Text(isStoreAvailable ? 'Google Official In-App Billing' : 'Tester Sandbox Checkout', style: const TextStyle(fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ],
@@ -234,11 +234,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     LanguageService.tr('encryption_security'),
                     style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.7)),
                   ),
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.lock, size: 14, color: Colors.green),
-                      SizedBox(width: 4),
-                      Text('Google Play 256-bit TLS', style: TextStyle(color: Colors.green, fontSize: 12)),
+                      Icon(Icons.lock, size: 14, color: isStoreAvailable ? Colors.green : Colors.orangeAccent),
+                      const SizedBox(width: 4),
+                      Text(isStoreAvailable ? 'Google Play 256-bit TLS' : 'Local Sandbox Verification', style: TextStyle(color: isStoreAvailable ? Colors.green : Colors.orangeAccent, fontSize: 12)),
                     ],
                   ),
                 ],
@@ -258,10 +258,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.fingerprint, size: 22, color: Colors.white),
+                      Icon(isStoreAvailable ? Icons.fingerprint : Icons.check_circle_outline, size: 22, color: Colors.white),
                       const SizedBox(width: 10),
                       Text(
-                        LanguageService.tr('authenticate_pay_google'),
+                        isStoreAvailable ? LanguageService.tr('authenticate_pay_google') : 'Authorize Sandbox Test Purchase',
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                     ],
@@ -269,14 +269,28 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Center(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: Text(
-                    LanguageService.tr('cancel'),
-                    style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.6)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx, false);
+                      MonetizationService.showPromoCodeDialog(context);
+                    },
+                    icon: const Icon(Icons.confirmation_number_outlined, size: 15, color: Colors.amber),
+                    label: const Text(
+                      'Redeem Promo (PROVIP)',
+                      style: TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(
+                      LanguageService.tr('cancel'),
+                      style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.6)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -286,7 +300,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
     if (confirmed == true && mounted) {
       setState(() => _isProcessingLocal = true);
-      final success = await _iapService.buyProduct(productId);
+      final success = await _iapService.buyProduct(productId, allowSandboxSimulation: true);
       if (!mounted) return;
       setState(() => _isProcessingLocal = false);
 
@@ -495,6 +509,35 @@ class _PremiumScreenState extends State<PremiumScreen> {
                                   ),
                                 ],
                               ),
+                            ),
+
+                            ValueListenableBuilder<bool>(
+                              valueListenable: _iapService.isStoreAvailableNotifier,
+                              builder: (ctx, isStoreAvail, _) {
+                                if (isStoreAvail) return const SizedBox.shrink();
+                                final isDark = theme.brightness == Brightness.dark;
+                                return Container(
+                                  margin: const EdgeInsets.only(top: 14),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.science_outlined, color: Colors.amber, size: 20),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          'Store Offline / Test Device: Sandbox checkout and test promo code (PROVIP) are active.',
+                                          style: TextStyle(fontSize: 12, color: isDark ? Colors.amber.shade200 : Colors.amber.shade900),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
 
                             const SizedBox(height: 24),
