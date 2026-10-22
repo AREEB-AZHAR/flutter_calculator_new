@@ -2,6 +2,10 @@
 
 **Date:** 23 October 2026 · **Source baseline:** `0ecfe21` · **App:** `1.8.16+26`
 
+## Implementation status — 23 October 2026
+
+The follow-up implementation in **1.8.17+27** addresses F1/F2 transaction/goal preservation and write truncation, and F5 recurring-write atomicity. See [SYNC_SAFETY.md](SYNC_SAFETY.md) for exact guarantees, tests, conflict/compatibility policy and remaining limitations. The findings below describe the original audit baseline; the rest of the roadmap remains pending.
+
 ## Decision
 
 Fix ledger synchronization, recurring-write atomicity, account recovery, and purchase authority before investing in animation tuning. Then measure startup and large-ledger workloads on a physical Android device. Preserve the existing offline-first Flutter/SQLite architecture; a framework or state-management rewrite is not justified by this audit.

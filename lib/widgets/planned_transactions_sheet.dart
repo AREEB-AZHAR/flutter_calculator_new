@@ -306,15 +306,24 @@ class PlannedTransactionsSheet extends StatelessWidget {
                                           children: [
                                             // Post Now Action
                                             InkWell(
-                                              onTap: () {
-                                                if (AppState.currentUser != null) {
-                                                  AppState.executePlannedTransactionNow(AppState.currentUser!, plan);
-                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                    SnackBar(
+                                              onTap: () async {
+                                                final username = AppState.currentUser;
+                                                final generation = AppState.sessionGeneration;
+                                                if (username == null) return;
+                                                try {
+                                                  final posted = await AppState.executePlannedTransactionNow(username, plan);
+                                                  if (!context.mounted || AppState.currentUser != username || AppState.sessionGeneration != generation) return;
+                                                  if (posted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                                                       content: Text('"${plan.title}" posted to active transactions!'),
                                                       backgroundColor: Colors.teal,
-                                                    ),
-                                                  );
+                                                    ));
+                                                  }
+                                                } catch (e) {
+                                                  if (!context.mounted || AppState.currentUser != username || AppState.sessionGeneration != generation) return;
+                                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                                    content: Text('Could not post this transaction. Your plan is still available to retry.'),
+                                                  ));
                                                 }
                                               },
                                               borderRadius: BorderRadius.circular(8),

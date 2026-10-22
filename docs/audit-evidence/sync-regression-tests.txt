@@ -1,0 +1,137 @@
+00:00 +0: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart
+00:00 +0: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:00 +0: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization two persisted devices preserve independent additions and propagate explicit deletion
+00:00 +1: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization version 1 ledger migrates without dropping records and bootstraps safely
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:00 +2: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization uncertain remote commit is retried idempotently after restart
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:00 +3: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization uploads every one of 0 records and checkpoints all chunks
+00:01 +4: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization uploads every one of 1 records and checkpoints all chunks
+00:01 +5: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization uploads every one of 400 records and checkpoints all chunks
+00:01 +6: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization uploads every one of 401 records and checkpoints all chunks
+00:01 +7: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization uploads every one of 1000 records and checkpoints all chunks
+00:01 +8: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization uploads every one of 100000 records and checkpoints all chunks
+00:25 +9: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization stale nonempty device preserves cloud-only transactions/goals and entries
+00:25 +10: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization interrupted second chunk survives reopen and retries only unacknowledged changes
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:26 +11: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization offline transaction/goal deletion and undo survive restart without resurrection
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:26 +12: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization edit during acknowledgment retains its newer revision and survives import
+00:26 +13: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization session switch aborts before upload and preserves outbox
+00:26 +14: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization session switch during import rolls back all local changes
+00:26 +15: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization outbox and imported data stay scoped to the account
+00:26 +16: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization ordinary sync prefers remote over an unedited legacy conflict
+00:26 +17: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization explicit replacement handles more than 400 writes, including deletions
+00:26 +18: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization explicit restore replaces local ledger/goal entries without echo uploads
+00:26 +19: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization payload size also bounds chunks; oversized documents remain pending
+00:27 +20: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Atomic planned and recurring transactions automatic/manual concurrent retries create one occurrence, outbox entry and successor
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:27 +21: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Atomic planned and recurring transactions failure at occurrence rolls back ledger, flag, successor and outbox; restart retries safely
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:27 +22: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Atomic planned and recurring transactions failure at processed rolls back ledger, flag, successor and outbox; restart retries safely
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:27 +23: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Atomic planned and recurring transactions failure at successor rolls back ledger, flag, successor and outbox; restart retries safely
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:27 +24: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Atomic planned and recurring transactions catch-up records every missed day and leaves future plans untouched
+00:27 +25: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Atomic planned and recurring transactions month end and leap year clamping preserve original anchors
+00:27 +26: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Atomic planned and recurring transactions manual future execution is atomic and account-scoped
+00:27 +27: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: (tearDownAll)
+00:27 +27: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart
+00:29 +27: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: (setUpAll)
+00:29 +27: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: BiometricService toggles enabled state and persists associated username
+00:29 +28: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Currency updates reactively and persists without app relaunch
+00:29 +29: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: TransactionTile updates currency dynamically without reload
+00:29 +30: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Transaction Dialog: Empty title defaults to selected category name
+00:30 +31: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Transaction Dialog: Allows selecting custom transaction date and orders descending
+00:31 +32: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: TourService tracks tour completion and resets correctly
+00:31 +33: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: BiometricService session prompt resets on logout
+00:31 +34: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Transaction Dialog: Selecting Income auto-switches category to Salary & auto-fills title
+00:31 +35: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: MonetizationService: tier transitions, separate remove-ads, and promo codes
+MonetizationService: Ads removed and signed for null.
+MonetizationService: Tally Pro unlocked and signed for null.
+MonetizationService: Ads removed and signed for null.
+MonetizationService: Tally Pro unlocked and signed for null.
+00:31 +36: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: GoogleAuthService: detects Google email bindings
+00:31 +37: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: AdBannerWidget: shows labeled partner fallback and hides it when ad-free
+MonetizationService: Ads removed and signed for null.
+00:31 +38: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: InsightsScreen: Free users see Tally Pro lock screen, Pro users see insights
+MonetizationService: Tally Pro unlocked and signed for null.
+00:31 +39: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Delete Confirmation Dialog: Appears and cancelling does not delete transaction
+00:31 +40: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Delete Confirmation Dialog & Undo: Confirming deletes transaction and Undo restores it
+00:31 +41: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Goal Deletion: Shows confirmation dialog, delete removes goal, and Undo restores it
+scheduleGoalReminders notice: LateInitializationError: Field '_local@653310200' has not been initialized.
+scheduleGoalReminders notice: LateInitializationError: Field '_local@653310200' has not been initialized.
+00:31 +42: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: (tearDownAll)
+00:31 +42: All tests passed!
