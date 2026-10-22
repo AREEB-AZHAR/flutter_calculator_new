@@ -3,14 +3,22 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../services/monetization_service.dart';
 import '../services/ad_service.dart';
 
+enum AdBannerSize {
+  standard, // 320x50
+  large, // 320x100
+  mediumRectangle, // 300x250
+}
+
 class AdBannerWidget extends StatefulWidget {
   final EdgeInsetsGeometry margin;
   final String? sponsorCategory;
+  final AdBannerSize size;
 
   const AdBannerWidget({
     super.key,
     this.margin = const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
     this.sponsorCategory,
+    this.size = AdBannerSize.large,
   });
 
   @override
@@ -20,6 +28,17 @@ class AdBannerWidget extends StatefulWidget {
 class _AdBannerWidgetState extends State<AdBannerWidget> {
   BannerAd? _bannerAd;
   bool _isAdLoaded = false;
+
+  AdSize get _adSize {
+    switch (widget.size) {
+      case AdBannerSize.standard:
+        return AdSize.banner;
+      case AdBannerSize.large:
+        return AdSize.largeBanner;
+      case AdBannerSize.mediumRectangle:
+        return AdSize.mediumRectangle;
+    }
+  }
 
   @override
   void initState() {
@@ -32,6 +51,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
     if (!AdService.isSupportedPlatform) return;
 
     _bannerAd = AdService.createBannerAd(
+      size: _adSize,
       onAdLoaded: (ad) {
         if (mounted) {
           setState(() {
@@ -168,108 +188,122 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
           }
 
             // 2. Fallback sponsored banner (for Desktop/Windows or while loading)
+            final isLarge = widget.size != AdBannerSize.standard;
+
             return RepaintBoundary(
               child: Container(
                 margin: widget.margin,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: onSurface.withValues(alpha: 0.12), width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  // Ad Badge & Brand Icon
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: isLarge ? 16 : 10),
+                decoration: BoxDecoration(
+                  color: surface,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: onSurface.withValues(alpha: 0.14), width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: isLarge ? 12 : 8,
+                      offset: const Offset(0, 3),
                     ),
-                    child: Center(
-                      child: Icon(Icons.campaign_rounded, size: 20, color: primary),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-
-                  // Sponsor Copy
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      crossAxisAlignment: isLarge ? CrossAxisAlignment.start : CrossAxisAlignment.center,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                              decoration: BoxDecoration(
-                                color: Colors.amber.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'Ad',
-                                style: TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.amber,
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
+                        // Ad Badge & Brand Icon
+                        Container(
+                          width: isLarge ? 48 : 38,
+                          height: isLarge ? 48 : 38,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [primary.withValues(alpha: 0.2), primary.withValues(alpha: 0.05)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                widget.sponsorCategory ?? 'Google Cloud for Startups',
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: primary.withValues(alpha: 0.2)),
+                          ),
+                          child: Center(
+                            child: Icon(Icons.campaign_rounded, size: isLarge ? 26 : 20, color: primary),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+
+                        // Sponsor Copy
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: const Text(
+                                      'Ad • Partner',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.amber,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      widget.sponsorCategory ?? 'Google Cloud for Startups',
+                                      style: TextStyle(
+                                        fontSize: isLarge ? 13.5 : 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: onSurface,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                isLarge
+                                    ? 'Scale your financial infrastructure with \$350 startup credits, high-availability Cloud SQL, and automatic backup nodes.'
+                                    : 'Scale your financial ledger with \$300 credits & secure cloud infrastructure.',
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: onSurface,
+                                  fontSize: isLarge ? 11.5 : 10.5,
+                                  height: 1.35,
+                                  color: onSurface.withValues(alpha: 0.7),
                                 ),
-                                maxLines: 1,
+                                maxLines: isLarge ? 2 : 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Scale your financial ledger with \$300 credits & secure cloud infrastructure.',
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            color: onSurface.withValues(alpha: 0.65),
+                            ],
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  ),
 
-                  const SizedBox(width: 8),
+                        const SizedBox(width: 8),
 
-                  // Remove Ads Shortcut Button
-                  InkWell(
-                    borderRadius: BorderRadius.circular(8),
-                    onTap: () => MonetizationService.showPaywallModal(
-                      context,
-                      featureTitle: 'Ad-Free Tally',
-                      featureDescription: 'Remove all banner advertisements permanently with a single tap.',
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: onSurface.withValues(alpha: 0.06),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
+                        // Remove Ads Shortcut Button
+                        InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () => MonetizationService.showPaywallModal(
+                            context,
+                            featureTitle: 'Ad-Free Tally',
+                            featureDescription: 'Remove all banner advertisements permanently with a single tap.',
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: onSurface.withValues(alpha: 0.06),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
                         'Hide',
                         style: TextStyle(
                           fontSize: 10,
@@ -277,13 +311,15 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
                           color: onSurface.withValues(alpha: 0.7),
                         ),
                       ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
         );
       },
     );
