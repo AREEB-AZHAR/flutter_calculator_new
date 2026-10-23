@@ -1,0 +1,16 @@
+00:00 +0: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/settings_menu_and_insights_smoothness_test.dart
+00:00 +0: (setUpAll)
+00:00 +0: GeoLocationService & Regional Currency Tests GeoLocationService formats localized tier pricing and period strings
+00:00 +1: InsightsEngine Currency Parameter Tests generateReport incorporates provided regional currency symbol in advice and projections
+00:00 +2: ProfileScreen Settings Menu Virtualization & Categorization Tests Opening Settings menu displays 3 categorized tabs and allows switching
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:01 +3: ProfileScreen Settings Menu Virtualization & Categorization Tests Opening Features Guide modal displays virtualized list items
+00:01 +4: (tearDownAll)
+00:01 +4: All tests passed!

@@ -25,7 +25,11 @@ class AdBannerWidget extends StatefulWidget {
   State<AdBannerWidget> createState() => _AdBannerWidgetState();
 }
 
-class _AdBannerWidgetState extends State<AdBannerWidget> {
+class _AdBannerWidgetState extends State<AdBannerWidget> with AutomaticKeepAliveClientMixin {
+  // Preserve the native ad while a lazy scroll section is offscreen. Recreating
+  // it on every return would reload the ad and churn platform views.
+  @override
+  bool get wantKeepAlive => true;
   BannerAd? _bannerAd;
   bool _isAdLoaded = false;
 
@@ -82,6 +86,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return ValueListenableBuilder<bool>(
       valueListenable: MonetizationService.isProUnlockedNotifier,
       builder: (context, isPro, _) {

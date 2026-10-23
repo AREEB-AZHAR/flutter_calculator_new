@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/transaction.dart';
@@ -10,16 +9,25 @@ import '../models/loan.dart';
 import '../models/planned_transaction.dart';
 import '../utils/constants.dart';
 import 'database/app_database.dart';
+import 'atomic_plans.dart';
 import 'cloud_sync_service.dart';
 import 'notification_service.dart';
 import 'monetization_service.dart';
+import 'purchase_backend.dart';
 import 'google_auth_service.dart';
 import 'biometric_service.dart';
 import '../screens/login_screen.dart';
 import '../screens/dashboard_screen.dart';
 
 class AppState {
-  static String? currentUser;
+  static String? _currentUser;
+  static int _sessionGeneration = 0;
+  static int get sessionGeneration => _sessionGeneration;
+  static String? get currentUser => _currentUser;
+  static set currentUser(String? value) {
+    if (_currentUser != value) _sessionGeneration++;
+    _currentUser = value;
+  }
 
   static const String _prefThemeKey = 'tally_active_theme';
   static const String _prefPrimaryColorKey = 'tally_primary_color';
@@ -202,6 +210,9 @@ class AppState {
   // Initialize and load all data for user from SQLite database
   static Future<void> loadAllUserData(String username) async {
     currentUser = username;
+    final generation = sessionGeneration;
+    bool sameSession() =>
+        currentUser == username && generation == sessionGeneration;
     final db = AppDatabase.instance;
 
     // 1. Load monetization entitlements strictly scoped to this user
@@ -209,6 +220,7 @@ class AppState {
 
     // 2. Load user profile from SQLite database
     final profile = await db.loadProfile(username);
+    if (!sameSession()) return;
     displayNameNotifier.value = profile.displayName;
     bioNotifier.value = profile.bio;
     profilePhotoNotifier.value = profile.photoPath;
@@ -231,14 +243,20 @@ class AppState {
       if (isPremium) {
         effectiveTheme = 'Ledger';
       }
-      final preset = themePresets.firstWhere((p) => p.name == effectiveTheme, orElse: () => themePresets.first);
+      final preset = themePresets.firstWhere(
+        (p) => p.name == effectiveTheme,
+        orElse: () => themePresets.first,
+      );
       pCol = preset.primary;
       sCol = preset.secondary;
       tCol = null;
     } else {
       // Pro user: heal legacy default if primaryColor matches old background or old default
       if (pCol.toARGB32() == 0xFF17493B || pCol.toARGB32() == 0xFF8B5CF6) {
-        final preset = themePresets.firstWhere((p) => p.name == effectiveTheme, orElse: () => themePresets.first);
+        final preset = themePresets.firstWhere(
+          (p) => p.name == effectiveTheme,
+          orElse: () => themePresets.first,
+        );
         pCol = preset.primary;
         sCol = preset.secondary;
       }
@@ -251,55 +269,88 @@ class AppState {
     avatarColorNotifier.value = pCol;
     currencyNotifier.value = profile.currency;
 
-    // Persist healed/sanitized profile to database
-    await db.saveProfile(profile.copyWith(
-      primaryColor: pCol,
-      secondaryColor: sCol,
-      textColor: tCol,
-      theme: effectiveTheme,
-    ));
+    // An unavailable verification server must not erase a paid user's saved palette.
+    if (PurchaseSecurityPolicy.allowDevelopmentUnlocks ||
+        MonetizationService.isPro) {
+      await db.saveProfile(
+        profile.copyWith(
+          primaryColor: pCol,
+          secondaryColor: sCol,
+          textColor: tCol,
+          clearTextColor: tCol == null,
+          theme: effectiveTheme,
+        ),
+      );
+    }
 
-    transactionsNotifier.value = await db.loadTransactions(username);
-    budgetsNotifier.value = await db.loadBudgets(username);
-    goalsNotifier.value = await db.loadGoals(username);
-    accountsNotifier.value = await db.loadAccounts(username);
-    loansNotifier.value = await db.loadLoans(username);
-    plannedTransactionsNotifier.value = await db.loadPlannedTransactions(username);
+    final transactions = await db.loadTransactions(username);
+    final budgets = await db.loadBudgets(username);
+    final goals = await db.loadGoals(username);
+    final accounts = await db.loadAccounts(username);
+    final loans = await db.loadLoans(username);
+    final plans = await db.loadPlannedTransactions(username);
+    if (!sameSession()) return;
+    transactionsNotifier.value = transactions;
+    budgetsNotifier.value = budgets;
+    goalsNotifier.value = goals;
+    accountsNotifier.value = accounts;
+    loansNotifier.value = loans;
+    plannedTransactionsNotifier.value = plans;
     await checkGoalExpirations(username);
     await checkAndProcessPlannedAndRecurring(username);
 
-    // Schedule active user reminders if enabled
-    final remindersOn = await NotificationService.instance.areRemindersEnabled(username);
-    if (remindersOn) {
-      await NotificationService.instance.scheduleAllDailyReminders();
-      await NotificationService.instance.scheduleGoalReminders(
-        goalsNotifier.value,
-        currencyNotifier.value,
-      );
-      for (final loan in loansNotifier.value) {
-        if (!loan.isSettled) {
-          await NotificationService.instance.scheduleLoanReminder(
-            loan: loan,
-            currencySymbol: currencyNotifier.value,
-          );
-        }
-      }
-      for (final plan in plannedTransactionsNotifier.value) {
-        await NotificationService.instance.schedulePlannedTransactionReminder(
-          plan: plan,
-          currencySymbol: currencyNotifier.value,
-        );
-      }
-    } else {
-      await NotificationService.instance.cancelAllReminders();
-    }
+    if (!sameSession()) return;
+    // Optional platform work runs after the local vault is ready.
+    unawaited(
+      _scheduleSessionReminders(username, generation).catchError((
+        Object error,
+      ) {
+        debugPrint('Reminder refresh failed: $error');
+      }),
+    );
+    final initialPalette = [
+      themeNameNotifier.value,
+      customPrimaryColorNotifier.value,
+      customSecondaryColorNotifier.value,
+      customTextColorNotifier.value,
+    ];
+    unawaited(
+      MonetizationService.verificationReady
+          .then((_) async {
+            bool unchanged() =>
+                sameSession() &&
+                MonetizationService.isPro &&
+                themeNameNotifier.value == initialPalette[0] &&
+                customPrimaryColorNotifier.value == initialPalette[1] &&
+                customSecondaryColorNotifier.value == initialPalette[2] &&
+                customTextColorNotifier.value == initialPalette[3];
+            if (!unchanged()) return;
+            final saved = await db.loadProfile(username);
+            if (!unchanged()) return;
+            final preset = themePresets
+                .where((p) => p.name == saved.theme)
+                .firstOrNull;
+            if (preset == null) return;
+            themeNameNotifier.value = preset.name;
+            customPrimaryColorNotifier.value = saved.primaryColor;
+            customSecondaryColorNotifier.value = saved.secondaryColor;
+            customTextColorNotifier.value = saved.textColor;
+            avatarColorNotifier.value = saved.primaryColor;
+          })
+          .catchError((Object error) {
+            debugPrint('Deferred palette refresh failed: $error');
+          }),
+    );
 
     // Sync user's saved palette to SharedPreferences so next startup boots with this palette
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('${_prefThemeKey}_$username', effectiveTheme);
       await prefs.setInt('${_prefPrimaryColorKey}_$username', pCol.toARGB32());
-      await prefs.setInt('${_prefSecondaryColorKey}_$username', sCol.toARGB32());
+      await prefs.setInt(
+        '${_prefSecondaryColorKey}_$username',
+        sCol.toARGB32(),
+      );
       if (tCol != null) {
         await prefs.setInt('${_prefTextColorKey}_$username', tCol.toARGB32());
       } else {
@@ -316,6 +367,47 @@ class AppState {
       }
       await prefs.setString(_prefCurrencyKey, profile.currency);
     } catch (_) {}
+  }
+
+  static Future<void> _scheduleSessionReminders(
+    String username,
+    int generation,
+  ) async {
+    bool sameSession() =>
+        currentUser == username && sessionGeneration == generation;
+    if (!sameSession()) return;
+    final remindersOn = await NotificationService.instance.areRemindersEnabled(
+      username,
+    );
+    if (!sameSession()) return;
+    if (remindersOn) {
+      await NotificationService.instance.scheduleAllDailyReminders();
+      if (!sameSession()) return;
+      await NotificationService.instance.scheduleGoalReminders(
+        goalsNotifier.value,
+        currencyNotifier.value,
+      );
+      for (final loan in List<Loan>.of(loansNotifier.value)) {
+        if (!sameSession()) return;
+        if (!loan.isSettled) {
+          await NotificationService.instance.scheduleLoanReminder(
+            loan: loan,
+            currencySymbol: currencyNotifier.value,
+          );
+        }
+      }
+      for (final plan in List<PlannedTransaction>.of(
+        plannedTransactionsNotifier.value,
+      )) {
+        if (!sameSession()) return;
+        await NotificationService.instance.schedulePlannedTransactionReminder(
+          plan: plan,
+          currencySymbol: currencyNotifier.value,
+        );
+      }
+    } else {
+      await NotificationService.instance.cancelAllReminders();
+    }
   }
 
   static Future<void> saveProfile(UserProfile profile) async {
@@ -390,25 +482,36 @@ class AppState {
   /// If the user taps 'Undo', the transaction is restored at its chronological position and saved to SQLite.
   /// The undo banner automatically dismisses after exactly 5 seconds.
   static void deleteTransactionWithUndo(BuildContext context, Transaction tx) {
+    final username = currentUser;
+    final generation = sessionGeneration;
     final currentList = List<Transaction>.from(transactionsNotifier.value);
     final originalIndex = currentList.indexWhere((t) => t.id == tx.id);
     currentList.removeWhere((t) => t.id == tx.id);
     transactionsNotifier.value = currentList;
     if (currentUser != null) {
-      AppDatabase.instance.deleteSingleTransaction(tx.id);
+      AppDatabase.instance
+          .deleteSingleTransaction(tx.id, username: username)
+          .then((_) {
+            if (currentUser == username && sessionGeneration == generation) {
+              unawaited(CloudSyncService.sync(username!));
+            }
+          });
       if (tx.category == 'Savings Goal') {
-        AppDatabase.instance.deleteGoalEntryByTransactionId(currentUser!, tx.id).then((_) async {
-          goalsNotifier.value = await AppDatabase.instance.loadGoals(currentUser!);
-          await checkGoalExpirations(currentUser!);
-          NotificationService.instance.scheduleGoalReminders(
-            goalsNotifier.value,
-            currencyNotifier.value,
-          );
-        });
+        AppDatabase.instance
+            .deleteGoalEntryByTransactionId(username!, tx.id)
+            .then((_) async {
+              final refreshedGoals = await AppDatabase.instance.loadGoals(username);
+              if (currentUser != username || sessionGeneration != generation) return;
+              goalsNotifier.value = refreshedGoals;
+              await checkGoalExpirations(username);
+              if (currentUser != username || sessionGeneration != generation) return;
+              NotificationService.instance.scheduleGoalReminders(
+                goalsNotifier.value,
+                currencyNotifier.value,
+              );
+            });
       }
     }
-    // Delete from Firestore immediately
-    CloudSyncService.deleteTransactionFromCloud(tx.id);
 
     try {
       final messenger = ScaffoldMessenger.of(context);
@@ -424,9 +527,15 @@ class AppState {
             onPressed: () {
               _undoSnackBarTimer?.cancel();
               _undoSnackBarTimer = null;
-              final restoredList = List<Transaction>.from(transactionsNotifier.value);
+              if (currentUser != username || sessionGeneration != generation) {
+                return;
+              }
+              final restoredList = List<Transaction>.from(
+                transactionsNotifier.value,
+              );
               if (!restoredList.any((t) => t.id == tx.id)) {
-                if (originalIndex >= 0 && originalIndex <= restoredList.length) {
+                if (originalIndex >= 0 &&
+                    originalIndex <= restoredList.length) {
                   restoredList.insert(originalIndex, tx);
                 } else {
                   restoredList.add(tx);
@@ -434,9 +543,17 @@ class AppState {
                 restoredList.sort((a, b) => b.date.compareTo(a.date));
                 transactionsNotifier.value = restoredList;
                 if (currentUser != null) {
-                  AppDatabase.instance.insertTransaction(currentUser!, tx);
+                  AppDatabase.instance.insertTransaction(username!, tx).then((
+                    _,
+                  ) {
+                    if (currentUser == username &&
+                        sessionGeneration == generation) {
+                      unawaited(CloudSyncService.sync(username));
+                    }
+                  });
                   if (tx.category == 'Savings Goal') {
-                    AppDatabase.instance.loadGoals(currentUser!).then((refreshedGoals) {
+                    AppDatabase.instance.loadGoals(username).then((refreshedGoals) {
+                      if (currentUser != username || sessionGeneration != generation) return;
                       goalsNotifier.value = refreshedGoals;
                       NotificationService.instance.scheduleGoalReminders(
                         refreshedGoals,
@@ -445,8 +562,6 @@ class AppState {
                     });
                   }
                 }
-                // Re-sync restored transaction to cloud
-                CloudSyncService.syncTransactionToCloud(tx);
               }
             },
           ),
@@ -467,21 +582,27 @@ class AppState {
   /// Safely deletes a savings goal using soft-delete logic (archive if >10% or completed),
   /// and displays a SnackBar with an 'Undo' option.
   static void deleteGoalWithUndo(BuildContext context, SavingsGoal goal) {
+    final username = currentUser;
+    final generation = sessionGeneration;
     final currentGoals = List<SavingsGoal>.from(goalsNotifier.value);
     final originalIndex = currentGoals.indexWhere((g) => g.id == goal.id);
     currentGoals.removeWhere((g) => g.id == goal.id);
     goalsNotifier.value = currentGoals;
     if (currentUser != null) {
-      AppDatabase.instance.softDeleteGoal(currentUser!, goal.id);
+      AppDatabase.instance.softDeleteGoal(username!, goal.id).then((_) {
+        if (currentUser == username && sessionGeneration == generation) {
+          unawaited(CloudSyncService.sync(username));
+        }
+      });
     }
     // Cancel goal reminders immediately and purge orphaned alarms
     unawaited(NotificationService.instance.cancelGoalReminders(goal.id));
-    unawaited(NotificationService.instance.scheduleGoalReminders(
-      currentGoals,
-      currencyNotifier.value,
-    ));
-    // Delete from Firestore immediately
-    CloudSyncService.deleteGoalFromCloud(goal.id);
+    unawaited(
+      NotificationService.instance.scheduleGoalReminders(
+        currentGoals,
+        currencyNotifier.value,
+      ),
+    );
 
     try {
       final messenger = ScaffoldMessenger.of(context);
@@ -497,9 +618,13 @@ class AppState {
             onPressed: () {
               _undoSnackBarTimer?.cancel();
               _undoSnackBarTimer = null;
+              if (currentUser != username || sessionGeneration != generation) {
+                return;
+              }
               final restoredGoals = List<SavingsGoal>.from(goalsNotifier.value);
               if (!restoredGoals.any((g) => g.id == goal.id)) {
-                if (originalIndex >= 0 && originalIndex <= restoredGoals.length) {
+                if (originalIndex >= 0 &&
+                    originalIndex <= restoredGoals.length) {
                   restoredGoals.insert(originalIndex, goal);
                 } else {
                   restoredGoals.add(goal);
@@ -507,7 +632,14 @@ class AppState {
                 goalsNotifier.value = restoredGoals;
                 if (currentUser != null) {
                   // Re-upsert the goal (un-archive or re-insert)
-                  AppDatabase.instance.upsertGoal(currentUser!, goal.copyWith(isArchived: false));
+                  AppDatabase.instance
+                      .upsertGoal(username!, goal.copyWith(isArchived: false))
+                      .then((_) {
+                        if (currentUser == username &&
+                            sessionGeneration == generation) {
+                          unawaited(CloudSyncService.sync(username));
+                        }
+                      });
                 }
                 NotificationService.instance.scheduleGoalReminders(
                   restoredGoals,
@@ -797,85 +929,81 @@ class AppState {
     plannedTransactionsNotifier.value = plans;
   }
 
-  /// Immediately converts a planned transaction to active and moves it into the main ledger
-  static Future<void> executePlannedTransactionNow(String username, PlannedTransaction plan) async {
-    final newTx = plan.toActiveTransaction();
-    final currentList = List<Transaction>.from(transactionsNotifier.value);
-    currentList.removeWhere((t) => t.id == newTx.id);
-    currentList.insert(0, newTx);
-    currentList.sort((a, b) => b.date.compareTo(a.date));
-
-    transactionsNotifier.value = currentList;
-    await AppDatabase.instance.insertTransaction(username, newTx);
-    await AppDatabase.instance.markPlannedTransactionProcessed(username, plan.id);
-    await NotificationService.instance.cancelPlannedTransactionReminder(plan.id);
-
-    final plans = await AppDatabase.instance.loadPlannedTransactions(username);
-    plannedTransactionsNotifier.value = plans;
-    CloudSyncService.syncTransactionToCloud(newTx);
+  /// Both manual promotion and automatic processing use the same atomic writer.
+  static Future<bool> executePlannedTransactionNow(
+    String username,
+    PlannedTransaction plan,
+  ) async {
+    final generation = sessionGeneration;
+    final db = await AppDatabase.instance.database;
+    final result = await AtomicPlans(
+      db,
+    ).process(username, plan.id, now: DateTime.now(), force: true);
+    if (result != null) {
+      await _publishProcessedPlans(username, generation, [result]);
+      if (currentUser == username && sessionGeneration == generation) unawaited(CloudSyncService.sync(username));
+    }
+    return result != null;
   }
 
-  /// Checks for due planned transactions and automatically records them into the active ledger
-  static Future<void> checkAndProcessPlannedAndRecurring(String username) async {
-    try {
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day, 23, 59, 59);
-      final plans = await AppDatabase.instance.loadPlannedTransactions(username);
-      final currentTxs = List<Transaction>.from(transactionsNotifier.value);
-      bool txsUpdated = false;
+  static Future<void> checkAndProcessPlannedAndRecurring(
+    String username,
+  ) async {
+    final generation = sessionGeneration;
+    final db = await AppDatabase.instance.database;
+    final results = await AtomicPlans(
+      db,
+    ).processDue(username, now: DateTime.now());
+    // Nothing changed: avoid rereading the whole ledger and rescheduling every plan.
+    if (results.isEmpty) return;
+    // Persistence failures propagate. A failed occurrence rolls back and stays due.
+    await _publishProcessedPlans(username, generation, results, notify: true);
+  }
 
-      for (var plan in plans) {
-        if (plan.date.isBefore(today) || plan.date.isAtSameMomentAs(today)) {
-          final activeTx = plan.toActiveTransaction();
-          if (!currentTxs.any((t) => t.id == activeTx.id)) {
-            currentTxs.insert(0, activeTx);
-            txsUpdated = true;
-          }
-          await AppDatabase.instance.markPlannedTransactionProcessed(username, plan.id);
-
-          // Alert user via notification
-          NotificationService.instance.showInstantAlert(
-            title: 'Planned Transaction Added 📅',
-            body: 'Your planned ${plan.isIncome ? "income" : "expense"} "${plan.title}" (${currencyNotifier.value}${plan.amount.toStringAsFixed(0)}) is recorded to your ledger!',
-            id: (plan.id.hashCode.abs() % 50000) + 70000,
-          );
-
-          // If recurrence is active, schedule the next iteration
-          if (plan.recurrence != 'None') {
-            DateTime nextDate = plan.date;
-            if (plan.recurrence == 'Daily') {
-              nextDate = plan.date.add(const Duration(days: 1));
-            } else if (plan.recurrence == 'Weekly') {
-              nextDate = plan.date.add(const Duration(days: 7));
-            } else if (plan.recurrence == 'Monthly') {
-              nextDate = DateTime(plan.date.year, plan.date.month + 1, plan.date.day, plan.date.hour, plan.date.minute);
-            } else if (plan.recurrence == 'Yearly') {
-              nextDate = DateTime(plan.date.year + 1, plan.date.month, plan.date.day, plan.date.hour, plan.date.minute);
-            }
-            final nextPlan = plan.copyWith(
-              id: 'plan_${DateTime.now().millisecondsSinceEpoch}_${plan.id.substring(max(0, plan.id.length - 4))}',
-              date: nextDate,
-              isProcessed: false,
-              createdAt: DateTime.now(),
-            );
-            await AppDatabase.instance.savePlannedTransaction(username, nextPlan);
-            await NotificationService.instance.schedulePlannedTransactionReminder(
-              plan: nextPlan,
-              currencySymbol: currencyNotifier.value,
-            );
-          }
-        }
+  static Future<void> _publishProcessedPlans(
+    String username,
+    int generation,
+    List<ProcessedPlan> results, {
+    bool notify = false,
+  }) async {
+    final txs = await AppDatabase.instance.loadTransactions(username);
+    final plans = await AppDatabase.instance.loadPlannedTransactions(username);
+    if (currentUser != username || sessionGeneration != generation) return;
+    transactionsNotifier.value = txs;
+    plannedTransactionsNotifier.value = plans;
+    // Notification failures cannot undo or prevent committed ledger processing.
+    if (notify && results.isNotEmpty) {
+      try {
+        await NotificationService.instance.showInstantAlert(
+          title: 'Planned transactions recorded',
+          body: results.length == 1
+              ? '"${results.single.plan.title}" was added to your ledger.'
+              : '${results.length} planned transactions were added to your ledger.',
+        );
+      } catch (e) {
+        debugPrint('Committed plan notification notice: $e');
       }
-
-      if (txsUpdated) {
-        currentTxs.sort((a, b) => b.date.compareTo(a.date));
-        transactionsNotifier.value = currentTxs;
-        await AppDatabase.instance.saveTransactions(username, currentTxs);
+    }
+    for (final result in results) {
+      if (currentUser != username || sessionGeneration != generation) return;
+      try {
+        await NotificationService.instance.cancelPlannedTransactionReminder(
+          result.plan.id,
+        );
+      } catch (e) {
+        debugPrint('Committed plan reminder cleanup notice: $e');
       }
-
-      plannedTransactionsNotifier.value = await AppDatabase.instance.loadPlannedTransactions(username);
-    } catch (e) {
-      debugPrint('checkAndProcessPlannedAndRecurring notice: $e');
+    }
+    for (final plan in plans) {
+      if (currentUser != username || sessionGeneration != generation) return;
+      try {
+        await NotificationService.instance.schedulePlannedTransactionReminder(
+          plan: plan,
+          currencySymbol: currencyNotifier.value,
+        );
+      } catch (e) {
+        debugPrint('Committed plan reminder scheduling notice: $e');
+      }
     }
   }
 }

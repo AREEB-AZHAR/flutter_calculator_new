@@ -1,6 +1,72 @@
 # 💰 Tally — Smart Personal Finance & Expense Tracker
 
-> *"Just tally it up!"* — A blazing-fast, modern personal finance manager built with **Flutter** & **Material 3**. Designed with fluid micro-interactions, dark glassmorphism styling, graphic theme customization, offline-first encrypted SQLite storage, and stutter-free 60/120fps mobile rendering.
+## Login, display controls and hidden goals - 1.8.21+31 (24 October 2026)
+
+Local login no longer waits for purchase-server verification or cloud comparison. Production paid access remains locked until verified, and an unavailable server no longer erases a saved premium palette. Cloud comparison starts after the dashboard renders; automatic reconciliation merges safely. Optional reminder refresh runs in the background, no-due recurrence checks skip duplicate work, and goals load in two scoped SQL reads instead of N+1.
+
+- **Debug testing without ads:** Profile → Open Settings → Appearance → Display & testing → Enter testing code → **FREEVIP**. It enables local Pro/no-ads across debug restarts until **Disable FREEVIP** or removal of the feature. **Release/profile builds ignore the code and stored flag**, including the owner's currently installed release APK. This is not a verified purchase.
+- **Display preference:** the same card offers **System / 60 Hz / 120 Hz**. Unsupported choices are disabled; Android may override the hint for battery/thermal/device policy. This does not guarantee rendered FPS.
+- **Hidden goal cleanup:** Goals → top-right **Manage all goals** icon. Inspect archived goals, optionally **Refresh from cloud**, then trash → **Remove goal**. Confirmed removal deletes goal/deposit history, preserves financial transactions and queues durable cloud deletion. Existing archives are never purged automatically.
+- **Further repeated-work fixes:** Insights now reuses unchanged reports without hashing every ledger row or fresh budget-entry objects; Dashboard caches its balance; the transaction popup avoids intrinsic width measurement of the entire form. Existing Accounts/Profile/chart optimizations remain.
+
+**Validation:** all **244 Flutter tests**, **20 focused tests**, **4 settings-navigation tests**, **10 server tests** and **10 Firestore emulator tests** passed. Static analysis found no issues; native Android Kotlin compilation passed without APK assembly.
+
+The purchase-security change introduced a confirmed login wait. Broader release scrolling lag on the owner's **Redmi Note 13** still needs device profiling; source inspection cannot assign all sluggishness to a contributor. See [investigation, implementation plan, architecture, evidence and device checks](docs/LOGIN_DISPLAY_AND_GOALS.md). **No APK was built.** Existing clone/SDK/Firebase/run instructions below remain applicable; no new dependency, secret, permission or schema migration is needed.
+
+
+## Accounts, Transactions and Profile scrolling — 1.8.20+30 (24 October 2026)
+
+Accounts now reuses wallet balances, account-indexed transaction lists and loan summaries across rebuilds/filter changes. Transactions caches filtered views, debounces typing by **180 ms**, and preserves/clears the visible search text correctly when its header scrolls offscreen. Wallet/loan/transaction headers, Profile summary sections and Profile's draggable settings sheet now build on demand. Profile reuses its spending summary and session-scoped recovery-email lookup, refreshes that lookup after binding changes, and updates currency labels without rescanning the ledger.
+
+**Validation:** **233 Flutter tests passed**, **21 focused screen/cache/theme tests passed**, and **static analysis found no issues**. New tests cover 100,000-row caches with zero extra source reads on cache hits, data replacement, loan settlement, wallet switching, search cancellation/disposal, Profile currency updates and settings-footer navigation. These verify reduced work and preserved behavior; a physical-device trace is still needed to confirm frame-rate improvements. **No APK was built.**
+
+See [the follow-up plan, architecture, limits and evidence](docs/SCROLL_PERFORMANCE.md#accounts-transactions-and-profile-follow-up--24-october-2026). The new helper is `lib/services/ledger_view_cache.dart`; `LazySectionList` also supports the draggable controller, and `LazySectionSliver` shares lazy headers with existing ledger-row slivers. Dependencies, database schema and backend setup are unchanged. Use the Flutter setup and test instructions below; screenshots/device traces remain outstanding as described in the capture instructions.
+
+## Scrolling improvements — 1.8.19+29 (24 October 2026)
+
+Home and Insights now build scroll sections near the viewport; Goals builds individual cards on demand. Chart period/category summaries reuse unchanged ledger snapshots, chart selections and native ad instances survive scrolling offscreen, and hidden cached tabs pause their animation tickers. Existing transaction/account list virtualization remains in place.
+
+**Validation:** all **227 Flutter tests passed**, **13 focused scrolling/navigation tests passed**, and **static analysis found no issues**. Structural tests cover 1,000 scroll sections, 500 goals, offscreen state retention and a 100,000-row chart summary with zero additional row reads on cache hits. These verify reduced work and correct behavior, not a device FPS improvement. The user's multi-screen sluggishness still needs a physical-device frame trace; first-time analytics and native ad rendering remain possible contributors.
+
+See [scrolling plan, changes, evidence and device profiling steps](docs/SCROLL_PERFORMANCE.md). **No APK was built.** Run the existing setup/test commands below; the new layout helper is `lib/widgets/lazy_section_list.dart`, and the bounded chart cache is `lib/services/chart_summary.dart`. No database migration or backend configuration is needed for this update. Existing screenshot capture instructions remain applicable; phone screenshots/traces are still outstanding.
+
+## Production activation preflight — 24 October 2026
+
+Verified Firebase CLI access to `tally-b3652` and enabled **Google Play Developer API**, **Firebase App Check API**, and **Play Integrity API**. Live inspection confirms **billing is disabled**; Cloud Functions and Secret Manager APIs are also disabled, so backend deployment and secret configuration remain blocked. No backend/rules deployment or live purchase/email test has occurred, and **no APK was built**.
+
+The Android app already has a SHA-256 fingerprint and a Play Integrity configuration, whose minimum device recognition is currently `NO_INTEGRITY`. The owner has confirmed the app is **not uploaded to Play**, and Google is rejecting the Blaze payment setup with **`OR_BACR2_31`**. A recovery sender has been supplied privately; Gmail app-password availability is unconfirmed. Chrome is not connected to the available browser tools; Firebase CLI project access works independently. Next: follow the [billing and Gmail prerequisite instructions](docs/PURCHASE_AND_RECOVERY_SECURITY.md#billing-error-or_bacr2_31-and-gmail-app-password), then prepare Play testing before live purchase validation. The registered certificate still needs comparison with Play App Signing.
+
+## Purchase and recovery security update — 1.8.18+28 (23 October 2026)
+
+Release builds now reject sandbox unlocks, universal promo codes and locally cached paid grants. **Google Play only** purchases are verified by the backend before access and completion, with account binding, replay protection, subscription/refund checks, server-side coffee consumption and short-lived entitlement leases. Recovery now emails a server-generated, single-use code and updates only the matching local vault; it never changes your Google password.
+
+See the [purchase and recovery setup guide](docs/PURCHASE_AND_RECOVERY_SECURITY.md) for the plan, architecture, exact configuration/deployment steps, offline policy and test evidence. **Live setup is unverified and nothing was deployed.** The project owner must configure Play API access for the runtime service account, Android App Check/Play Integrity, and the three Firebase email/recovery secrets before live testing. Existing unbound store receipts need a trusted ownership migration. Paid access requires online re-verification after restart and expires after at most 15 minutes without refresh; the local ledger remains available offline.
+
+**Validation completed 24 October 2026:** all **222 Flutter tests**, **10 server unit tests**, and **10 Firestore emulator tests** passed. Flutter analysis found no issues; npm audit reported **zero vulnerabilities** across the backend dependency tree. Host tests use controlled Play/email adapters; native-plugin warning messages do not establish device behavior.
+
+**No APK was built for this update.** The earlier APK result below belongs to 1.8.17+27. Production billing/email and device attestation still require integration testing after deployment. Backend runtime is now Node **22**; see the guide before following historical backend instructions lower in this README.
+
+## Sync and recurring safety update — 1.8.17+27 (23 October 2026)
+
+Implemented the first requested audit fixes. Ordinary transaction/goal sync now preserves cloud-only records, drains **all records in bounded batches** (including ledgers above 400 transactions), and retains offline mutations in a durable SQLite outbox. Explicit deletes use persistent tombstones; undo becomes a new mutation. Failed chunks remain retryable after restart, and edits made during upload retain their newer queue revisions.
+
+Recurring and manual planned transactions now commit the occurrence, processed flag, deterministic successor and cloud-outbox entry **together in one SQLite transaction**. UI publication and reminder scheduling follow the commit. Calendar recurrence preserves month-end/leap-year anchors, with bounded catch-up of up to 1,000 missed occurrences per pass. Database schema **2** migrates existing records additively.
+
+See [sync safety, conflict policy and validation](docs/SYNC_SAFETY.md) for architecture, migration behavior, limits and test commands. Upgrade all devices before using the tombstone format: older builds still contain destructive sync and do not understand these records. Same-ID explicit edits use last successful commit wins; full overwrite remains an explicit destructive choice and is not globally atomic across chunks.
+
+The [original audit and remaining optimization roadmap](docs/AUDIT_AND_OPTIMIZATION_PLAN.md) is retained as historical evidence. Payment verification, release sandbox access and recovery are addressed in source in 1.8.18+28, pending production activation. Storage protection remains pending. SQLite is **not configured for database encryption**; headless timing tests do not establish device 60/120 fps performance. Visited tabs remain cached in a lazy `IndexedStack`.
+
+Verified: **198 tests passed**, **static analysis found no issues**, and the **Android debug APK built successfully**. Validation logs are linked in the sync safety guide. Test files now use separate temporary databases, and the old ad assertion checks the actual `Ad • Partner` fallback. Live Firebase/plugin behavior and physical-device notification delivery require integration smoke testing; local tests use real SQLite with a controlled remote.
+
+**Setup corrections:** use Flutter **3.41.3 / Dart 3.11.1** as the audited toolchain baseline; the manifest requires Dart `^3.11.1`. Older Flutter/Dart minimums in historical notes do not satisfy this manifest. Android uses AGP **8.11.1**, Kotlin **2.2.20**, Gradle **8.14**, and Java 17 compilation. Install a compatible JDK 17/21 and confirm its actual path with `flutter doctor -v`; replace the example JDK path below with your installed location. `android/local.properties` must contain the local `flutter.sdk` and Android `sdk.dir` paths and stay untracked. Windows builds require Visual Studio's Desktop development with C++ workload. iOS builds require macOS/Xcode/CocoaPods. Browser support needs a real web build and runtime test.
+
+After cloning, run `flutter doctor -v`, `flutter pub get`, `flutter analyze`, then `flutter test`. Configure your own Firebase development project using the instructions below for cloud/auth testing; backend functions require Node 22 per `functions/package.json`, `npm ci` inside `functions`, and `EMAIL_USER`, `EMAIL_PASS` and `RECOVERY_CODE_SECRET` secrets. Follow the current security setup guide above for App Check and Google Play access. Native Google sign-in needs the signing certificate fingerprints for your build. Store billing needs configured products and a store test account. Never use sandbox unlocks as purchase-verification evidence. Current release Gradle settings use debug signing and disable shrinking/release lint; address these before store distribution.
+
+Architecture: `lib/main.dart` boots the app; `lib/screens/` and `lib/widgets/` implement UI; `lib/services/state.dart` owns reactive session state; `lib/services/database/` persists the local ledger; `lib/services/ledger_sync.dart` owns outbox/reconciliation and `lib/services/atomic_plans.dart` owns recurring atomicity; `lib/services/cloud_sync_service.dart` adapts Firebase; `functions/` contains Google Play verification and email recovery code; `test/` contains host tests; `android/`, `ios/`, `windows/`, `macos/`, `linux/`, and `web/` contain platform hosts.
+
+**Real screenshots requested:** capture the dashboard with sample transactions, the full transaction search results, Insights, Goals, the sync comparison dialog, and the purchase screen on a running device. Use fictitious names/amounts and hide account identifiers; place images in `assets/screenshots/` with descriptive filenames. Capture Ledger and Paper themes on a narrow phone so layout/contrast can also be reviewed. Existing launcher icons are not substitutes for screenshots.
+
+> *"Just tally it up!"* — A blazing-fast, modern personal finance manager built with **Flutter** & **Material 3**. Designed with fluid micro-interactions, dark glassmorphism styling, graphic theme customization, offline-first SQLite storage and Material 3 mobile rendering. Database encryption and device frame-rate guarantees are not established.
 
 ---
 
@@ -29,6 +95,8 @@
 | *(Add Splash Screenshot)* | *(Add Dashboard Banner Screenshot)* | *(Add Pro Paywall Screenshot)* | *(Add Sync Conflict Screenshot)* | *(Add Saved Accounts Screenshot)* |
 
 ---
+
+> Historical feature/changelog descriptions below may describe superseded implementations. The security and sync updates above and their linked guides define current guarantees. In particular, local HMAC checks and development promo/sandbox tests are not production purchase authority, and the old `sendOtpEmail` flow has been retired.
 
 ## ✨ Features & Capabilities
 
@@ -64,7 +132,7 @@
 
 ### 6. 🛡️ Secure SQLite Database Vault & Cloud Architecture
 
-- **On-Device Encrypted SQL Ledger**: All user accounts, transactions, budgets, goals, and customized profiles are securely stored in an on-device SQLite database (`finance_vault.db`).
+- **On-Device SQL Ledger (unencrypted)**: All user accounts, transactions, budgets, goals, and customized profiles are securely stored in an on-device SQLite database (`finance_vault.db`).
 - **Cryptographic Password Protection**: User passwords are protected using SHA-256 cryptographic hashing with unique random salts.
 - **Strict User Isolation**: Foreign-key scoped queries guarantee that no account can ever access another user's financial records.
 - **Full `.sql` Script Export**: One-tap generation and export of your complete SQL database dump for backups or offline inspection.
@@ -661,8 +729,8 @@ Follow these steps to clone and run the project locally on your machine.
 
 ### 1. Prerequisites
 
-- **Flutter SDK**: 3.24.0 or higher (`Channel stable`)
-- **Dart SDK**: 3.5.0 or higher
+- **Flutter SDK**: audited with 3.41.3 (`Channel stable`); use a version bundling a Dart SDK compatible with the manifest.
+- **Dart SDK**: `^3.11.1` (current manifest constraint).
 - **Java Development Kit (JDK)**: **Java 17 or Java 21 LTS** (⚠️ *Do NOT use Java 25+, as Gradle 8.14 is incompatible with Java 25*).
 - **Android Studio** (for Android emulator / device deployment) or **Visual Studio** (for Windows desktop deployment).
 

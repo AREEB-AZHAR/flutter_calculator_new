@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:crypto/crypto.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -11,10 +12,11 @@ import '../models/transaction.dart' as model;
 import '../models/user_profile.dart';
 import 'database/app_database.dart';
 import 'state.dart';
+import 'ledger_sync.dart';
 
 /// Secure Cloud Data Synchronization Engine for Tally.
 ///
-/// Coordinates two-way synchronization between on-device encrypted SQLite
+/// Coordinates two-way synchronization between on-device SQLite
 /// and Google Cloud Firestore under strictly isolated per-user vault paths:
 /// `/users/{userId}/...`.
 /// Data summary representing vault contents for conflict comparison
@@ -35,9 +37,13 @@ class VaultSummary {
 class CloudSyncService {
   CloudSyncService._();
 
-  static final ValueNotifier<bool> isSyncingNotifier = ValueNotifier<bool>(false);
-  static final ValueNotifier<DateTime?> lastSyncTimeNotifier = ValueNotifier<DateTime?>(null);
-  static final ValueNotifier<String?> syncStatusMessageNotifier = ValueNotifier<String?>(null);
+  static final ValueNotifier<bool> isSyncingNotifier = ValueNotifier<bool>(
+    false,
+  );
+  static final ValueNotifier<DateTime?> lastSyncTimeNotifier =
+      ValueNotifier<DateTime?>(null);
+  static final ValueNotifier<String?> syncStatusMessageNotifier =
+      ValueNotifier<String?>(null);
 
   /// Returns true if the user is authenticated with Firebase and cloud sync is available.
   static bool get isCloudAvailable {
@@ -48,14 +54,16 @@ class CloudSyncService {
     // Strictly isolate cloud sync to the authenticated Google/Firebase user.
     // If the active app user is a local password user or differs from the Firebase account, prevent sync bleed.
     if (currentAppUser == null || currentAppUser.isEmpty) return false;
-    if (fbUser.email != null && fbUser.email!.toLowerCase() != currentAppUser.toLowerCase()) {
+    if (fbUser.email == null ||
+        fbUser.email!.toLowerCase() != currentAppUser.toLowerCase()) {
       return false;
     }
     return true;
   }
 
   /// Current authenticated Firebase User UID
-  static String? get currentUid => FirebaseAuth.instance.currentUser?.uid;
+  static String? get currentUid =>
+      Firebase.apps.isEmpty ? null : FirebaseAuth.instance.currentUser?.uid;
 
   /// Checks whether cloud Firestore already has any data stored for the current Firebase UID or user.
   static Future<bool> hasCloudData([String? targetUid]) async {
@@ -64,11 +72,34 @@ class CloudSyncService {
       final uid = targetUid ?? currentUid;
       if (uid == null) return false;
       final firestore = FirebaseFirestore.instance;
-      final txSnapshot = await firestore.collection('users').doc(uid).collection('transactions').limit(1).get();
-      if (txSnapshot.docs.isNotEmpty) return true;
-      final goalsSnapshot = await firestore.collection('users').doc(uid).collection('goals').limit(1).get();
-      if (goalsSnapshot.docs.isNotEmpty) return true;
-      final vaultDoc = await firestore.collection('users').doc(uid).collection('vault').doc('budgets').get();
+      for (final collection in SqliteLedgerStore.collections) {
+        QueryDocumentSnapshot<Map<String, dynamic>>? cursor;
+        while (true) {
+          Query<Map<String, dynamic>> query = firestore
+              .collection('users')
+              .doc(uid)
+              .collection(collection)
+              .orderBy(FieldPath.documentId)
+              .limit(100);
+          if (cursor != null) {
+            query = query.startAfterDocument(cursor);
+          }
+          final page = await query.get(const GetOptions(source: Source.server));
+          if (page.docs.any((d) => d.data()['_deleted'] != true)) {
+            return true;
+          }
+          if (page.docs.length < 100) {
+            break;
+          }
+          cursor = page.docs.last;
+        }
+      }
+      final vaultDoc = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('vault')
+          .doc('budgets')
+          .get();
       if (vaultDoc.exists) return true;
     } catch (e) {
       debugPrint('CloudSyncService.hasCloudData check note: $e');
@@ -79,7 +110,10 @@ class CloudSyncService {
   /// Calculates a summary of the local SQLite vault for conflict comparisons.
   static Future<VaultSummary> fetchLocalSummary(String username) async {
     final txs = await AppDatabase.instance.loadTransactions(username);
-    final goals = await AppDatabase.instance.loadGoals(username, includeArchived: true);
+    final goals = await AppDatabase.instance.loadGoals(
+      username,
+      includeArchived: true,
+    );
     double balance = 0.0;
     DateTime? latest;
     for (var tx in txs) {
@@ -107,13 +141,22 @@ class CloudSyncService {
       final uid = targetUid ?? currentUid;
       if (uid == null) return null;
       final firestore = FirebaseFirestore.instance;
-      final txSnapshot = await firestore.collection('users').doc(uid).collection('transactions').get();
-      final goalsSnapshot = await firestore.collection('users').doc(uid).collection('goals').get();
+      final txSnapshot = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('transactions')
+          .get();
+      final goalsSnapshot = await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('goals')
+          .get();
       double balance = 0.0;
       DateTime? latest;
 
       for (var doc in txSnapshot.docs) {
         final data = doc.data();
+        if (data['_deleted'] == true) continue;
         final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
         final isIncome = data['isIncome'] as bool? ?? false;
         if (isIncome) {
@@ -140,8 +183,12 @@ class CloudSyncService {
 
       return VaultSummary(
         totalBalance: balance,
-        transactionCount: txSnapshot.docs.length,
-        goalsCount: goalsSnapshot.docs.length,
+        transactionCount: txSnapshot.docs
+            .where((d) => d.data()['_deleted'] != true)
+            .length,
+        goalsCount: goalsSnapshot.docs
+            .where((d) => d.data()['_deleted'] != true)
+            .length,
         lastModified: latest,
       );
     } catch (e) {
@@ -150,339 +197,64 @@ class CloudSyncService {
     }
   }
 
-  /// Overwrites on-device SQLite database with authoritative Cloud Firestore data.
-  static Future<bool> restoreFromCloud(String username) async {
-    final uid = currentUid;
-    if (uid == null) return false;
-    isSyncingNotifier.value = true;
-    syncStatusMessageNotifier.value = 'Restoring records from Google Cloud...';
-    try {
-      final firestore = FirebaseFirestore.instance;
-      final userRef = firestore.collection('users').doc(uid);
+  /// Explicit conflict choices share the tested engine and bounded writer.
+  static Future<bool> restoreFromCloud(String username) =>
+      _runSync(username, mode: 'restore');
+  static Future<bool> overwriteCloudWithLocal(String username) =>
+      uploadFreshData(username);
+  static Future<bool> uploadFreshData(String username) =>
+      _runSync(username, mode: 'overwrite');
+  static Future<bool> mixAndUploadData(String username) => _runSync(username);
 
-      // 1. Transactions
-      final txSnapshot = await userRef.collection('transactions').get();
-      final restoredTxs = txSnapshot.docs.map((doc) => model.Transaction.fromJson(doc.data())).toList();
-      await AppDatabase.instance.saveTransactions(username, restoredTxs);
-      await AppState.loadTransactions(username);
+  /// Local database mutations are durable; these helpers only request a drain.
+  static Future<void> deleteTransactionFromCloud(String txId) =>
+      _syncCurrentLedger();
+  static Future<void> syncTransactionToCloud(model.Transaction tx) =>
+      _syncCurrentLedger();
 
-      // 2. Goals
-      final goalsSnapshot = await userRef.collection('goals').get();
-      final restoredGoals = goalsSnapshot.docs.map((d) => SavingsGoal.fromJson(d.data())).toList();
-      await AppDatabase.instance.saveGoals(username, restoredGoals);
-      await AppState.loadGoals(username);
-
-      // 3. Accounts
-      final accountsDoc = await userRef.collection('vault').doc('accounts').get();
-      if (accountsDoc.exists) {
-        final data = accountsDoc.data();
-        if (data != null && data['list'] is List) {
-          final cloudAccounts = (data['list'] as List).cast<String>();
-          if (cloudAccounts.isNotEmpty) {
-            await AppDatabase.instance.saveAccounts(username, cloudAccounts);
-            AppState.loadAccounts(username);
-          }
-        }
-      }
-
-      // 4. Budgets
-      final budgetsDoc = await userRef.collection('vault').doc('budgets').get();
-      if (budgetsDoc.exists) {
-        final data = budgetsDoc.data();
-        if (data != null && data['categories'] is Map) {
-          final map = (data['categories'] as Map).map((k, v) => MapEntry(k.toString(), (v as num).toDouble()));
-          await AppDatabase.instance.saveBudgets(username, map);
-          AppState.budgetsNotifier.value = map;
-        }
-      }
-
-      lastSyncTimeNotifier.value = DateTime.now();
-      syncStatusMessageNotifier.value = 'Cloud restoration completed';
-      return true;
-    } catch (e) {
-      debugPrint('CloudSyncService.restoreFromCloud error: $e');
-      syncStatusMessageNotifier.value = 'Restoration notice: $e';
-      return false;
-    } finally {
-      isSyncingNotifier.value = false;
-    }
-  }
-
-  /// Overwrites Google Cloud Firestore with authoritative local device data.
-  static Future<bool> overwriteCloudWithLocal(String username) async {
-    return await uploadFreshData(username);
-  }
-
-  /// Uploads fresh device data to Google Cloud Firestore, ensuring cloud exactly mirrors local device.
-  static Future<bool> uploadFreshData(String username) async {
-    final uid = currentUid;
-    if (uid == null) return false;
-    isSyncingNotifier.value = true;
-    syncStatusMessageNotifier.value = 'Uploading fresh device data to Cloud Vault...';
-    try {
-      final firestore = FirebaseFirestore.instance;
-      final userRef = firestore.collection('users').doc(uid);
-
-      // 1. Upload Local Profile
-      final profile = await AppDatabase.instance.loadProfile(username);
-      await syncProfileToCloud(profile);
-
-      // 2. Upload Accounts
-      final localAccounts = await AppDatabase.instance.loadAccounts(username);
-      await userRef.collection('vault').doc('accounts').set({
-        'list': localAccounts,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      // 3. Upload Budgets
-      final localBudgets = await AppDatabase.instance.loadBudgets(username);
-      await userRef.collection('vault').doc('budgets').set({
-        'categories': localBudgets,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      // 4. Overwrite Transactions (delete remote orphaned docs, push local)
-      final localTxs = await AppDatabase.instance.loadTransactions(username);
-      final txCollection = userRef.collection('transactions');
-      final cloudTxSnapshot = await txCollection.get();
-      final localTxIds = localTxs.map((t) => t.id).toSet();
-
-      final batch = firestore.batch();
-      for (var doc in cloudTxSnapshot.docs) {
-        if (!localTxIds.contains(doc.id)) {
-          batch.delete(doc.reference);
-        }
-      }
-      for (var tx in localTxs) {
-        batch.set(txCollection.doc(tx.id), tx.toJson(), SetOptions(merge: true));
-      }
-      await batch.commit();
-
-      // 5. Overwrite Goals
-      final localGoals = await AppDatabase.instance.loadGoals(username, includeArchived: true);
-      final goalsCollection = userRef.collection('goals');
-      final cloudGoalsSnapshot = await goalsCollection.get();
-      final localGoalIds = localGoals.map((g) => g.id).toSet();
-
-      final goalsBatch = firestore.batch();
-      for (var doc in cloudGoalsSnapshot.docs) {
-        if (!localGoalIds.contains(doc.id)) {
-          goalsBatch.delete(doc.reference);
-        }
-      }
-      for (var g in localGoals) {
-        goalsBatch.set(goalsCollection.doc(g.id), g.toJson(), SetOptions(merge: true));
-      }
-      await goalsBatch.commit();
-
-      lastSyncTimeNotifier.value = DateTime.now();
-      syncStatusMessageNotifier.value = 'Fresh device data uploaded successfully';
-      return true;
-    } catch (e) {
-      debugPrint('CloudSyncService.uploadFreshData error: $e');
-      syncStatusMessageNotifier.value = 'Upload error: $e';
-      return false;
-    } finally {
-      isSyncingNotifier.value = false;
-    }
-  }
-
-  /// Combines and mixes cloud records and local device records into a unified ledger,
-  /// saving to local SQLite and updating Cloud Firestore without losing any data.
-  static Future<bool> mixAndUploadData(String username) async {
-    final uid = currentUid;
-    if (uid == null) return false;
-    isSyncingNotifier.value = true;
-    syncStatusMessageNotifier.value = 'Mixing device and cloud records...';
-    try {
-      final firestore = FirebaseFirestore.instance;
-      final userRef = firestore.collection('users').doc(uid);
-
-      // 1. Fetch Local Data
-      final localTxs = await AppDatabase.instance.loadTransactions(username);
-      final localAccounts = await AppDatabase.instance.loadAccounts(username);
-      final localBudgets = await AppDatabase.instance.loadBudgets(username);
-      final localGoals = await AppDatabase.instance.loadGoals(username, includeArchived: true);
-
-      // 2. Fetch Cloud Data
-      final txSnapshot = await userRef.collection('transactions').get();
-      final cloudTxs = txSnapshot.docs.map((d) => model.Transaction.fromJson(d.data())).toList();
-
-      final goalsSnapshot = await userRef.collection('goals').get();
-      final cloudGoals = goalsSnapshot.docs.map((d) => SavingsGoal.fromJson(d.data())).toList();
-
-      List<String> cloudAccounts = [];
-      final accountsDoc = await userRef.collection('vault').doc('accounts').get();
-      if (accountsDoc.exists && accountsDoc.data()?['list'] is List) {
-        cloudAccounts = (accountsDoc.data()!['list'] as List).cast<String>();
-      }
-
-      Map<String, double> cloudBudgets = {};
-      final budgetsDoc = await userRef.collection('vault').doc('budgets').get();
-      if (budgetsDoc.exists && budgetsDoc.data()?['categories'] is Map) {
-        cloudBudgets = (budgetsDoc.data()!['categories'] as Map)
-            .map((k, v) => MapEntry(k.toString(), (v as num).toDouble()));
-      }
-
-      // 3. Perform In-App Mixing (Deduplicate & Merge)
-      // Transactions: Cloud first, then local (local updates overwrite on identical ID)
-      final Map<String, model.Transaction> mergedTxMap = {};
-      for (var tx in cloudTxs) {
-        mergedTxMap[tx.id] = tx;
-      }
-      for (var tx in localTxs) {
-        mergedTxMap[tx.id] = tx;
-      }
-      final mergedTxs = mergedTxMap.values.toList()
-        ..sort((a, b) => b.date.compareTo(a.date));
-
-      // Accounts: Union of distinct account names
-      final mergedAccounts = {...localAccounts, ...cloudAccounts}.toList();
-
-      // Budgets: Union with local taking priority
-      final mergedBudgets = {...cloudBudgets, ...localBudgets};
-
-      // Goals: Cloud first, then local
-      final Map<String, SavingsGoal> mergedGoalsMap = {};
-      for (var g in cloudGoals) {
-        mergedGoalsMap[g.id] = g;
-      }
-      for (var g in localGoals) {
-        mergedGoalsMap[g.id] = g;
-      }
-      final mergedGoals = mergedGoalsMap.values.toList();
-
-      // 4. Persist Merged State Locally
-      await AppDatabase.instance.saveTransactions(username, mergedTxs);
-      await AppDatabase.instance.saveAccounts(username, mergedAccounts);
-      await AppDatabase.instance.saveBudgets(username, mergedBudgets);
-      await AppDatabase.instance.saveGoals(username, mergedGoals);
-
-      // 5. Upload Merged State to Firestore
-      final txCollection = userRef.collection('transactions');
-      final batch = firestore.batch();
-      for (var tx in mergedTxs) {
-        batch.set(txCollection.doc(tx.id), tx.toJson(), SetOptions(merge: true));
-      }
-      await batch.commit();
-
-      final goalsCollection = userRef.collection('goals');
-      final goalsBatch = firestore.batch();
-      for (var g in mergedGoals) {
-        goalsBatch.set(goalsCollection.doc(g.id), g.toJson(), SetOptions(merge: true));
-      }
-      await goalsBatch.commit();
-
-      await userRef.collection('vault').doc('accounts').set({
-        'list': mergedAccounts,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      await userRef.collection('vault').doc('budgets').set({
-        'categories': mergedBudgets,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      // 6. Reload In-Memory AppState
-      await AppState.loadAllUserData(username);
-
-      lastSyncTimeNotifier.value = DateTime.now();
-      syncStatusMessageNotifier.value = 'Unified ledger synchronized successfully';
-      return true;
-    } catch (e) {
-      debugPrint('CloudSyncService.mixAndUploadData error: $e');
-      syncStatusMessageNotifier.value = 'Mix & sync notice: $e';
-      return false;
-    } finally {
-      isSyncingNotifier.value = false;
-    }
-  }
-
-  /// Immediately deletes a transaction document from Firestore.
-  static Future<void> deleteTransactionFromCloud(String txId) async {
-    if (!isCloudAvailable) return;
-    final uid = currentUid;
-    if (uid == null) return;
-    try {
-      final firestore = FirebaseFirestore.instance;
-      await firestore.collection('users').doc(uid).collection('transactions').doc(txId).delete();
-      debugPrint('CloudSyncService: Deleted transaction $txId from cloud');
-    } catch (e) {
-      debugPrint('CloudSyncService.deleteTransactionFromCloud notice: $e');
-    }
-  }
-
-  /// Immediately syncs a single transaction document to Firestore.
-  static Future<void> syncTransactionToCloud(model.Transaction tx) async {
-    if (!isCloudAvailable) return;
-    final uid = currentUid;
-    if (uid == null) return;
-    try {
-      final firestore = FirebaseFirestore.instance;
-      await firestore.collection('users').doc(uid).collection('transactions').doc(tx.id).set(
-        tx.toJson(),
-        SetOptions(merge: true),
-      );
-      debugPrint('CloudSyncService: Synced transaction ${tx.id} to cloud');
-    } catch (e) {
-      debugPrint('CloudSyncService.syncTransactionToCloud notice: $e');
-    }
+  static Future<void> _syncCurrentLedger() async {
+    final username = AppState.currentUser;
+    if (username != null) await sync(username);
   }
 
   /// Immediately updates accounts in Firestore vault.
   static Future<void> syncAccountsToCloud(List<String> accounts) async {
-    if (!isCloudAvailable) return;
-    final uid = currentUid;
-    if (uid == null) return;
+    final username = AppState.currentUser;
+    if (username == null) return;
+    final checkSession = _sessionGuard(username);
+    if (checkSession == null) return;
+    final uid = currentUid!;
     try {
       final firestore = FirebaseFirestore.instance;
-      await firestore.collection('users').doc(uid).collection('vault').doc('accounts').set({
-        'list': accounts,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      debugPrint('CloudSyncService: Synced ${accounts.length} accounts to cloud');
+      await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('vault')
+          .doc('accounts')
+          .set({'list': accounts, 'updatedAt': FieldValue.serverTimestamp()});
+      debugPrint(
+        'CloudSyncService: Synced ${accounts.length} accounts to cloud',
+      );
     } catch (e) {
       debugPrint('CloudSyncService.syncAccountsToCloud notice: $e');
     }
   }
 
-  /// Immediately deletes a savings goal from Firestore.
-  static Future<void> deleteGoalFromCloud(String goalId) async {
-    if (!isCloudAvailable) return;
-    final uid = currentUid;
-    if (uid == null) return;
-    try {
-      final firestore = FirebaseFirestore.instance;
-      await firestore.collection('users').doc(uid).collection('goals').doc(goalId).delete();
-      debugPrint('CloudSyncService: Deleted goal $goalId from cloud');
-    } catch (e) {
-      debugPrint('CloudSyncService.deleteGoalFromCloud notice: $e');
-    }
-  }
-
-  /// Immediately syncs savings goals to Firestore.
-  static Future<void> syncGoalsToCloud(List<SavingsGoal> goals) async {
-    if (!isCloudAvailable) return;
-    final uid = currentUid;
-    if (uid == null) return;
-    try {
-      final firestore = FirebaseFirestore.instance;
-      final goalsCollection = firestore.collection('users').doc(uid).collection('goals');
-      final batch = firestore.batch();
-      for (var g in goals) {
-        batch.set(goalsCollection.doc(g.id), g.toJson(), SetOptions(merge: true));
-      }
-      await batch.commit();
-      debugPrint('CloudSyncService: Synced ${goals.length} goals to cloud');
-    } catch (e) {
-      debugPrint('CloudSyncService.syncGoalsToCloud notice: $e');
-    }
-  }
+  static Future<void> deleteGoalFromCloud(String goalId) =>
+      _syncCurrentLedger();
+  static Future<void> syncGoalsToCloud(List<SavingsGoal> goals) =>
+      _syncCurrentLedger();
 
   /// Immediately syncs user profile and uploaded avatar to Firestore.
-  static Future<void> syncProfileToCloud(UserProfile profile) async {
-    if (!isCloudAvailable) return;
-    final uid = currentUid;
-    if (uid == null) return;
+  static Future<void> syncProfileToCloud(
+    UserProfile profile, {
+    bool propagateErrors = false,
+  }) async {
+    final username = AppState.currentUser;
+    if (username == null) return;
+    final checkSession = _sessionGuard(username);
+    if (checkSession == null) return;
+    final uid = currentUid!;
     try {
       final firestore = FirebaseFirestore.instance;
       final userRef = firestore.collection('users').doc(uid);
@@ -491,7 +263,8 @@ class CloudSyncService {
       String? photoUrl;
 
       if (profile.photoPath != null && profile.photoPath!.isNotEmpty) {
-        if (profile.photoPath!.startsWith('http://') || profile.photoPath!.startsWith('https://')) {
+        if (profile.photoPath!.startsWith('http://') ||
+            profile.photoPath!.startsWith('https://')) {
           photoUrl = profile.photoPath;
         } else {
           try {
@@ -529,183 +302,240 @@ class CloudSyncService {
         profileMap['photoUrl'] = photoUrl;
       }
 
+      checkSession();
+      if (profile.username != username) {
+        throw StateError('Profile account mismatch');
+      }
       await userRef.set(profileMap, SetOptions(merge: true));
-      debugPrint('CloudSyncService: Profile and avatar synced to cloud for ${profile.username}');
+      debugPrint(
+        'CloudSyncService: Profile and avatar synced to cloud for ${profile.username}',
+      );
     } catch (e) {
       debugPrint('CloudSyncService.syncProfileToCloud notice: $e');
+      if (propagateErrors) rethrow;
     }
   }
 
-  /// Performs an intelligent two-way synchronization between SQLite and Firestore.
-  static Future<bool> sync(String username) async {
-    if (!isCloudAvailable) {
-      debugPrint('CloudSyncService: Firebase Auth user not present or does not match active session, skipping cloud sync.');
-      return false;
+  /// Capture account identity AND session generation; returning to the same user
+  /// after a logout still invalidates in-flight work from the old session.
+  static void Function()? _sessionGuard(String username) {
+    if (!isCloudAvailable || AppState.currentUser != username) return null;
+    final user = FirebaseAuth.instance.currentUser!;
+    if (user.email == null ||
+        user.email!.toLowerCase() != username.toLowerCase()) {
+      return null;
     }
+    final uid = user.uid;
+    final generation = AppState.sessionGeneration;
+    return () {
+      if (AppState.currentUser != username ||
+          AppState.sessionGeneration != generation ||
+          FirebaseAuth.instance.currentUser?.uid != uid) {
+        throw StateError('Account changed during synchronization');
+      }
+    };
+  }
 
-    final fbUser = FirebaseAuth.instance.currentUser;
-    if (fbUser != null && fbUser.email != null && fbUser.email!.toLowerCase() != username.toLowerCase()) {
-      debugPrint('CloudSyncService: Firebase user (${fbUser.email}) does not match local username ($username). Aborting sync.');
-      return false;
+  static Future<void> _restoreMissingAvatar(
+    String username,
+    DocumentReference<Map<String, dynamic>> user,
+    void Function() checkSession,
+  ) async {
+    final db = AppDatabase.instance;
+    final profile = await db.loadProfile(username);
+    checkSession();
+    if (profile.photoPath != null &&
+        !profile.photoPath!.startsWith('http') &&
+        await File(profile.photoPath!).exists()) {
+      return;
     }
-
-    final uid = currentUid;
-    if (uid == null) return false;
-
-    if (isSyncingNotifier.value) return false;
-
-    isSyncingNotifier.value = true;
-    syncStatusMessageNotifier.value = 'Connecting to Google Cloud Vault...';
-
-    try {
-      final firestore = FirebaseFirestore.instance;
-      final userRef = firestore.collection('users').doc(uid);
-
-      // 1. Sync Profile & Uploaded Avatar
-      syncStatusMessageNotifier.value = 'Syncing profile & avatar...';
-      final profile = await AppDatabase.instance.loadProfile(username);
-      
-      // Fetch cloud user doc to check if cloud has newer avatar or fields
-      final cloudUserDoc = await userRef.get();
-      if (cloudUserDoc.exists) {
-        final cData = cloudUserDoc.data();
-        if (cData != null) {
-          // If cloud has an uploaded photoBase64 and local photoPath is missing or non-existent
-          final cloudPhotoBase64 = cData['photoBase64'] as String?;
-          final cloudPhotoUrl = cData['photoUrl'] as String?;
-          final localFileExists = profile.photoPath != null && 
-              !profile.photoPath!.startsWith('http') && 
-              File(profile.photoPath!).existsSync();
-
-          if (!localFileExists && cloudPhotoBase64 != null && cloudPhotoBase64.isNotEmpty) {
-            try {
-              final bytes = base64Decode(cloudPhotoBase64);
-              final dbDir = await getDatabasesPath();
-              final safeName = username.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-              final localAvatarFile = File(join(dbDir, 'avatar_$safeName.jpg'));
-              await localAvatarFile.writeAsBytes(bytes);
-              
-              final updatedProfile = profile.copyWith(photoPath: localAvatarFile.path);
-              await AppDatabase.instance.saveProfile(updatedProfile);
-              AppState.profilePhotoNotifier.value = localAvatarFile.path;
-            } catch (e) {
-              debugPrint('Error restoring avatar from cloud: $e');
-            }
-          } else if (!localFileExists && cloudPhotoUrl != null && cloudPhotoUrl.isNotEmpty) {
-            final updatedProfile = profile.copyWith(photoPath: cloudPhotoUrl);
-            await AppDatabase.instance.saveProfile(updatedProfile);
-            AppState.profilePhotoNotifier.value = cloudPhotoUrl;
-          }
-        }
+    final cloud = (await user.get(
+      const GetOptions(source: Source.server),
+    )).data();
+    checkSession();
+    String? path = cloud?['photoUrl'] as String?;
+    final encoded = cloud?['photoBase64'] as String?;
+    if (encoded != null && encoded.isNotEmpty) {
+      final bytes = base64Decode(encoded);
+      if (bytes.length > 350000) {
+        throw StateError('Cloud avatar exceeds supported size');
       }
+      final directory = await getDatabasesPath();
+      checkSession();
+      final filename = 'avatar_${sha256.convert(utf8.encode(username))}.jpg';
+      final file = File(join(directory, filename));
+      await file.writeAsBytes(bytes);
+      path = file.path;
+    }
+    checkSession();
+    if (path != null && path.isNotEmpty) {
+      await db.saveProfile(profile.copyWith(photoPath: path));
+      checkSession();
+      AppState.profilePhotoNotifier.value = path;
+    }
+  }
 
-      // Upload local profile & avatar to Firestore
-      await syncProfileToCloud(profile);
-
-      // 2. Sync Accounts (Authoritative local-to-cloud sync; never resurrect deleted accounts)
-      final localAccounts = await AppDatabase.instance.loadAccounts(username);
-      final accountsDoc = await userRef.collection('vault').doc('accounts').get();
-      if (accountsDoc.exists && localAccounts.isEmpty) {
-        // Fresh device with no local accounts -> pull from cloud
-        final data = accountsDoc.data();
-        if (data != null && data['list'] is List) {
-          final cloudAccounts = (data['list'] as List).cast<String>();
-          if (cloudAccounts.isNotEmpty) {
-            await AppDatabase.instance.saveAccounts(username, cloudAccounts);
-            AppState.loadAccounts(username);
-          }
-        }
-      } else {
-        // Local has accounts -> push local state to cloud so deletions are accurately captured
-        await userRef.collection('vault').doc('accounts').set({
-          'list': localAccounts,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      }
-
-      // 3. Sync Budgets
-      final localBudgets = await AppDatabase.instance.loadBudgets(username);
-      await userRef.collection('vault').doc('budgets').set({
-        'categories': localBudgets,
+  static Future<void> _syncMetadata(
+    String username,
+    void Function() checkSession, {
+    required bool restore,
+    required bool merge,
+  }) async {
+    checkSession();
+    final user = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUid!);
+    final accountsDoc = await user
+        .collection('vault')
+        .doc('accounts')
+        .get(const GetOptions(source: Source.server));
+    final budgetsDoc = await user
+        .collection('vault')
+        .doc('budgets')
+        .get(const GetOptions(source: Source.server));
+    checkSession();
+    await _restoreMissingAvatar(username, user, checkSession);
+    checkSession();
+    final db = AppDatabase.instance;
+    final localAccounts = await db.loadAccounts(username);
+    final localBudgets = await db.loadBudgets(username);
+    final cloudAccounts =
+        (accountsDoc.data()?['list'] as List?)?.cast<String>() ?? <String>[];
+    final cloudBudgets = ((budgetsDoc.data()?['categories'] as Map?) ?? {}).map(
+      (k, v) => MapEntry(k.toString(), (v as num).toDouble()),
+    );
+    final accounts = restore
+        ? cloudAccounts
+        : (merge
+              ? {...cloudAccounts, ...localAccounts}.toList()
+              : localAccounts);
+    final budgets = restore
+        ? cloudBudgets
+        : (merge ? {...cloudBudgets, ...localBudgets} : localBudgets);
+    checkSession();
+    await db.saveAccounts(username, accounts);
+    await db.saveBudgets(username, budgets);
+    checkSession();
+    AppState.accountsNotifier.value = accounts;
+    AppState.budgetsNotifier.value = budgets;
+    if (!restore) {
+      await user.collection('vault').doc('accounts').set({
+        'list': accounts,
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      checkSession();
+      await user.collection('vault').doc('budgets').set({
+        'categories': budgets,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      checkSession();
+      await syncProfileToCloud(
+        await db.loadProfile(username),
+        propagateErrors: true,
+      );
+      checkSession();
+    }
+  }
 
-      // 4. Sync Transactions with Deletion Reconciliation
-      syncStatusMessageNotifier.value = 'Securing transactions...';
-      final localTxs = await AppDatabase.instance.loadTransactions(username);
-      final txCollection = userRef.collection('transactions');
+  /// Reconcile explicit mutations, then pull remote records. Local absence never
+  /// deletes cloud data. Unedited legacy conflicts prefer the remote record;
+  /// pending explicit local edits use last successful commit wins.
+  static Future<bool> sync(String username) => _runSync(username);
 
-      if (localTxs.isNotEmpty) {
-        final localIdSet = localTxs.map((t) => t.id).toSet();
-        final cloudSnapshot = await txCollection.get();
-        final batch = firestore.batch();
-
-        // Delete cloud transactions that were deleted locally
-        for (var doc in cloudSnapshot.docs) {
-          if (!localIdSet.contains(doc.id)) {
-            batch.delete(doc.reference);
-          }
-        }
-
-        // Upsert all local transactions
-        int count = 0;
-        for (var tx in localTxs) {
-          final doc = txCollection.doc(tx.id);
-          batch.set(doc, tx.toJson(), SetOptions(merge: true));
-          count++;
-          if (count >= 400) break; // stay within Firestore batch limits
-        }
-        await batch.commit();
-      } else {
-        // Local is empty (e.g. freshly reinstalled app or new device) -> Restore from Firestore
-        final cloudSnapshot = await txCollection.get();
-        if (cloudSnapshot.docs.isNotEmpty) {
-          final restoredTxs = cloudSnapshot.docs.map((doc) => model.Transaction.fromJson(doc.data())).toList();
-          await AppDatabase.instance.saveTransactions(username, restoredTxs);
-          await AppState.loadTransactions(username);
-        }
+  static Future<bool> _runSync(String username, {String mode = 'merge'}) async {
+    final checkSession = _sessionGuard(username);
+    if (checkSession == null || isSyncingNotifier.value) return false;
+    final uid = currentUid!;
+    isSyncingNotifier.value = true;
+    try {
+      syncStatusMessageNotifier.value = 'Synchronizing ledger...';
+      final db = await AppDatabase.instance.database;
+      checkSession();
+      final remote = _FirestoreLedgerRemote(
+        FirebaseFirestore.instance.collection('users').doc(uid),
+        checkSession,
+      );
+      final engine = LedgerSyncEngine(
+        SqliteLedgerStore(db),
+        remote,
+        checkSession: checkSession,
+        onProgress: (committed) => syncStatusMessageNotifier.value =
+            'Committed $committed ledger changes...',
+      );
+      final complete = switch (mode) {
+        'restore' => await engine.restore(username),
+        'overwrite' => await engine.overwrite(username),
+        _ => await engine.sync(username),
+      };
+      checkSession();
+      final transactions = await AppDatabase.instance.loadTransactions(
+        username,
+      );
+      final goals = await AppDatabase.instance.loadGoals(username);
+      checkSession();
+      AppState.transactionsNotifier.value = transactions;
+      AppState.goalsNotifier.value = goals;
+      await _syncMetadata(
+        username,
+        checkSession,
+        restore: mode == 'restore',
+        merge: mode == 'merge',
+      );
+      checkSession();
+      final pending = await SqliteLedgerStore(db).snapshot(username);
+      checkSession();
+      if (!complete || pending.pending.isNotEmpty) {
+        syncStatusMessageNotifier.value =
+            'Ledger saved; newer local changes are pending. Sync again.';
+        return false;
       }
-
-      // 5. Sync Savings Goals
-      syncStatusMessageNotifier.value = 'Syncing savings goals...';
-      final localGoals = await AppDatabase.instance.loadGoals(username, includeArchived: true);
-      final goalsCollection = userRef.collection('goals');
-
-      if (localGoals.isNotEmpty) {
-        final localGoalIdSet = localGoals.map((g) => g.id).toSet();
-        final cloudGoalsSnapshot = await goalsCollection.get();
-        final batch = firestore.batch();
-
-        // Delete goals in cloud that were removed locally
-        for (var doc in cloudGoalsSnapshot.docs) {
-          if (!localGoalIdSet.contains(doc.id)) {
-            batch.delete(doc.reference);
-          }
-        }
-
-        for (var g in localGoals) {
-          batch.set(goalsCollection.doc(g.id), g.toJson(), SetOptions(merge: true));
-        }
-        await batch.commit();
-      } else {
-        final cloudGoalsSnapshot = await goalsCollection.get();
-        if (cloudGoalsSnapshot.docs.isNotEmpty) {
-          final restoredGoals = cloudGoalsSnapshot.docs.map((d) => SavingsGoal.fromJson(d.data())).toList();
-          await AppDatabase.instance.saveGoals(username, restoredGoals);
-          await AppState.loadGoals(username);
-        }
-      }
-
       lastSyncTimeNotifier.value = DateTime.now();
-      syncStatusMessageNotifier.value = 'Vault synchronized successfully';
-      debugPrint('CloudSyncService: Vault sync completed for $username (uid: $uid)');
+      syncStatusMessageNotifier.value = 'Ledger synchronized successfully';
       return true;
     } catch (e) {
-      debugPrint('CloudSyncService error: $e');
-      syncStatusMessageNotifier.value = 'Sync notice: $e';
+      syncStatusMessageNotifier.value =
+          'Sync incomplete; pending changes retained: $e';
       return false;
     } finally {
       isSyncingNotifier.value = false;
     }
+  }
+}
+
+class _FirestoreLedgerRemote implements LedgerRemote {
+  final DocumentReference<Map<String, dynamic>> user;
+  final void Function() checkSession;
+  const _FirestoreLedgerRemote(this.user, this.checkSession);
+
+  @override
+  Future<LedgerRecords> read() async {
+    final result = <String, Map<String, Map<String, dynamic>>>{};
+    for (final collection in SqliteLedgerStore.collections) {
+      checkSession();
+      // Do not reconcile against a stale offline cache. Failed reads leave the
+      // durable outbox untouched and report incomplete sync.
+      final snapshot = await user
+          .collection(collection)
+          .get(const GetOptions(source: Source.server));
+      checkSession();
+      result[collection] = {
+        for (final doc in snapshot.docs) doc.id: doc.data(),
+      };
+    }
+    return result;
+  }
+
+  @override
+  Future<void> commit(List<LedgerWrite> writes) async {
+    checkSession();
+    final batch = user.firestore.batch();
+    for (final write in writes) {
+      batch.set(user.collection(write.collection).doc(write.id), {
+        ...write.data,
+        '_updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+    checkSession();
   }
 }

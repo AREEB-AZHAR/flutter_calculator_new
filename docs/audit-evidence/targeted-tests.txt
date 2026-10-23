@@ -1,0 +1,113 @@
+00:00 +0: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart
+00:00 +0: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Account Theme Isolation & Entitlement Scoping Tests User A setting a premium theme does not carry over to User B (free user)
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+MonetizationService: Tally Pro unlocked and signed for user_alice.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+00:00 +1: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Account Theme Isolation & Entitlement Scoping Tests Existing user with stale premium theme is sanitized to Ledger if not Pro
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+00:00 +2: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Account Theme Isolation & Entitlement Scoping Tests Pro user retains their chosen premium theme across sessions
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+MonetizationService: Tally Pro unlocked and signed for user_dave.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@594310200' has not been initialized.
+00:00 +3: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Undo Banner 5-Second Timer Tests deleteTransactionWithUndo shows 5-second banner and auto-dismisses
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+00:01 +4: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Undo Banner 5-Second Timer Tests deleteGoalWithUndo shows 5-second banner and auto-dismisses
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+00:01 +5: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: On-Demand Page Lifecycle Tests MainNavScreen renders only the active tab on-demand and discards others
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+00:01 +6: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Cross-User State Isolation & Migration Tests Tour onboarding state is isolated per user
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+00:01 +7: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Cross-User State Isolation & Migration Tests Biometric enrollment is strictly scoped per user and not stolen on login
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+00:01 +8: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Cross-User State Isolation & Migration Tests Notification reminder preferences are isolated per user
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+00:01 +9: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Cross-User State Isolation & Migration Tests Account migration migrates loans and planned transactions and cleans up local user
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1324271368' has not been initialized.
+00:01 +10: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart
+00:02 +10: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: BiometricService toggles enabled state and persists associated username
+00:02 +11: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Currency updates reactively and persists without app relaunch
+00:02 +12: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: TransactionTile updates currency dynamically without reload
+00:03 +13: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Transaction Dialog: Empty title defaults to selected category name
+00:04 +14: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Transaction Dialog: Allows selecting custom transaction date and orders descending
+00:04 +15: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: TourService tracks tour completion and resets correctly
+00:04 +16: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: BiometricService session prompt resets on logout
+00:04 +17: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Transaction Dialog: Selecting Income auto-switches category to Salary & auto-fills title
+00:05 +18: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: MonetizationService: tier transitions, separate remove-ads, and promo codes
+MonetizationService: Ads removed and signed for null.
+MonetizationService: Tally Pro unlocked and signed for null.
+MonetizationService: Ads removed and signed for null.
+MonetizationService: Tally Pro unlocked and signed for null.
+00:05 +19: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: GoogleAuthService: detects Google email bindings
+00:05 +20: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: AdBannerWidget: displays banner for free users and hides when ad-free or pro
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: exactly one matching candidate
+  Actual: _TextWidgetFinder:<Found 0 widgets with text "Ad": []>
+   Which: means none were found but one was expected
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart:319:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart line 319
+The test description was:
+  AdBannerWidget: displays banner for free users and hides when ad-free or pro
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:05 +20 -1: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: AdBannerWidget: displays banner for free users and hides when ad-free or pro [E]
+  Test failed. See exception logs above.
+  The test description was: AdBannerWidget: displays banner for free users and hides when ad-free or pro
+  
+00:05 +20 -1: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: InsightsScreen: Free users see Tally Pro lock screen, Pro users see insights
+MonetizationService: Tally Pro unlocked and signed for null.
+00:05 +21 -1: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Delete Confirmation Dialog: Appears and cancelling does not delete transaction
+00:05 +22 -1: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Delete Confirmation Dialog & Undo: Confirming deletes transaction and Undo restores it
+00:05 +23 -1: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Goal Deletion: Shows confirmation dialog, delete removes goal, and Undo restores it
+scheduleGoalReminders notice: LateInitializationError: Field '_local@593310200' has not been initialized.
+scheduleGoalReminders notice: LateInitializationError: Field '_local@593310200' has not been initialized.
+00:05 +24 -1: Some tests failed.

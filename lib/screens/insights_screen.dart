@@ -1,3 +1,4 @@
+import '../widgets/lazy_section_list.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
@@ -6,6 +7,7 @@ import '../models/savings_goal.dart';
 import '../services/state.dart';
 import '../services/monetization_service.dart';
 import '../services/insights_engine.dart';
+import '../services/insights_report_cache.dart';
 import '../utils/constants.dart';
 import '../services/language_service.dart';
 
@@ -21,14 +23,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   int _periodOffset = 0; // 0 = current, -1 = previous, etc.
   String _activeInsightTab = 'all';
 
-  InsightsReport? _lastReport;
-  int? _lastTxHash;
-  int? _lastLoansHash;
-  int? _lastBudgetsHash;
-  int? _lastGoalsHash;
-  TimeHorizon? _lastHorizon;
-  int? _lastPeriodOffset;
-  String? _lastCurrency;
+  final _reportCache = InsightsReportCache();
 
   InsightsReport _getOrComputeReport({
     required List<Transaction> transactions,
@@ -38,41 +33,15 @@ class _InsightsScreenState extends State<InsightsScreen> {
     required TimeHorizon horizon,
     required int periodOffset,
     String currency = '\$',
-  }) {
-    final txHash = Object.hashAll(transactions);
-    final loansHash = Object.hashAll(loans);
-    final budgetsHash = Object.hashAll(budgets.entries);
-    final goalsHash = Object.hashAll(goals);
-
-    if (_lastReport != null &&
-        _lastTxHash == txHash &&
-        _lastLoansHash == loansHash &&
-        _lastBudgetsHash == budgetsHash &&
-        _lastGoalsHash == goalsHash &&
-        _lastHorizon == horizon &&
-        _lastPeriodOffset == periodOffset &&
-        _lastCurrency == currency) {
-      return _lastReport!;
-    }
-
-    _lastTxHash = txHash;
-    _lastLoansHash = loansHash;
-    _lastBudgetsHash = budgetsHash;
-    _lastGoalsHash = goalsHash;
-    _lastHorizon = horizon;
-    _lastPeriodOffset = periodOffset;
-    _lastCurrency = currency;
-
-    return _lastReport = InsightsEngine.generateReport(
-      transactions: transactions,
-      loans: loans,
-      budgets: budgets,
-      goals: goals,
-      horizon: horizon,
-      periodOffset: periodOffset,
-      currency: currency,
-    );
-  }
+  }) => _reportCache.get(
+    transactions: transactions,
+    loans: loans,
+    budgets: budgets,
+    goals: goals,
+    horizon: horizon,
+    periodOffset: periodOffset,
+    currency: currency,
+  );
 
   void _changeHorizon(TimeHorizon horizon) {
     if (_selectedHorizon != horizon) {
@@ -250,47 +219,45 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                 currency: currentCurrency,
                               );
 
-                              return SingleChildScrollView(
+                              return LazySectionList(
+                                key: const PageStorageKey('insights_scroll'),
                                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    RepaintBoundary(child: _buildHorizonSelector(theme)),
-                                    const SizedBox(height: 12),
-                                    RepaintBoundary(child: _buildPeriodNavigator(theme, report)),
-                                    const SizedBox(height: 12),
-                                    _buildInsightSubTabBar(theme),
-                                    const SizedBox(height: 14),
+                                sections: [
+                                    (context) => RepaintBoundary(child: _buildHorizonSelector(theme)),
+                                    (context) => const SizedBox(height: 12),
+                                    (context) => RepaintBoundary(child: _buildPeriodNavigator(theme, report)),
+                                    (context) => const SizedBox(height: 12),
+                                    (context) => _buildInsightSubTabBar(theme),
+                                    (context) => const SizedBox(height: 14),
 
                                     // Tab: Overview / All
                                     if (_activeInsightTab == 'all' || _activeInsightTab == 'overview') ...[
-                                      RepaintBoundary(child: _buildAccountantBriefCard(theme, report)),
-                                      const SizedBox(height: 16),
-                                      RepaintBoundary(child: _buildSavingsVaultAndGoalsCard(theme, report, currentCurrency)),
-                                      const SizedBox(height: 16),
-                                      RepaintBoundary(child: _buildVelocitySummaryGrid(theme, report, currentCurrency)),
-                                      const SizedBox(height: 20),
+                                      (context) => RepaintBoundary(child: _buildAccountantBriefCard(theme, report)),
+                                      (context) => const SizedBox(height: 16),
+                                      (context) => RepaintBoundary(child: _buildSavingsVaultAndGoalsCard(theme, report, currentCurrency)),
+                                      (context) => const SizedBox(height: 16),
+                                      (context) => RepaintBoundary(child: _buildVelocitySummaryGrid(theme, report, currentCurrency)),
+                                      (context) => const SizedBox(height: 20),
                                     ],
 
                                     // Tab: Budget & Debts / All
                                     if (_activeInsightTab == 'all' || _activeInsightTab == 'planning') ...[
-                                      RepaintBoundary(child: _build503020PlanningCard(theme, report, currentCurrency)),
-                                      const SizedBox(height: 20),
-                                      RepaintBoundary(child: _buildCategoryMatrix(theme, report, currentCurrency)),
-                                      const SizedBox(height: 20),
-                                      RepaintBoundary(child: _buildLoansAndDebtCard(theme, report, currentCurrency)),
-                                      const SizedBox(height: 20),
+                                      (context) => RepaintBoundary(child: _build503020PlanningCard(theme, report, currentCurrency)),
+                                      (context) => const SizedBox(height: 20),
+                                      (context) => RepaintBoundary(child: _buildCategoryMatrix(theme, report, currentCurrency)),
+                                      (context) => const SizedBox(height: 20),
+                                      (context) => RepaintBoundary(child: _buildLoansAndDebtCard(theme, report, currentCurrency)),
+                                      (context) => const SizedBox(height: 20),
                                     ],
 
                                     // Tab: Tax & Liquidity / All
                                     if (_activeInsightTab == 'all' || _activeInsightTab == 'tax') ...[
-                                      RepaintBoundary(child: _buildTaxIntelligenceCard(theme, report, currentCurrency)),
-                                      const SizedBox(height: 20),
-                                      RepaintBoundary(child: _buildPaymentTypeCard(theme, report, currentCurrency)),
-                                      const SizedBox(height: 32),
+                                      (context) => RepaintBoundary(child: _buildTaxIntelligenceCard(theme, report, currentCurrency)),
+                                      (context) => const SizedBox(height: 20),
+                                      (context) => RepaintBoundary(child: _buildPaymentTypeCard(theme, report, currentCurrency)),
+                                      (context) => const SizedBox(height: 32),
                                     ],
                                   ],
-                                ),
                               );
                             },
                           );

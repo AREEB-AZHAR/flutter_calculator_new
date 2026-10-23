@@ -1,3 +1,5 @@
+import '../services/ledger_view_cache.dart';
+import '../widgets/lazy_section_list.dart';
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../models/loan.dart';
@@ -21,6 +23,8 @@ class AccountsScreen extends StatefulWidget {
 }
 
 class _AccountsScreenState extends State<AccountsScreen> {
+  final _walletCache = WalletViewCache();
+  final _loanCache = LoanViewCache();
   String _activeSegment = 'wallets'; // 'wallets' or 'loans'
   String _selectedAccount = 'Overall';
   String _loanFilter = 'all'; // 'all', 'receivable', 'payable', 'settled'
@@ -644,42 +648,18 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   _selectedAccount = 'Overall';
                 }
 
-                final Map<String, double> balances = {'Overall': 0.0};
-                final Map<String, double> spentMap = {'Overall': 0.0};
-                for (var acc in accounts) {
-                  balances[acc] = 0.0;
-                  spentMap[acc] = 0.0;
-                }
-
-                double overallIncome = 0;
-                double overallExpense = 0;
-                for (var t in transactions) {
-                  if (t.isIncome) {
-                    overallIncome += t.amount;
-                    if (balances.containsKey(t.account)) {
-                      balances[t.account] = (balances[t.account] ?? 0.0) + t.amount;
-                    }
-                  } else {
-                    overallExpense += t.amount;
-                    if (balances.containsKey(t.account)) {
-                      balances[t.account] = (balances[t.account] ?? 0.0) - t.amount;
-                      spentMap[t.account] = (spentMap[t.account] ?? 0.0) + t.amount;
-                    }
-                  }
-                }
-                balances['Overall'] = overallIncome - overallExpense;
-                spentMap['Overall'] = overallExpense;
-
-                final filteredTxs = _selectedAccount == 'Overall'
-                    ? transactions
-                    : transactions.where((t) => t.account == _selectedAccount).toList();
+                final view = _walletCache.get(transactions);
+                final balances = {...view.balances, 'Overall': view.overallBalance};
+                final spentMap = {...view.spending, 'Overall': view.overallSpending};
+                final filteredTxs = view.forAccount(_selectedAccount == 'Overall' ? null : _selectedAccount);
 
                 return CustomScrollView(
+                  key: const PageStorageKey('wallets_scroll'),
                   physics: const AlwaysScrollableScrollPhysics(),
                   cacheExtent: 500,
                   slivers: [
-                    SliverToBoxAdapter(
-                      child: RepaintBoundary(
+                    LazySectionSliver(sections: [
+                      (context) => RepaintBoundary(
                         child: Container(
                           height: 140,
                           margin: const EdgeInsets.symmetric(vertical: 16),
@@ -774,39 +754,29 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         ),
                       ),
                     ),
-                  ),
-
-                    SliverToBoxAdapter(
-                      child: Padding(
+                      (context) => Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: RepaintBoundary(
                           child: InteractiveChartCard(
-                            transactions: transactions,
-                            accountFilter: _selectedAccount == 'Overall' ? null : _selectedAccount,
+                            transactions: filteredTxs,
                             title: _selectedAccount == 'Overall' ? LanguageService.tr('overall_flow_and_analytics') : '${LanguageService.tr('analytics_prefix')}: $_selectedAccount',
                           ),
                         ),
                       ),
-                    ),
-
-                    const SliverToBoxAdapter(
-                      child: RepaintBoundary(
+                      (context) => RepaintBoundary(
                         child: AdBannerWidget(
                           margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
                           sponsorCategory: 'Cloud Multi-Currency Vault',
                         ),
                       ),
-                    ),
-
-                    SliverToBoxAdapter(
-                      child: Padding(
+                      (context) => Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                         child: Text(
                           _selectedAccount == 'Overall' ? LanguageService.tr('all_transactions_prefix') : '${LanguageService.tr('transactions_prefix')}: $_selectedAccount',
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                         ),
                       ),
-                    ),
+                    ]),
 
                     if (filteredTxs.isEmpty)
                       SliverFillRemaining(
@@ -866,36 +836,19 @@ class _AccountsScreenState extends State<AccountsScreen> {
         return ValueListenableBuilder<List<Loan>>(
           valueListenable: AppState.loansNotifier,
           builder: (context, loans, _) {
-            double totalReceivables = 0;
-            double totalPayables = 0;
-
-            for (var l in loans) {
-              if (!l.isSettled) {
-                if (l.isReceivable) {
-                  totalReceivables += l.amount;
-                } else {
-                  totalPayables += l.amount;
-                }
-              }
-            }
-
+            final view = _loanCache.get(loans);
+            final totalReceivables = view.receivables;
+            final totalPayables = view.payables;
             final netLending = totalReceivables - totalPayables;
-
-            // Filter loans list
-            final filteredLoans = loans.where((l) {
-              if (_loanFilter == 'receivable') return l.isReceivable && !l.isSettled;
-              if (_loanFilter == 'payable') return l.isPayable && !l.isSettled;
-              if (_loanFilter == 'settled') return l.isSettled;
-              return true; // 'all'
-            }).toList();
+            final filteredLoans = view.filtered(_loanFilter);
 
             return CustomScrollView(
+              key: const PageStorageKey('loans_scroll'),
               physics: const AlwaysScrollableScrollPhysics(),
               cacheExtent: 500,
               slivers: [
-                // Top Summary Cards (Receivables, Payables, Net Position)
-                SliverToBoxAdapter(
-                  child: RepaintBoundary(
+                    LazySectionSliver(sections: [
+                      (context) => RepaintBoundary(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                       child: Container(
@@ -1009,11 +962,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     ),
                   ),
                 ),
-              ),
-
-                // Loan Filter Chips
-                SliverToBoxAdapter(
-                  child: SingleChildScrollView(
+                      (context) => SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
@@ -1025,20 +974,13 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       ],
                     ),
                   ),
-                ),
-
-                const SliverToBoxAdapter(
-                  child: RepaintBoundary(
+                      (context) => RepaintBoundary(
                     child: AdBannerWidget(
                       margin: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       sponsorCategory: 'Smart Debt & Cash Flow Reminders',
                     ),
                   ),
-                ),
-
-                // Loans List Header
-                SliverToBoxAdapter(
-                  child: Padding(
+                      (context) => Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1055,7 +997,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       ],
                     ),
                   ),
-                ),
+                    ]),
 
                 // Loans List or Empty State
                 if (filteredLoans.isEmpty)

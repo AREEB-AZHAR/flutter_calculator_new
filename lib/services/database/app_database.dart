@@ -14,10 +14,14 @@ import '../../models/planned_transaction.dart';
 import '../../models/saved_account_info.dart';
 import '../biometric_service.dart';
 import 'security_helper.dart';
+import '../ledger_sync.dart';
+import '../atomic_plans.dart';
 
 class AppDatabase {
   static AppDatabase? _instance;
   static Database? _database;
+
+  Future<Database>? _opening;
 
   AppDatabase._();
 
@@ -26,12 +30,23 @@ class AppDatabase {
     return _instance!;
   }
 
+  Future<void> close() async {
+    final db = _database;
+    _database = null;
+    _opening = null;
+    await db?.close();
+  }
+
   Future<Database> get database async {
     if (_database != null) {
       return _database!;
     }
-    _database = await _initDatabase();
-    return _database!;
+    try {
+      return _database = await (_opening ??= _initDatabase());
+    } catch (_) {
+      _opening = null;
+      rethrow;
+    }
   }
 
   Future<Database> _initDatabase() async {
@@ -45,7 +60,10 @@ class AppDatabase {
 
     final db = await openDatabase(
       path,
-      version: 1,
+      version: 2,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) await SqliteLedgerStore.install(db);
+      },
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE users (
@@ -216,6 +234,18 @@ class AppDatabase {
     } catch (_) {}
 
 
+    // Version 2 additions are idempotent for fresh installs and legacy databases.
+    final planColumns = await db.rawQuery(
+      'PRAGMA table_info(planned_transactions)',
+    );
+    for (final name in ['anchor_day', 'anchor_month']) {
+      if (!planColumns.any((c) => c['name'] == name)) {
+        await db.execute(
+          'ALTER TABLE planned_transactions ADD COLUMN $name INTEGER',
+        );
+      }
+    }
+    await SqliteLedgerStore.install(db);
     await _migrateLegacyPrefs(db);
     return db;
   }
@@ -482,6 +512,18 @@ class AppDatabase {
       whereArgs: [cleanEmail, cleanEmail],
     );
     return count > 0;
+  }
+
+  /// Changes only the verified local vault if its credentials have not changed.
+  Future<bool> updateRecoveredPassword({required String username, required String email,
+      required String expectedHash, required String newPassword}) async {
+    final db = await database;
+    final salt = SecurityHelper.generateSalt();
+    // Compare-and-swap exactly the verified local account; never reset all rows
+    // matching an email-or-username expression, or a rebound email/account.
+    return await db.update('users', {'password_hash': SecurityHelper.hashPassword(newPassword, salt), 'salt': salt},
+      where: 'username = ? COLLATE NOCASE AND email = ? COLLATE NOCASE AND password_hash = ?',
+      whereArgs: [username, email, expectedHash]) == 1;
   }
 
   /// Checks if a username or email has existing transactions or goals in the local SQLite database.
@@ -1055,12 +1097,12 @@ class AppDatabase {
   }
 
   /// Fast O(1) single transaction deletion by ID
-  Future<void> deleteSingleTransaction(String id) async {
+  Future<void> deleteSingleTransaction(String id, {String? username}) async {
     final db = await database;
     await db.delete(
       'transactions',
-      where: 'id = ?',
-      whereArgs: [id],
+      where: username == null ? 'id = ?' : 'id = ? AND username = ?',
+      whereArgs: [id, ?username],
     );
   }
 
@@ -1071,26 +1113,35 @@ class AppDatabase {
   ) async {
     final db = await database;
     await db.transaction((txn) async {
-      await txn.delete(
+      final existing = await txn.query(
         'transactions',
         where: 'username = ?',
         whereArgs: [username],
       );
-      final batch = txn.batch();
-      for (var tx in txs) {
-        batch.insert('transactions', {
-          'id': tx.id,
-          'username': username,
-          'title': tx.title,
-          'amount': tx.amount,
-          'date': tx.date.toIso8601String(),
-          'is_income': tx.isIncome ? 1 : 0,
-          'category': tx.category,
-          'account': tx.account,
-          'recurrence': tx.recurrence,
-        });
+      final old = {for (final row in existing) row['id']: row};
+      final ids = txs.map((t) => t.id).toSet();
+      for (final row in existing) {
+        if (!ids.contains(row['id'])) {
+          await txn.delete(
+            'transactions',
+            where: 'username = ? AND id = ?',
+            whereArgs: [username, row['id']],
+          );
+        }
       }
-      await batch.commit(noResult: true);
+      for (final tx in txs) {
+        final row = SqliteLedgerStore.transactionRow(username, tx);
+        final previous = old[tx.id];
+        if (previous != null &&
+            row.entries.every((e) => previous[e.key] == e.value)) {
+          continue;
+        }
+        await txn.insert(
+          'transactions',
+          row,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
     });
   }
 
@@ -1132,84 +1183,113 @@ class AppDatabase {
   }
 
   // --- GOALS ---
-  Future<List<SavingsGoal>> loadGoals(String username, {bool includeArchived = false}) async {
+  Future<List<SavingsGoal>> loadGoals(
+    String username, {
+    bool includeArchived = false,
+  }) async {
     final db = await database;
-    final where = includeArchived
-        ? 'username = ?'
-        : 'username = ? AND (is_archived = 0 OR is_archived IS NULL)';
-    final results = await db.query(
-      'goals',
-      where: where,
-      whereArgs: [username],
-    );
-
-    final goals = <SavingsGoal>[];
-    for (final r in results) {
-      final goalId = r['id'] as String;
-      // Load entries for this goal
-      final entryRows = await db.query(
-        'goal_entries',
-        where: 'goal_id = ? AND username = ?',
-        whereArgs: [goalId, username],
-        orderBy: 'date DESC',
+    return db.transaction((txn) async {
+      final where = includeArchived
+          ? 'username = ?'
+          : 'username = ? AND (is_archived = 0 OR is_archived IS NULL)';
+      final results = await txn.query(
+        'goals',
+        where: where,
+        whereArgs: [username],
       );
-      final entries = entryRows.map((e) => GoalEntry(
-            id: e['id'] as String,
-            goalId: e['goal_id'] as String,
-            amount: (e['amount'] as num).toDouble(),
-            date: DateTime.parse(e['date'] as String),
-            note: e['note'] as String?,
-            createdAt: e['created_at'] != null
-                ? DateTime.parse(e['created_at'] as String)
-                : DateTime.now(),
-          )).toList();
 
-      goals.add(SavingsGoal(
-        id: goalId,
-        title: r['title'] as String,
-        target: (r['target_amount'] as num).toDouble(),
-        saved: (r['current_amount'] as num).toDouble(),
-        color: Color(r['color'] as int),
-        icon: resolveGoalIconByCodePoint(r['icon'] as int?),
-        dueDate: r['due_date'] != null ? DateTime.tryParse(r['due_date'] as String) : null,
-        periodType: (r['period_type'] as String?) ?? 'monthly',
-        isRecurring: (r['is_recurring'] as int?) == 1,
-        recurrence: (r['recurrence'] as String?) ?? 'none',
-        isCompleted: (r['is_completed'] as int?) == 1,
-        isFailed: (r['is_failed'] as int?) == 1,
-        isArchived: (r['is_archived'] as int?) == 1,
-        createdAt: r['created_at'] != null
-            ? DateTime.tryParse(r['created_at'] as String) ?? DateTime.now()
-            : DateTime.now(),
-        entries: entries,
-      ));
-    }
-    return goals;
+      // Two scoped reads instead of one entry query for every goal.
+      final allEntries = await txn.rawQuery(
+        '''
+      SELECT e.* FROM goal_entries e JOIN goals g
+        ON g.id = e.goal_id AND g.username = e.username
+      WHERE g.username = ? ${includeArchived ? '' : 'AND (g.is_archived = 0 OR g.is_archived IS NULL)'}
+      ORDER BY e.date DESC
+    ''',
+        [username],
+      );
+      final grouped = <String, List<Map<String, Object?>>>{};
+      for (final entry in allEntries) {
+        grouped.putIfAbsent(entry['goal_id'] as String, () => []).add(entry);
+      }
+      final goals = <SavingsGoal>[];
+      for (final r in results) {
+        final goalId = r['id'] as String;
+        final entryRows = grouped[goalId] ?? const [];
+        final entries = entryRows
+            .map(
+              (e) => GoalEntry(
+                id: e['id'] as String,
+                goalId: e['goal_id'] as String,
+                amount: (e['amount'] as num).toDouble(),
+                date: DateTime.parse(e['date'] as String),
+                note: e['note'] as String?,
+                createdAt: e['created_at'] != null
+                    ? DateTime.parse(e['created_at'] as String)
+                    : DateTime.now(),
+              ),
+            )
+            .toList();
+
+        goals.add(
+          SavingsGoal(
+            id: goalId,
+            title: r['title'] as String,
+            target: (r['target_amount'] as num).toDouble(),
+            saved: (r['current_amount'] as num).toDouble(),
+            color: Color(r['color'] as int),
+            icon: resolveGoalIconByCodePoint(r['icon'] as int?),
+            dueDate: r['due_date'] != null
+                ? DateTime.tryParse(r['due_date'] as String)
+                : null,
+            periodType: (r['period_type'] as String?) ?? 'monthly',
+            isRecurring: (r['is_recurring'] as int?) == 1,
+            recurrence: (r['recurrence'] as String?) ?? 'none',
+            isCompleted: (r['is_completed'] as int?) == 1,
+            isFailed: (r['is_failed'] as int?) == 1,
+            isArchived: (r['is_archived'] as int?) == 1,
+            createdAt: r['created_at'] != null
+                ? DateTime.tryParse(r['created_at'] as String) ?? DateTime.now()
+                : DateTime.now(),
+            entries: entries,
+          ),
+        );
+      }
+      return goals;
+    });
   }
 
   Future<void> saveGoals(String username, List<SavingsGoal> goals) async {
     final db = await database;
     await db.transaction((txn) async {
-      // Delete goals that are no longer in the list (but preserve archived separately)
-      await txn.delete('goals', where: 'username = ? AND (is_archived = 0 OR is_archived IS NULL)', whereArgs: [username]);
-      for (var g in goals) {
-        await txn.insert('goals', {
-          'id': g.id,
-          'username': username,
-          'title': g.title,
-          'target_amount': g.target,
-          'current_amount': g.saved,
-          'color': g.color.toARGB32(),
-          'icon': g.icon.codePoint,
-          'due_date': g.dueDate?.toIso8601String(),
-          'period_type': g.periodType,
-          'is_recurring': g.isRecurring ? 1 : 0,
-          'recurrence': g.recurrence,
-          'is_completed': g.isCompleted ? 1 : 0,
-          'is_failed': g.isFailed ? 1 : 0,
-          'is_archived': g.isArchived ? 1 : 0,
-          'created_at': g.createdAt.toIso8601String(),
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      final existing = await txn.query(
+        'goals',
+        where: 'username = ?',
+        whereArgs: [username],
+      );
+      final old = {for (final row in existing) row['id']: row};
+      final ids = goals.map((g) => g.id).toSet();
+      for (final row in existing) {
+        if (row['is_archived'] != 1 && !ids.contains(row['id'])) {
+          await txn.delete(
+            'goals',
+            where: 'username = ? AND id = ?',
+            whereArgs: [username, row['id']],
+          );
+        }
+      }
+      for (final goal in goals) {
+        final row = SqliteLedgerStore.goalRow(username, goal);
+        final previous = old[goal.id];
+        if (previous != null &&
+            row.entries.every((e) => previous[e.key] == e.value)) {
+          continue;
+        }
+        await txn.insert(
+          'goals',
+          row,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
     });
   }
@@ -1253,6 +1333,16 @@ class AppDatabase {
       await db.delete('goals', where: 'id = ? AND username = ?', whereArgs: [goalId, username]);
       await db.delete('goal_entries', where: 'goal_id = ? AND username = ?', whereArgs: [goalId, username]);
     }
+  }
+
+  /// Explicit removal, including archived goals. Triggers persist the cloud
+  /// tombstone in this same transaction. Financial transactions are retained.
+  Future<void> permanentlyDeleteGoal(String username, String goalId) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('goal_entries', where: 'username = ? AND goal_id = ?', whereArgs: [username, goalId]);
+      await txn.delete('goals', where: 'username = ? AND id = ?', whereArgs: [username, goalId]);
+    });
   }
 
   /// Update goal status flags (completed, failed, archived).
@@ -1564,23 +1654,14 @@ class AppDatabase {
     return maps.map((m) => PlannedTransaction.fromJson(m)).toList();
   }
 
-  Future<void> savePlannedTransaction(String username, PlannedTransaction plan) async {
+  Future<void> savePlannedTransaction(
+    String username,
+    PlannedTransaction plan,
+  ) async {
     final db = await database;
     await db.insert(
       'planned_transactions',
-      {
-        'id': plan.id,
-        'username': username,
-        'title': plan.title,
-        'amount': plan.amount,
-        'date': plan.date.toIso8601String(),
-        'is_income': plan.isIncome ? 1 : 0,
-        'category': plan.category,
-        'account': plan.account,
-        'recurrence': plan.recurrence,
-        'is_processed': plan.isProcessed ? 1 : 0,
-        'created_at': plan.createdAt.toIso8601String(),
-      },
+      AtomicPlans.row(username, plan),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }

@@ -1,0 +1,42 @@
+i  emulators: Starting emulators: firestore
+i  emulators: Detected demo project ID "demo-tally-security", emulated services will use a demo configuration and attempts to access non-emulated services for this project will fail.
+i  firestore: Firestore Emulator logging to firestore-debug.log
++  firestore: Firestore Emulator was started in standard edition.
++  firestore: Firestore Emulator UI websocket is running on 9150.
+i  Running script: node --test functions/test/*.emulator.js
+[2026-10-23T21:03:10.905Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x7d22414c error. Code: 7 Message: 7 PERMISSION_DENIED:
+false for 'create' @ L13, false for 'update' @ L13
+[2026-10-23T21:03:10.931Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x7d22414e error. Code: 7 Message: 7 PERMISSION_DENIED:
+false for 'create' @ L13, false for 'update' @ L13
+[2026-10-23T21:03:10.965Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x7d22414f error. Code: 7 Message: 7 PERMISSION_DENIED:
+false for 'create' @ L13, false for 'update' @ L13
+[2026-10-23T21:03:10.995Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x7d224150 error. Code: 7 Message: 7 PERMISSION_DENIED:
+false for 'create' @ L13, false for 'update' @ L13
+[2026-10-23T21:03:11.013Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x7d224151 error. Code: 7 Message: 7 PERMISSION_DENIED: No matching allow statements
+[2026-10-23T21:03:11.056Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x7d224153 error. Code: 7 Message: 7 PERMISSION_DENIED: No matching allow statements
+[2026-10-23T21:03:11.087Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x7d224154 error. Code: 7 Message: 7 PERMISSION_DENIED: No matching allow statements
+[2026-10-23T21:03:11.115Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x7d224155 error. Code: 7 Message: 7 PERMISSION_DENIED: No matching allow statements
+✔ rules deny entitlement/receipt forgery without disrupting any other owner data (2737.3238ms)
+✔ paid verification requires App Check, authentication, supported source/product and store proof (781.7685ms)
+✔ token ownership and store account binding prevent cross-account replay (477.0788ms)
+✔ concurrent replay grants coffee once and refresh handles consumption, refund and outages (3947.437ms)
+✔ coffee consumption failure retains ownership for retry and missing receipts revoke access (374.7891ms)
+✔ subscription renewal, expiry, revocation and linked-token replacement reconcile (861.654ms)
+✔ server-generated recovery code is hashed, expires, and is consumed once under concurrency (3192.2708ms)
+✔ wrong recovery attempts commit and lock after five; expiration is server-enforced (708.7143ms)
+✔ resend invalidates the previous challenge and rate limits cannot be bypassed by parallel calls (332.778ms)
+✔ missing App Check/client-selected OTP/mail failure cannot report successful delivery (72.8223ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17120.3193
++  Script exited successfully (code 0)
+i  emulators: Shutting down emulators.
+i  firestore: Stopping Firestore Emulator
+!  Firestore Emulator has exited upon receiving signal: SIGINT
+i  hub: Stopping emulator hub
+i  logging: Stopping Logging Emulator

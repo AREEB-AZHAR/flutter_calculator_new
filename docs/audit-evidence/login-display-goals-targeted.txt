@@ -1,0 +1,80 @@
+00:00 +0: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart
+00:00 +0: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: (setUpAll)
+00:00 +0: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: FREEVIP hides ads, survives initialization and can be disabled
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:00 +1: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: local profile loads while verification is pending and preserves saved paid palette
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1391271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@670310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@670310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@670310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@670310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@670310200' has not been initialized.
+00:00 +2: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: delayed palette work cannot publish into another account
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1391271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@670310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@670310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@670310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@670310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@670310200' has not been initialized.
+00:00 +3: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: archived goals load with scoped entries; removal survives restart and sync
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:00 +4: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: goal deletion rolls back entry and goal changes together on failure
+00:00 +5: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: 60 and 120 Hz requests persist; unsupported rate falls back safely
+00:00 +6: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: platforms without the display plugin use system control
+00:00 +7: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: settings disables unsupported 120 Hz and enables debug testing controls
+00:01 +8: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: manager exposes an archived goal and requires confirmation to remove it
+00:02 +9: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: (tearDownAll)
+00:02 +9: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/report_cache_regression_test.dart
+00:04 +9: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/report_cache_regression_test.dart: (setUpAll)
+00:04 +9: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/report_cache_regression_test.dart: Insights cache hits read zero rows and invalidate all report inputs
+00:05 +10: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/report_cache_regression_test.dart: Dashboard balance excludes outgoing goal transfers and reuses snapshots
+00:05 +11: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/report_cache_regression_test.dart: (tearDownAll)
+00:05 +11: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart
+00:06 +11: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart: (setUpAll)
+00:06 +11: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart: InsightsScreen renders Pro locked preview when user is not Pro
+00:07 +12: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart: InsightsScreen renders full Personal Wealth Accountant when Pro unlocked
+00:09 +13: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart: InsightsScreen segmented domain sub-tabs filter analytical cards
+00:09 +14: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart: (tearDownAll)
+00:09 +14: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart
+00:10 +14: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:10 +14: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: Loan Model & Data Operations Loan serializes to and from JSON accurately
+00:10 +15: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: Loan Model & Data Operations Saving and toggling settled status updates SQLite and AppState
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+scheduleLoanReminder notice: LateInitializationError: Field '_instance@1322271368' has not been initialized.
+00:10 +16: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: Planned & Recurring Automation Engine PlannedTransaction promotes to active transaction when due date is reached
+showInstantAlert notice: LateInitializationError: Field '_instance@1322271368' has not been initialized.
+schedulePlannedTransactionReminder notice: LateInitializationError: Field '_instance@1322271368' has not been initialized.
+00:10 +17: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: InteractiveChartCard & AllTransactionsScreen Widgets InteractiveChartCard renders month/year controls and switches chart modes
+00:12 +18: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: InteractiveChartCard & AllTransactionsScreen Widgets AllTransactionsScreen search dynamically filters transactions and updates chart
+00:12 +19: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: InteractiveChartCard & AllTransactionsScreen Widgets AccountsScreen switches between Wallets and Loans & Debts segments
+00:13 +20: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: (tearDownAll)
+00:13 +20: All tests passed!

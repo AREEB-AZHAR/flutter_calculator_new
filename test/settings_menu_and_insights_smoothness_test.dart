@@ -125,11 +125,23 @@ void main() {
       expect(find.text('Security'), findsOneWidget);
       expect(find.text('Cloud & Data'), findsOneWidget);
 
-      // Tab 0 (Appearance) is active by default
-      expect(find.text('What Each Setting Does'), findsOneWidget);
-      expect(find.text('BRAND PALETTES (INSTANT IN-APP)'), findsOneWidget);
-      expect(find.text('Ledger'), findsOneWidget);
-      expect(find.text('Explore 6 Pro Brand Themes'), findsOneWidget);
+      // Appearance sections are lazy; scroll to reach each item after the display card.
+      expect(find.text('Display & testing'), findsOneWidget);
+      final settingsScroll = find.descendant(
+        of: find.byKey(const PageStorageKey('profile_settings_scroll')),
+        matching: find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down),
+      ).first;
+      for (final text in ['What Each Setting Does', 'BRAND PALETTES (INSTANT IN-APP)',
+        'Ledger', 'Explore 6 Pro Brand Themes']) {
+        for (var step = 0; step < 40 && find.text(text).evaluate().isEmpty; step++) {
+          final position = tester.state<ScrollableState>(settingsScroll).position;
+          position.jumpTo((position.pixels + 150).clamp(0, position.maxScrollExtent));
+          await tester.pumpAndSettle();
+        }
+        expect(find.text(text), findsOneWidget);
+      }
+      tester.state<ScrollableState>(settingsScroll).position.jumpTo(0);
+      await tester.pumpAndSettle();
 
       // Tap on Security tab
       await tester.tap(find.text('Security'));

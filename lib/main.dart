@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:async';
+import 'services/display_rate_service.dart';
 import 'dart:ui' show PointerDeviceKind;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -13,8 +15,7 @@ import 'services/language_service.dart';
 import 'services/app_version.dart';
 import 'services/state.dart';
 import 'utils/constants.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'services/firebase_security_bootstrap.dart';
 
 /// Custom high-performance scroll behavior enabling buttery smooth 60/120 FPS
 /// momentum and physics across touchscreens, trackpads, and mouse wheels.
@@ -56,6 +57,10 @@ void main() async {
   // Initialize runtime application versioning from native platform
   await AppVersion.init();
 
+  // Firebase and genuine-app attestation must precede purchase listeners.
+  try { await FirebaseSecurityBootstrap.initialize(); }
+  catch (_) { debugPrint('Secure cloud services are unavailable; paid features remain locked.'); }
+
   // Initialize monetization and pro/ad-free purchase state
   await MonetizationService.initialize();
 
@@ -68,19 +73,8 @@ void main() async {
   // Load saved theme settings so SplashScreen and LoginScreen immediately boot with the user's chosen theme
   await AppState.initGlobalTheme();
 
-  // Load and initialize Firebase if configured
-  await DefaultFirebaseOptions.loadSavedConfig();
-  if (DefaultFirebaseOptions.isConfigured) {
-    try {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-    } catch (e) {
-      debugPrint('Firebase initialization notice: $e');
-    }
-  }
-
   runApp(const TallyApp());
+  unawaited(DisplayRateService.instance.initialize());
 }
 
 class TallyApp extends StatelessWidget {
