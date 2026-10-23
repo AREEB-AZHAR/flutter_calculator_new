@@ -7,6 +7,7 @@ import '../services/state.dart';
 import '../services/database/app_database.dart';
 import '../utils/constants.dart';
 import 'delete_confirmation_dialog.dart';
+import 'form_dialog.dart';
 import '../services/language_service.dart';
 
 Future<void> showTransactionDialog(BuildContext context, {Transaction? existingTx}) async {
@@ -75,7 +76,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
     final negativeColor = isLight ? const Color(0xFFDC2626) : const Color(0xFFF87171);
     final planAccent = isLight ? const Color(0xFFD97706) : const Color(0xFFFBBF24);
 
-    return AlertDialog(
+    return FormDialog(
       backgroundColor: surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
@@ -85,9 +86,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
         widget.existingTx == null ? LanguageService.tr('tx_new_title') : LanguageService.tr('tx_edit_title'),
         style: TextStyle(fontWeight: FontWeight.bold, color: onSurface),
       ),
-      // Bound width avoids intrinsic measurement of the entire form.
-      content: SizedBox(width: 420, child: SingleChildScrollView(
-        child: Column(
+      content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
@@ -461,7 +460,6 @@ class _TransactionDialogState extends State<_TransactionDialog> {
             )
           ],
         ),
-      )),
       actions: [
         if (widget.existingTx != null)
           TextButton.icon(

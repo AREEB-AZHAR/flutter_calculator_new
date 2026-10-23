@@ -7,6 +7,7 @@ import '../services/ledger_view_cache.dart';
 import '../utils/constants.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/transaction_dialog.dart';
+import '../widgets/form_dialog.dart';
 import '../widgets/interactive_chart_card.dart';
 import 'all_transactions_screen.dart';
 import '../widgets/tally_brand_painters.dart';
@@ -116,22 +117,30 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                   IconButton(
                     icon: Icon(Icons.add_circle, color: Theme.of(context).colorScheme.primary),
                     onPressed: () {
-                      String newCat = '';
+                      // The selected item must belong to the filtered dropdown.
+                      final availableCategories = categoryIcons.keys
+                          .where((cat) => !budgets.containsKey(cat)).toList();
+                      if (availableCategories.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text('All categories already have a budget.'),
+                        ));
+                        return;
+                      }
+                      String newCat = availableCategories.first;
                       String newLimit = '';
                       showDialog(
                         context: context,
-                        builder: (innerCtx) => AlertDialog(
+                        builder: (innerCtx) => FormDialog(
                           backgroundColor: Theme.of(context).colorScheme.surface,
                           title: Text(LanguageService.tr('add_budget')),
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               DropdownButtonFormField<String>(
-                                initialValue: categoryIcons.keys.first,
+                                initialValue: newCat,
                                 dropdownColor: Theme.of(context).colorScheme.surface,
                                 style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-                                items: categoryIcons.keys
-                                    .where((cat) => !budgets.containsKey(cat))
+                                items: availableCategories
                                     .map((cat) => DropdownMenuItem(value: cat, child: Text(LanguageService.trCategory(cat))))
                                     .toList(),
                                 onChanged: (val) { if (val != null) newCat = val; },
