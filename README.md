@@ -1,5 +1,11 @@
 # 💰 Tally — Smart Personal Finance & Expense Tracker
 
+## Production activation preflight — 24 October 2026
+
+Verified Firebase CLI access to `tally-b3652` and enabled **Google Play Developer API**, **Firebase App Check API**, and **Play Integrity API**. Live inspection confirms **billing is disabled**; Cloud Functions and Secret Manager APIs are also disabled, so backend deployment and secret configuration remain blocked. No backend/rules deployment or live purchase/email test has occurred, and **no APK was built**.
+
+The Android app already has a SHA-256 fingerprint and a Play Integrity configuration, whose minimum device recognition is currently `NO_INTEGRITY`. The registered certificate still needs comparison with Play App Signing; Play permissions, sender credentials and device testing remain outstanding. Next: the project owner enables Blaze billing, signs in to the provided Firebase console, confirms the Play testing track/current installed client, and supplies only the recovery sender email (never its password in chat). See [live activation status and continuation steps](docs/PURCHASE_AND_RECOVERY_SECURITY.md#live-activation-status--24-october-2026).
+
 ## Purchase and recovery security update — 1.8.18+28 (23 October 2026)
 
 Release builds now reject sandbox unlocks, universal promo codes and locally cached paid grants. **Google Play only** purchases are verified by the backend before access and completion, with account binding, replay protection, subscription/refund checks, server-side coffee consumption and short-lived entitlement leases. Recovery now emails a server-generated, single-use code and updates only the matching local vault; it never changes your Google password.

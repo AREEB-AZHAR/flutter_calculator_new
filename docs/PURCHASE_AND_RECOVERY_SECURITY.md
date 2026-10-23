@@ -29,6 +29,8 @@ Recommendations follow Google's [billing security guidance](https://developer.an
 
 Do not paste passwords or service-account keys into chat or commit them. Use a development Firebase project and test users first.
 
+**Billing prerequisite:** Cloud Functions deployment requires the Blaze plan. The project owner must link billing through Firebase Console → Upgrade; this can incur usage charges. Configure budget alerts, noting that alerts are not a spending cap. This is a financial setup step for the owner to complete, not an automatic repository operation. See [Firebase's deployment prerequisites](https://firebase.google.com/docs/functions/get-started).
+
 1. Install Flutter **3.41.3 / Dart 3.11.1**, Git, Node **22**, Firebase CLI and JDK **21** for the Firestore emulator. Follow the README for Android SDK/JDK paths. Clone the repository, run `flutter doctor -v`, `flutter pub get`, then `cd functions` and `npm ci`. Return to the repository root.
 2. Sign into Firebase CLI with the project owner's account: `firebase login`. Confirm the target with `firebase projects:list`. The tracked default project is `tally-b3652`; replace it with your development project when testing. Never point emulator tests at production.
 3. In Firebase Console → App Check, register the Android app with **Play Integrity** and its actual signing certificate SHA-256. For Play-installed builds use the Play App Signing certificate, not merely the upload/debug certificate. Follow the linked Firebase instructions for the Play project linkage. Register development debug tokens only in the development project's debug provider. The callables enforce App Check immediately after deployment.
@@ -61,6 +63,26 @@ Do not paste passwords or service-account keys into chat or commit them. Use a d
 - Firestore emulator tests: **10 passed**, including ownership/rules, replay, consumption retry, refunds and recovery concurrency/rate limits.
 - npm audit: **zero vulnerabilities**, including development dependencies.
 - Live Play, SMTP, deployed rules and device attestation remain unverified. No APK was built.
+
+## Live activation status — 24 October 2026
+
+The subsequent production configuration request established these live facts:
+
+| Check | Verified state |
+| --- | --- |
+| Firebase CLI project access | Available for `tally-b3652` |
+| Billing | `billingEnabled: false`; owner must enable Blaze |
+| Verification APIs | `androidpublisher.googleapis.com`, `firebaseappcheck.googleapis.com`, `playintegrity.googleapis.com` enabled and rechecked |
+| Cloud Functions API | Disabled; function runtime identity/deployed inventory unavailable |
+| Secret Manager API | Disabled; secret existence/values not inspected |
+| App Check | Existing Play Integrity config, token TTL 3,600 seconds, minimum device recognition `NO_INTEGRITY`; unchanged |
+| Android certificates | Existing SHA-1/SHA-256 found; SHA-256 must be compared with Play App Signing |
+| Console browser | Opened at Firebase project; Google sign-in required |
+| Deployment/live flows | Pending; no purchase, recovery email, credential change, rules deployment or APK build performed |
+
+Evidence: [sanitized preflight report](audit-evidence/live-configuration-preflight.json) and [API enablement operations](audit-evidence/live-api-enablement.jsonl). The read-only `scripts/inspect-firebase-live.cjs` rechecks billing, enabled services, function identity, App Check settings and secret-version metadata using the installed Windows Firebase CLI's authenticated account. It never requests secret payloads or prints credentials. `scripts/enable-firebase-verification-apis.cjs` enables only the three listed verification APIs; it does not link billing, grant IAM permissions, generate keys or modify App Check enforcement. Both scripts passed Node syntax validation. Run them from the repository root with Node 22+ and a signed-in Firebase CLI installed under `%APPDATA%/npm`; no full regression rerun was needed for these operational scripts and documentation.
+
+Continuation needs: owner completes billing/sign-in; confirms whether the package is on a Play testing track and whether the device has the updated client; provides the recovery sender email and whether a Gmail app password exists. Password entry happens directly in Secret Manager/CLI, not chat. After billing is verified, enable deployment APIs, identify the actual runtime service account, grant only necessary Play access, configure secrets and the confirmed signing certificate/integrity policy, back up deployed rules, deploy and test. Existing earlier APKs lack this client implementation; do not claim end-to-end attestation/purchase/recovery success with an older build. The standing instruction is **do not build an APK**.
 
 ## Reproduce local validation without building an APK
 

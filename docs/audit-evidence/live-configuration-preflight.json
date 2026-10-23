@@ -1,0 +1,125 @@
+{
+  "project": "tally-b3652",
+  "checks": [
+    {
+      "label": "functions",
+      "status": 403,
+      "error": "Cloud Functions API has not been used in project tally-b3652 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudfunctions.googleapis.com/overview?project=tally-b3652 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.",
+      "details": [
+        {
+          "reason": "SERVICE_DISABLED",
+          "service": "cloudfunctions.googleapis.com"
+        },
+        {},
+        {}
+      ]
+    },
+    {
+      "label": "billing",
+      "status": 200,
+      "result": {
+        "billingEnabled": false
+      }
+    },
+    {
+      "label": "enabledServices",
+      "status": 200,
+      "result": [
+        "analyticshub.googleapis.com",
+        "androidpublisher.googleapis.com",
+        "appengine.googleapis.com",
+        "apptopology.googleapis.com",
+        "bigquery.googleapis.com",
+        "bigqueryconnection.googleapis.com",
+        "bigquerydatapolicy.googleapis.com",
+        "bigquerydatatransfer.googleapis.com",
+        "bigquerymigration.googleapis.com",
+        "bigqueryreservation.googleapis.com",
+        "bigquerystorage.googleapis.com",
+        "cloudaicompanion.googleapis.com",
+        "cloudapis.googleapis.com",
+        "cloudresourcemanager.googleapis.com",
+        "cloudtrace.googleapis.com",
+        "dataform.googleapis.com",
+        "dataplex.googleapis.com",
+        "datastore.googleapis.com",
+        "fcm.googleapis.com",
+        "fcmregistrations.googleapis.com",
+        "firebase.googleapis.com",
+        "firebaseappcheck.googleapis.com",
+        "firebaseappdistribution.googleapis.com",
+        "firebasehosting.googleapis.com",
+        "firebaseinstallations.googleapis.com",
+        "firebaseremoteconfig.googleapis.com",
+        "firebaseremoteconfigrealtime.googleapis.com",
+        "firebaserules.googleapis.com",
+        "firestore.googleapis.com",
+        "identitytoolkit.googleapis.com",
+        "logging.googleapis.com",
+        "monitoring.googleapis.com",
+        "playintegrity.googleapis.com",
+        "pubsub.googleapis.com",
+        "runtimeconfig.googleapis.com",
+        "securetoken.googleapis.com",
+        "servicemanagement.googleapis.com",
+        "serviceusage.googleapis.com",
+        "sql-component.googleapis.com",
+        "storage-api.googleapis.com",
+        "storage-component.googleapis.com",
+        "storage.googleapis.com",
+        "telemetry.googleapis.com",
+        "testing.googleapis.com"
+      ]
+    },
+    {
+      "label": "playIntegrity",
+      "status": 200,
+      "result": {
+        "name": "projects/494819662703/apps/1:494819662703:android:1eed08eedd66202a07e69a/playIntegrityConfig",
+        "tokenTtl": "3600s",
+        "deviceIntegrity": {
+          "minDeviceRecognitionLevel": "NO_INTEGRITY"
+        }
+      }
+    },
+    {
+      "label": "EMAIL_USER",
+      "status": 403,
+      "error": "Secret Manager API has not been used in project tally-b3652 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/secretmanager.googleapis.com/overview?project=tally-b3652 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.",
+      "details": [
+        {
+          "reason": "SERVICE_DISABLED",
+          "service": "secretmanager.googleapis.com"
+        },
+        {},
+        {}
+      ]
+    },
+    {
+      "label": "EMAIL_PASS",
+      "status": 403,
+      "error": "Secret Manager API has not been used in project tally-b3652 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/secretmanager.googleapis.com/overview?project=tally-b3652 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.",
+      "details": [
+        {
+          "reason": "SERVICE_DISABLED",
+          "service": "secretmanager.googleapis.com"
+        },
+        {},
+        {}
+      ]
+    },
+    {
+      "label": "RECOVERY_CODE_SECRET",
+      "status": 403,
+      "error": "Secret Manager API has not been used in project tally-b3652 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/secretmanager.googleapis.com/overview?project=tally-b3652 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.",
+      "details": [
+        {
+          "reason": "SERVICE_DISABLED",
+          "service": "secretmanager.googleapis.com"
+        },
+        {},
+        {}
+      ]
+    }
+  ]
+}
