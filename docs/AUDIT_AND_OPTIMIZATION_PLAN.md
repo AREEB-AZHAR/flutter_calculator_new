@@ -6,6 +6,8 @@
 
 The follow-up implementation in **1.8.17+27** addresses F1/F2 transaction/goal preservation and write truncation, and F5 recurring-write atomicity. See [SYNC_SAFETY.md](SYNC_SAFETY.md) for exact guarantees, tests, conflict/compatibility policy and remaining limitations. In **1.8.18+28**, F3 production unlocks/server purchase verification and F4 local password recovery are addressed in source. See [PURCHASE_AND_RECOVERY_SECURITY.md](PURCHASE_AND_RECOVERY_SECURITY.md) for the researched plan, tests and required production activation. Live Google Play/SMTP/App Check configuration and device validation are not confirmed; no deployment or APK build was performed. F6 password KDF/database encryption and the remaining roadmap are still pending. The findings below describe the original audit baseline.
 
+**1.8.19+29 scrolling follow-up:** F8 is partially improved through lazy Home/Insights sections, lazy goal cards, cached chart summaries and hidden-tab ticker control. [SCROLL_PERFORMANCE.md](SCROLL_PERFORMANCE.md) records the plan, structural tests and remaining UI-isolate/device-profiling work. This does not close F7 startup or F11 hardware verification.
+
 ## Decision
 
 Fix ledger synchronization, recurring-write atomicity, account recovery, and purchase authority before investing in animation tuning. Then measure startup and large-ledger workloads on a physical Android device. Preserve the existing offline-first Flutter/SQLite architecture; a framework or state-management rewrite is not justified by this audit.

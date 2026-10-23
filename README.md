@@ -1,5 +1,13 @@
 # 💰 Tally — Smart Personal Finance & Expense Tracker
 
+## Scrolling improvements — 1.8.19+29 (24 October 2026)
+
+Home and Insights now build scroll sections near the viewport; Goals builds individual cards on demand. Chart period/category summaries reuse unchanged ledger snapshots, chart selections and native ad instances survive scrolling offscreen, and hidden cached tabs pause their animation tickers. Existing transaction/account list virtualization remains in place.
+
+**Validation:** all **227 Flutter tests passed**, **13 focused scrolling/navigation tests passed**, and **static analysis found no issues**. Structural tests cover 1,000 scroll sections, 500 goals, offscreen state retention and a 100,000-row chart summary with zero additional row reads on cache hits. These verify reduced work and correct behavior, not a device FPS improvement. The user's multi-screen sluggishness still needs a physical-device frame trace; first-time analytics and native ad rendering remain possible contributors.
+
+See [scrolling plan, changes, evidence and device profiling steps](docs/SCROLL_PERFORMANCE.md). **No APK was built.** Run the existing setup/test commands below; the new layout helper is `lib/widgets/lazy_section_list.dart`, and the bounded chart cache is `lib/services/chart_summary.dart`. No database migration or backend configuration is needed for this update. Existing screenshot capture instructions remain applicable; phone screenshots/traces are still outstanding.
+
 ## Production activation preflight — 24 October 2026
 
 Verified Firebase CLI access to `tally-b3652` and enabled **Google Play Developer API**, **Firebase App Check API**, and **Play Integrity API**. Live inspection confirms **billing is disabled**; Cloud Functions and Secret Manager APIs are also disabled, so backend deployment and secret configuration remain blocked. No backend/rules deployment or live purchase/email test has occurred, and **no APK was built**.
