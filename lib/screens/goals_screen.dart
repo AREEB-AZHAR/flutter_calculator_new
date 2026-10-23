@@ -718,35 +718,85 @@ class _GoalsScreenState extends State<GoalsScreen> {
                   final activeGoals = goals.where((g) => g.isActive).toList();
                   final endedGoals = goals.where((g) => !g.isActive).toList();
 
-                  return ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 90),
-                    children: [
-                      // Vault Summary Header
-                      RepaintBoundary(
-                        child: _buildVaultSummary(context, goals, currentCurrency),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Enlarged Banner Ad for Free Users
-                      const RepaintBoundary(
-                        child: AdBannerWidget(
-                          margin: EdgeInsets.only(bottom: 16.0),
-                          sponsorCategory: 'YieldMax High-Yield Savings (5.2% APY)',
-                          size: AdBannerSize.large,
+                  return CustomScrollView(
+                    key: const PageStorageKey('goals_scroll'),
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                        sliver: SliverList.list(
+                          children: [
+                            _buildVaultSummary(context, goals, currentCurrency),
+                            const SizedBox(height: 16),
+                            const AdBannerWidget(
+                              margin: EdgeInsets.only(bottom: 16),
+                              sponsorCategory:
+                                  'YieldMax High-Yield Savings (5.2% APY)',
+                              size: AdBannerSize.large,
+                            ),
+                            if (activeGoals.isNotEmpty) ...[
+                              Text(
+                                LanguageService.tr('active_goals'),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                          ],
                         ),
                       ),
-
-                      if (activeGoals.isNotEmpty) ...[
-                        Text(LanguageService.tr('active_goals'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface)),
-                        const SizedBox(height: 12),
-                        ...activeGoals.map((g) => RepaintBoundary(key: ValueKey('goal_${g.id}'), child: _buildGoalCard(context, g, currentCurrency))),
-                      ],
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        sliver: SliverList.builder(
+                          itemCount: activeGoals.length,
+                          itemBuilder: (context, index) {
+                            final goal = activeGoals[index];
+                            return KeyedSubtree(
+                              key: ValueKey('goal_${goal.id}'),
+                              child: _buildGoalCard(
+                                context,
+                                goal,
+                                currentCurrency,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                       if (endedGoals.isNotEmpty) ...[
-                        const SizedBox(height: 20),
-                        Text(LanguageService.tr('completed_and_expired'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface.withValues(alpha: 0.6))),
-                        const SizedBox(height: 12),
-                        ...endedGoals.map((g) => RepaintBoundary(key: ValueKey('goal_${g.id}'), child: _buildGoalCard(context, g, currentCurrency))),
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                          sliver: SliverToBoxAdapter(
+                            child: Text(
+                              LanguageService.tr('completed_and_expired'),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: onSurface.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          sliver: SliverList.builder(
+                            itemCount: endedGoals.length,
+                            itemBuilder: (context, index) {
+                              final goal = endedGoals[index];
+                              return KeyedSubtree(
+                                key: ValueKey('goal_${goal.id}'),
+                                child: _buildGoalCard(
+                                  context,
+                                  goal,
+                                  currentCurrency,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ],
+                      const SliverToBoxAdapter(child: SizedBox(height: 90)),
                     ],
                   );
                 },

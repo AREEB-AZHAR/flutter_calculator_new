@@ -84,9 +84,10 @@ class _MainNavScreenState extends State<MainNavScreen> {
                 index: currentIndex,
                 children: List.generate(5, (i) {
                   return RepaintBoundary(
-                    child: _cachedScreens.containsKey(i)
-                        ? _cachedScreens[i]!
-                        : const SizedBox.shrink(),
+                    child: TickerMode(
+                      enabled: i == currentIndex,
+                      child: _cachedScreens[i] ?? const SizedBox.shrink(),
+                    ),
                   );
                 }),
               ),

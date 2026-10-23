@@ -1,3 +1,4 @@
+import '../widgets/lazy_section_list.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
@@ -250,47 +251,45 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                 currency: currentCurrency,
                               );
 
-                              return SingleChildScrollView(
+                              return LazySectionList(
+                                key: const PageStorageKey('insights_scroll'),
                                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    RepaintBoundary(child: _buildHorizonSelector(theme)),
-                                    const SizedBox(height: 12),
-                                    RepaintBoundary(child: _buildPeriodNavigator(theme, report)),
-                                    const SizedBox(height: 12),
-                                    _buildInsightSubTabBar(theme),
-                                    const SizedBox(height: 14),
+                                sections: [
+                                    (context) => RepaintBoundary(child: _buildHorizonSelector(theme)),
+                                    (context) => const SizedBox(height: 12),
+                                    (context) => RepaintBoundary(child: _buildPeriodNavigator(theme, report)),
+                                    (context) => const SizedBox(height: 12),
+                                    (context) => _buildInsightSubTabBar(theme),
+                                    (context) => const SizedBox(height: 14),
 
                                     // Tab: Overview / All
                                     if (_activeInsightTab == 'all' || _activeInsightTab == 'overview') ...[
-                                      RepaintBoundary(child: _buildAccountantBriefCard(theme, report)),
-                                      const SizedBox(height: 16),
-                                      RepaintBoundary(child: _buildSavingsVaultAndGoalsCard(theme, report, currentCurrency)),
-                                      const SizedBox(height: 16),
-                                      RepaintBoundary(child: _buildVelocitySummaryGrid(theme, report, currentCurrency)),
-                                      const SizedBox(height: 20),
+                                      (context) => RepaintBoundary(child: _buildAccountantBriefCard(theme, report)),
+                                      (context) => const SizedBox(height: 16),
+                                      (context) => RepaintBoundary(child: _buildSavingsVaultAndGoalsCard(theme, report, currentCurrency)),
+                                      (context) => const SizedBox(height: 16),
+                                      (context) => RepaintBoundary(child: _buildVelocitySummaryGrid(theme, report, currentCurrency)),
+                                      (context) => const SizedBox(height: 20),
                                     ],
 
                                     // Tab: Budget & Debts / All
                                     if (_activeInsightTab == 'all' || _activeInsightTab == 'planning') ...[
-                                      RepaintBoundary(child: _build503020PlanningCard(theme, report, currentCurrency)),
-                                      const SizedBox(height: 20),
-                                      RepaintBoundary(child: _buildCategoryMatrix(theme, report, currentCurrency)),
-                                      const SizedBox(height: 20),
-                                      RepaintBoundary(child: _buildLoansAndDebtCard(theme, report, currentCurrency)),
-                                      const SizedBox(height: 20),
+                                      (context) => RepaintBoundary(child: _build503020PlanningCard(theme, report, currentCurrency)),
+                                      (context) => const SizedBox(height: 20),
+                                      (context) => RepaintBoundary(child: _buildCategoryMatrix(theme, report, currentCurrency)),
+                                      (context) => const SizedBox(height: 20),
+                                      (context) => RepaintBoundary(child: _buildLoansAndDebtCard(theme, report, currentCurrency)),
+                                      (context) => const SizedBox(height: 20),
                                     ],
 
                                     // Tab: Tax & Liquidity / All
                                     if (_activeInsightTab == 'all' || _activeInsightTab == 'tax') ...[
-                                      RepaintBoundary(child: _buildTaxIntelligenceCard(theme, report, currentCurrency)),
-                                      const SizedBox(height: 20),
-                                      RepaintBoundary(child: _buildPaymentTypeCard(theme, report, currentCurrency)),
-                                      const SizedBox(height: 32),
+                                      (context) => RepaintBoundary(child: _buildTaxIntelligenceCard(theme, report, currentCurrency)),
+                                      (context) => const SizedBox(height: 20),
+                                      (context) => RepaintBoundary(child: _buildPaymentTypeCard(theme, report, currentCurrency)),
+                                      (context) => const SizedBox(height: 32),
                                     ],
                                   ],
-                                ),
                               );
                             },
                           );
