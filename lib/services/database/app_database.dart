@@ -1183,59 +1183,80 @@ class AppDatabase {
   }
 
   // --- GOALS ---
-  Future<List<SavingsGoal>> loadGoals(String username, {bool includeArchived = false}) async {
+  Future<List<SavingsGoal>> loadGoals(
+    String username, {
+    bool includeArchived = false,
+  }) async {
     final db = await database;
-    final where = includeArchived
-        ? 'username = ?'
-        : 'username = ? AND (is_archived = 0 OR is_archived IS NULL)';
-    final results = await db.query(
-      'goals',
-      where: where,
-      whereArgs: [username],
-    );
-
-    final goals = <SavingsGoal>[];
-    for (final r in results) {
-      final goalId = r['id'] as String;
-      // Load entries for this goal
-      final entryRows = await db.query(
-        'goal_entries',
-        where: 'goal_id = ? AND username = ?',
-        whereArgs: [goalId, username],
-        orderBy: 'date DESC',
+    return db.transaction((txn) async {
+      final where = includeArchived
+          ? 'username = ?'
+          : 'username = ? AND (is_archived = 0 OR is_archived IS NULL)';
+      final results = await txn.query(
+        'goals',
+        where: where,
+        whereArgs: [username],
       );
-      final entries = entryRows.map((e) => GoalEntry(
-            id: e['id'] as String,
-            goalId: e['goal_id'] as String,
-            amount: (e['amount'] as num).toDouble(),
-            date: DateTime.parse(e['date'] as String),
-            note: e['note'] as String?,
-            createdAt: e['created_at'] != null
-                ? DateTime.parse(e['created_at'] as String)
-                : DateTime.now(),
-          )).toList();
 
-      goals.add(SavingsGoal(
-        id: goalId,
-        title: r['title'] as String,
-        target: (r['target_amount'] as num).toDouble(),
-        saved: (r['current_amount'] as num).toDouble(),
-        color: Color(r['color'] as int),
-        icon: resolveGoalIconByCodePoint(r['icon'] as int?),
-        dueDate: r['due_date'] != null ? DateTime.tryParse(r['due_date'] as String) : null,
-        periodType: (r['period_type'] as String?) ?? 'monthly',
-        isRecurring: (r['is_recurring'] as int?) == 1,
-        recurrence: (r['recurrence'] as String?) ?? 'none',
-        isCompleted: (r['is_completed'] as int?) == 1,
-        isFailed: (r['is_failed'] as int?) == 1,
-        isArchived: (r['is_archived'] as int?) == 1,
-        createdAt: r['created_at'] != null
-            ? DateTime.tryParse(r['created_at'] as String) ?? DateTime.now()
-            : DateTime.now(),
-        entries: entries,
-      ));
-    }
-    return goals;
+      // Two scoped reads instead of one entry query for every goal.
+      final allEntries = await txn.rawQuery(
+        '''
+      SELECT e.* FROM goal_entries e JOIN goals g
+        ON g.id = e.goal_id AND g.username = e.username
+      WHERE g.username = ? ${includeArchived ? '' : 'AND (g.is_archived = 0 OR g.is_archived IS NULL)'}
+      ORDER BY e.date DESC
+    ''',
+        [username],
+      );
+      final grouped = <String, List<Map<String, Object?>>>{};
+      for (final entry in allEntries) {
+        grouped.putIfAbsent(entry['goal_id'] as String, () => []).add(entry);
+      }
+      final goals = <SavingsGoal>[];
+      for (final r in results) {
+        final goalId = r['id'] as String;
+        final entryRows = grouped[goalId] ?? const [];
+        final entries = entryRows
+            .map(
+              (e) => GoalEntry(
+                id: e['id'] as String,
+                goalId: e['goal_id'] as String,
+                amount: (e['amount'] as num).toDouble(),
+                date: DateTime.parse(e['date'] as String),
+                note: e['note'] as String?,
+                createdAt: e['created_at'] != null
+                    ? DateTime.parse(e['created_at'] as String)
+                    : DateTime.now(),
+              ),
+            )
+            .toList();
+
+        goals.add(
+          SavingsGoal(
+            id: goalId,
+            title: r['title'] as String,
+            target: (r['target_amount'] as num).toDouble(),
+            saved: (r['current_amount'] as num).toDouble(),
+            color: Color(r['color'] as int),
+            icon: resolveGoalIconByCodePoint(r['icon'] as int?),
+            dueDate: r['due_date'] != null
+                ? DateTime.tryParse(r['due_date'] as String)
+                : null,
+            periodType: (r['period_type'] as String?) ?? 'monthly',
+            isRecurring: (r['is_recurring'] as int?) == 1,
+            recurrence: (r['recurrence'] as String?) ?? 'none',
+            isCompleted: (r['is_completed'] as int?) == 1,
+            isFailed: (r['is_failed'] as int?) == 1,
+            isArchived: (r['is_archived'] as int?) == 1,
+            createdAt: r['created_at'] != null
+                ? DateTime.tryParse(r['created_at'] as String) ?? DateTime.now()
+                : DateTime.now(),
+            entries: entries,
+          ),
+        );
+      }
+      return goals;
+    });
   }
 
   Future<void> saveGoals(String username, List<SavingsGoal> goals) async {
@@ -1312,6 +1333,16 @@ class AppDatabase {
       await db.delete('goals', where: 'id = ? AND username = ?', whereArgs: [goalId, username]);
       await db.delete('goal_entries', where: 'goal_id = ? AND username = ?', whereArgs: [goalId, username]);
     }
+  }
+
+  /// Explicit removal, including archived goals. Triggers persist the cloud
+  /// tombstone in this same transaction. Financial transactions are retained.
+  Future<void> permanentlyDeleteGoal(String username, String goalId) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('goal_entries', where: 'username = ? AND goal_id = ?', whereArgs: [username, goalId]);
+      await txn.delete('goals', where: 'username = ? AND id = ?', whereArgs: [username, goalId]);
+    });
   }
 
   /// Update goal status flags (completed, failed, archived).

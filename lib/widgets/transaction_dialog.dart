@@ -85,7 +85,8 @@ class _TransactionDialogState extends State<_TransactionDialog> {
         widget.existingTx == null ? LanguageService.tr('tx_new_title') : LanguageService.tr('tx_edit_title'),
         style: TextStyle(fontWeight: FontWeight.bold, color: onSurface),
       ),
-      content: SingleChildScrollView(
+      // Bound width avoids intrinsic measurement of the entire form.
+      content: SizedBox(width: 420, child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -460,7 +461,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
             )
           ],
         ),
-      ),
+      )),
       actions: [
         if (widget.existingTx != null)
           TextButton.icon(

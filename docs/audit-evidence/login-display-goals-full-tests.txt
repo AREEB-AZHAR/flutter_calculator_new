@@ -1,0 +1,761 @@
+00:00 +0: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_auth_biometric_test.dart
+00:00 +0: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_auth_biometric_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:00 +0: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_auth_biometric_test.dart: New Account Registration and Case-Insensitive Login Tests Database: Register user with mixed case and authenticate across all case variations
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1318271368' has not been initialized.
+00:00 +1: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_auth_biometric_test.dart: New Account Registration and Case-Insensitive Login Tests Database: Google account registration persists email column and handles case-insensitivity
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1318271368' has not been initialized.
+00:00 +2: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_auth_biometric_test.dart: New Account Registration and Case-Insensitive Login Tests Database: Password recovery by email works case-insensitively
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1318271368' has not been initialized.
+00:00 +3: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_auth_biometric_test.dart: Biometric Account Switching & Credential Isolation Tests Logging into new account does not retain first account biometric credentials
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1318271368' has not been initialized.
+00:00 +4: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_auth_biometric_test.dart: Biometric Account Switching & Credential Isolation Tests Widget: Register new account, logout, and verify LoginScreen does not prompt wrong account
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1318271368' has not been initialized.
+BiometricService.isDeviceSupported error: MissingPluginException(No implementation found for method isDeviceSupported on channel plugins.flutter.io/local_auth)
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1318271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@588310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@588310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@588310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@588310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@588310200' has not been initialized.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1318271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@588310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@588310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@588310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@588310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@588310200' has not been initialized.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1318271368' has not been initialized.
+00:03 +5: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_auth_biometric_test.dart: Account Deletion & Legacy Migration Resilience Tests deleteSavedAccount permanently wipes SQLite and SharedPreferences, preventing resurrection
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1318271368' has not been initialized.
+00:03 +6: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_auth_biometric_test.dart: (tearDownAll)
+00:03 +6: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart
+00:04 +6: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:04 +6: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Account Theme Isolation & Entitlement Scoping Tests User A setting a premium theme does not carry over to User B (free user)
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+MonetizationService: Tally Pro unlocked and signed for user_alice.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+00:04 +7: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Account Theme Isolation & Entitlement Scoping Tests Existing user with stale premium theme is sanitized to Ledger if not Pro
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+00:04 +8: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Account Theme Isolation & Entitlement Scoping Tests Pro user retains their chosen premium theme across sessions
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+MonetizationService: Tally Pro unlocked and signed for user_dave.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+00:05 +9: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Undo Banner 5-Second Timer Tests deleteTransactionWithUndo shows 5-second banner and auto-dismisses
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+00:05 +10: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Undo Banner 5-Second Timer Tests deleteGoalWithUndo shows 5-second banner and auto-dismisses
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+00:05 +11: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: On-Demand Page Lifecycle Tests MainNavScreen renders only the active tab on-demand and discards others
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+00:06 +12: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Cross-User State Isolation & Migration Tests Tour onboarding state is isolated per user
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+00:06 +13: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Cross-User State Isolation & Migration Tests Biometric enrollment is strictly scoped per user and not stolen on login
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+00:06 +14: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Cross-User State Isolation & Migration Tests Notification reminder preferences are isolated per user
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+00:06 +15: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: Cross-User State Isolation & Migration Tests Account migration migrates loans and planned transactions and cleans up local user
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+00:06 +16: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/account_theme_isolation_test.dart: (tearDownAll)
+00:06 +16: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/app_version_test.dart
+00:06 +16: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/app_version_test.dart: (setUpAll)
+00:06 +16: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/app_version_test.dart: AppVersion Service Tests Default fallback version matches 1.8.21 and build 31
+00:06 +17: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/app_version_test.dart: AppVersion Service Tests Mock values update getters and display string dynamically
+00:06 +18: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/app_version_test.dart: AppVersion Service Tests pubspec.yaml single-source-of-truth matches AppVersion fallback
+00:07 +19: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/app_version_test.dart: AppVersion Service Tests AppVersion displayString renders cleanly in widgets
+00:07 +20: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/app_version_test.dart: (tearDownAll)
+00:07 +20: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/auth_migration_password_vip_test.dart
+00:08 +20: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/auth_migration_password_vip_test.dart: (setUpAll)
+00:08 +20: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/auth_migration_password_vip_test.dart: Strong Password Validation Tests Rejects password shorter than 10 characters
+00:08 +21: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/auth_migration_password_vip_test.dart: Strong Password Validation Tests Rejects password missing uppercase letters
+00:08 +22: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/auth_migration_password_vip_test.dart: Strong Password Validation Tests Rejects password missing lowercase letters
+00:08 +23: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/auth_migration_password_vip_test.dart: Strong Password Validation Tests Rejects password missing special characters
+00:08 +24: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/auth_migration_password_vip_test.dart: Strong Password Validation Tests Rejects password with fewer than 3 numbers
+00:08 +25: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/auth_migration_password_vip_test.dart: Strong Password Validation Tests Accepts valid strong password with all criteria satisfied
+00:08 +26: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/auth_migration_password_vip_test.dart: Strong Password Validation Tests Validates email format correctly
+00:08 +27: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/auth_migration_password_vip_test.dart: Monetization VIP Promo Code & Reset Testing Initial free tier is not Pro and not Ad-free
+00:08 +28: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/auth_migration_password_vip_test.dart: Monetization VIP Promo Code & Reset Testing Unlocks Pro with PROVIP promo code
+MonetizationService: Tally Pro unlocked and signed for null.
+00:08 +29: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/auth_migration_password_vip_test.dart: Monetization VIP Promo Code & Reset Testing Resets VIP and Pro status with RESETVIP promo code
+MonetizationService: Tally Pro unlocked and signed for null.
+00:08 +30: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/auth_migration_password_vip_test.dart: Monetization VIP Promo Code & Reset Testing Resets VIP and Pro status with RESET promo code
+MonetizationService: Tally Pro unlocked and signed for null.
+00:08 +31: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/auth_migration_password_vip_test.dart: Monetization VIP Promo Code & Reset Testing Resets VIP with resetPurchases direct method
+MonetizationService: Tally Pro unlocked and signed for null.
+00:08 +32: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/auth_migration_password_vip_test.dart: (tearDownAll)
+00:08 +32: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/benchmark_100k_transactions_test.dart
+00:09 +32: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/benchmark_100k_transactions_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:09 +32: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/benchmark_100k_transactions_test.dart: 100,000 Transactions Stress & Scalability Benchmark Evaluate 100,000 transactions query, memory, and calculation latency
+
+🚀 STARTING 100,000 TRANSACTIONS STRESS BENCHMARK 🚀
+⏱️ 100,000 Records Bulk Insertion Time: 1959 ms (1.96s)
+⏱️ 100,000 Records SQLite Query & In-Memory Deserialization: 1763 ms
+⏱️ 100,000 Records Cumulative Balance Calculation (.fold): 2 ms (Balance: $-8666320.00)
+⏱️ 100,000 Records In-Memory Search & Filter (.where): 23 ms (Found: 66666 matches)
+⏱️ Atomic Single Transaction Insert (.insertTransaction): 8 ms
+✅ 100,000 Transactions Benchmark Completed Successfully!
+
+00:12 +33: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/benchmark_100k_transactions_test.dart: (tearDownAll)
+00:12 +33: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart
+00:13 +33: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:13 +33: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart: MainNavScreen Background Pre-Build & Tab Caching Tests MainNavScreen initializes with DashboardScreen and warms screen cache flag
+00:14 +34: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart: MainNavScreen Background Pre-Build & Tab Caching Tests Switching tabs mounts new screen into IndexedStack preserving cached screens
+00:14 +35: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart: CloudSyncModal Widget & Selection Flow Tests CloudSyncModal displays comparing state initially when summaries need loading
+00:14 +36: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart: CloudSyncModal Widget & Selection Flow Tests CloudSyncModal renders clean comparison and all 3 plain-language choices
+00:14 +37: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart: CloudSyncModal Widget & Selection Flow Tests Tapping different sync action options updates active selection
+00:15 +38: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart: (tearDownAll)
+00:15 +38: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_premium_image_test.dart
+00:15 +38: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_premium_image_test.dart: (setUpAll)
+00:15 +38: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_premium_image_test.dart: ImageHelper Tests isNetworkImage correctly classifies URLs and local files
+00:15 +39: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_premium_image_test.dart: ImageHelper Tests getProfileImageProvider returns appropriate ImageProvider instance
+00:15 +40: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_premium_image_test.dart: PremiumScreen Widget Tests Renders Tally Pro & VIP screen elements, tiers, and Google Pay CTA
+00:16 +41: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_premium_image_test.dart: PremiumScreen Widget Tests Tapping plan selection changes active tier
+00:16 +42: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_premium_image_test.dart: PremiumScreen Widget Tests Reset Purchases button in developer mode resets VIP state
+MonetizationService: Tally Pro unlocked and signed for null.
+00:16 +43: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_premium_image_test.dart: (tearDownAll)
+00:16 +43: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/deep_localization_test.dart
+00:17 +43: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/deep_localization_test.dart: (setUpAll)
+00:17 +43: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/deep_localization_test.dart: Deep Localization Tests All 7 supported languages exist with codes and names
+00:17 +44: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/deep_localization_test.dart: Deep Localization Tests All 7 languages contain essential UI and screen localization keys
+00:17 +45: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/deep_localization_test.dart: Deep Localization Tests trCategory translates standard categories across languages
+00:17 +46: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/deep_localization_test.dart: Deep Localization Tests trRecurrence translates recurrence intervals across languages
+00:17 +47: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/deep_localization_test.dart: Deep Localization Tests isRtl returns true only for Arabic and Urdu
+00:17 +48: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/deep_localization_test.dart: Deep Localization Tests MainNavScreen locks NavigationBar textDirection to LTR even in RTL mode
+00:18 +49: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/deep_localization_test.dart: Deep Localization Tests All 7 languages have 100% key parity with English dictionary (417 keys each)
+00:18 +50: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/deep_localization_test.dart: (tearDownAll)
+00:18 +50: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/dynamic_theme_splash_test.dart
+00:19 +50: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/dynamic_theme_splash_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:19 +50: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/dynamic_theme_splash_test.dart: Dynamic Theme Persistence & User Session Tests initGlobalTheme preserves user configured theme on reboot without logout
+00:19 +51: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/dynamic_theme_splash_test.dart: Dynamic Theme Persistence & User Session Tests clearUserSession resets theme to Ledger defaults in memory and SharedPreferences
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1316271368' has not been initialized.
+00:19 +52: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/dynamic_theme_splash_test.dart: Dynamic Theme Persistence & User Session Tests New registered user is initialized with Ledger theme by default in profiles
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:19 +53: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/dynamic_theme_splash_test.dart: Dynamic Splash Tally Painter Rendering TallyIconPainter renders with custom palette colors
+00:19 +54: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/dynamic_theme_splash_test.dart: (tearDownAll)
+00:19 +54: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart
+00:20 +54: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: (setUpAll)
+00:20 +54: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: BiometricService toggles enabled state and persists associated username
+00:20 +55: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Currency updates reactively and persists without app relaunch
+00:20 +56: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: TransactionTile updates currency dynamically without reload
+00:21 +57: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Transaction Dialog: Empty title defaults to selected category name
+00:21 +58: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Transaction Dialog: Allows selecting custom transaction date and orders descending
+00:22 +59: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: TourService tracks tour completion and resets correctly
+00:22 +60: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: BiometricService session prompt resets on logout
+00:22 +61: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Transaction Dialog: Selecting Income auto-switches category to Salary & auto-fills title
+00:22 +62: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: MonetizationService: tier transitions, separate remove-ads, and promo codes
+MonetizationService: Ads removed and signed for null.
+MonetizationService: Tally Pro unlocked and signed for null.
+MonetizationService: Ads removed and signed for null.
+MonetizationService: Tally Pro unlocked and signed for null.
+00:22 +63: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: GoogleAuthService: detects Google email bindings
+00:22 +64: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: AdBannerWidget: shows labeled partner fallback and hides it when ad-free
+MonetizationService: Ads removed and signed for null.
+00:22 +65: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: InsightsScreen: Free users see Tally Pro lock screen, Pro users see insights
+MonetizationService: Tally Pro unlocked and signed for null.
+00:22 +66: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Delete Confirmation Dialog: Appears and cancelling does not delete transaction
+00:22 +67: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Delete Confirmation Dialog & Undo: Confirming deletes transaction and Undo restores it
+00:23 +68: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: Goal Deletion: Shows confirmation dialog, delete removes goal, and Undo restores it
+scheduleGoalReminders notice: LateInitializationError: Field '_local@596310200' has not been initialized.
+scheduleGoalReminders notice: LateInitializationError: Field '_local@596310200' has not been initialized.
+00:23 +69: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/features_and_fixes_test.dart: (tearDownAll)
+00:23 +69: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_notification_cleanup_test.dart
+00:24 +69: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_notification_cleanup_test.dart: (setUpAll)
+00:24 +69: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_notification_cleanup_test.dart: Goal Notification Timezone & Cleanup Tests configureLocalTimeZone sets tz.local to device timezone offset instead of UTC
+00:24 +70: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_notification_cleanup_test.dart: Goal Notification Timezone & Cleanup Tests scheduleGoalReminders with empty goals purges tracked goal IDs
+00:24 +71: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_notification_cleanup_test.dart: Goal Notification Timezone & Cleanup Tests scheduleGoalReminders cleans up IDs of deleted goals while retaining active ones
+scheduleGoalReminders notice: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+scheduleGoalReminders notice: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+00:24 +72: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_notification_cleanup_test.dart: Goal Notification Timezone & Cleanup Tests cancelGoalReminders removes target goal from persistent tracked list
+00:24 +73: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_notification_cleanup_test.dart: Goal Notification Timezone & Cleanup Tests cancelAllGoalReminders empties tracked list
+00:24 +74: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_notification_cleanup_test.dart: Goal Notification Timezone & Cleanup Tests Daily friendly messages exclude goal references when no active goals exist
+00:24 +75: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_notification_cleanup_test.dart: Goal Notification Timezone & Cleanup Tests Daily friendly messages include goal references when active goals exist
+00:24 +76: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_notification_cleanup_test.dart: (tearDownAll)
+00:24 +76: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_pacing_and_notifications_test.dart
+00:24 +76: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_pacing_and_notifications_test.dart: (setUpAll)
+00:24 +76: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_pacing_and_notifications_test.dart: SavingsGoal Calculations & Pacing Tests remainingToSave reflects actual remaining amount rather than total target
+00:24 +77: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_pacing_and_notifications_test.dart: SavingsGoal Calculations & Pacing Tests dailySavingsNeeded recalculates dynamically as deposits increase
+00:24 +78: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_pacing_and_notifications_test.dart: SavingsGoal Calculations & Pacing Tests isExpired does NOT prematurely expire on the due date during the day
+00:24 +79: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_pacing_and_notifications_test.dart: SavingsGoal Calculations & Pacing Tests goals without explicit dueDate compute effective days and daily savings rate
+00:24 +80: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_pacing_and_notifications_test.dart: GoalsScreen Widget UI Tests GoalsScreen displays amount left badge and pacing badge for active goals with transactions
+00:25 +81: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_pacing_and_notifications_test.dart: NotificationService Deterministic ID & Pacing Copy Tests stableHash produces deterministic, non-negative 32-bit values
+00:25 +82: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_pacing_and_notifications_test.dart: NotificationService Deterministic ID & Pacing Copy Tests formatGoalReminderContent uses days remaining instead of calendar due date for multi-day goals
+00:25 +83: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_pacing_and_notifications_test.dart: NotificationService Deterministic ID & Pacing Copy Tests formatGoalReminderContent formats due today or 1 day remaining with urgency text
+00:25 +84: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_pacing_and_notifications_test.dart: NotificationService Deterministic ID & Pacing Copy Tests formatGoalReminderContent handles daily periodType accurately
+00:25 +85: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/goal_pacing_and_notifications_test.dart: (tearDownAll)
+00:25 +85: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/google_live_translate_test.dart
+00:26 +85: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/google_live_translate_test.dart: (setUpAll)
+00:26 +85: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/google_live_translate_test.dart: Google Live Translation & Dual-Engine Fallback Tests getCached returns null for uncached string and returns cached value once set
+00:26 +86: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/google_live_translate_test.dart: Google Live Translation & Dual-Engine Fallback Tests LanguageService.tr returns static dictionary value with 0ms latency
+00:26 +87: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/google_live_translate_test.dart: Google Live Translation & Dual-Engine Fallback Tests LanguageService.tr falls back to English when key is missing in active language
+00:26 +88: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/google_live_translate_test.dart: Google Live Translation & Dual-Engine Fallback Tests LanguageService.trDynamic translates standard categories immediately
+00:26 +89: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/google_live_translate_test.dart: Google Live Translation & Dual-Engine Fallback Tests trAsync falls back to text safely without throwing exceptions
+00:26 +90: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/google_live_translate_test.dart: Google Live Translation & Dual-Engine Fallback Tests liveTranslationsVersionNotifier increments on cache updates
+00:26 +91: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/google_live_translate_test.dart: (tearDownAll)
+00:26 +91: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_engine_test.dart
+00:27 +91: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_engine_test.dart: (setUpAll)
+00:27 +91: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_engine_test.dart: InsightsEngine Tests Generates comprehensive monthly report with multi-horizon metrics
+00:27 +92: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_engine_test.dart: InsightsEngine Tests Handles weekly and daily horizons with prorated budgets and safe-to-spend
+00:27 +93: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_engine_test.dart: InsightsEngine Tests Handles zero transactions and zero loans safely without throwing exceptions
+00:27 +94: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_engine_test.dart: InsightsEngine Tests Correctly handles uncapped categories without false alarms
+00:27 +95: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_engine_test.dart: InsightsEngine Tests Integrates Savings Vault & Goal Momentum metrics into report and commentary
+00:27 +96: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_engine_test.dart: (tearDownAll)
+00:27 +96: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart
+00:28 +96: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart: (setUpAll)
+00:28 +96: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart: InsightsScreen renders Pro locked preview when user is not Pro
+00:28 +97: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart: InsightsScreen renders full Personal Wealth Accountant when Pro unlocked
+00:29 +98: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart: InsightsScreen segmented domain sub-tabs filter analytical cards
+00:30 +99: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart: (tearDownAll)
+00:30 +99: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/interstitial_ad_and_density_test.dart
+00:31 +99: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/interstitial_ad_and_density_test.dart: (setUpAll)
+00:31 +99: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/interstitial_ad_and_density_test.dart: Ad Density & Interstitial Tab Transitions Tests AdBannerWidget renders enlarged banner for free tier users
+00:31 +100: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/interstitial_ad_and_density_test.dart: Ad Density & Interstitial Tab Transitions Tests AdBannerWidget collapses to SizedBox.shrink when Ad-Free is unlocked
+00:31 +101: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/interstitial_ad_and_density_test.dart: Ad Density & Interstitial Tab Transitions Tests FullscreenInterstitialAdDialog renders skip counter and dispatches onDismissed
+00:32 +102: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/interstitial_ad_and_density_test.dart: Ad Density & Interstitial Tab Transitions Tests AdService.showTabSwitchInterstitialAd bypasses immediately for Pro subscribers
+00:32 +103: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/interstitial_ad_and_density_test.dart: (tearDownAll)
+00:32 +103: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/language_tour_saved_accounts_test.dart
+00:33 +103: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/language_tour_saved_accounts_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:33 +103: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/language_tour_saved_accounts_test.dart: Multilingual Dynamic Translation Tests Translates navigation tabs and dashboard keys across all 7 languages
+00:33 +104: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/language_tour_saved_accounts_test.dart: Multilingual Dynamic Translation Tests English dictionary matches expected localized terms
+00:33 +105: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/language_tour_saved_accounts_test.dart: Multilingual Dynamic Translation Tests Spanish dictionary translates keys correctly
+00:33 +106: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/language_tour_saved_accounts_test.dart: Feature Tour Concurrency & Deduplication Tests Second concurrent tour call is rejected when tour is active
+00:34 +107: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/language_tour_saved_accounts_test.dart: Saved Accounts Database & Model Tests (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:34 +107: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/language_tour_saved_accounts_test.dart: Saved Accounts Database & Model Tests getAllSavedAccounts retrieves newly registered user info
+00:34 +108: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/language_tour_saved_accounts_test.dart: Saved Accounts Database & Model Tests SavedAccountInfo model attributes serialize accurately
+00:34 +109: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/language_tour_saved_accounts_test.dart: Saved Accounts Database & Model Tests SavedAccountsScreen renders app bar and responds without errors
+00:34 +110: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/language_tour_saved_accounts_test.dart: Saved Accounts Database & Model Tests (tearDownAll)
+00:34 +110: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/language_tour_saved_accounts_test.dart: (tearDownAll)
+00:34 +110: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart
+00:35 +110: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:35 +110: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization two persisted devices preserve independent additions and propagate explicit deletion
+00:35 +111: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization version 1 ledger migrates without dropping records and bootstraps safely
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:36 +112: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization uncertain remote commit is retried idempotently after restart
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:36 +113: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization uploads every one of 0 records and checkpoints all chunks
+00:36 +114: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization uploads every one of 1 records and checkpoints all chunks
+00:36 +115: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization uploads every one of 400 records and checkpoints all chunks
+00:36 +116: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization uploads every one of 401 records and checkpoints all chunks
+00:36 +117: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization uploads every one of 1000 records and checkpoints all chunks
+00:36 +118: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization uploads every one of 100000 records and checkpoints all chunks
+00:58 +119: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization stale nonempty device preserves cloud-only transactions/goals and entries
+00:59 +120: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization interrupted second chunk survives reopen and retries only unacknowledged changes
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:59 +121: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization offline transaction/goal deletion and undo survive restart without resurrection
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:59 +122: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization edit during acknowledgment retains its newer revision and survives import
+00:59 +123: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization session switch aborts before upload and preserves outbox
+00:59 +124: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization session switch during import rolls back all local changes
+00:59 +125: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization outbox and imported data stay scoped to the account
+00:59 +126: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization ordinary sync prefers remote over an unedited legacy conflict
+00:59 +127: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization explicit replacement handles more than 400 writes, including deletions
+00:59 +128: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization explicit restore replaces local ledger/goal entries without echo uploads
+00:59 +129: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Durable ledger synchronization payload size also bounds chunks; oversized documents remain pending
+00:59 +130: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Atomic planned and recurring transactions automatic/manual concurrent retries create one occurrence, outbox entry and successor
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:59 +131: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Atomic planned and recurring transactions failure at occurrence rolls back ledger, flag, successor and outbox; restart retries safely
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:59 +132: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Atomic planned and recurring transactions failure at processed rolls back ledger, flag, successor and outbox; restart retries safely
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+01:00 +133: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Atomic planned and recurring transactions failure at successor rolls back ledger, flag, successor and outbox; restart retries safely
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+01:00 +134: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Atomic planned and recurring transactions catch-up records every missed day and leaves future plans untouched
+01:00 +135: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Atomic planned and recurring transactions month end and leap year clamping preserve original anchors
+01:00 +136: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: Atomic planned and recurring transactions manual future execution is atomic and account-scoped
+01:00 +137: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ledger_sync_and_atomic_plans_test.dart: (tearDownAll)
+01:00 +137: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart
+01:01 +137: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+01:01 +137: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: Loan Model & Data Operations Loan serializes to and from JSON accurately
+01:01 +138: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: Loan Model & Data Operations Saving and toggling settled status updates SQLite and AppState
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+scheduleLoanReminder notice: LateInitializationError: Field '_instance@1322271368' has not been initialized.
+01:01 +139: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: Planned & Recurring Automation Engine PlannedTransaction promotes to active transaction when due date is reached
+showInstantAlert notice: LateInitializationError: Field '_instance@1322271368' has not been initialized.
+schedulePlannedTransactionReminder notice: LateInitializationError: Field '_instance@1322271368' has not been initialized.
+01:01 +140: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: InteractiveChartCard & AllTransactionsScreen Widgets InteractiveChartCard renders month/year controls and switches chart modes
+01:02 +141: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: InteractiveChartCard & AllTransactionsScreen Widgets AllTransactionsScreen search dynamically filters transactions and updates chart
+01:03 +142: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: InteractiveChartCard & AllTransactionsScreen Widgets AccountsScreen switches between Wallets and Loans & Debts segments
+01:03 +143: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: (tearDownAll)
+01:03 +143: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart
+01:04 +143: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: (setUpAll)
+01:04 +143: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: FREEVIP hides ads, survives initialization and can be disabled
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+01:04 +144: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: local profile loads while verification is pending and preserves saved paid palette
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+01:04 +145: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: delayed palette work cannot publish into another account
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+01:04 +146: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: archived goals load with scoped entries; removal survives restart and sync
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+01:04 +147: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: goal deletion rolls back entry and goal changes together on failure
+01:04 +148: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: 60 and 120 Hz requests persist; unsupported rate falls back safely
+01:04 +149: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: platforms without the display plugin use system control
+01:04 +150: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: settings disables unsupported 120 Hz and enables debug testing controls
+01:05 +151: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: manager exposes an archived goal and requires confirmation to remove it
+01:06 +152: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: (tearDownAll)
+01:06 +152: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/logout_biometric_smoothness_test.dart
+01:07 +152: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/logout_biometric_smoothness_test.dart: (setUpAll)
+01:07 +152: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/logout_biometric_smoothness_test.dart: Logout & Biometric Lifecycle Tests clearUserSession marks isExplicitLogout = true and nullifies user
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1316271368' has not been initialized.
+01:07 +153: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/logout_biometric_smoothness_test.dart: Logout & Biometric Lifecycle Tests resetSessionPrompt sets isExplicitLogout to true
+01:07 +154: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/logout_biometric_smoothness_test.dart: Logout & Biometric Lifecycle Tests isBiometricEnabled and savedBiometricUser behave consistently with user scoping
+01:07 +155: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/logout_biometric_smoothness_test.dart: (tearDownAll)
+01:07 +155: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/offline_localization_sync_test.dart
+01:08 +155: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/offline_localization_sync_test.dart: (setUpAll)
+01:08 +155: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/offline_localization_sync_test.dart: LanguageService Tests Supports all 7 international languages with correct RTL flag
+01:08 +156: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/offline_localization_sync_test.dart: LanguageService Tests Translates keys accurately across languages and falls back gracefully
+01:08 +157: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/offline_localization_sync_test.dart: ConnectivityService Tests Exposes reactive online state notifier
+01:08 +158: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/offline_localization_sync_test.dart: VaultSummary & Conflict Choice Tests VaultSummary encapsulates balance and counts properly
+01:08 +159: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/offline_localization_sync_test.dart: VaultSummary & Conflict Choice Tests SyncConflictChoice covers all 3 decision paths
+01:08 +160: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/offline_localization_sync_test.dart: (tearDownAll)
+01:08 +160: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/pro_pricing_iap_rewarded_ads_test.dart
+01:09 +160: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/pro_pricing_iap_rewarded_ads_test.dart: (setUpAll)
+01:09 +160: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/pro_pricing_iap_rewarded_ads_test.dart: Recalculated Pro Pricing Matrix Tests Pro pricing values follow consistent unit economics
+01:09 +161: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/pro_pricing_iap_rewarded_ads_test.dart: Google Official Payment (InAppPurchaseService) Tests Configures official product IDs correctly
+01:09 +162: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/pro_pricing_iap_rewarded_ads_test.dart: Google Official Payment (InAppPurchaseService) Tests Simulated / Fallback purchase execution unlocks entitlements properly
+MonetizationService: Tally Pro unlocked and signed for null.
+01:09 +163: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/pro_pricing_iap_rewarded_ads_test.dart: Theme Passes & Rewarded Ads Unlocking Tests Starts at 0 passes for new users
+01:09 +164: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/pro_pricing_iap_rewarded_ads_test.dart: Theme Passes & Rewarded Ads Unlocking Tests Grants and consumes theme passes correctly
+MonetizationService: Granted 1 theme pass(es) for null. Total: 1
+MonetizationService: Consumed 1 theme pass for null. Remaining: 0
+01:09 +165: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/pro_pricing_iap_rewarded_ads_test.dart: Theme Passes & Rewarded Ads Unlocking Tests Pro subscribers bypass pass requirements
+MonetizationService: Tally Pro unlocked and signed for null.
+01:09 +166: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/pro_pricing_iap_rewarded_ads_test.dart: Theme Passes & Rewarded Ads Unlocking Tests Promo code THEMEPASS grants 3 passes
+MonetizationService: Granted 3 theme pass(es) for null. Total: 3
+01:09 +167: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/pro_pricing_iap_rewarded_ads_test.dart: Theme Passes & Rewarded Ads Unlocking Tests Reset purchases clears theme passes, pro status, and ad removal
+MonetizationService: Tally Pro unlocked and signed for null.
+MonetizationService: Granted 2 theme pass(es) for null. Total: 2
+01:09 +168: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/pro_pricing_iap_rewarded_ads_test.dart: 30-Second Fullscreen Rewarded Ad Widget Tests Renders 30-second non-skippable countdown timer and partner information
+01:10 +169: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/pro_pricing_iap_rewarded_ads_test.dart: (tearDownAll)
+01:10 +169: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart
+01:11 +169: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: (setUpAll)
+01:11 +169: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Production purchase policy arguments and stored sandbox flag cannot grant production access
+01:11 +170: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Production purchase policy all local paid-grant helpers and universal promo codes are disabled
+01:11 +171: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Production purchase policy even a valid legacy HMAC/premium cache is not a production entitlement
+01:11 +172: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Production purchase policy release-policy paywall hides developer reset and promo controls
+01:12 +173: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Verified purchase delivery verification, delivery and store completion occur in that order
+01:12 +174: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Verified purchase delivery network cannot deliver or complete a purchase
+01:12 +175: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Verified purchase delivery token cannot deliver or complete a purchase
+01:12 +176: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Verified purchase delivery product cannot deliver or complete a purchase
+01:12 +177: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Verified purchase delivery uid cannot deliver or complete a purchase
+01:12 +178: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Verified purchase delivery schema cannot deliver or complete a purchase
+01:12 +179: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Verified purchase delivery expired cannot deliver or complete a purchase
+01:12 +180: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Verified purchase delivery oversized-lease cannot deliver or complete a purchase
+01:12 +181: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Verified purchase delivery unverified cannot deliver or complete a purchase
+01:12 +182: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Verified purchase delivery account switch during verification cannot deliver into another account
+01:12 +183: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Verified purchase delivery revoked purchase applies the server downgrade but is not acknowledged as a new grant
+01:12 +184: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Server-authorized local password recovery verified mailbox code updates only its captured account and works after reopen
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+01:12 +185: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Server-authorized local password recovery unverified never changes the local password
+01:12 +186: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Server-authorized local password recovery wrong-email never changes the local password
+01:12 +187: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Server-authorized local password recovery wrong-challenge never changes the local password
+01:13 +188: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Server-authorized local password recovery offline never changes the local password
+01:13 +189: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Server-authorized local password recovery weak/mismatched passwords do not consume the server challenge
+01:13 +190: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Server-authorized local password recovery changing a local password while recovery is in flight cannot be overwritten
+01:13 +191: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Server-authorized local password recovery canceling pending verification prevents a later response from changing credentials
+01:13 +192: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: Server-authorized local password recovery email failure is visible and never advances to code entry
+01:13 +193: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/purchase_and_recovery_security_test.dart: (tearDownAll)
+01:13 +193: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/report_cache_regression_test.dart
+01:14 +193: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/report_cache_regression_test.dart: (setUpAll)
+01:14 +193: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/report_cache_regression_test.dart: Insights cache hits read zero rows and invalidate all report inputs
+01:16 +194: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/report_cache_regression_test.dart: Dashboard balance excludes outgoing goal transfers and reuses snapshots
+01:16 +195: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/report_cache_regression_test.dart: (tearDownAll)
+01:16 +195: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/savings_goals_vault_test.dart
+01:17 +195: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/savings_goals_vault_test.dart: (setUpAll)
+01:17 +195: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/savings_goals_vault_test.dart: SavingsGoal & Savings Vault Pacing Engine Tests Calculates days remaining and daily/weekly required pacing correctly
+01:17 +196: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/savings_goals_vault_test.dart: SavingsGoal & Savings Vault Pacing Engine Tests Daily allowance goal calculates target correctly
+01:17 +197: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/savings_goals_vault_test.dart: SavingsGoal & Savings Vault Pacing Engine Tests Expired goal is detected when dueDate is in the past and goal is not met
+01:17 +198: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/savings_goals_vault_test.dart: SavingsGoal & Savings Vault Pacing Engine Tests Completed goal is detected when saved >= target
+01:17 +199: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/savings_goals_vault_test.dart: SavingsGoal & Savings Vault Pacing Engine Tests GoalEntry serialization and deserialization retains precision and note
+01:17 +200: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/savings_goals_vault_test.dart: SavingsGoal & Savings Vault Pacing Engine Tests SavingsGoal with nested GoalEntries serializes and restores fully
+01:17 +201: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/savings_goals_vault_test.dart: SavingsGoal & Savings Vault Pacing Engine Tests Soft-deletion preservation rule checks
+01:17 +202: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/savings_goals_vault_test.dart: (tearDownAll)
+01:17 +202: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart
+01:18 +202: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: (setUpAll)
+01:18 +202: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: 100k rows: wallet and spending cache hits do not read ledger again
+01:18 +203: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: search caches case-insensitive filters and invalidates edited snapshots
+01:18 +204: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: loan views reuse grouped rows and refresh after settlement
+01:18 +205: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: transaction search debounces, clears pending query, and survives header eviction
+01:20 +206: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: wallet switch selects indexed rows and refreshes changed ledger
+01:21 +207: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: Profile lazy sections and draggable settings remain reachable
+01:22 +208: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: (tearDownAll)
+01:22 +208: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart
+01:23 +208: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart: (setUpAll)
+01:23 +208: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart: ad section preserves its instance across offscreen scrolling
+01:23 +209: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart: 100k ledger summary reuses unchanged snapshot without reading rows
+01:25 +210: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart: 1000 sections mount only near viewport and remain reachable
+01:25 +211: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart: chart selection survives lazy eviction and rebuild
+01:26 +212: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart: large goal list creates only nearby cards and reaches final goal
+01:31 +213: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart: (tearDownAll)
+01:31 +213: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/settings_menu_and_insights_smoothness_test.dart
+01:33 +213: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/settings_menu_and_insights_smoothness_test.dart: (setUpAll)
+01:33 +213: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/settings_menu_and_insights_smoothness_test.dart: GeoLocationService & Regional Currency Tests GeoLocationService formats localized tier pricing and period strings
+01:33 +214: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/settings_menu_and_insights_smoothness_test.dart: InsightsEngine Currency Parameter Tests generateReport incorporates provided regional currency symbol in advice and projections
+01:33 +215: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/settings_menu_and_insights_smoothness_test.dart: ProfileScreen Settings Menu Virtualization & Categorization Tests Opening Settings menu displays 3 categorized tabs and allows switching
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+01:35 +216: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/settings_menu_and_insights_smoothness_test.dart: ProfileScreen Settings Menu Virtualization & Categorization Tests Opening Features Guide modal displays virtualized list items
+01:35 +217: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/settings_menu_and_insights_smoothness_test.dart: (tearDownAll)
+01:35 +217: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/smoothness_benchmark_test.dart
+01:36 +217: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/smoothness_benchmark_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+01:36 +217: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/smoothness_benchmark_test.dart: Smoothness Test: Splash Screen multi-stage animation 60fps frames
+📊 Splash Animation Performance:
+   Average frame build: 2.99 ms
+   Peak frame build: 19.57 ms
+01:37 +218: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/smoothness_benchmark_test.dart: Smoothness Test: MainNavScreen and Dashboard initial mount & slide animation
+📊 MainNavScreen Initial Mount: 356.80 ms
+📊 Dashboard Slide Animation Performance:
+   Average frame build: 6.40 ms
+   Peak frame build: 63.42 ms
+01:37 +219: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/smoothness_benchmark_test.dart: Smoothness Test: Tab switching transitions between all 5 screens
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+📊 Tab Switching Durations:
+   Tab switch to Insights: 51.31 ms
+   Tab switch to Goals: 41.16 ms
+   Tab switch to Accounts: 87.34 ms
+   Tab switch to Profile: 92.39 ms
+   Tab switch to Return to Home: 25.58 ms
+01:38 +220: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/smoothness_benchmark_test.dart: Smoothness Test: Chart Line Flow vs Donut toggle
+📊 Chart Toggle to Donut: 104.40 ms
+📊 Chart Toggle to Line Flow: 20.69 ms
+01:38 +221: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/smoothness_benchmark_test.dart: Smoothness Test: Route transition to MainNavScreen frame timing
+📊 Route Transition to MainNavScreen Frame Performance:
+   Average frame build: 1.99 ms
+   Peak frame build: 9.60 ms
+01:38 +222: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/smoothness_benchmark_test.dart: (tearDownAll)
+01:38 +222: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tab_ad_frequency_and_promo_test.dart
+01:39 +222: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tab_ad_frequency_and_promo_test.dart: (setUpAll)
+01:39 +222: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tab_ad_frequency_and_promo_test.dart: Tab Switch Ad Frequency Tests 1st switch always triggers ad, then every 4th to 5th switch
+01:40 +223: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tab_ad_frequency_and_promo_test.dart: Tab Switch Ad Frequency Tests Pro / Ad-Free users completely bypass transition ads
+MonetizationService: Tally Pro unlocked and signed for null.
+01:40 +224: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tab_ad_frequency_and_promo_test.dart: Promo Code Redemption Tests PROVIP successfully unlocks Tally Pro
+MonetizationService: Tally Pro unlocked and signed for null.
+01:40 +225: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tab_ad_frequency_and_promo_test.dart: Promo Code Redemption Tests NOADS successfully removes banner and transition ads
+MonetizationService: Ads removed and signed for null.
+01:40 +226: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tab_ad_frequency_and_promo_test.dart: Promo Code Redemption Tests THEMEPASS grants 3 free theme change passes
+MonetizationService: Granted 3 theme pass(es) for null. Total: 3
+01:40 +227: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tab_ad_frequency_and_promo_test.dart: Promo Code Redemption Tests RESETVIP resets entitlements to free tier
+MonetizationService: Tally Pro unlocked and signed for null.
+01:40 +228: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tab_ad_frequency_and_promo_test.dart: InAppPurchaseService Sandbox Mode Tests buyProduct with allowSandboxSimulation completes and unlocks Pro
+MonetizationService: Tally Pro unlocked and signed for null.
+01:40 +229: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tab_ad_frequency_and_promo_test.dart: InAppPurchaseService Sandbox Mode Tests buyProduct with allowSandboxSimulation removes ads
+MonetizationService: Ads removed and signed for null.
+01:40 +230: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tab_ad_frequency_and_promo_test.dart: (tearDownAll)
+01:40 +230: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tamper_proof_monetization_test.dart
+01:41 +230: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tamper_proof_monetization_test.dart: (setUpAll)
+01:41 +230: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tamper_proof_monetization_test.dart: Cryptographic HMAC Anti-Tamper & Security Integrity Tests Legitimate unlockPro signs entitlements with valid HMAC signature
+MonetizationService: Tally Pro unlocked and signed for alice_valid.
+01:41 +231: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tamper_proof_monetization_test.dart: Cryptographic HMAC Anti-Tamper & Security Integrity Tests Attacker modifying SharedPreferences XML directly is detected and revoked to Free
+MonetizationService: Local storage tamper detected for hacker_bob! Resetting to free tier.
+01:41 +232: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tamper_proof_monetization_test.dart: Cryptographic HMAC Anti-Tamper & Security Integrity Tests Attacker forging an invalid signature string is detected and revoked to Free
+MonetizationService: Local storage tamper detected for hacker_charlie! Resetting to free tier.
+01:41 +233: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tamper_proof_monetization_test.dart: Cryptographic HMAC Anti-Tamper & Security Integrity Tests Attacker tampering theme passes count is sanitized back to 0
+MonetizationService: Local storage tamper detected for hacker_dave! Resetting to free tier.
+01:41 +234: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tamper_proof_monetization_test.dart: Cryptographic HMAC Anti-Tamper & Security Integrity Tests Legitimate grantThemePass updates and signs theme passes correctly
+MonetizationService: Granted 2 theme pass(es) for eve_legit. Total: 2
+01:41 +235: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/tamper_proof_monetization_test.dart: (tearDownAll)
+01:41 +235: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart
+01:42 +235: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+01:42 +235: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: buildDynamicTheme generates valid contrast across all 9 presets
+01:42 +236: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: InteractiveChartCard renders without errors under Ledger, Paper, and Ink
+01:43 +237: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: AccountsScreen and Loan Tab adapt seamlessly across themes
+01:44 +238: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: PlannedTransactionsSheet renders smoothly in light Paper and dark Ledger
+01:44 +239: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: AllTransactionsScreen search and theme switching without glitches
+01:44 +240: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: (tearDownAll)
+01:44 +240: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/web_compatibility_test.dart
+01:45 +240: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/web_compatibility_test.dart: (setUpAll)
+01:45 +240: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/web_compatibility_test.dart: Web Compatibility & Render Resilience Tests TallyWordmarkWidget renders inside tight constraints without subpixel overflow
+01:46 +241: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/web_compatibility_test.dart: Web Compatibility & Render Resilience Tests NotificationService web guards prevent zonedSchedule exceptions
+NotificationService._notificationsPlugin.initialize notice: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+NotificationService.showInstantFriendlyReminder notice: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+showInstantAlert notice: LateInitializationError: Field '_instance@1317271368' has not been initialized.
+01:46 +242: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/web_compatibility_test.dart: Web Compatibility & Render Resilience Tests BiometricService web guards return safe false / empty values
+BiometricService.isDeviceSupported error: MissingPluginException(No implementation found for method isDeviceSupported on channel plugins.flutter.io/local_auth)
+BiometricService.getAvailableBiometrics error: MissingPluginException(No implementation found for method getAvailableBiometrics on channel plugins.flutter.io/local_auth)
+01:46 +243: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/web_compatibility_test.dart: (tearDownAll)
+01:46 +243: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/widget_test.dart
+01:46 +243: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/widget_test.dart: (setUpAll)
+01:46 +243: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/widget_test.dart: App smoke test
+01:47 +244: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/widget_test.dart: (tearDownAll)
+01:47 +244: All tests passed!

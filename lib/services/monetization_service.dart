@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'purchase_backend.dart';
@@ -12,6 +13,26 @@ import 'geo_location_service.dart';
 import '../screens/premium_screen.dart';
 
 class MonetizationService {
+  // Temporary debug-only testing exception. Remove by setting false;
+  // stored FREEVIP flags are ignored when this switch is disabled.
+  static const bool testingVipCodeEnabled = kDebugMode;
+  static final ValueNotifier<bool> testingVipNotifier = ValueNotifier(false);
+  static bool get testingVipActive =>
+      testingVipCodeEnabled && testingVipNotifier.value;
+  static const _testingVipKey = 'tally_testing_freevip';
+
+  @visibleForTesting
+  static Future<void> Function()? refreshForTesting;
+  static Future<void> verificationReady = Future<void>.value();
+
+  static Future<void> disableTestingVip() async {
+    testingVipNotifier.value = false;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_testingVipKey);
+    _clearPaidAccess();
+    unawaited(refreshVerifiedEntitlements());
+  }
+
   static const String _prefProUnlockedKey = 'tally_pro_unlocked';
   static const String _prefAdsRemovedKey = 'tally_ads_removed';
   static const String _prefProTrialExpiryKey = 'tally_pro_trial_expiry';
@@ -69,8 +90,8 @@ class MonetizationService {
   static void _clearPaidAccess() {
     _leaseTimer?.cancel();
     _leaseExpiry = null;
-    isProUnlockedNotifier.value = false;
-    isAdsRemovedNotifier.value = false;
+    isProUnlockedNotifier.value = testingVipActive;
+    isAdsRemovedNotifier.value = testingVipActive;
     proTrialExpiryNotifier.value = null;
   }
 
@@ -83,8 +104,8 @@ class MonetizationService {
     }
     _leaseTimer?.cancel();
     _leaseExpiry = lease.leaseExpiry;
-    isProUnlockedNotifier.value = lease.pro;
-    isAdsRemovedNotifier.value = lease.ads;
+    isProUnlockedNotifier.value = lease.pro || testingVipActive;
+    isAdsRemovedNotifier.value = lease.ads || testingVipActive;
     proTrialExpiryNotifier.value = lease.trialExpiry;
     verificationErrorNotifier.value = null;
     final generation = _entitlementGeneration;
@@ -125,7 +146,7 @@ class MonetizationService {
   }
 
   static bool get _hasValidPaidLease =>
-      PurchaseSecurityPolicy.allowDevelopmentUnlocks ||
+      testingVipActive || PurchaseSecurityPolicy.allowDevelopmentUnlocks ||
       (_leaseExpiry != null && DateTime.now().isBefore(_leaseExpiry!));
 
   static String _userKey(String baseKey) {
@@ -215,13 +236,22 @@ class MonetizationService {
 
   /// Initializes monetization states from local SharedPreferences with tamper verification.
   static Future<void> initialize() async {
+    verificationReady = Future<void>.value();
+    final testingPrefs = await SharedPreferences.getInstance();
+    testingVipNotifier.value = testingVipCodeEnabled && (testingPrefs.getBool(_testingVipKey) ?? false);
+    if (testingVipActive) {
+      _clearPaidAccess();
+      return;
+    }
     if (!PurchaseSecurityPolicy.allowDevelopmentUnlocks) {
       _clearPaidAccess();
       final prefs = await SharedPreferences.getInstance();
       // Rewarded cosmetic passes are separate from paid membership.
       themePassesNotifier.value =
           (prefs.getInt(_userKey(_prefThemePassesKey)) ?? 0).clamp(0, 100);
-      await refreshVerifiedEntitlements();
+      // Local login must not wait on an unavailable billing backend.
+      verificationReady = (refreshForTesting?.call() ?? refreshVerifiedEntitlements()).catchError((Object _) {});
+      unawaited(verificationReady);
       return;
     }
     try {
@@ -293,7 +323,7 @@ class MonetizationService {
   static Future<void> loadUserEntitlements(String username) async {
     _activeUsername = username;
     _entitlementGeneration++;
-    if (!PurchaseSecurityPolicy.allowDevelopmentUnlocks) {
+    if (!PurchaseSecurityPolicy.allowDevelopmentUnlocks || testingVipActive) {
       await initialize();
       return;
     }
@@ -522,6 +552,13 @@ class MonetizationService {
 
   /// Validates and redeems promo codes with server-side validation & local developer security.
   static Future<String?> redeemPromoCode(String inputCode) async {
+    if (testingVipCodeEnabled && inputCode.trim().toUpperCase() == 'FREEVIP') {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_testingVipKey, true);
+      testingVipNotifier.value = true;
+      _clearPaidAccess();
+      return 'FREEVIP testing enabled on this device: Pro features and no ads. This is not a store purchase.';
+    }
     if (!PurchaseSecurityPolicy.allowDevelopmentUnlocks) {
       return 'Promotion codes are not available.';
     }
@@ -543,8 +580,7 @@ class MonetizationService {
     } else if (code == 'RESET' ||
         code == 'RESETVIP' ||
         code == 'RESETPRO' ||
-        code == 'FREE' ||
-        code == 'FREEVIP') {
+        code == 'FREE') {
       await resetPurchases();
       return '🔄 VIP Subscription, Theme Passes & Ad-Free status have been reset to Free tier.';
     }
@@ -998,7 +1034,7 @@ class MonetizationService {
 
   /// Displays the promo code redemption dialog
   static void showPromoCodeDialog(BuildContext context) {
-    if (!PurchaseSecurityPolicy.allowDevelopmentUnlocks) {
+    if (!PurchaseSecurityPolicy.allowDevelopmentUnlocks && !testingVipCodeEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Promotion codes are not available.')),
       );
@@ -1025,7 +1061,7 @@ class MonetizationService {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Enter a VIP promo code to unlock Tally Pro, Free Theme Passes, or Ad-Free features for testing.',
+              'Enter FREEVIP to enable temporary VIP testing with no ads on this device.',
               style: TextStyle(
                 fontSize: 12.5,
                 color: Theme.of(
@@ -1044,7 +1080,7 @@ class MonetizationService {
                 letterSpacing: 1.5,
               ),
               decoration: InputDecoration(
-                hintText: 'e.g. PROVIP, THEMEPASS, NOADS',
+                hintText: 'FREEVIP',
                 hintStyle: TextStyle(
                   color: Theme.of(
                     context,
@@ -1079,7 +1115,7 @@ class MonetizationService {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
-                        'Invalid promo code. Try PROVIP, THEMEPASS, NOADS, or RESETVIP.',
+                        'Invalid testing code. Try FREEVIP.',
                       ),
                       backgroundColor: Colors.redAccent,
                     ),

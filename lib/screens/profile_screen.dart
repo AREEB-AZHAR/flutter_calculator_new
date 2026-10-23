@@ -1,5 +1,6 @@
 import '../services/ledger_view_cache.dart';
 import '../widgets/lazy_section_list.dart';
+import '../widgets/testing_performance_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -616,6 +617,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         (context) => const SizedBox(height: 16),
 
                         if (activeSettingsTab == 0) ...[
+                          (context) => const TestingPerformanceSettings(),
                           // --- TAB 0: APPEARANCE & STYLING ---
                           // Features & Settings Guide Banner Card
                           (context) => Container(

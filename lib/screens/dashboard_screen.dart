@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../models/savings_goal.dart';
 import '../services/state.dart';
+import '../services/ledger_view_cache.dart';
 import '../utils/constants.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/transaction_dialog.dart';
@@ -31,6 +32,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
   late AnimationController _animController;
+  final _balanceCache = LiquidBalanceCache();
   
   @override
   void initState() {
@@ -423,12 +425,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           return ValueListenableBuilder<List<Transaction>>(
             valueListenable: AppState.transactionsNotifier,
             builder: (context, transactions, child) {
-          // Exclude 'Savings Goal' deposits from liquid balance – they are vault transfers
-          final totalBalance = transactions.fold(0.0, (sum, item) {
-            if (item.category == 'Savings Goal' && !item.isIncome) return sum;
-            return item.isIncome ? sum + item.amount : sum - item.amount;
-          });
-          
+          final totalBalance = _balanceCache.get(transactions);
+
           return Stack(
             children: [
               Positioned(

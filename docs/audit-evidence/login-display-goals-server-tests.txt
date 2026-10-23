@@ -1,0 +1,18 @@
+✔ subscription state SUBSCRIPTION_STATE_ACTIVE is evaluated with store expiry (5.5342ms)
+✔ subscription state SUBSCRIPTION_STATE_IN_GRACE_PERIOD is evaluated with store expiry (0.19ms)
+✔ subscription state SUBSCRIPTION_STATE_CANCELED is evaluated with store expiry (0.109ms)
+✔ subscription state SUBSCRIPTION_STATE_ON_HOLD is evaluated with store expiry (0.0986ms)
+✔ subscription state SUBSCRIPTION_STATE_PAUSED is evaluated with store expiry (0.4773ms)
+✔ subscription state SUBSCRIPTION_STATE_EXPIRED is evaluated with store expiry (0.1059ms)
+✔ subscription state SUBSCRIPTION_STATE_PENDING is evaluated with store expiry (0.1736ms)
+✔ product mismatch, pending and refunded products cannot grant access (0.4303ms)
+✔ leases never outlive subscription/trial expiry or refresh stale receipts (0.6555ms)
+✔ Publisher adapter fixes the package, uses V2 reads and encodes tokens (0.6388ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1199.3222

@@ -8,10 +8,8 @@ import '../services/biometric_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/connectivity_service.dart';
 import '../services/language_service.dart';
-import '../services/cloud_sync_service.dart';
 import '../widgets/new_user_setup_dialog.dart';
 import '../widgets/password_recovery_dialog.dart';
-import '../widgets/sync_conflict_dialog.dart';
 import '../utils/password_validator.dart';
 import '../widgets/tally_brand_painters.dart';
 
@@ -173,34 +171,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         await BiometricService.syncUserSession(googleUser.email);
         await AppState.loadAllUserData(googleUser.email);
 
-        // 2. Resolve any Cloud vs Local synchronization conflict
-        if (CloudSyncService.isCloudAvailable) {
-          final cloudSummary = await CloudSyncService.fetchCloudSummary();
-          final localSummary = await CloudSyncService.fetchLocalSummary(googleUser.email);
-
-          if (cloudSummary != null &&
-              cloudSummary.transactionCount > 0 &&
-              localSummary.transactionCount > 0) {
-            if (!mounted) return;
-            final choice = await SyncConflictDialog.show(
-              context,
-              cloudSummary: cloudSummary,
-              localSummary: localSummary,
-              currency: AppState.currencyNotifier.value,
-            );
-
-            if (choice == SyncConflictChoice.restoreCloud) {
-              await CloudSyncService.restoreFromCloud(googleUser.email);
-            } else if (choice == SyncConflictChoice.overwriteCloud) {
-              await CloudSyncService.overwriteCloudWithLocal(googleUser.email);
-            }
-          } else if (cloudSummary != null && cloudSummary.transactionCount > 0 && localSummary.transactionCount == 0) {
-            await CloudSyncService.restoreFromCloud(googleUser.email);
-          } else if ((cloudSummary == null || cloudSummary.transactionCount == 0) && localSummary.transactionCount > 0) {
-            await CloudSyncService.sync(googleUser.email);
-          }
-        }
-
         // 3. First-time onboarding setup
         final profile = await AppDatabase.instance.loadProfile(googleUser.email);
         final isBrandNew = profile.displayName == googleUser.displayName &&
@@ -357,34 +327,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           final canonicalUsername = await AppDatabase.instance.getUsernameForIdentifier(identifier) ?? identifier;
           await BiometricService.syncUserSession(canonicalUsername);
           await AppState.loadAllUserData(canonicalUsername);
-
-          // Resolve any cloud vs local synchronization conflict
-          if (CloudSyncService.isCloudAvailable) {
-            final cloudSummary = await CloudSyncService.fetchCloudSummary();
-            final localSummary = await CloudSyncService.fetchLocalSummary(canonicalUsername);
-
-            if (cloudSummary != null &&
-                cloudSummary.transactionCount > 0 &&
-                localSummary.transactionCount > 0) {
-              if (!mounted) return;
-              final choice = await SyncConflictDialog.show(
-                context,
-                cloudSummary: cloudSummary,
-                localSummary: localSummary,
-                currency: AppState.currencyNotifier.value,
-              );
-
-              if (choice == SyncConflictChoice.restoreCloud) {
-                await CloudSyncService.restoreFromCloud(canonicalUsername);
-              } else if (choice == SyncConflictChoice.overwriteCloud) {
-                await CloudSyncService.overwriteCloudWithLocal(canonicalUsername);
-              }
-            } else if (cloudSummary != null && cloudSummary.transactionCount > 0 && localSummary.transactionCount == 0) {
-              await CloudSyncService.restoreFromCloud(canonicalUsername);
-            } else if ((cloudSummary == null || cloudSummary.transactionCount == 0) && localSummary.transactionCount > 0) {
-              await CloudSyncService.sync(canonicalUsername);
-            }
-          }
 
           if (!mounted) return;
           Navigator.pushReplacement(
