@@ -84,6 +84,12 @@ Evidence: [sanitized preflight report](audit-evidence/live-configuration-preflig
 
 Continuation needs: owner completes billing/sign-in; confirms whether the package is on a Play testing track and whether the device has the updated client; provides the recovery sender email and whether a Gmail app password exists. Password entry happens directly in Secret Manager/CLI, not chat. After billing is verified, enable deployment APIs, identify the actual runtime service account, grant only necessary Play access, configure secrets and the confirmed signing certificate/integrity policy, back up deployed rules, deploy and test. Existing earlier APKs lack this client implementation; do not claim end-to-end attestation/purchase/recovery success with an older build. The standing instruction is **do not build an APK**.
 
+### Owner clarification and current blockers
+
+The owner subsequently confirmed that the package has **not been uploaded to Play**, Blaze payment setup is being rejected, and supplied a recovery sender privately. App-password availability is still unknown. Browser inventory exposes only the in-app browser and MCP Apps; an explicit Chrome connection attempt returned unavailable. No attempt was made to extract Chrome cookies or credentials. Firebase CLI access remains available, so browser sign-in is not itself a blocker for authorized project API work.
+
+The next diagnosis needs the exact Google payment error code/message, excluding card/account details. Follow [Google Cloud's billing issue guidance](https://docs.cloud.google.com/billing/docs/how-to/resolve-issues); do not infer a particular bank, card or regional cause without the error. Blaze is a pay-as-you-go plan rather than a fixed-price subscription, and deployment cannot bypass its billing prerequisite. If billing cannot be enabled, choosing and implementing another trusted backend requires a revised deployment plan; Firebase Hosting alone does not execute these server functions. Live purchase testing also needs an eligible Play test setup and client containing the new implementation. No production debug-token bypass, weaker enforcement, deployment, secret storage, test email, purchase or APK build was performed in this clarification step. Only documentation changed, checked with `git diff --check`; the prior regression results still apply to unchanged runtime code.
+
 ## Reproduce local validation without building an APK
 
 From the root:
