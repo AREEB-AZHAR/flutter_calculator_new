@@ -1,5 +1,19 @@
 # 💰 Tally — Smart Personal Finance & Expense Tracker
 
+## Login, display controls and hidden goals - 1.8.21+31 (24 October 2026)
+
+Local login no longer waits for purchase-server verification or cloud comparison. Production paid access remains locked until verified, and an unavailable server no longer erases a saved premium palette. Cloud comparison starts after the dashboard renders; automatic reconciliation merges safely. Optional reminder refresh runs in the background, no-due recurrence checks skip duplicate work, and goals load in two scoped SQL reads instead of N+1.
+
+- **Debug testing without ads:** Profile → Open Settings → Appearance → Display & testing → Enter testing code → **FREEVIP**. It enables local Pro/no-ads across debug restarts until **Disable FREEVIP** or removal of the feature. **Release/profile builds ignore the code and stored flag**, including the owner's currently installed release APK. This is not a verified purchase.
+- **Display preference:** the same card offers **System / 60 Hz / 120 Hz**. Unsupported choices are disabled; Android may override the hint for battery/thermal/device policy. This does not guarantee rendered FPS.
+- **Hidden goal cleanup:** Goals → top-right **Manage all goals** icon. Inspect archived goals, optionally **Refresh from cloud**, then trash → **Remove goal**. Confirmed removal deletes goal/deposit history, preserves financial transactions and queues durable cloud deletion. Existing archives are never purged automatically.
+- **Further repeated-work fixes:** Insights now reuses unchanged reports without hashing every ledger row or fresh budget-entry objects; Dashboard caches its balance; the transaction popup avoids intrinsic width measurement of the entire form. Existing Accounts/Profile/chart optimizations remain.
+
+**Validation:** all **244 Flutter tests**, **20 focused tests**, **4 settings-navigation tests**, **10 server tests** and **10 Firestore emulator tests** passed. Static analysis found no issues; native Android Kotlin compilation passed without APK assembly.
+
+The purchase-security change introduced a confirmed login wait. Broader release scrolling lag on the owner's **Redmi Note 13** still needs device profiling; source inspection cannot assign all sluggishness to a contributor. See [investigation, implementation plan, architecture, evidence and device checks](docs/LOGIN_DISPLAY_AND_GOALS.md). **No APK was built.** Existing clone/SDK/Firebase/run instructions below remain applicable; no new dependency, secret, permission or schema migration is needed.
+
+
 ## Accounts, Transactions and Profile scrolling — 1.8.20+30 (24 October 2026)
 
 Accounts now reuses wallet balances, account-indexed transaction lists and loan summaries across rebuilds/filter changes. Transactions caches filtered views, debounces typing by **180 ms**, and preserves/clears the visible search text correctly when its header scrolls offscreen. Wallet/loan/transaction headers, Profile summary sections and Profile's draggable settings sheet now build on demand. Profile reuses its spending summary and session-scoped recovery-email lookup, refreshes that lookup after binding changes, and updates currency labels without rescanning the ledger.

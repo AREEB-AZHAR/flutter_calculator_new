@@ -7,6 +7,7 @@ import '../services/language_service.dart';
 import '../utils/constants.dart';
 import '../widgets/delete_confirmation_dialog.dart';
 import '../widgets/ad_banner_widget.dart';
+import '../widgets/goal_manager_dialog.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -677,6 +678,8 @@ class _GoalsScreenState extends State<GoalsScreen> {
         return Scaffold(
           appBar: AppBar(
             title: Text(LanguageService.tr('savings_vault'), style: const TextStyle(fontWeight: FontWeight.bold)),
+            actions: [IconButton(tooltip: 'Manage all goals', icon: const Icon(Icons.inventory_2_outlined),
+              onPressed: () => showDialog(context: context, builder: (_) => const GoalManagerDialog()))],
             backgroundColor: theme.colorScheme.surface,
             elevation: 0,
           ),

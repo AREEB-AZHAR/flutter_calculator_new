@@ -13,6 +13,7 @@ import 'atomic_plans.dart';
 import 'cloud_sync_service.dart';
 import 'notification_service.dart';
 import 'monetization_service.dart';
+import 'purchase_backend.dart';
 import 'google_auth_service.dart';
 import 'biometric_service.dart';
 import '../screens/login_screen.dart';
@@ -209,6 +210,9 @@ class AppState {
   // Initialize and load all data for user from SQLite database
   static Future<void> loadAllUserData(String username) async {
     currentUser = username;
+    final generation = sessionGeneration;
+    bool sameSession() =>
+        currentUser == username && generation == sessionGeneration;
     final db = AppDatabase.instance;
 
     // 1. Load monetization entitlements strictly scoped to this user
@@ -216,6 +220,7 @@ class AppState {
 
     // 2. Load user profile from SQLite database
     final profile = await db.loadProfile(username);
+    if (!sameSession()) return;
     displayNameNotifier.value = profile.displayName;
     bioNotifier.value = profile.bio;
     profilePhotoNotifier.value = profile.photoPath;
@@ -238,14 +243,20 @@ class AppState {
       if (isPremium) {
         effectiveTheme = 'Ledger';
       }
-      final preset = themePresets.firstWhere((p) => p.name == effectiveTheme, orElse: () => themePresets.first);
+      final preset = themePresets.firstWhere(
+        (p) => p.name == effectiveTheme,
+        orElse: () => themePresets.first,
+      );
       pCol = preset.primary;
       sCol = preset.secondary;
       tCol = null;
     } else {
       // Pro user: heal legacy default if primaryColor matches old background or old default
       if (pCol.toARGB32() == 0xFF17493B || pCol.toARGB32() == 0xFF8B5CF6) {
-        final preset = themePresets.firstWhere((p) => p.name == effectiveTheme, orElse: () => themePresets.first);
+        final preset = themePresets.firstWhere(
+          (p) => p.name == effectiveTheme,
+          orElse: () => themePresets.first,
+        );
         pCol = preset.primary;
         sCol = preset.secondary;
       }
@@ -258,55 +269,88 @@ class AppState {
     avatarColorNotifier.value = pCol;
     currencyNotifier.value = profile.currency;
 
-    // Persist healed/sanitized profile to database
-    await db.saveProfile(profile.copyWith(
-      primaryColor: pCol,
-      secondaryColor: sCol,
-      textColor: tCol,
-      theme: effectiveTheme,
-    ));
+    // An unavailable verification server must not erase a paid user's saved palette.
+    if (PurchaseSecurityPolicy.allowDevelopmentUnlocks ||
+        MonetizationService.isPro) {
+      await db.saveProfile(
+        profile.copyWith(
+          primaryColor: pCol,
+          secondaryColor: sCol,
+          textColor: tCol,
+          clearTextColor: tCol == null,
+          theme: effectiveTheme,
+        ),
+      );
+    }
 
-    transactionsNotifier.value = await db.loadTransactions(username);
-    budgetsNotifier.value = await db.loadBudgets(username);
-    goalsNotifier.value = await db.loadGoals(username);
-    accountsNotifier.value = await db.loadAccounts(username);
-    loansNotifier.value = await db.loadLoans(username);
-    plannedTransactionsNotifier.value = await db.loadPlannedTransactions(username);
+    final transactions = await db.loadTransactions(username);
+    final budgets = await db.loadBudgets(username);
+    final goals = await db.loadGoals(username);
+    final accounts = await db.loadAccounts(username);
+    final loans = await db.loadLoans(username);
+    final plans = await db.loadPlannedTransactions(username);
+    if (!sameSession()) return;
+    transactionsNotifier.value = transactions;
+    budgetsNotifier.value = budgets;
+    goalsNotifier.value = goals;
+    accountsNotifier.value = accounts;
+    loansNotifier.value = loans;
+    plannedTransactionsNotifier.value = plans;
     await checkGoalExpirations(username);
     await checkAndProcessPlannedAndRecurring(username);
 
-    // Schedule active user reminders if enabled
-    final remindersOn = await NotificationService.instance.areRemindersEnabled(username);
-    if (remindersOn) {
-      await NotificationService.instance.scheduleAllDailyReminders();
-      await NotificationService.instance.scheduleGoalReminders(
-        goalsNotifier.value,
-        currencyNotifier.value,
-      );
-      for (final loan in loansNotifier.value) {
-        if (!loan.isSettled) {
-          await NotificationService.instance.scheduleLoanReminder(
-            loan: loan,
-            currencySymbol: currencyNotifier.value,
-          );
-        }
-      }
-      for (final plan in plannedTransactionsNotifier.value) {
-        await NotificationService.instance.schedulePlannedTransactionReminder(
-          plan: plan,
-          currencySymbol: currencyNotifier.value,
-        );
-      }
-    } else {
-      await NotificationService.instance.cancelAllReminders();
-    }
+    if (!sameSession()) return;
+    // Optional platform work runs after the local vault is ready.
+    unawaited(
+      _scheduleSessionReminders(username, generation).catchError((
+        Object error,
+      ) {
+        debugPrint('Reminder refresh failed: $error');
+      }),
+    );
+    final initialPalette = [
+      themeNameNotifier.value,
+      customPrimaryColorNotifier.value,
+      customSecondaryColorNotifier.value,
+      customTextColorNotifier.value,
+    ];
+    unawaited(
+      MonetizationService.verificationReady
+          .then((_) async {
+            bool unchanged() =>
+                sameSession() &&
+                MonetizationService.isPro &&
+                themeNameNotifier.value == initialPalette[0] &&
+                customPrimaryColorNotifier.value == initialPalette[1] &&
+                customSecondaryColorNotifier.value == initialPalette[2] &&
+                customTextColorNotifier.value == initialPalette[3];
+            if (!unchanged()) return;
+            final saved = await db.loadProfile(username);
+            if (!unchanged()) return;
+            final preset = themePresets
+                .where((p) => p.name == saved.theme)
+                .firstOrNull;
+            if (preset == null) return;
+            themeNameNotifier.value = preset.name;
+            customPrimaryColorNotifier.value = saved.primaryColor;
+            customSecondaryColorNotifier.value = saved.secondaryColor;
+            customTextColorNotifier.value = saved.textColor;
+            avatarColorNotifier.value = saved.primaryColor;
+          })
+          .catchError((Object error) {
+            debugPrint('Deferred palette refresh failed: $error');
+          }),
+    );
 
     // Sync user's saved palette to SharedPreferences so next startup boots with this palette
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('${_prefThemeKey}_$username', effectiveTheme);
       await prefs.setInt('${_prefPrimaryColorKey}_$username', pCol.toARGB32());
-      await prefs.setInt('${_prefSecondaryColorKey}_$username', sCol.toARGB32());
+      await prefs.setInt(
+        '${_prefSecondaryColorKey}_$username',
+        sCol.toARGB32(),
+      );
       if (tCol != null) {
         await prefs.setInt('${_prefTextColorKey}_$username', tCol.toARGB32());
       } else {
@@ -323,6 +367,47 @@ class AppState {
       }
       await prefs.setString(_prefCurrencyKey, profile.currency);
     } catch (_) {}
+  }
+
+  static Future<void> _scheduleSessionReminders(
+    String username,
+    int generation,
+  ) async {
+    bool sameSession() =>
+        currentUser == username && sessionGeneration == generation;
+    if (!sameSession()) return;
+    final remindersOn = await NotificationService.instance.areRemindersEnabled(
+      username,
+    );
+    if (!sameSession()) return;
+    if (remindersOn) {
+      await NotificationService.instance.scheduleAllDailyReminders();
+      if (!sameSession()) return;
+      await NotificationService.instance.scheduleGoalReminders(
+        goalsNotifier.value,
+        currencyNotifier.value,
+      );
+      for (final loan in List<Loan>.of(loansNotifier.value)) {
+        if (!sameSession()) return;
+        if (!loan.isSettled) {
+          await NotificationService.instance.scheduleLoanReminder(
+            loan: loan,
+            currencySymbol: currencyNotifier.value,
+          );
+        }
+      }
+      for (final plan in List<PlannedTransaction>.of(
+        plannedTransactionsNotifier.value,
+      )) {
+        if (!sameSession()) return;
+        await NotificationService.instance.schedulePlannedTransactionReminder(
+          plan: plan,
+          currencySymbol: currencyNotifier.value,
+        );
+      }
+    } else {
+      await NotificationService.instance.cancelAllReminders();
+    }
   }
 
   static Future<void> saveProfile(UserProfile profile) async {
@@ -869,6 +954,8 @@ class AppState {
     final results = await AtomicPlans(
       db,
     ).processDue(username, now: DateTime.now());
+    // Nothing changed: avoid rereading the whole ledger and rescheduling every plan.
+    if (results.isEmpty) return;
     // Persistence failures propagate. A failed occurrence rolls back and stays due.
     await _publishProcessedPlans(username, generation, results, notify: true);
   }

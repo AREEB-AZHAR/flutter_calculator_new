@@ -223,3 +223,18 @@ class LoanViewCache {
     );
   }
 }
+
+/// Dashboard liquid balance excludes outgoing goal transfers, matching the
+/// existing balance semantics without rescanning on unrelated UI rebuilds.
+class LiquidBalanceCache {
+  List<Transaction>? _source;
+  double _balance = 0;
+  double get(List<Transaction> transactions) {
+    if (identical(transactions, _source)) return _balance;
+    _source = transactions;
+    return _balance = transactions.fold(0.0, (sum, item) {
+      if (item.category == 'Savings Goal' && !item.isIncome) return sum;
+      return sum + (item.isIncome ? item.amount : -item.amount);
+    });
+  }
+}

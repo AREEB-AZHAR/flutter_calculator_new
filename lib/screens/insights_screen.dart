@@ -7,6 +7,7 @@ import '../models/savings_goal.dart';
 import '../services/state.dart';
 import '../services/monetization_service.dart';
 import '../services/insights_engine.dart';
+import '../services/insights_report_cache.dart';
 import '../utils/constants.dart';
 import '../services/language_service.dart';
 
@@ -22,14 +23,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   int _periodOffset = 0; // 0 = current, -1 = previous, etc.
   String _activeInsightTab = 'all';
 
-  InsightsReport? _lastReport;
-  int? _lastTxHash;
-  int? _lastLoansHash;
-  int? _lastBudgetsHash;
-  int? _lastGoalsHash;
-  TimeHorizon? _lastHorizon;
-  int? _lastPeriodOffset;
-  String? _lastCurrency;
+  final _reportCache = InsightsReportCache();
 
   InsightsReport _getOrComputeReport({
     required List<Transaction> transactions,
@@ -39,41 +33,15 @@ class _InsightsScreenState extends State<InsightsScreen> {
     required TimeHorizon horizon,
     required int periodOffset,
     String currency = '\$',
-  }) {
-    final txHash = Object.hashAll(transactions);
-    final loansHash = Object.hashAll(loans);
-    final budgetsHash = Object.hashAll(budgets.entries);
-    final goalsHash = Object.hashAll(goals);
-
-    if (_lastReport != null &&
-        _lastTxHash == txHash &&
-        _lastLoansHash == loansHash &&
-        _lastBudgetsHash == budgetsHash &&
-        _lastGoalsHash == goalsHash &&
-        _lastHorizon == horizon &&
-        _lastPeriodOffset == periodOffset &&
-        _lastCurrency == currency) {
-      return _lastReport!;
-    }
-
-    _lastTxHash = txHash;
-    _lastLoansHash = loansHash;
-    _lastBudgetsHash = budgetsHash;
-    _lastGoalsHash = goalsHash;
-    _lastHorizon = horizon;
-    _lastPeriodOffset = periodOffset;
-    _lastCurrency = currency;
-
-    return _lastReport = InsightsEngine.generateReport(
-      transactions: transactions,
-      loans: loans,
-      budgets: budgets,
-      goals: goals,
-      horizon: horizon,
-      periodOffset: periodOffset,
-      currency: currency,
-    );
-  }
+  }) => _reportCache.get(
+    transactions: transactions,
+    loans: loans,
+    budgets: budgets,
+    goals: goals,
+    horizon: horizon,
+    periodOffset: periodOffset,
+    currency: currency,
+  );
 
   void _changeHorizon(TimeHorizon horizon) {
     if (_selectedHorizon != horizon) {

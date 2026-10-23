@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/state.dart';
+import '../services/cloud_sync_service.dart';
+import '../widgets/sync_conflict_dialog.dart';
 import '../services/language_service.dart';
 import '../services/ad_service.dart';
 import '../widgets/offline_banner.dart';
@@ -24,6 +27,49 @@ class _MainNavScreenState extends State<MainNavScreen> {
     super.initState();
     AppState.activeTabNotifier.addListener(_onTabChanged);
     _persistDeviceScreenCacheFlag();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_reconcileCloudAfterLogin());
+    });
+  }
+
+  Future<void> _reconcileCloudAfterLogin() async {
+    final username = AppState.currentUser;
+    final generation = AppState.sessionGeneration;
+    bool sameSession() =>
+        mounted &&
+        username != null &&
+        username == AppState.currentUser &&
+        generation == AppState.sessionGeneration;
+    if (!sameSession() || !CloudSyncService.isCloudAvailable) return;
+    try {
+      final cloud = await CloudSyncService.fetchCloudSummary();
+      if (!sameSession()) return;
+      final local = await CloudSyncService.fetchLocalSummary(username!);
+      if (!sameSession()) return;
+      final cloudHasData =
+          cloud != null && (cloud.transactionCount > 0 || cloud.goalsCount > 0);
+      final localHasData = local.transactionCount > 0 || local.goalsCount > 0;
+      if (!mounted) return;
+      if (cloudHasData && localHasData) {
+        final choice = await SyncConflictDialog.show(
+          context,
+          cloudSummary: cloud,
+          localSummary: local,
+          currency: AppState.currencyNotifier.value,
+        );
+        if (!sameSession()) return;
+        if (choice == SyncConflictChoice.restoreCloud) {
+          await CloudSyncService.restoreFromCloud(username);
+        } else if (choice == SyncConflictChoice.overwriteCloud) {
+          await CloudSyncService.overwriteCloudWithLocal(username);
+        }
+      } else if (cloudHasData || localHasData) {
+        // The user can already edit the vault: merge safely rather than replace it.
+        await CloudSyncService.sync(username);
+      }
+    } catch (error) {
+      debugPrint('Post-login cloud reconciliation deferred: $error');
+    }
   }
 
   Future<void> _persistDeviceScreenCacheFlag() async {
