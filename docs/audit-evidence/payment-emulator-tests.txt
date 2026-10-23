@@ -1,0 +1,94 @@
+i  emulators: Starting emulators: firestore
+i  emulators: Detected demo project ID "demo-tally-security", emulated services will use a demo configuration and attempts to access non-emulated services for this project will fail.
+i  firestore: Firestore Emulator logging to firestore-debug.log
++  firestore: Firestore Emulator was started in standard edition.
++  firestore: Firestore Emulator UI websocket is running on 9150.
+i  Running script: C:/Users/areeb/AppData/Local/npm-cache/_npx/52027bd8fc0022aa/node_modules/node/bin/node.exe --test functions/test/security.emulator.js
+TAP version 13
+# [2026-10-22T23:12:53.662Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x3bfe9094 error. Code: 7 Message: 7 PERMISSION_DENIED:
+# false for 'create' @ L13, false for 'update' @ L13
+# [2026-10-22T23:12:53.686Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x3bfe9096 error. Code: 7 Message: 7 PERMISSION_DENIED:
+# false for 'create' @ L13, false for 'update' @ L13
+# [2026-10-22T23:12:53.706Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x3bfe9097 error. Code: 7 Message: 7 PERMISSION_DENIED:
+# false for 'create' @ L13, false for 'update' @ L13
+# [2026-10-22T23:12:53.726Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x3bfe9098 error. Code: 7 Message: 7 PERMISSION_DENIED:
+# false for 'create' @ L13, false for 'update' @ L13
+# [2026-10-22T23:12:53.743Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x3bfe9099 error. Code: 7 Message: 7 PERMISSION_DENIED: No matching allow statements
+# [2026-10-22T23:12:53.775Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x3bfe909b error. Code: 7 Message: 7 PERMISSION_DENIED: No matching allow statements
+# [2026-10-22T23:12:53.799Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x3bfe909c error. Code: 7 Message: 7 PERMISSION_DENIED: No matching allow statements
+# [2026-10-22T23:12:53.836Z]  @firebase/firestore: Firestore (12.19.0): GrpcConnection RPC 'Write' stream 0x3bfe909d error. Code: 7 Message: 7 PERMISSION_DENIED: No matching allow statements
+# Subtest: rules deny entitlement/receipt forgery without disrupting any other owner data
+ok 1 - rules deny entitlement/receipt forgery without disrupting any other owner data
+  ---
+  duration_ms: 6374.0295
+  type: 'test'
+  ...
+# Subtest: paid verification requires App Check, authentication, supported source/product and store proof
+ok 2 - paid verification requires App Check, authentication, supported source/product and store proof
+  ---
+  duration_ms: 822.3659
+  type: 'test'
+  ...
+# Subtest: token ownership and store account binding prevent cross-account replay
+ok 3 - token ownership and store account binding prevent cross-account replay
+  ---
+  duration_ms: 282.0781
+  type: 'test'
+  ...
+# Subtest: concurrent replay grants coffee once and refresh handles consumption, refund and outages
+ok 4 - concurrent replay grants coffee once and refresh handles consumption, refund and outages
+  ---
+  duration_ms: 3481.2815
+  type: 'test'
+  ...
+# Subtest: coffee consumption failure retains ownership for retry and missing receipts revoke access
+ok 5 - coffee consumption failure retains ownership for retry and missing receipts revoke access
+  ---
+  duration_ms: 372.9564
+  type: 'test'
+  ...
+# Subtest: subscription renewal, expiry, revocation and linked-token replacement reconcile
+ok 6 - subscription renewal, expiry, revocation and linked-token replacement reconcile
+  ---
+  duration_ms: 917.0997
+  type: 'test'
+  ...
+# Subtest: server-generated recovery code is hashed, expires, and is consumed once under concurrency
+ok 7 - server-generated recovery code is hashed, expires, and is consumed once under concurrency
+  ---
+  duration_ms: 3492.2148
+  type: 'test'
+  ...
+# Subtest: wrong recovery attempts commit and lock after five; expiration is server-enforced
+ok 8 - wrong recovery attempts commit and lock after five; expiration is server-enforced
+  ---
+  duration_ms: 635.0765
+  type: 'test'
+  ...
+# Subtest: resend invalidates the previous challenge and rate limits cannot be bypassed by parallel calls
+ok 9 - resend invalidates the previous challenge and rate limits cannot be bypassed by parallel calls
+  ---
+  duration_ms: 346.022
+  type: 'test'
+  ...
+# Subtest: missing App Check/client-selected OTP/mail failure cannot report successful delivery
+ok 10 - missing App Check/client-selected OTP/mail failure cannot report successful delivery
+  ---
+  duration_ms: 122.157
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 22490.069
++  Script exited successfully (code 0)
+i  emulators: Shutting down emulators.
+i  firestore: Stopping Firestore Emulator
+!  Firestore Emulator has exited upon receiving signal: SIGINT
+i  hub: Stopping emulator hub
+i  logging: Stopping Logging Emulator

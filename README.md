@@ -1,5 +1,15 @@
 # 💰 Tally — Smart Personal Finance & Expense Tracker
 
+## Purchase and recovery security update — 1.8.18+28 (23 October 2026)
+
+Release builds now reject sandbox unlocks, universal promo codes and locally cached paid grants. **Google Play only** purchases are verified by the backend before access and completion, with account binding, replay protection, subscription/refund checks, server-side coffee consumption and short-lived entitlement leases. Recovery now emails a server-generated, single-use code and updates only the matching local vault; it never changes your Google password.
+
+See the [purchase and recovery setup guide](docs/PURCHASE_AND_RECOVERY_SECURITY.md) for the plan, architecture, exact configuration/deployment steps, offline policy and test evidence. **Live setup is unverified and nothing was deployed.** The project owner must configure Play API access for the runtime service account, Android App Check/Play Integrity, and the three Firebase email/recovery secrets before live testing. Existing unbound store receipts need a trusted ownership migration. Paid access requires online re-verification after restart and expires after at most 15 minutes without refresh; the local ledger remains available offline.
+
+**Validation completed 24 October 2026:** all **222 Flutter tests**, **10 server unit tests**, and **10 Firestore emulator tests** passed. Flutter analysis found no issues; npm audit reported **zero vulnerabilities** across the backend dependency tree. Host tests use controlled Play/email adapters; native-plugin warning messages do not establish device behavior.
+
+**No APK was built for this update.** The earlier APK result below belongs to 1.8.17+27. Production billing/email and device attestation still require integration testing after deployment. Backend runtime is now Node **22**; see the guide before following historical backend instructions lower in this README.
+
 ## Sync and recurring safety update — 1.8.17+27 (23 October 2026)
 
 Implemented the first requested audit fixes. Ordinary transaction/goal sync now preserves cloud-only records, drains **all records in bounded batches** (including ledgers above 400 transactions), and retains offline mutations in a durable SQLite outbox. Explicit deletes use persistent tombstones; undo becomes a new mutation. Failed chunks remain retryable after restart, and edits made during upload retain their newer queue revisions.
@@ -8,19 +18,19 @@ Recurring and manual planned transactions now commit the occurrence, processed f
 
 See [sync safety, conflict policy and validation](docs/SYNC_SAFETY.md) for architecture, migration behavior, limits and test commands. Upgrade all devices before using the tombstone format: older builds still contain destructive sync and do not understand these records. Same-ID explicit edits use last successful commit wins; full overwrite remains an explicit destructive choice and is not globally atomic across chunks.
 
-The [original audit and remaining optimization roadmap](docs/AUDIT_AND_OPTIMIZATION_PLAN.md) is retained as historical evidence. Payment verification, sandbox access, password recovery and storage protection are still pending. SQLite is **not configured for database encryption**; headless timing tests do not establish device 60/120 fps performance. Visited tabs remain cached in a lazy `IndexedStack`.
+The [original audit and remaining optimization roadmap](docs/AUDIT_AND_OPTIMIZATION_PLAN.md) is retained as historical evidence. Payment verification, release sandbox access and recovery are addressed in source in 1.8.18+28, pending production activation. Storage protection remains pending. SQLite is **not configured for database encryption**; headless timing tests do not establish device 60/120 fps performance. Visited tabs remain cached in a lazy `IndexedStack`.
 
 Verified: **198 tests passed**, **static analysis found no issues**, and the **Android debug APK built successfully**. Validation logs are linked in the sync safety guide. Test files now use separate temporary databases, and the old ad assertion checks the actual `Ad • Partner` fallback. Live Firebase/plugin behavior and physical-device notification delivery require integration smoke testing; local tests use real SQLite with a controlled remote.
 
 **Setup corrections:** use Flutter **3.41.3 / Dart 3.11.1** as the audited toolchain baseline; the manifest requires Dart `^3.11.1`. Older Flutter/Dart minimums in historical notes do not satisfy this manifest. Android uses AGP **8.11.1**, Kotlin **2.2.20**, Gradle **8.14**, and Java 17 compilation. Install a compatible JDK 17/21 and confirm its actual path with `flutter doctor -v`; replace the example JDK path below with your installed location. `android/local.properties` must contain the local `flutter.sdk` and Android `sdk.dir` paths and stay untracked. Windows builds require Visual Studio's Desktop development with C++ workload. iOS builds require macOS/Xcode/CocoaPods. Browser support needs a real web build and runtime test.
 
-After cloning, run `flutter doctor -v`, `flutter pub get`, `flutter analyze`, then `flutter test`. Configure your own Firebase development project using the instructions below for cloud/auth testing; email functions additionally require Node 20 per `functions/package.json`, `npm ci` inside `functions`, and the `EMAIL_USER` / `EMAIL_PASS` Firebase secrets. Native Google sign-in needs the signing certificate fingerprints for your build. Store billing needs configured products and a store test account. Never use sandbox unlocks as purchase-verification evidence. Current release Gradle settings use debug signing and disable shrinking/release lint; address these before store distribution.
+After cloning, run `flutter doctor -v`, `flutter pub get`, `flutter analyze`, then `flutter test`. Configure your own Firebase development project using the instructions below for cloud/auth testing; backend functions require Node 22 per `functions/package.json`, `npm ci` inside `functions`, and `EMAIL_USER`, `EMAIL_PASS` and `RECOVERY_CODE_SECRET` secrets. Follow the current security setup guide above for App Check and Google Play access. Native Google sign-in needs the signing certificate fingerprints for your build. Store billing needs configured products and a store test account. Never use sandbox unlocks as purchase-verification evidence. Current release Gradle settings use debug signing and disable shrinking/release lint; address these before store distribution.
 
-Architecture: `lib/main.dart` boots the app; `lib/screens/` and `lib/widgets/` implement UI; `lib/services/state.dart` owns reactive session state; `lib/services/database/` persists the local ledger; `lib/services/ledger_sync.dart` owns outbox/reconciliation and `lib/services/atomic_plans.dart` owns recurring atomicity; `lib/services/cloud_sync_service.dart` adapts Firebase; `functions/` contains email backend code; `test/` contains host tests; `android/`, `ios/`, `windows/`, `macos/`, `linux/`, and `web/` contain platform hosts.
+Architecture: `lib/main.dart` boots the app; `lib/screens/` and `lib/widgets/` implement UI; `lib/services/state.dart` owns reactive session state; `lib/services/database/` persists the local ledger; `lib/services/ledger_sync.dart` owns outbox/reconciliation and `lib/services/atomic_plans.dart` owns recurring atomicity; `lib/services/cloud_sync_service.dart` adapts Firebase; `functions/` contains Google Play verification and email recovery code; `test/` contains host tests; `android/`, `ios/`, `windows/`, `macos/`, `linux/`, and `web/` contain platform hosts.
 
 **Real screenshots requested:** capture the dashboard with sample transactions, the full transaction search results, Insights, Goals, the sync comparison dialog, and the purchase screen on a running device. Use fictitious names/amounts and hide account identifiers; place images in `assets/screenshots/` with descriptive filenames. Capture Ledger and Paper themes on a narrow phone so layout/contrast can also be reviewed. Existing launcher icons are not substitutes for screenshots.
 
-> *"Just tally it up!"* — A blazing-fast, modern personal finance manager built with **Flutter** & **Material 3**. Designed with fluid micro-interactions, dark glassmorphism styling, graphic theme customization, offline-first encrypted SQLite storage, and stutter-free 60/120fps mobile rendering.
+> *"Just tally it up!"* — A blazing-fast, modern personal finance manager built with **Flutter** & **Material 3**. Designed with fluid micro-interactions, dark glassmorphism styling, graphic theme customization, offline-first SQLite storage and Material 3 mobile rendering. Database encryption and device frame-rate guarantees are not established.
 
 ---
 
@@ -49,6 +59,8 @@ Architecture: `lib/main.dart` boots the app; `lib/screens/` and `lib/widgets/` i
 | *(Add Splash Screenshot)* | *(Add Dashboard Banner Screenshot)* | *(Add Pro Paywall Screenshot)* | *(Add Sync Conflict Screenshot)* | *(Add Saved Accounts Screenshot)* |
 
 ---
+
+> Historical feature/changelog descriptions below may describe superseded implementations. The security and sync updates above and their linked guides define current guarantees. In particular, local HMAC checks and development promo/sandbox tests are not production purchase authority, and the old `sendOtpEmail` flow has been retired.
 
 ## ✨ Features & Capabilities
 
@@ -84,7 +96,7 @@ Architecture: `lib/main.dart` boots the app; `lib/screens/` and `lib/widgets/` i
 
 ### 6. 🛡️ Secure SQLite Database Vault & Cloud Architecture
 
-- **On-Device Encrypted SQL Ledger**: All user accounts, transactions, budgets, goals, and customized profiles are securely stored in an on-device SQLite database (`finance_vault.db`).
+- **On-Device SQL Ledger (unencrypted)**: All user accounts, transactions, budgets, goals, and customized profiles are securely stored in an on-device SQLite database (`finance_vault.db`).
 - **Cryptographic Password Protection**: User passwords are protected using SHA-256 cryptographic hashing with unique random salts.
 - **Strict User Isolation**: Foreign-key scoped queries guarantee that no account can ever access another user's financial records.
 - **Full `.sql` Script Export**: One-tap generation and export of your complete SQL database dump for backups or offline inspection.

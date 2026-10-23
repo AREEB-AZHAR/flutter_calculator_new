@@ -514,6 +514,18 @@ class AppDatabase {
     return count > 0;
   }
 
+  /// Changes only the verified local vault if its credentials have not changed.
+  Future<bool> updateRecoveredPassword({required String username, required String email,
+      required String expectedHash, required String newPassword}) async {
+    final db = await database;
+    final salt = SecurityHelper.generateSalt();
+    // Compare-and-swap exactly the verified local account; never reset all rows
+    // matching an email-or-username expression, or a rebound email/account.
+    return await db.update('users', {'password_hash': SecurityHelper.hashPassword(newPassword, salt), 'salt': salt},
+      where: 'username = ? COLLATE NOCASE AND email = ? COLLATE NOCASE AND password_hash = ?',
+      whereArgs: [username, email, expectedHash]) == 1;
+  }
+
   /// Checks if a username or email has existing transactions or goals in the local SQLite database.
   Future<bool> hasUserData(String username) async {
     final db = await database;

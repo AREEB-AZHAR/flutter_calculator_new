@@ -4,7 +4,7 @@
 
 ## Implementation status — 23 October 2026
 
-The follow-up implementation in **1.8.17+27** addresses F1/F2 transaction/goal preservation and write truncation, and F5 recurring-write atomicity. See [SYNC_SAFETY.md](SYNC_SAFETY.md) for exact guarantees, tests, conflict/compatibility policy and remaining limitations. The findings below describe the original audit baseline; the rest of the roadmap remains pending.
+The follow-up implementation in **1.8.17+27** addresses F1/F2 transaction/goal preservation and write truncation, and F5 recurring-write atomicity. See [SYNC_SAFETY.md](SYNC_SAFETY.md) for exact guarantees, tests, conflict/compatibility policy and remaining limitations. In **1.8.18+28**, F3 production unlocks/server purchase verification and F4 local password recovery are addressed in source. See [PURCHASE_AND_RECOVERY_SECURITY.md](PURCHASE_AND_RECOVERY_SECURITY.md) for the researched plan, tests and required production activation. Live Google Play/SMTP/App Check configuration and device validation are not confirmed; no deployment or APK build was performed. F6 password KDF/database encryption and the remaining roadmap are still pending. The findings below describe the original audit baseline.
 
 ## Decision
 
