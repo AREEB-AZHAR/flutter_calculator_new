@@ -1,4 +1,23 @@
-# Scrolling performance update — 1.8.19+29
+# Scrolling performance updates — through 1.8.20+30
+
+## Accounts, Transactions and Profile follow-up — 24 October 2026
+
+The follow-up inspects these screens' surrounding content and data work while preserving their existing transaction/loan row virtualization. The researched plan follows Flutter's guidance to avoid repeated work in `build()` and use lazy builders:
+
+1. Cache wallet/account grouping, loan summaries/filter groups, transaction filtering and Profile spending summaries against the current immutable snapshot.
+2. Build the wallet/loan/transaction headers lazily with `LazySectionSliver`; retain existing chart/ad state through automatic keep-alive. Pass the selected wallet's indexed rows directly to its chart.
+3. Build Profile summary/settings sections lazily; forward the draggable sheet's controller and reset its list to the top when changing settings categories.
+4. Retain search text in a screen-owned controller, debounce filtering by 180 ms, cancel obsolete timers on clear/dispose, and keep chart/list search results consistent.
+5. Reuse Profile's recovery-email lookup future within a user/session, invalidate after binding or Google linking, and key the display to the user/session so old data is not carried across account changes. Update currency labels reactively without rescanning the ledger.
+6. Run cache/scroll regressions, existing settings/theme/loan tests, the complete Flutter suite and analysis. Do not build an APK.
+
+`lib/services/ledger_view_cache.dart` contains bounded per-screen caches. Wallet grouping preserves ledger order and includes unlisted wallets in Overall totals. Loan totals exclude settled entries; settlement/list replacement invalidates the result. Search remains case-insensitive across title, category and account and supports All/Income/Expense filters. Spending totals, largest expense, essential/discretionary classification and top four categories preserve the previous calculations.
+
+Cache invalidation relies on the same existing new-list publication contract as the chart cache: replace transaction/loan lists when editing, deleting, restoring, syncing or switching sessions. Filtered/grouped results are read-only; the unfiltered result reuses the published source. Caches retain only the current source/result, with O(n) row-reference storage for grouped wallets. Initial summarization and a new search query still perform O(n) work on the UI isolate; the debounce reduces work during typing bursts, and repeated rebuilds/cache hits avoid it. A new wallet chart period still computes its own analytics. Profile's four-cell grid remains bounded and is only constructed when its section enters the viewport. Native ad raster cost, first-frame startup and full Insights report generation remain separate profiling work.
+
+New regressions exercise 100,000-row wallet, spending and search views, zero extra source reads on cache hits, new-snapshot invalidation, loan settlement, search debounce/clear/disposal, lazy transaction rows, wallet switching and the Profile settings footer/category navigation. Evidence: [focused follow-up tests](audit-evidence/scroll-followup-targeted.txt), [full suite](audit-evidence/scroll-followup-full-tests.txt), [analysis](audit-evidence/scroll-followup-analyze.txt). **Results: 233 full-suite tests and 21 focused tests passed; analysis found no issues.** The final focused rerun also checks currency refresh while the cached Profile summary is displayed. These establish correctness and reduced repeated work, not hardware FPS; no device trace or APK was produced. Backend/deployment configuration is unchanged.
+
+## Initial Home, Insights and Goals update — 1.8.19+29
 
 24 October 2026. The reported symptom is sluggish scrolling on several screens. A phone model, build mode and device frame trace were not supplied, so the specific source of dropped frames has **not** been established on hardware. No APK was built.
 
@@ -23,7 +42,7 @@ Following source inspection and Flutter's [performance guidance](https://docs.fl
 | Ads | Banners retain state across lazy eviction to avoid repeated ad loads and native platform-view recreation. Native rendering still needs device profiling. |
 | Cached tabs | `TickerMode` now disables tickers for hidden tabs without destroying their state. Hidden tabs may still receive data notifications; this is not a blanket suspension of background work. |
 
-Transactions and Accounts already use lazy transaction slivers; this update does not rewrite those lists. Chart monthly/yearly painter preparation and first-period aggregation still run synchronously, and full Insights report generation remains on the UI isolate. Very large individual cards, native ads, expensive analytics and device/debug-mode overhead remain possible contributors. No database or cloud protocol changed.
+At the 1.8.19 baseline, Transactions and Accounts already used lazy transaction slivers; their header/data-work follow-up is documented above. Chart monthly/yearly painter preparation and first-period aggregation still run synchronously, and full Insights report generation remains on the UI isolate. Very large individual cards, native ads, expensive analytics and device/debug-mode overhead remain possible contributors. No database or cloud protocol changed.
 
 The summary cache relies on the existing `AppState` contract: every ledger mutation publishes a **new list** and transaction fields are immutable. A new list, account or period invalidates the cache. Do not mutate a published list in place. The cache retains only the current chart summary, not an unlimited history. Chart/ad keep-alive retains those stateful sections after first use; other sections remain evictable. PageStorage keys preserve scroll position across ordinary rebuilds/tab caching.
 

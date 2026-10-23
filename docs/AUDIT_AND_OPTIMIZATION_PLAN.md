@@ -8,6 +8,8 @@ The follow-up implementation in **1.8.17+27** addresses F1/F2 transaction/goal p
 
 **1.8.19+29 scrolling follow-up:** F8 is partially improved through lazy Home/Insights sections, lazy goal cards, cached chart summaries and hidden-tab ticker control. [SCROLL_PERFORMANCE.md](SCROLL_PERFORMANCE.md) records the plan, structural tests and remaining UI-isolate/device-profiling work. This does not close F7 startup or F11 hardware verification.
 
+**1.8.20+30 follow-up:** Accounts/loan summaries and transaction filters now cache immutable snapshots; headers, Profile and settings build lazily. Profile currency and email-lookup lifecycle are scoped explicitly. F8 remains partially addressed: first-time aggregation/search still runs on the UI isolate, and F11 hardware profiling remains outstanding. See the scrolling guide for the 233-test regression result and focused evidence.
+
 ## Decision
 
 Fix ledger synchronization, recurring-write atomicity, account recovery, and purchase authority before investing in animation tuning. Then measure startup and large-ledger workloads on a physical Android device. Preserve the existing offline-first Flutter/SQLite architecture; a framework or state-management rewrite is not justified by this audit.

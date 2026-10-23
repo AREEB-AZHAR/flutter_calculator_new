@@ -1,5 +1,13 @@
 # 💰 Tally — Smart Personal Finance & Expense Tracker
 
+## Accounts, Transactions and Profile scrolling — 1.8.20+30 (24 October 2026)
+
+Accounts now reuses wallet balances, account-indexed transaction lists and loan summaries across rebuilds/filter changes. Transactions caches filtered views, debounces typing by **180 ms**, and preserves/clears the visible search text correctly when its header scrolls offscreen. Wallet/loan/transaction headers, Profile summary sections and Profile's draggable settings sheet now build on demand. Profile reuses its spending summary and session-scoped recovery-email lookup, refreshes that lookup after binding changes, and updates currency labels without rescanning the ledger.
+
+**Validation:** **233 Flutter tests passed**, **21 focused screen/cache/theme tests passed**, and **static analysis found no issues**. New tests cover 100,000-row caches with zero extra source reads on cache hits, data replacement, loan settlement, wallet switching, search cancellation/disposal, Profile currency updates and settings-footer navigation. These verify reduced work and preserved behavior; a physical-device trace is still needed to confirm frame-rate improvements. **No APK was built.**
+
+See [the follow-up plan, architecture, limits and evidence](docs/SCROLL_PERFORMANCE.md#accounts-transactions-and-profile-follow-up--24-october-2026). The new helper is `lib/services/ledger_view_cache.dart`; `LazySectionList` also supports the draggable controller, and `LazySectionSliver` shares lazy headers with existing ledger-row slivers. Dependencies, database schema and backend setup are unchanged. Use the Flutter setup and test instructions below; screenshots/device traces remain outstanding as described in the capture instructions.
+
 ## Scrolling improvements — 1.8.19+29 (24 October 2026)
 
 Home and Insights now build scroll sections near the viewport; Goals builds individual cards on demand. Chart period/category summaries reuse unchanged ledger snapshots, chart selections and native ad instances survive scrolling offscreen, and hidden cached tabs pause their animation tickers. Existing transaction/account list virtualization remains in place.
