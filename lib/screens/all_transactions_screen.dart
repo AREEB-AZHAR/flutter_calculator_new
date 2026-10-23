@@ -1,3 +1,6 @@
+import 'dart:async';
+import '../services/ledger_view_cache.dart';
+import '../widgets/lazy_section_list.dart';
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../models/planned_transaction.dart';
@@ -17,6 +20,30 @@ class AllTransactionsScreen extends StatefulWidget {
 }
 
 class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
+  final _filterCache = TransactionFilterCache();
+  final _searchController = TextEditingController();
+  Timer? _searchDebounce;
+
+  void _onSearchChanged(String query) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 180), () {
+      if (mounted) setState(() => _searchQuery = query);
+    });
+  }
+
+  void _clearSearch() {
+    _searchDebounce?.cancel();
+    _searchController.clear();
+    setState(() => _searchQuery = '');
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
   String _filter = 'All';
   String _searchQuery = '';
 
@@ -52,31 +79,21 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
           return ValueListenableBuilder<List<Transaction>>(
             valueListenable: AppState.transactionsNotifier,
             builder: (context, transactions, child) {
-              final filtered = transactions.where((t) {
-                bool matchesFilter = true;
-                if (_filter == 'Income') matchesFilter = t.isIncome;
-                if (_filter == 'Expense') matchesFilter = !t.isIncome;
-
-                bool matchesSearch = _searchQuery.isEmpty ||
-                    t.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                    t.category.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                    t.account.toLowerCase().contains(_searchQuery.toLowerCase());
-
-                return matchesFilter && matchesSearch;
-              }).toList();
+              final filtered = _filterCache.get(transactions,
+                filter: _filter, query: _searchQuery);
 
               return CustomScrollView(
+                key: const PageStorageKey('transactions_scroll'),
                 physics: const AlwaysScrollableScrollPhysics(),
                 cacheExtent: 500,
                 slivers: [
-                  SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                  LazySectionSliver(sections: [
                         // Search Bar
-                        Padding(
+                        (context) => Padding(
                           padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                           child: TextField(
+                            key: const Key('transaction_search'),
+                            controller: _searchController,
                             style: TextStyle(color: onSurface),
                             decoration: InputDecoration(
                               hintText: LanguageService.tr('search_transactions_hint'),
@@ -91,7 +108,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                               suffixIcon: _searchQuery.isNotEmpty
                                   ? IconButton(
                                       icon: const Icon(Icons.clear, size: 18),
-                                      onPressed: () => setState(() => _searchQuery = ''),
+                                      onPressed: _clearSearch,
                                     )
                                   : null,
                               filled: true,
@@ -103,12 +120,12 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                                 ),
                               ),
                             ),
-                            onChanged: (val) => setState(() => _searchQuery = val),
+                            onChanged: _onSearchChanged,
                           ),
                         ),
 
                         // Filter Chips (All, Income, Expense, Planned Future)
-                        SingleChildScrollView(
+                        (context) => SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: Row(
@@ -161,10 +178,10 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                           ),
                         ),
 
-                        const SizedBox(height: 12),
+                        (context) => const SizedBox(height: 12),
 
                         // Dynamic Interactive Analytics Chart (Updates with search & filters)
-                        Padding(
+                        (context) => Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: RepaintBoundary(
                             child: InteractiveChartCard(
@@ -176,20 +193,20 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                           ),
                         ),
 
-                        const SizedBox(height: 12),
+                        (context) => const SizedBox(height: 12),
 
                         // Ad Banner
-                        const RepaintBoundary(
+                        (context) => const RepaintBoundary(
                           child: AdBannerWidget(
                             margin: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                             sponsorCategory: 'Smart Expense Categorization Engine',
                           ),
                         ),
 
-                        const SizedBox(height: 12),
+                        (context) => const SizedBox(height: 12),
 
                         // Section Title with Count
-                        Padding(
+                        (context) => Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -206,6 +223,8 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                                 TextButton(
                                   onPressed: () {
                                     setState(() {
+                                      _searchDebounce?.cancel();
+                                      _searchController.clear();
                                       _searchQuery = '';
                                       _filter = 'All';
                                     });
@@ -222,10 +241,8 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                           ),
                         ),
 
-                        const SizedBox(height: 8),
-                      ],
-                    ),
-                  ),
+                        (context) => const SizedBox(height: 8),
+]),
 
                   // Virtualized Transaction List Items or Empty State
                   if (filtered.isEmpty)

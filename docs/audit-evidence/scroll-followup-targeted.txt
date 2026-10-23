@@ -1,0 +1,69 @@
+00:00 +0: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart
+00:00 +0: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: (setUpAll)
+00:00 +0: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: 100k rows: wallet and spending cache hits do not read ledger again
+00:00 +1: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: search caches case-insensitive filters and invalidates edited snapshots
+00:00 +2: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: loan views reuse grouped rows and refresh after settlement
+00:00 +3: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: transaction search debounces, clears pending query, and survives header eviction
+00:01 +4: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: wallet switch selects indexed rows and refreshes changed ledger
+00:01 +5: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: Profile lazy sections and draggable settings remain reachable
+00:02 +6: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_followup_test.dart: (tearDownAll)
+00:02 +6: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart
+00:03 +6: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:03 +6: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: Loan Model & Data Operations Loan serializes to and from JSON accurately
+00:03 +7: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: Loan Model & Data Operations Saving and toggling settled status updates SQLite and AppState
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+scheduleLoanReminder notice: LateInitializationError: Field '_instance@1322271368' has not been initialized.
+00:03 +8: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: Planned & Recurring Automation Engine PlannedTransaction promotes to active transaction when due date is reached
+showInstantAlert notice: LateInitializationError: Field '_instance@1322271368' has not been initialized.
+schedulePlannedTransactionReminder notice: LateInitializationError: Field '_instance@1322271368' has not been initialized.
+00:03 +9: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: InteractiveChartCard & AllTransactionsScreen Widgets InteractiveChartCard renders month/year controls and switches chart modes
+00:04 +10: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: InteractiveChartCard & AllTransactionsScreen Widgets AllTransactionsScreen search dynamically filters transactions and updates chart
+00:04 +11: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: InteractiveChartCard & AllTransactionsScreen Widgets AccountsScreen switches between Wallets and Loans & Debts segments
+00:05 +12: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/loans_recurring_analytics_test.dart: (tearDownAll)
+00:05 +12: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/settings_menu_and_insights_smoothness_test.dart
+00:05 +12: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/settings_menu_and_insights_smoothness_test.dart: (setUpAll)
+00:05 +12: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/settings_menu_and_insights_smoothness_test.dart: GeoLocationService & Regional Currency Tests GeoLocationService formats localized tier pricing and period strings
+00:05 +13: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/settings_menu_and_insights_smoothness_test.dart: InsightsEngine Currency Parameter Tests generateReport incorporates provided regional currency symbol in advice and projections
+00:05 +14: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/settings_menu_and_insights_smoothness_test.dart: ProfileScreen Settings Menu Virtualization & Categorization Tests Opening Settings menu displays 3 categorized tabs and allows switching
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:06 +15: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/settings_menu_and_insights_smoothness_test.dart: ProfileScreen Settings Menu Virtualization & Categorization Tests Opening Features Guide modal displays virtualized list items
+00:07 +16: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/settings_menu_and_insights_smoothness_test.dart: (tearDownAll)
+00:07 +16: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart
+00:07 +16: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:07 +16: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: buildDynamicTheme generates valid contrast across all 9 presets
+00:07 +17: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: InteractiveChartCard renders without errors under Ledger, Paper, and Ink
+00:08 +18: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: AccountsScreen and Loan Tab adapt seamlessly across themes
+00:09 +19: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: PlannedTransactionsSheet renders smoothly in light Paper and dark Ledger
+00:09 +20: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: AllTransactionsScreen search and theme switching without glitches
+00:10 +21: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: (tearDownAll)
+00:10 +21: All tests passed!
