@@ -1,0 +1,39 @@
+00:00 +0: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart
+00:00 +0: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart: (setUpAll)
+00:00 +0: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart: ad section preserves its instance across offscreen scrolling
+00:00 +1: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart: 100k ledger summary reuses unchanged snapshot without reading rows
+00:02 +2: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart: 1000 sections mount only near viewport and remain reachable
+00:02 +3: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart: chart selection survives lazy eviction and rebuild
+00:02 +4: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart: large goal list creates only nearby cards and reaches final goal
+00:05 +5: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/scroll_performance_test.dart: (tearDownAll)
+00:05 +5: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart
+00:06 +5: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart: (setUpAll)
+00:06 +5: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart: InsightsScreen renders Pro locked preview when user is not Pro
+00:06 +6: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart: InsightsScreen renders full Personal Wealth Accountant when Pro unlocked
+00:07 +7: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart: InsightsScreen segmented domain sub-tabs filter analytical cards
+00:08 +8: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/insights_screen_widget_test.dart: (tearDownAll)
+00:08 +8: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart
+00:09 +8: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:09 +8: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart: MainNavScreen Background Pre-Build & Tab Caching Tests MainNavScreen initializes with DashboardScreen and warms screen cache flag
+00:10 +9: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart: MainNavScreen Background Pre-Build & Tab Caching Tests Switching tabs mounts new screen into IndexedStack preserving cached screens
+00:10 +10: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart: CloudSyncModal Widget & Selection Flow Tests CloudSyncModal displays comparing state initially when summaries need loading
+00:10 +11: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart: CloudSyncModal Widget & Selection Flow Tests CloudSyncModal renders clean comparison and all 3 plain-language choices
+00:10 +12: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart: CloudSyncModal Widget & Selection Flow Tests Tapping different sync action options updates active selection
+00:10 +13: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/cloud_sync_modal_and_tab_cache_test.dart: (tearDownAll)
+00:11 +13: All tests passed!

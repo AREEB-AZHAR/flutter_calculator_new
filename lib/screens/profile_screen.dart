@@ -1,3 +1,6 @@
+import '../services/ledger_view_cache.dart';
+import '../widgets/lazy_section_list.dart';
+import '../widgets/testing_performance_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -31,6 +34,20 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final _spendingCache = SpendingViewCache();
+  String? _emailUser;
+  int _emailGeneration = -1;
+  Future<String?>? _emailFuture;
+  Future<String?> _recoveryEmail() {
+    final user = AppState.currentUser;
+    if (_emailFuture == null || user != _emailUser || _emailGeneration != AppState.sessionGeneration) {
+      _emailGeneration = AppState.sessionGeneration;
+      _emailUser = user;
+      _emailFuture = user == null ? Future.value(null) : AppDatabase.instance.getUserEmail(user);
+    }
+    return _emailFuture!;
+  }
+
   final ImagePicker _picker = ImagePicker();
   int _devToggleCount = 0;
 
@@ -213,7 +230,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           await AppState.loadAllUserData(googleUser.email);
         }
 
-        setState(() {});
+        if (mounted) setState(() => _emailFuture = null);
       }
     } catch (e) {
       if (mounted) {
@@ -287,6 +304,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               }
               if (mounted) {
                 if (success) {
+                  _emailFuture = null;
                   setState(() {});
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('🎉 Recovery email bound: $newEmail'), backgroundColor: Colors.teal),
@@ -564,11 +582,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     maxChildSize: 0.92,
                     minChildSize: 0.5,
                     expand: false,
-                    builder: (c, scrollController) => ListView(
+                    builder: (c, scrollController) => LazySectionList(
+                      key: const PageStorageKey('profile_settings_scroll'),
                       controller: scrollController,
                       padding: const EdgeInsets.all(24),
-                      children: [
-                        Center(
+                      sections: [
+                        (context) => Center(
                           child: Container(
                             width: 40,
                             height: 4,
@@ -578,26 +597,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Text(
+                        (context) => const SizedBox(height: 16),
+                        (context) => Text(
                           LanguageService.tr('app_account_settings'),
                           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: onSurface),
                         ),
-                        const SizedBox(height: 14),
+                        (context) => const SizedBox(height: 14),
 
                         // Categorized Segmented Tabs (Eliminates menu scroll stutter)
-                        _buildSettingsTabsBar(
+                        (context) => _buildSettingsTabsBar(
                           activeTab: activeSettingsTab,
                           primary: primary,
                           onSurface: onSurface,
-                          onTabSelected: (tab) => setSheetState(() => activeSettingsTab = tab),
+                          onTabSelected: (tab) {
+                            scrollController.jumpTo(0);
+                            setSheetState(() => activeSettingsTab = tab);
+                          },
                         ),
-                        const SizedBox(height: 16),
+                        (context) => const SizedBox(height: 16),
 
                         if (activeSettingsTab == 0) ...[
+                          (context) => const TestingPerformanceSettings(),
                           // --- TAB 0: APPEARANCE & STYLING ---
                           // Features & Settings Guide Banner Card
-                          Container(
+                          (context) => Container(
                             margin: const EdgeInsets.only(bottom: 20),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
@@ -639,10 +662,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
 
                           // Brand Palettes
-                          _settingsSectionTitle(LanguageService.tr('brand_palettes_section'), onSurface.withValues(alpha: 0.6)),
+                          (context) => _settingsSectionTitle(LanguageService.tr('brand_palettes_section'), onSurface.withValues(alpha: 0.6)),
 
                           // Theme Passes & 30s Ad Unlock Banner
-                          ValueListenableBuilder<int>(
+                          (context) => ValueListenableBuilder<int>(
                             valueListenable: MonetizationService.themePassesNotifier,
                             builder: (context, themePasses, _) {
                               final isPro = MonetizationService.isPro;
@@ -748,7 +771,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             },
                           ),
 
-                          Card(
+                          (context) => Card(
                             color: cardBg,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             child: Column(
@@ -880,17 +903,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 20),
+                          (context) => const SizedBox(height: 20),
 
                           // Launcher App Icon with Restart Notice
-                          _settingsSectionTitle(LanguageService.tr('launcher_icon_section'), onSurface.withValues(alpha: 0.6)),
-                          _launcherIconCard(cardBg, surface, onSurface, primary),
+                          (context) => _settingsSectionTitle(LanguageService.tr('launcher_icon_section'), onSurface.withValues(alpha: 0.6)),
+                          (context) => _launcherIconCard(cardBg, surface, onSurface, primary),
 
-                          const SizedBox(height: 20),
+                          (context) => const SizedBox(height: 20),
 
                           // Theme Studio Tile
-                          _settingsSectionTitle(LanguageService.tr('custom_palettes_section'), onSurface.withValues(alpha: 0.6)),
-                          Card(
+                          (context) => _settingsSectionTitle(LanguageService.tr('custom_palettes_section'), onSurface.withValues(alpha: 0.6)),
+                          (context) => Card(
                             color: cardBg,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             child: ListTile(
@@ -957,11 +980,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 20),
+                          (context) => const SizedBox(height: 20),
 
                           // Currency & Language Preferences
-                          _settingsSectionTitle(LanguageService.tr('ledger_architecture_section'), onSurface.withValues(alpha: 0.6)),
-                          Card(
+                          (context) => _settingsSectionTitle(LanguageService.tr('ledger_architecture_section'), onSurface.withValues(alpha: 0.6)),
+                          (context) => Card(
                             color: cardBg,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             child: Column(
@@ -1076,8 +1099,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ] else if (activeSettingsTab == 1) ...[
                           // --- TAB 1: SECURITY & PROFILE ---
-                          _settingsSectionTitle(LanguageService.tr('profile_identity_section'), onSurface.withValues(alpha: 0.6)),
-                          Card(
+                          (context) => _settingsSectionTitle(LanguageService.tr('profile_identity_section'), onSurface.withValues(alpha: 0.6)),
+                          (context) => Card(
                             color: cardBg,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             child: Column(
@@ -1106,10 +1129,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 20),
+                          (context) => const SizedBox(height: 20),
 
-                          _settingsSectionTitle('Account Security & Lock', onSurface.withValues(alpha: 0.6)),
-                          Card(
+                          (context) => _settingsSectionTitle('Account Security & Lock', onSurface.withValues(alpha: 0.6)),
+                          (context) => Card(
                             color: cardBg,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             child: Column(
@@ -1201,10 +1224,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ],
                             ),
                           ),
-                        ] else ...[
+] else ...[
                           // --- TAB 2: CLOUD & DATA ---
-                          _settingsSectionTitle(LanguageService.tr('pro_membership_section'), onSurface.withValues(alpha: 0.6)),
-                          Card(
+                          (context) => _settingsSectionTitle(LanguageService.tr('pro_membership_section'), onSurface.withValues(alpha: 0.6)),
+                          (context) => Card(
                             color: cardBg,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             child: ListTile(
@@ -1232,10 +1255,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 20),
+                          (context) => const SizedBox(height: 20),
 
-                          _settingsSectionTitle(LanguageService.tr('interactive_tours_section'), onSurface.withValues(alpha: 0.6)),
-                          Card(
+                          (context) => _settingsSectionTitle(LanguageService.tr('interactive_tours_section'), onSurface.withValues(alpha: 0.6)),
+                          (context) => Card(
                             color: cardBg,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             child: ListTile(
@@ -1259,10 +1282,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 20),
+                          (context) => const SizedBox(height: 20),
 
-                          _settingsSectionTitle(LanguageService.tr('notifications_reminders_section'), onSurface.withValues(alpha: 0.6)),
-                          Card(
+                          (context) => _settingsSectionTitle(LanguageService.tr('notifications_reminders_section'), onSurface.withValues(alpha: 0.6)),
+                          (context) => Card(
                             color: cardBg,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             child: StatefulBuilder(
@@ -1302,10 +1325,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 20),
+                          (context) => const SizedBox(height: 20),
 
-                          _settingsSectionTitle('Cloud & Local Vault', onSurface.withValues(alpha: 0.6)),
-                          Card(
+                          (context) => _settingsSectionTitle('Cloud & Local Vault', onSurface.withValues(alpha: 0.6)),
+                          (context) => Card(
                             color: cardBg,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             child: Column(
@@ -1377,10 +1400,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 28),
+                          (context) => const SizedBox(height: 28),
 
                           // Logout Button
-                          ElevatedButton.icon(
+                          (context) => ElevatedButton.icon(
                             icon: const Icon(Icons.logout, color: Colors.white),
                             label: Text(LanguageService.tr('logout'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                             style: ElevatedButton.styleFrom(
@@ -1394,10 +1417,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             },
                           ),
 
-                          const SizedBox(height: 24),
+                          (context) => const SizedBox(height: 24),
 
                           // App Version & Security Architecture Footer
-                          Center(
+                          (context) => Center(
                             child: Column(
                               children: [
                                 Text(
@@ -1420,10 +1443,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ],
                             ),
                           ),
-                        ],
+],
 
-                        const SizedBox(height: 16),
-                      ],
+                        (context) => const SizedBox(height: 16),
+],
                     ),
                   );
                 },
@@ -1705,7 +1728,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           body: ValueListenableBuilder<List<Transaction>>(
             valueListenable: AppState.transactionsNotifier,
             builder: (context, transactions, _) {
-              return _buildSpendingBehaviorSummary(transactions, primaryColor);
+              return ValueListenableBuilder<String>(
+                valueListenable: AppState.currencyNotifier,
+                builder: (context, currency, _) => _buildSpendingBehaviorSummary(transactions, primaryColor),
+              );
             },
           ),
         );
@@ -1716,36 +1742,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildSpendingBehaviorSummary(List<Transaction> transactions, Color primaryColor) {
     final currency = AppState.currencyNotifier.value;
 
-    double totalIncome = 0;
-    double totalExpense = 0;
-    double largestExpense = 0;
-    String largestExpenseTitle = 'None';
-    final Map<String, double> categoryTotals = {};
-
-    // Essential categories (Needs) vs Discretionary (Wants)
-    const essentialCategories = {'Housing & Rent', 'Food & Dining', 'Utilities', 'Healthcare', 'Transportation', 'Education'};
-    double essentialSpending = 0;
-    double discretionarySpending = 0;
-
-    for (var t in transactions) {
-      if (t.isIncome) {
-        totalIncome += t.amount;
-      } else {
-        totalExpense += t.amount;
-        categoryTotals[t.category] = (categoryTotals[t.category] ?? 0) + t.amount;
-
-        if (t.amount > largestExpense) {
-          largestExpense = t.amount;
-          largestExpenseTitle = '${t.title} (${t.category})';
-        }
-
-        if (essentialCategories.contains(t.category)) {
-          essentialSpending += t.amount;
-        } else {
-          discretionarySpending += t.amount;
-        }
-      }
-    }
+    final summary = _spendingCache.get(transactions);
+    final totalIncome = summary.income;
+    final totalExpense = summary.expense;
+    final largestExpense = summary.largestExpense;
+    final largestExpenseTitle = summary.largestExpenseTitle;
+    final essentialSpending = summary.essential;
+    final discretionarySpending = summary.discretionary;
 
     final double netSavings = totalIncome - totalExpense;
     final double savingsRate = totalIncome > 0 ? ((netSavings / totalIncome) * 100).clamp(-100.0, 100.0) : 0.0;
@@ -1778,16 +1781,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       personaColor = const Color(0xFFEF4444);
     }
 
-    // Top Categories sorted
-    final sortedCategories = categoryTotals.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final topCategories = sortedCategories.take(4).toList();
+    final topCategories = summary.topCategories;
 
-    return ListView(
+    return LazySectionList(key: const PageStorageKey('profile_scroll'),
       padding: const EdgeInsets.all(20),
-      children: [
+      sections: [
         // User Identity Card with Custom Photo & Bio
-        Center(
+        (context) => Center(
           child: Column(
             children: [
               GestureDetector(
@@ -1925,9 +1925,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 6),
                 FutureBuilder<String?>(
-                  future: AppState.currentUser != null
-                      ? AppDatabase.instance.getUserEmail(AppState.currentUser!)
-                      : Future.value(null),
+                  key: ValueKey(('recovery-email', AppState.currentUser, AppState.sessionGeneration)),
+                  future: _recoveryEmail(),
                   builder: (context, snapshot) {
                     final email = snapshot.data;
                     return InkWell(
@@ -1974,10 +1973,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
 
-        const SizedBox(height: 20),
+        (context) => const SizedBox(height: 20),
 
         // Dedicated Tally Pro & VIP Membership Banner
-        ValueListenableBuilder<bool>(
+        (context) => ValueListenableBuilder<bool>(
           valueListenable: MonetizationService.isProUnlockedNotifier,
           builder: (context, isPro, _) {
             return ValueListenableBuilder<bool>(
@@ -2076,10 +2075,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           },
         ),
 
-        const SizedBox(height: 18),
+        (context) => const SizedBox(height: 18),
 
         // Persona Classification Card
-        Container(
+        (context) => Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
@@ -2118,13 +2117,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
 
-        const SizedBox(height: 24),
+        (context) => const SizedBox(height: 24),
 
         // Financial Vital Signs Grid
-        Text(LanguageService.tr('executive_financial_vitals'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), letterSpacing: 1)),
-        const SizedBox(height: 12),
+        (context) => Text(LanguageService.tr('executive_financial_vitals'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), letterSpacing: 1)),
+        (context) => const SizedBox(height: 12),
 
-        GridView.count(
+        (context) => GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -2163,14 +2162,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
 
-        const SizedBox(height: 24),
+        (context) => const SizedBox(height: 24),
 
         // Top Spending Drivers Leaderboard
-        Text(LanguageService.tr('top_spending_drivers'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), letterSpacing: 1)),
-        const SizedBox(height: 12),
+        (context) => Text(LanguageService.tr('top_spending_drivers'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), letterSpacing: 1)),
+        (context) => const SizedBox(height: 12),
 
         if (topCategories.isEmpty)
-          Container(
+          (context) => Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
@@ -2180,7 +2179,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Text(LanguageService.tr('no_expense_recorded'), style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13)),
           )
         else
-          Container(
+          (context) => Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
@@ -2226,11 +2225,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
 
-        const SizedBox(height: 20),
+        (context) => const SizedBox(height: 20),
 
         // Largest Single Expense Callout
         if (largestExpense > 0) ...[
-          Container(
+          (context) => Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,
@@ -2255,11 +2254,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          (context) => const SizedBox(height: 24),
         ],
 
         // Quick Settings Button
-        OutlinedButton.icon(
+        (context) => OutlinedButton.icon(
           icon: Icon(Icons.tune, color: Theme.of(context).colorScheme.onSurface),
           label: Text(LanguageService.tr('open_settings'), style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
           style: OutlinedButton.styleFrom(
@@ -2270,7 +2269,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onPressed: _showSettingsPopup,
         ),
 
-        const SizedBox(height: 30),
+        (context) => const SizedBox(height: 30),
       ],
     );
   }

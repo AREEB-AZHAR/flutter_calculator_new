@@ -59,6 +59,9 @@ void main() {
       expect(find.byType(GoalsScreen), findsOneWidget);
       // DashboardScreen remains in IndexedStack tree (offstage), preserved in memory
       expect(find.byType(DashboardScreen, skipOffstage: false), findsOneWidget);
+      final hiddenDashboard = tester.element(find.byType(DashboardScreen, skipOffstage: false));
+      expect(TickerMode.valuesOf(hiddenDashboard).enabled, false);
+      expect(TickerMode.valuesOf(tester.element(find.byType(GoalsScreen))).enabled, true);
     });
   });
 

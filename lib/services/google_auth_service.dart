@@ -8,6 +8,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../firebase_options.dart';
 import 'state.dart';
+import 'firebase_security_bootstrap.dart';
 import 'database/app_database.dart';
 
 class GoogleUserData {
@@ -80,7 +81,7 @@ class GoogleAuthService {
 
     if (DefaultFirebaseOptions.isConfigured && Firebase.apps.isEmpty) {
       try {
-        await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+        await FirebaseSecurityBootstrap.initialize();
       } catch (e) {
         debugPrint('Firebase initializeApp notice: $e');
       }

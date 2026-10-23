@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/monetization_service.dart';
 import '../services/in_app_purchase_service.dart';
+import '../services/purchase_backend.dart';
 import '../services/language_service.dart';
 import '../services/geo_location_service.dart';
 import '../services/state.dart';
@@ -83,6 +84,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
     // Check if Google Play Store is available directly
     final isStoreAvailable = _iapService.isStoreAvailableNotifier.value;
     final product = _iapService.productsNotifier.value[productId];
+
+    if (!PurchaseSecurityPolicy.allowDevelopmentUnlocks && (!isStoreAvailable || product == null)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Google Play is unavailable. No purchase has been started.')));
+      return;
+    }
 
     if (isStoreAvailable && product != null) {
       // Direct official Google Play Billing sheet
@@ -169,7 +175,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isStoreAvailable ? LanguageService.tr('google_play_billing') : 'Google Play Tester Sandbox',
+                            isStoreAvailable ? LanguageService.tr('google_play_billing') : (PurchaseSecurityPolicy.allowDevelopmentUnlocks ? 'Google Play Tester Sandbox' : 'Google Play unavailable'),
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                           Text(
@@ -221,7 +227,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     children: [
                       Icon(isStoreAvailable ? Icons.payment : Icons.science_outlined, size: 16, color: isStoreAvailable ? Colors.blueAccent : Colors.orangeAccent),
                       const SizedBox(width: 6),
-                      Text(isStoreAvailable ? 'Google Official In-App Billing' : 'Tester Sandbox Checkout', style: const TextStyle(fontWeight: FontWeight.w500)),
+                      Text(isStoreAvailable ? 'Google Play Billing' : (PurchaseSecurityPolicy.allowDevelopmentUnlocks ? 'Tester Sandbox Checkout' : 'Store unavailable'), style: const TextStyle(fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ],
@@ -238,7 +244,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     children: [
                       Icon(Icons.lock, size: 14, color: isStoreAvailable ? Colors.green : Colors.orangeAccent),
                       const SizedBox(width: 4),
-                      Text(isStoreAvailable ? 'Google Play 256-bit TLS' : 'Local Sandbox Verification', style: TextStyle(color: isStoreAvailable ? Colors.green : Colors.orangeAccent, fontSize: 12)),
+                      Text(isStoreAvailable ? 'Server verification required' : (PurchaseSecurityPolicy.allowDevelopmentUnlocks ? 'Development simulation only' : 'No purchase is available'), style: TextStyle(color: isStoreAvailable ? Colors.green : Colors.orangeAccent, fontSize: 12)),
                     ],
                   ),
                 ],
@@ -261,7 +267,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       Icon(isStoreAvailable ? Icons.fingerprint : Icons.check_circle_outline, size: 22, color: Colors.white),
                       const SizedBox(width: 10),
                       Text(
-                        isStoreAvailable ? LanguageService.tr('authenticate_pay_google') : 'Authorize Sandbox Test Purchase',
+                        isStoreAvailable ? LanguageService.tr('authenticate_pay_google') : (PurchaseSecurityPolicy.allowDevelopmentUnlocks ? 'Authorize Sandbox Test Purchase' : 'Google Play unavailable'),
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                     ],
@@ -272,14 +278,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TextButton.icon(
+                  if (PurchaseSecurityPolicy.allowDevelopmentUnlocks) TextButton.icon(
                     onPressed: () {
                       Navigator.pop(ctx, false);
                       MonetizationService.showPromoCodeDialog(context);
                     },
                     icon: const Icon(Icons.confirmation_number_outlined, size: 15, color: Colors.amber),
                     label: const Text(
-                      'Redeem Promo (PROVIP)',
+                      'Development promo',
                       style: TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -300,7 +306,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
     if (confirmed == true && mounted) {
       setState(() => _isProcessingLocal = true);
-      final success = await _iapService.buyProduct(productId, allowSandboxSimulation: true);
+      final success = await _iapService.buyProduct(productId);
       if (!mounted) return;
       setState(() => _isProcessingLocal = false);
 
@@ -312,6 +318,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
             backgroundColor: Colors.orangeAccent,
           ),
         );
+        return;
+      }
+
+      if (isStoreAvailable) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Purchase started. Access unlocks after server verification.')));
         return;
       }
 
@@ -329,7 +340,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
               const SizedBox(width: 10),
               Text(
-                isCoffee ? 'Thank You for Your Gift!' : 'Payment Successful',
+                'Development simulation complete',
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ],
@@ -405,7 +416,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         label: Text(LanguageService.tr('restore')),
                         style: TextButton.styleFrom(foregroundColor: onSurface.withValues(alpha: 0.8)),
                       ),
-                      TextButton.icon(
+                      if (PurchaseSecurityPolicy.allowDevelopmentUnlocks) TextButton.icon(
                         onPressed: () => MonetizationService.showPromoCodeDialog(context),
                         icon: const Icon(Icons.vpn_key_rounded, size: 16),
                         label: Text(LanguageService.tr('promo_code')),
@@ -530,7 +541,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Text(
-                                          'Store Offline / Test Device: Sandbox checkout and test promo code (PROVIP) are active.',
+                                          PurchaseSecurityPolicy.allowDevelopmentUnlocks ? 'Development build: local purchase simulation is available.' : 'Google Play is unavailable. Connect to the store and restore purchases to retry.',
                                           style: TextStyle(fontSize: 12, color: isDark ? Colors.amber.shade200 : Colors.amber.shade900),
                                         ),
                                       ),
@@ -755,8 +766,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
                             const SizedBox(height: 20),
 
-                            // 5. Test Mode & Reset Button
-                            Center(
+                            // Development controls are absent from release UI.
+                            if (PurchaseSecurityPolicy.allowDevelopmentUnlocks) Center(
                               child: OutlinedButton.icon(
                                 onPressed: () async {
                                   await MonetizationService.resetPurchases();

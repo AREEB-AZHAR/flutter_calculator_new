@@ -4,6 +4,7 @@ import '../models/transaction.dart';
 import '../services/state.dart';
 import '../services/language_service.dart';
 import 'custom_painters.dart';
+import '../services/chart_summary.dart';
 
 class InteractiveChartCard extends StatefulWidget {
   final List<Transaction> transactions;
@@ -21,7 +22,10 @@ class InteractiveChartCard extends StatefulWidget {
   State<InteractiveChartCard> createState() => _InteractiveChartCardState();
 }
 
-class _InteractiveChartCardState extends State<InteractiveChartCard> {
+class _InteractiveChartCardState extends State<InteractiveChartCard> with AutomaticKeepAliveClientMixin {
+  final _summaryCache = ChartSummaryCache();
+  @override
+  bool get wantKeepAlive => true;
   late int _year;
   late int _month;
   String _scope = 'month'; // 'month' or 'year'
@@ -73,6 +77,7 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
     final primaryColor = theme.colorScheme.primary;
@@ -82,31 +87,14 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> {
     final positiveColor = isLight ? const Color(0xFF059669) : const Color(0xFF10B981);
     final negativeColor = isLight ? const Color(0xFFDC2626) : const Color(0xFFF87171);
 
-    // Filter transactions matching accountFilter and period
-    final relevantTxs = widget.transactions.where((t) {
-      final matchesAcc = widget.accountFilter == null || t.account == widget.accountFilter;
-      if (!matchesAcc) return false;
-      if (_scope == 'year') {
-        return t.date.year == _year;
-      } else {
-        return t.date.year == _year && t.date.month == _month;
-      }
-    }).toList();
-
-    double income = 0;
-    double expense = 0;
-    final Map<String, double> spendCategories = {};
-    final Map<String, double> incomeCategories = {};
-
-    for (var t in relevantTxs) {
-      if (t.isIncome) {
-        income += t.amount;
-        incomeCategories[t.category] = (incomeCategories[t.category] ?? 0) + t.amount;
-      } else {
-        expense += t.amount;
-        spendCategories[t.category] = (spendCategories[t.category] ?? 0) + t.amount;
-      }
-    }
+    final summary = _summaryCache.get(widget.transactions,
+      year: _year, month: _scope == 'year' ? null : _month,
+      account: widget.accountFilter);
+    final relevantTxs = summary.transactions;
+    final income = summary.income;
+    final expense = summary.expense;
+    final spendCategories = summary.spendCategories;
+    final incomeCategories = summary.incomeCategories;
 
     final net = income - expense;
 

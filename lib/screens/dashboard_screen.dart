@@ -1,7 +1,9 @@
+import '../widgets/lazy_section_list.dart';
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../models/savings_goal.dart';
 import '../services/state.dart';
+import '../services/ledger_view_cache.dart';
 import '../utils/constants.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/transaction_dialog.dart';
@@ -30,6 +32,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
   late AnimationController _animController;
+  final _balanceCache = LiquidBalanceCache();
   
   @override
   void initState() {
@@ -422,12 +425,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           return ValueListenableBuilder<List<Transaction>>(
             valueListenable: AppState.transactionsNotifier,
             builder: (context, transactions, child) {
-          // Exclude 'Savings Goal' deposits from liquid balance – they are vault transfers
-          final totalBalance = transactions.fold(0.0, (sum, item) {
-            if (item.category == 'Savings Goal' && !item.isIncome) return sum;
-            return item.isIncome ? sum + item.amount : sum - item.amount;
-          });
-          
+          final totalBalance = _balanceCache.get(transactions);
+
           return Stack(
             children: [
               Positioned(
@@ -472,13 +471,11 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               ),
               
               SafeArea(
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                    const SizedBox(height: 10),
-                    SlideTransition(
+                child: LazySectionList(
+                  key: const PageStorageKey('dashboard_scroll'),
+                  sections: [
+                    (context) => const SizedBox(height: 10),
+                    (context) => SlideTransition(
                       position: Tween<Offset>(begin: const Offset(0, -0.1), end: Offset.zero)
                           .animate(CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic)),
                       child: Padding(
@@ -689,8 +686,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                     ),
                     ),
                     
-                    const SizedBox(height: 20),
-                    RepaintBoundary(
+                    (context) => const SizedBox(height: 20),
+                    (context) => RepaintBoundary(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Column(
@@ -758,8 +755,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    Padding(
+                    (context) => const SizedBox(height: 20),
+                    (context) => Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: RepaintBoundary(
                         child: InteractiveChartCard(
@@ -769,8 +766,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       ),
                     ),
 
-                    const SizedBox(height: 16),
-                    const RepaintBoundary(
+                    (context) => const SizedBox(height: 16),
+                    (context) => const RepaintBoundary(
                       child: AdBannerWidget(
                         margin: EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
                         sponsorCategory: 'YieldMax High-Yield Savings (5.2% APY)',
@@ -778,8 +775,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       ),
                     ),
 
-                    const SizedBox(height: 16),
-                    Padding(
+                    (context) => const SizedBox(height: 16),
+                    (context) => Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -810,8 +807,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       ),
                     ),
                     
-                    const SizedBox(height: 10),
-                    transactions.isEmpty 
+                    (context) => const SizedBox(height: 10),
+                    (context) => transactions.isEmpty
                       ? Padding(
                           padding: const EdgeInsets.symmetric(vertical: 20),
                           child: Center(child: Text(LanguageService.tr('no_transactions_yet'), style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)))),
@@ -831,10 +828,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                             }).toList(),
                           ),
                         ),
-                    const SizedBox(height: 20),
+                    (context) => const SizedBox(height: 20),
                   ],
                 ),
-              ),
             ),
             ],
           );
