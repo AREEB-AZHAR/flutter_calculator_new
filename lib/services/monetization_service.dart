@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'ad_service.dart';
 import 'geo_location_service.dart';
 import '../screens/premium_screen.dart';
+import '../widgets/form_dialog.dart';
 
 class MonetizationService {
   // Temporary debug-only testing exception. Remove by setting false;
@@ -1043,7 +1044,7 @@ class MonetizationService {
     final textCtrl = TextEditingController();
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => FormDialog(
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(

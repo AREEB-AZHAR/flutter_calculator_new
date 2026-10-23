@@ -7,6 +7,7 @@ import '../widgets/sync_conflict_dialog.dart';
 import '../services/language_service.dart';
 import '../services/ad_service.dart';
 import '../widgets/offline_banner.dart';
+import '../widgets/keyboard_stable_page.dart';
 import 'dashboard_screen.dart';
 import 'insights_screen.dart';
 import 'goals_screen.dart';
@@ -118,7 +119,8 @@ class _MainNavScreenState extends State<MainNavScreen> {
     // Ensure current screen is initialized and cached
     _buildScreen(currentIndex);
 
-    return Scaffold(
+    // Dialog editors use the root Navigator and retain the real keyboard insets.
+    return KeyboardStablePage(child: Scaffold(
       body: SafeArea(
         top: true,
         bottom: false,
@@ -175,6 +177,6 @@ class _MainNavScreenState extends State<MainNavScreen> {
           );
         },
       ),
-    );
+    ));
   }
 }
