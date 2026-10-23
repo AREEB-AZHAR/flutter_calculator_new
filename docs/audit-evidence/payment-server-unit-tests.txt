@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: subscription state SUBSCRIPTION_STATE_ACTIVE is evaluated with store expiry
+ok 1 - subscription state SUBSCRIPTION_STATE_ACTIVE is evaluated with store expiry
+  ---
+  duration_ms: 13.3517
+  type: 'test'
+  ...
+# Subtest: subscription state SUBSCRIPTION_STATE_IN_GRACE_PERIOD is evaluated with store expiry
+ok 2 - subscription state SUBSCRIPTION_STATE_IN_GRACE_PERIOD is evaluated with store expiry
+  ---
+  duration_ms: 0.2327
+  type: 'test'
+  ...
+# Subtest: subscription state SUBSCRIPTION_STATE_CANCELED is evaluated with store expiry
+ok 3 - subscription state SUBSCRIPTION_STATE_CANCELED is evaluated with store expiry
+  ---
+  duration_ms: 0.1859
+  type: 'test'
+  ...
+# Subtest: subscription state SUBSCRIPTION_STATE_ON_HOLD is evaluated with store expiry
+ok 4 - subscription state SUBSCRIPTION_STATE_ON_HOLD is evaluated with store expiry
+  ---
+  duration_ms: 0.0998
+  type: 'test'
+  ...
+# Subtest: subscription state SUBSCRIPTION_STATE_PAUSED is evaluated with store expiry
+ok 5 - subscription state SUBSCRIPTION_STATE_PAUSED is evaluated with store expiry
+  ---
+  duration_ms: 0.1978
+  type: 'test'
+  ...
+# Subtest: subscription state SUBSCRIPTION_STATE_EXPIRED is evaluated with store expiry
+ok 6 - subscription state SUBSCRIPTION_STATE_EXPIRED is evaluated with store expiry
+  ---
+  duration_ms: 0.1045
+  type: 'test'
+  ...
+# Subtest: subscription state SUBSCRIPTION_STATE_PENDING is evaluated with store expiry
+ok 7 - subscription state SUBSCRIPTION_STATE_PENDING is evaluated with store expiry
+  ---
+  duration_ms: 0.1744
+  type: 'test'
+  ...
+# Subtest: product mismatch, pending and refunded products cannot grant access
+ok 8 - product mismatch, pending and refunded products cannot grant access
+  ---
+  duration_ms: 1.0223
+  type: 'test'
+  ...
+# Subtest: leases never outlive subscription/trial expiry or refresh stale receipts
+ok 9 - leases never outlive subscription/trial expiry or refresh stale receipts
+  ---
+  duration_ms: 0.7891
+  type: 'test'
+  ...
+# Subtest: Publisher adapter fixes the package, uses V2 reads and encodes tokens
+ok 10 - Publisher adapter fixes the package, uses V2 reads and encodes tokens
+  ---
+  duration_ms: 1.4068
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 894.628

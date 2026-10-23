@@ -9,8 +9,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 class AppVersion {
   AppVersion._();
 
-  static const String fallbackVersion = '1.8.17';
-  static const String fallbackBuildNumber = '27';
+  static const String fallbackVersion = '1.8.18';
+  static const String fallbackBuildNumber = '28';
   static const String fallbackAppName = 'Tally';
 
   static String _version = fallbackVersion;
