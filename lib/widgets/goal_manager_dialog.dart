@@ -107,11 +107,7 @@ class _GoalManagerDialogState extends State<GoalManagerDialog> {
       if (!_sameSession || !mounted) return;
       await _load();
       // Durable outbox protects the removal even if offline or the process exits.
-      unawaited(
-        CloudSyncService.sync(
-          _username,
-        ).then<void>((_) {}).catchError((Object _) {}),
-      );
+      CloudSyncService.requestBackgroundSync(_username);
     } catch (_) {
       if (mounted) {
         setState(() {

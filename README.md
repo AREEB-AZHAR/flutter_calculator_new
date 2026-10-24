@@ -1585,3 +1585,13 @@ A separate **42-capture** renderer matrix used the same selected profile APK for
 ### Final all-user renderer decision — 24 October 2026
 
 The owner requested the best policy for **all user builds**. Keep Flutter's supported default; the proposed global Skia opt-out is **not applied**. Skia's measured and subjective gains on one Redmi remain useful evidence, but mixed Dashboard/Accounts results and the SDK's deprecation warning do not justify a universal override. [Final decision](docs/audit-evidence/phase1-renderer-final-decision.json). All row experiments are reverted. **251 tests pass; analysis is clean.** The original profile build, default renderer and phone's Maximum 120 Hz preference are restored; all benchmark numbers above remain **60 Hz profile** measurements. No push, native policy change, version bump or release build was performed.
+
+## 25 October 2026 — Quiet background sync and genuine conflict review
+
+Login no longer prompts just because both vaults contain data. Transactions and goals now use owner-approved, local SQLite fingerprints of their last synced versions: ordinary queued edits and independent additions merge quietly; unresolved same-record versions pause automatic sync for review. Settings keeps its manual sync choices. Unknown legacy same-ID differences still need a deliberate first resolution.
+
+Local changes coalesce into **two-second background batches**, with durable queued metadata, serialized uploads, retries, reconnect/resume wakeups and a **15-minute foreground cloud refresh**. New edits made during an upload stay queued. Sync runs quietly while the app is foregrounded; it does not claim Android killed-app execution. Ledger chunks retain the existing **400-document / 4 MiB limits** and check cloud versions transactionally before writing.
+
+[Background-sync architecture, conflict policy, test commands and limitations](docs/BACKGROUND_SYNC.md). No new dependencies, cloud-format/rules changes, version bump, APK build or deployment. Live device/cloud flows remain unverified; local SQLite, fake-remote and widget tests are recorded separately from production behavior. Commit stays on `main` without a push.
+
+Validation: **282 Flutter tests passed**, including the existing 100,000-record ledger and atomic recurring tests; **`flutter analyze --no-pub` is clean**. [Full test output](docs/audit-evidence/background-sync-full-tests.txt) · [Analysis output](docs/audit-evidence/background-sync-analysis.txt).

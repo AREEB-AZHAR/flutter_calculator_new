@@ -4,6 +4,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../models/savings_goal.dart';
 import '../models/goal_entry.dart';
 import '../models/transaction.dart' as model;
+import 'sync_fingerprint.dart';
 
 typedef LedgerRecords = Map<String, Map<String, Map<String, dynamic>>>;
 
@@ -23,7 +24,19 @@ abstract interface class LedgerRemote {
 class LedgerSnapshot {
   final LedgerRecords records;
   final List<LedgerWrite> pending;
-  const LedgerSnapshot(this.records, this.pending);
+  final Map<String, Map<String, String>> baselines;
+  const LedgerSnapshot(this.records, this.pending, {this.baselines = const {}});
+}
+
+class LedgerConflictException implements Exception {
+  final List<LedgerConflict> conflicts;
+  final LedgerSnapshot local;
+  final LedgerRecords cloud;
+  const LedgerConflictException(this.conflicts, this.local, this.cloud);
+}
+
+class RemoteLedgerChanged implements Exception {
+  const RemoteLedgerChanged();
 }
 
 /// A durable, coalescing outbox. Triggers enlist mutations in the SAME SQLite
@@ -42,6 +55,10 @@ class SqliteLedgerStore {
     await db.execute(
       'CREATE TABLE IF NOT EXISTS ledger_import_guard (id INTEGER PRIMARY KEY)',
     );
+    await db.execute('''CREATE TABLE IF NOT EXISTS ledger_sync_baselines (
+      username TEXT NOT NULL, collection TEXT NOT NULL, entity_id TEXT NOT NULL,
+      fingerprint TEXT NOT NULL,
+      PRIMARY KEY (username, collection, entity_id))''');
     for (final table in collections) {
       for (final event in ['INSERT', 'UPDATE', 'DELETE']) {
         final ref = event == 'DELETE' ? 'OLD' : 'NEW';
@@ -100,24 +117,39 @@ class SqliteLedgerStore {
     };
     final changes = await txn.query(
       'ledger_outbox',
-      where: 'username = ?',
+      where: "username = ? AND collection IN ('transactions', 'goals')",
       whereArgs: [username],
       orderBy: 'revision',
     );
-    return LedgerSnapshot(records, [
-      for (final r in changes)
-        LedgerWrite(
-          r['collection'] as String,
-          r['entity_id'] as String,
-          r['deleted'] == 1
-              ? {'id': r['entity_id'], '_deleted': true}
-              : {
-                  ...records[r['collection']]![r['entity_id']]!,
-                  '_deleted': false,
-                },
-          revision: r['revision'] as int,
-        ),
-    ]);
+    final bases = await txn.query(
+      'ledger_sync_baselines',
+      where: 'username = ?',
+      whereArgs: [username],
+    );
+    return LedgerSnapshot(
+      records,
+      [
+        for (final r in changes)
+          LedgerWrite(
+            r['collection'] as String,
+            r['entity_id'] as String,
+            r['deleted'] == 1
+                ? {'id': r['entity_id'], '_deleted': true}
+                : {
+                    ...records[r['collection']]![r['entity_id']]!,
+                    '_deleted': false,
+                  },
+            revision: r['revision'] as int,
+          ),
+      ],
+      baselines: {
+        for (final collection in collections)
+          collection: {
+            for (final row in bases.where((r) => r['collection'] == collection))
+              row['entity_id'] as String: row['fingerprint'] as String,
+          },
+      },
+    );
   });
 
   Future<void> acknowledge(
@@ -126,6 +158,12 @@ class SqliteLedgerStore {
   ) => db.transaction((txn) async {
     final batch = txn.batch();
     for (final write in writes) {
+      batch.insert('ledger_sync_baselines', {
+        'username': username,
+        'collection': write.collection,
+        'entity_id': write.id,
+        'fingerprint': syncFingerprint(write.collection, write.id, write.data),
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
       if (write.revision == null) continue;
       // A concurrent edit replaces the revision. Never acknowledge that newer edit.
       batch.delete(
@@ -150,13 +188,14 @@ class SqliteLedgerStore {
     if (discardPendingThrough != null) {
       await txn.delete(
         'ledger_outbox',
-        where: 'username = ? AND revision <= ?',
+        where:
+            "username = ? AND revision <= ? AND collection IN ('transactions', 'goals')",
         whereArgs: [username, discardPendingThrough],
       );
     }
     final pending = await txn.query(
       'ledger_outbox',
-      where: 'username = ?',
+      where: "username = ? AND collection IN ('transactions', 'goals')",
       whereArgs: [username],
     );
     final dirty = {
@@ -181,6 +220,12 @@ class SqliteLedgerStore {
         if (old != null && old['username'] != username) {
           throw StateError('Ledger ID belongs to another local account');
         }
+        batch.insert('ledger_sync_baselines', {
+          'username': username,
+          'collection': collection,
+          'entity_id': entry.key,
+          'fingerprint': syncFingerprint(collection, entry.key, entry.value),
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
         if (entry.value['_deleted'] == true) {
           batch.delete(
             collection,
@@ -326,13 +371,26 @@ class LedgerSyncEngine {
     this.onProgress,
   });
 
-  Future<bool> sync(String username) async {
+  Future<bool> sync(String username, {bool detectConflicts = false}) async {
     checkSession();
     final snapshot = await local.snapshot(username);
     checkSession();
     final cloud = await remote.read();
     checkSession();
+    if (detectConflicts) _checkConflicts(snapshot, cloud);
     final writes = [...snapshot.pending];
+    if (detectConflicts) {
+      // A no-op local save must not overwrite a newer cloud version.
+      final unchanged = writes
+          .where(
+            (w) =>
+                snapshot.baselines[w.collection]?[w.id] ==
+                syncFingerprint(w.collection, w.id, w.data),
+          )
+          .toList();
+      await local.acknowledge(username, unchanged);
+      writes.removeWhere(unchanged.contains);
+    }
     final dirty = {for (final w in writes) '${w.collection}/${w.id}'};
     // Migration/bootstrap only: import legacy local records missing remotely.
     // Remote copies (including tombstones) win over unedited stale local copies.
@@ -363,9 +421,26 @@ class LedgerSyncEngine {
     checkSession();
     final latest = await remote.read();
     checkSession();
+    if (detectConflicts) {
+      _checkConflicts(await local.snapshot(username), latest);
+    }
     await local.applyRemote(username, latest, checkSession);
     checkSession();
     return (await local.snapshot(username)).pending.isEmpty;
+  }
+
+  void _checkConflicts(LedgerSnapshot snapshot, LedgerRecords cloud) {
+    final conflicts = findLedgerConflicts(
+      local: snapshot.records,
+      cloud: cloud,
+      pending: {
+        for (final w in snapshot.pending) '${w.collection}/${w.id}': w.data,
+      },
+      baselines: snapshot.baselines,
+    );
+    if (conflicts.isNotEmpty) {
+      throw LedgerConflictException(conflicts, snapshot, cloud);
+    }
   }
 
   Future<bool> restore(String username) async {

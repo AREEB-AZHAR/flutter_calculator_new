@@ -25,7 +25,10 @@ class AppState {
   static int get sessionGeneration => _sessionGeneration;
   static String? get currentUser => _currentUser;
   static set currentUser(String? value) {
-    if (_currentUser != value) _sessionGeneration++;
+    if (_currentUser != value) {
+      _sessionGeneration++;
+      CloudSyncService.stopBackgroundSync();
+    }
     _currentUser = value;
   }
 
@@ -36,25 +39,46 @@ class AppState {
   static const String _prefCurrencyKey = 'tally_currency_symbol';
 
   static final ValueNotifier<String> currencyNotifier = ValueNotifier('\$');
-  static final ValueNotifier<List<Transaction>> transactionsNotifier = ValueNotifier([]);
-  static final ValueNotifier<Map<String, double>> budgetsNotifier = ValueNotifier({
-    'Food & Dining': 500.0,
-    'Housing & Rent': 1500.0,
-    'Transportation': 300.0,
-    'Entertainment': 200.0,
-  });
-  static final ValueNotifier<List<String>> accountsNotifier = ValueNotifier(['Main', 'Cash', 'Credit Card', 'Digital Wallet']);
-  static final ValueNotifier<Color> avatarColorNotifier = ValueNotifier(const Color(0xFFE4572E));
-  static final ValueNotifier<String> themeNameNotifier = ValueNotifier('Ledger');
-  static final ValueNotifier<List<SavingsGoal>> goalsNotifier = ValueNotifier([]);
+  static final ValueNotifier<List<Transaction>> transactionsNotifier =
+      ValueNotifier([]);
+  static final ValueNotifier<Map<String, double>> budgetsNotifier =
+      ValueNotifier({
+        'Food & Dining': 500.0,
+        'Housing & Rent': 1500.0,
+        'Transportation': 300.0,
+        'Entertainment': 200.0,
+      });
+  static final ValueNotifier<List<String>> accountsNotifier = ValueNotifier([
+    'Main',
+    'Cash',
+    'Credit Card',
+    'Digital Wallet',
+  ]);
+  static final ValueNotifier<Color> avatarColorNotifier = ValueNotifier(
+    const Color(0xFFE4572E),
+  );
+  static final ValueNotifier<String> themeNameNotifier = ValueNotifier(
+    'Ledger',
+  );
+  static final ValueNotifier<List<SavingsGoal>> goalsNotifier = ValueNotifier(
+    [],
+  );
   static final ValueNotifier<List<Loan>> loansNotifier = ValueNotifier([]);
-  static final ValueNotifier<List<PlannedTransaction>> plannedTransactionsNotifier = ValueNotifier([]);
+  static final ValueNotifier<List<PlannedTransaction>>
+  plannedTransactionsNotifier = ValueNotifier([]);
 
   // Graphic Theme & Profile Customization Notifiers
-  static final ValueNotifier<Color> customPrimaryColorNotifier = ValueNotifier(const Color(0xFFE4572E));
-  static final ValueNotifier<Color> customSecondaryColorNotifier = ValueNotifier(const Color(0xFFF6F0E1));
-  static final ValueNotifier<Color?> customTextColorNotifier = ValueNotifier(null);
-  static final ValueNotifier<String?> profilePhotoNotifier = ValueNotifier(null);
+  static final ValueNotifier<Color> customPrimaryColorNotifier = ValueNotifier(
+    const Color(0xFFE4572E),
+  );
+  static final ValueNotifier<Color> customSecondaryColorNotifier =
+      ValueNotifier(const Color(0xFFF6F0E1));
+  static final ValueNotifier<Color?> customTextColorNotifier = ValueNotifier(
+    null,
+  );
+  static final ValueNotifier<String?> profilePhotoNotifier = ValueNotifier(
+    null,
+  );
   static final ValueNotifier<String> displayNameNotifier = ValueNotifier('');
   static final ValueNotifier<String> bioNotifier = ValueNotifier('');
   static final ValueNotifier<int> activeTabNotifier = ValueNotifier(0);
@@ -125,11 +149,16 @@ class AppState {
     // 1. Immediately transition to LoginScreen with a crisp, butter-smooth 200ms fade transition
     Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(
-          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-          child: child,
-        ),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const LoginScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+            FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              ),
+              child: child,
+            ),
         transitionDuration: const Duration(milliseconds: 200),
       ),
       (route) => false,
@@ -194,8 +223,14 @@ class AppState {
       final prefs = await SharedPreferences.getInstance();
       if (currentUser != null && currentUser!.isNotEmpty) {
         await prefs.setString('${_prefThemeKey}_$currentUser', preset.name);
-        await prefs.setInt('${_prefPrimaryColorKey}_$currentUser', preset.primary.toARGB32());
-        await prefs.setInt('${_prefSecondaryColorKey}_$currentUser', preset.secondary.toARGB32());
+        await prefs.setInt(
+          '${_prefPrimaryColorKey}_$currentUser',
+          preset.primary.toARGB32(),
+        );
+        await prefs.setInt(
+          '${_prefSecondaryColorKey}_$currentUser',
+          preset.secondary.toARGB32(),
+        );
         await prefs.remove('${_prefTextColorKey}_$currentUser');
       }
       await prefs.setString(_prefThemeKey, preset.name);
@@ -424,21 +459,45 @@ class AppState {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('${_prefThemeKey}_${profile.username}', themeNameNotifier.value);
-      await prefs.setInt('${_prefPrimaryColorKey}_${profile.username}', updatedProfile.primaryColor.toARGB32());
-      await prefs.setInt('${_prefSecondaryColorKey}_${profile.username}', updatedProfile.secondaryColor.toARGB32());
+      await prefs.setString(
+        '${_prefThemeKey}_${profile.username}',
+        themeNameNotifier.value,
+      );
+      await prefs.setInt(
+        '${_prefPrimaryColorKey}_${profile.username}',
+        updatedProfile.primaryColor.toARGB32(),
+      );
+      await prefs.setInt(
+        '${_prefSecondaryColorKey}_${profile.username}',
+        updatedProfile.secondaryColor.toARGB32(),
+      );
       if (updatedProfile.textColor != null) {
-        await prefs.setInt('${_prefTextColorKey}_${profile.username}', updatedProfile.textColor!.toARGB32());
+        await prefs.setInt(
+          '${_prefTextColorKey}_${profile.username}',
+          updatedProfile.textColor!.toARGB32(),
+        );
       } else {
         await prefs.remove('${_prefTextColorKey}_${profile.username}');
       }
-      await prefs.setString('${_prefCurrencyKey}_${profile.username}', updatedProfile.currency);
+      await prefs.setString(
+        '${_prefCurrencyKey}_${profile.username}',
+        updatedProfile.currency,
+      );
 
       await prefs.setString(_prefThemeKey, themeNameNotifier.value);
-      await prefs.setInt(_prefPrimaryColorKey, updatedProfile.primaryColor.toARGB32());
-      await prefs.setInt(_prefSecondaryColorKey, updatedProfile.secondaryColor.toARGB32());
+      await prefs.setInt(
+        _prefPrimaryColorKey,
+        updatedProfile.primaryColor.toARGB32(),
+      );
+      await prefs.setInt(
+        _prefSecondaryColorKey,
+        updatedProfile.secondaryColor.toARGB32(),
+      );
       if (updatedProfile.textColor != null) {
-        await prefs.setInt(_prefTextColorKey, updatedProfile.textColor!.toARGB32());
+        await prefs.setInt(
+          _prefTextColorKey,
+          updatedProfile.textColor!.toARGB32(),
+        );
       } else {
         await prefs.remove(_prefTextColorKey);
       }
@@ -451,12 +510,17 @@ class AppState {
     CloudSyncService.syncProfileToCloud(updatedProfile);
   }
 
-  static Future<void> saveGoals(String username, List<SavingsGoal> goals) async {
+  static Future<void> saveGoals(
+    String username,
+    List<SavingsGoal> goals,
+  ) async {
     await AppDatabase.instance.saveGoals(username, goals);
     goalsNotifier.value = List.from(goals);
     CloudSyncService.syncGoalsToCloud(goals);
     await checkGoalExpirations(username);
-    final remindersOn = await NotificationService.instance.areRemindersEnabled(username);
+    final remindersOn = await NotificationService.instance.areRemindersEnabled(
+      username,
+    );
     if (remindersOn) {
       NotificationService.instance.scheduleGoalReminders(
         goalsNotifier.value,
@@ -469,9 +533,13 @@ class AppState {
     return await AppDatabase.instance.loadGoals(username);
   }
 
-  static Future<void> saveTransactions(String username, List<Transaction> txs) async {
+  static Future<void> saveTransactions(
+    String username,
+    List<Transaction> txs,
+  ) async {
     await AppDatabase.instance.saveTransactions(username, txs);
     transactionsNotifier.value = List.from(txs);
+    CloudSyncService.requestBackgroundSync(username);
   }
 
   static Future<List<Transaction>> loadTransactions(String username) async {
@@ -493,18 +561,24 @@ class AppState {
           .deleteSingleTransaction(tx.id, username: username)
           .then((_) {
             if (currentUser == username && sessionGeneration == generation) {
-              unawaited(CloudSyncService.sync(username!));
+              CloudSyncService.requestBackgroundSync(username!);
             }
           });
       if (tx.category == 'Savings Goal') {
         AppDatabase.instance
             .deleteGoalEntryByTransactionId(username!, tx.id)
             .then((_) async {
-              final refreshedGoals = await AppDatabase.instance.loadGoals(username);
-              if (currentUser != username || sessionGeneration != generation) return;
+              final refreshedGoals = await AppDatabase.instance.loadGoals(
+                username,
+              );
+              if (currentUser != username || sessionGeneration != generation) {
+                return;
+              }
               goalsNotifier.value = refreshedGoals;
               await checkGoalExpirations(username);
-              if (currentUser != username || sessionGeneration != generation) return;
+              if (currentUser != username || sessionGeneration != generation) {
+                return;
+              }
               NotificationService.instance.scheduleGoalReminders(
                 goalsNotifier.value,
                 currencyNotifier.value,
@@ -548,12 +622,17 @@ class AppState {
                   ) {
                     if (currentUser == username &&
                         sessionGeneration == generation) {
-                      unawaited(CloudSyncService.sync(username));
+                      CloudSyncService.requestBackgroundSync(username);
                     }
                   });
                   if (tx.category == 'Savings Goal') {
-                    AppDatabase.instance.loadGoals(username).then((refreshedGoals) {
-                      if (currentUser != username || sessionGeneration != generation) return;
+                    AppDatabase.instance.loadGoals(username).then((
+                      refreshedGoals,
+                    ) {
+                      if (currentUser != username ||
+                          sessionGeneration != generation) {
+                        return;
+                      }
                       goalsNotifier.value = refreshedGoals;
                       NotificationService.instance.scheduleGoalReminders(
                         refreshedGoals,
@@ -591,7 +670,7 @@ class AppState {
     if (currentUser != null) {
       AppDatabase.instance.softDeleteGoal(username!, goal.id).then((_) {
         if (currentUser == username && sessionGeneration == generation) {
-          unawaited(CloudSyncService.sync(username));
+          CloudSyncService.requestBackgroundSync(username);
         }
       });
     }
@@ -637,7 +716,7 @@ class AppState {
                       .then((_) {
                         if (currentUser == username &&
                             sessionGeneration == generation) {
-                          unawaited(CloudSyncService.sync(username));
+                          CloudSyncService.requestBackgroundSync(username);
                         }
                       });
                 }
@@ -672,7 +751,9 @@ class AppState {
     // Reload goals to get updated saved amounts
     goalsNotifier.value = await AppDatabase.instance.loadGoals(username);
     await checkGoalExpirations(username);
-    final remindersOn = await NotificationService.instance.areRemindersEnabled(username);
+    final remindersOn = await NotificationService.instance.areRemindersEnabled(
+      username,
+    );
     if (remindersOn) {
       NotificationService.instance.scheduleGoalReminders(
         goalsNotifier.value,
@@ -687,7 +768,9 @@ class AppState {
     await AppDatabase.instance.updateGoalEntry(username, entry);
     goalsNotifier.value = await AppDatabase.instance.loadGoals(username);
     await checkGoalExpirations(username);
-    final remindersOn = await NotificationService.instance.areRemindersEnabled(username);
+    final remindersOn = await NotificationService.instance.areRemindersEnabled(
+      username,
+    );
     if (remindersOn) {
       NotificationService.instance.scheduleGoalReminders(
         goalsNotifier.value,
@@ -698,11 +781,17 @@ class AppState {
   }
 
   /// Deletes a goal entry and refreshes state.
-  static Future<void> deleteGoalEntry(String username, String entryId, String goalId) async {
+  static Future<void> deleteGoalEntry(
+    String username,
+    String entryId,
+    String goalId,
+  ) async {
     await AppDatabase.instance.deleteGoalEntry(username, entryId, goalId);
     goalsNotifier.value = await AppDatabase.instance.loadGoals(username);
     await checkGoalExpirations(username);
-    final remindersOn = await NotificationService.instance.areRemindersEnabled(username);
+    final remindersOn = await NotificationService.instance.areRemindersEnabled(
+      username,
+    );
     if (remindersOn) {
       NotificationService.instance.scheduleGoalReminders(
         goalsNotifier.value,
@@ -713,11 +802,16 @@ class AppState {
   }
 
   /// Removes any goal entry linked to a transaction and refreshes state.
-  static Future<void> removeGoalEntryForTransaction(String username, String txId) async {
+  static Future<void> removeGoalEntryForTransaction(
+    String username,
+    String txId,
+  ) async {
     await AppDatabase.instance.deleteGoalEntryByTransactionId(username, txId);
     goalsNotifier.value = await AppDatabase.instance.loadGoals(username);
     await checkGoalExpirations(username);
-    final remindersOn = await NotificationService.instance.areRemindersEnabled(username);
+    final remindersOn = await NotificationService.instance.areRemindersEnabled(
+      username,
+    );
     if (remindersOn) {
       NotificationService.instance.scheduleGoalReminders(
         goalsNotifier.value,
@@ -737,13 +831,21 @@ class AppState {
       // Mark completed goals
       if (g.saved >= g.target && !g.isCompleted) {
         goals[i] = g.copyWith(isCompleted: true);
-        await AppDatabase.instance.updateGoalStatus(username, g.id, isCompleted: true);
+        await AppDatabase.instance.updateGoalStatus(
+          username,
+          g.id,
+          isCompleted: true,
+        );
         changed = true;
       }
       // Mark expired goals as failed
       if (g.isExpired && !g.isFailed) {
         goals[i] = g.copyWith(isFailed: true);
-        await AppDatabase.instance.updateGoalStatus(username, g.id, isFailed: true);
+        await AppDatabase.instance.updateGoalStatus(
+          username,
+          g.id,
+          isFailed: true,
+        );
         changed = true;
       }
     }
@@ -759,7 +861,6 @@ class AppState {
         .where((g) => !g.isArchived)
         .fold(0.0, (sum, g) => sum + g.saved);
   }
-
 
   /// Displays an auto-dismissing SnackBar guaranteed to disappear after the given duration (default 5s).
   static void showAutoDismissingSnackBar(
@@ -784,19 +885,26 @@ class AppState {
     } catch (_) {}
   }
 
-  static Future<void> saveBudgets(String username, Map<String, double> budgets) async {
+  static Future<void> saveBudgets(
+    String username,
+    Map<String, double> budgets,
+  ) async {
     await AppDatabase.instance.saveBudgets(username, budgets);
     budgetsNotifier.value = Map.from(budgets);
+    CloudSyncService.requestBackgroundSync(username);
   }
 
   static Future<Map<String, double>> loadBudgets(String username) async {
     return await AppDatabase.instance.loadBudgets(username);
   }
 
-  static Future<void> saveAccounts(String username, List<String> accounts) async {
+  static Future<void> saveAccounts(
+    String username,
+    List<String> accounts,
+  ) async {
     await AppDatabase.instance.saveAccounts(username, accounts);
     accountsNotifier.value = List.from(accounts);
-    // Push updated accounts list to Firestore immediately so deletions persist
+    // Queue the saved account list with the other background changes.
     CloudSyncService.syncAccountsToCloud(accounts);
   }
 
@@ -819,6 +927,7 @@ class AppState {
       try {
         final p = await AppDatabase.instance.loadProfile(username);
         await AppDatabase.instance.saveProfile(p.copyWith(theme: themeName));
+        CloudSyncService.requestBackgroundSync(username);
       } catch (_) {}
     }
   }
@@ -827,7 +936,8 @@ class AppState {
     try {
       final prefs = await SharedPreferences.getInstance();
       final saved = (username != null && username.isNotEmpty)
-          ? prefs.getString('${_prefThemeKey}_$username') ?? prefs.getString(_prefThemeKey)
+          ? prefs.getString('${_prefThemeKey}_$username') ??
+                prefs.getString(_prefThemeKey)
           : prefs.getString(_prefThemeKey);
       if (saved != null) {
         themeNameNotifier.value = saved;
@@ -845,6 +955,7 @@ class AppState {
     if (currentUser != null) {
       final p = await AppDatabase.instance.loadProfile(username);
       await AppDatabase.instance.saveProfile(p.copyWith(primaryColor: color));
+      CloudSyncService.requestBackgroundSync(username);
     }
   }
 
@@ -861,6 +972,7 @@ class AppState {
     if (currentUser != null) {
       final p = await AppDatabase.instance.loadProfile(currentUser!);
       await AppDatabase.instance.saveProfile(p.copyWith(currency: currency));
+      CloudSyncService.requestBackgroundSync(currentUser);
       NotificationService.instance.scheduleGoalReminders(
         goalsNotifier.value,
         currency,
@@ -911,7 +1023,10 @@ class AppState {
   // ---------------------------------------------------------------------------
   // Planned / Future Transactions & Recurring Automation
   // ---------------------------------------------------------------------------
-  static Future<void> savePlannedTransaction(String username, PlannedTransaction plan) async {
+  static Future<void> savePlannedTransaction(
+    String username,
+    PlannedTransaction plan,
+  ) async {
     await AppDatabase.instance.savePlannedTransaction(username, plan);
     final plans = await AppDatabase.instance.loadPlannedTransactions(username);
     plannedTransactionsNotifier.value = plans;
@@ -922,7 +1037,10 @@ class AppState {
     );
   }
 
-  static Future<void> deletePlannedTransaction(String username, String planId) async {
+  static Future<void> deletePlannedTransaction(
+    String username,
+    String planId,
+  ) async {
     await AppDatabase.instance.deletePlannedTransaction(username, planId);
     await NotificationService.instance.cancelPlannedTransactionReminder(planId);
     final plans = await AppDatabase.instance.loadPlannedTransactions(username);
@@ -941,7 +1059,9 @@ class AppState {
     ).process(username, plan.id, now: DateTime.now(), force: true);
     if (result != null) {
       await _publishProcessedPlans(username, generation, [result]);
-      if (currentUser == username && sessionGeneration == generation) unawaited(CloudSyncService.sync(username));
+      if (currentUser == username && sessionGeneration == generation) {
+        CloudSyncService.requestBackgroundSync(username);
+      }
     }
     return result != null;
   }

@@ -20,56 +20,70 @@ class MainNavScreen extends StatefulWidget {
   State<MainNavScreen> createState() => _MainNavScreenState();
 }
 
-class _MainNavScreenState extends State<MainNavScreen> {
+class _MainNavScreenState extends State<MainNavScreen>
+    with WidgetsBindingObserver {
   final Map<int, Widget> _cachedScreens = {};
+  bool _reviewingConflict = false;
+  final Object _syncOwner = Object();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     AppState.activeTabNotifier.addListener(_onTabChanged);
     _persistDeviceScreenCacheFlag();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) unawaited(_reconcileCloudAfterLogin());
+      if (mounted) {
+        CloudSyncService.startBackgroundSync(
+          owner: _syncOwner,
+          onLoginConflict: (conflict) =>
+              unawaited(_reviewLoginConflict(conflict)),
+        );
+      }
     });
   }
 
-  Future<void> _reconcileCloudAfterLogin() async {
-    final username = AppState.currentUser;
-    final generation = AppState.sessionGeneration;
+  Future<void> _reviewLoginConflict(CloudSyncConflict conflict) async {
+    final username = conflict.session.username;
+    final generation = conflict.session.generation;
     bool sameSession() =>
         mounted &&
-        username != null &&
         username == AppState.currentUser &&
         generation == AppState.sessionGeneration;
-    if (!sameSession() || !CloudSyncService.isCloudAvailable) return;
+    if (!sameSession() ||
+        _reviewingConflict ||
+        !CloudSyncService.isCloudAvailable ||
+        ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    _reviewingConflict = true;
     try {
-      final cloud = await CloudSyncService.fetchCloudSummary();
+      final choice = await SyncConflictDialog.show(
+        context,
+        cloudSummary: conflict.cloud,
+        localSummary: conflict.local,
+        conflictCount: conflict.count,
+        currency: AppState.currencyNotifier.value,
+      );
       if (!sameSession()) return;
-      final local = await CloudSyncService.fetchLocalSummary(username!);
-      if (!sameSession()) return;
-      final cloudHasData =
-          cloud != null && (cloud.transactionCount > 0 || cloud.goalsCount > 0);
-      final localHasData = local.transactionCount > 0 || local.goalsCount > 0;
-      if (!mounted) return;
-      if (cloudHasData && localHasData) {
-        final choice = await SyncConflictDialog.show(
-          context,
-          cloudSummary: cloud,
-          localSummary: local,
-          currency: AppState.currencyNotifier.value,
-        );
-        if (!sameSession()) return;
-        if (choice == SyncConflictChoice.restoreCloud) {
-          await CloudSyncService.restoreFromCloud(username);
-        } else if (choice == SyncConflictChoice.overwriteCloud) {
-          await CloudSyncService.overwriteCloudWithLocal(username);
-        }
-      } else if (cloudHasData || localHasData) {
-        // The user can already edit the vault: merge safely rather than replace it.
-        await CloudSyncService.sync(username);
+      if (choice == SyncConflictChoice.restoreCloud) {
+        await CloudSyncService.restoreFromCloud(username);
+      } else if (choice == SyncConflictChoice.overwriteCloud) {
+        await CloudSyncService.overwriteCloudWithLocal(username);
       }
     } catch (error) {
       debugPrint('Post-login cloud reconciliation deferred: $error');
+    } finally {
+      _reviewingConflict = false;
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      CloudSyncService.resumeBackgroundSync(owner: _syncOwner);
+    } else {
+      CloudSyncService.pauseBackgroundSync(owner: _syncOwner);
     }
   }
 
@@ -82,6 +96,8 @@ class _MainNavScreenState extends State<MainNavScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    CloudSyncService.stopBackgroundSync(owner: _syncOwner);
     AppState.activeTabNotifier.removeListener(_onTabChanged);
     super.dispose();
   }
@@ -120,63 +136,82 @@ class _MainNavScreenState extends State<MainNavScreen> {
     _buildScreen(currentIndex);
 
     // Dialog editors use the root Navigator and retain the real keyboard insets.
-    return KeyboardStablePage(child: Scaffold(
-      body: SafeArea(
-        top: true,
-        bottom: false,
-        child: Column(
-          children: [
-            const OfflineBanner(),
-            Expanded(
-              child: IndexedStack(
-                index: currentIndex,
-                children: List.generate(5, (i) {
-                  return RepaintBoundary(
-                    child: TickerMode(
-                      enabled: i == currentIndex,
-                      child: _cachedScreens[i] ?? const SizedBox.shrink(),
-                    ),
-                  );
-                }),
+    return KeyboardStablePage(
+      child: Scaffold(
+        body: SafeArea(
+          top: true,
+          bottom: false,
+          child: Column(
+            children: [
+              const OfflineBanner(),
+              Expanded(
+                child: IndexedStack(
+                  index: currentIndex,
+                  children: List.generate(5, (i) {
+                    return RepaintBoundary(
+                      child: TickerMode(
+                        enabled: i == currentIndex,
+                        child: _cachedScreens[i] ?? const SizedBox.shrink(),
+                      ),
+                    );
+                  }),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+        bottomNavigationBar: ValueListenableBuilder<String>(
+          valueListenable: LanguageService.currentLanguageNotifier,
+          builder: (context, lang, child) {
+            // Bottom navigation bar stays strictly LTR (Home -> Profile) regardless of RTL language
+            return Directionality(
+              textDirection: TextDirection.ltr,
+              child: NavigationBar(
+                selectedIndex: currentIndex,
+                onDestinationSelected: (i) {
+                  if (i == currentIndex) return;
+                  // 1. Immediately switch tab so the target screen renders smoothly
+                  AppState.activeTabNotifier.value = i;
+                  // 2. Schedule interstitial ad check after the frame renders to eliminate frame drops & jank
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    AdService.showTabSwitchInterstitialAd(
+                      context: context,
+                      onComplete: () {},
+                    );
+                  });
+                },
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                indicatorColor: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.2),
+                destinations: [
+                  NavigationDestination(
+                    icon: const Icon(Icons.dashboard),
+                    label: LanguageService.tr('nav_home'),
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.insights),
+                    label: LanguageService.tr('nav_insights'),
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.flag),
+                    label: LanguageService.tr('nav_goals'),
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.account_balance_wallet),
+                    label: LanguageService.tr('nav_accounts'),
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.person),
+                    label: LanguageService.tr('nav_profile'),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
-      bottomNavigationBar: ValueListenableBuilder<String>(
-        valueListenable: LanguageService.currentLanguageNotifier,
-        builder: (context, lang, child) {
-          // Bottom navigation bar stays strictly LTR (Home -> Profile) regardless of RTL language
-          return Directionality(
-            textDirection: TextDirection.ltr,
-            child: NavigationBar(
-              selectedIndex: currentIndex,
-              onDestinationSelected: (i) {
-                if (i == currentIndex) return;
-                // 1. Immediately switch tab so the target screen renders smoothly
-                AppState.activeTabNotifier.value = i;
-                // 2. Schedule interstitial ad check after the frame renders to eliminate frame drops & jank
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (!mounted) return;
-                  AdService.showTabSwitchInterstitialAd(
-                    context: context,
-                    onComplete: () {},
-                  );
-                });
-              },
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              indicatorColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-              destinations: [
-                NavigationDestination(icon: const Icon(Icons.dashboard), label: LanguageService.tr('nav_home')),
-                NavigationDestination(icon: const Icon(Icons.insights), label: LanguageService.tr('nav_insights')),
-                NavigationDestination(icon: const Icon(Icons.flag), label: LanguageService.tr('nav_goals')),
-                NavigationDestination(icon: const Icon(Icons.account_balance_wallet), label: LanguageService.tr('nav_accounts')),
-                NavigationDestination(icon: const Icon(Icons.person), label: LanguageService.tr('nav_profile')),
-              ],
-            ),
-          );
-        },
-      ),
-    ));
+    );
   }
 }

@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/cloud_sync_service.dart';
 
 /// User decision options when resolving a sync conflict between Cloud & Local records.
-enum SyncConflictChoice {
-  restoreCloud,
-  overwriteCloud,
-  offlineOnly,
-}
+enum SyncConflictChoice { restoreCloud, overwriteCloud, offlineOnly }
 
 /// Side-by-side comparison modal displaying Cloud data vs. Local data
 /// and asking the user how to reconcile diverging records.
@@ -14,12 +10,14 @@ class SyncConflictDialog extends StatelessWidget {
   final VaultSummary cloudSummary;
   final VaultSummary localSummary;
   final String currency;
+  final int? conflictCount;
 
   const SyncConflictDialog({
     super.key,
     required this.cloudSummary,
     required this.localSummary,
     required this.currency,
+    this.conflictCount,
   });
 
   static Future<SyncConflictChoice?> show(
@@ -27,6 +25,7 @@ class SyncConflictDialog extends StatelessWidget {
     required VaultSummary cloudSummary,
     required VaultSummary localSummary,
     required String currency,
+    int? conflictCount,
   }) {
     return showDialog<SyncConflictChoice>(
       context: context,
@@ -35,6 +34,7 @@ class SyncConflictDialog extends StatelessWidget {
         cloudSummary: cloudSummary,
         localSummary: localSummary,
         currency: currency,
+        conflictCount: conflictCount,
       ),
     );
   }
@@ -90,10 +90,14 @@ class SyncConflictDialog extends StatelessWidget {
                 const SizedBox(height: 6),
                 Center(
                   child: Text(
-                    'Existing Google Cloud records and local device records differ. Compare both and choose how you want to synchronize:',
+                    conflictCount == null
+                        ? 'Existing Google Cloud records and local device records differ. Compare both and choose how you want to synchronize:'
+                        : '$conflictCount record(s) have unresolved versions. Automatic sync is paused to preserve both copies. Review the totals and choose which copy to use, or resolve this later in Settings.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                      color: theme.textTheme.bodyMedium?.color?.withValues(
+                        alpha: 0.7,
+                      ),
                       height: 1.3,
                     ),
                   ),
@@ -112,7 +116,9 @@ class SyncConflictDialog extends StatelessWidget {
                       summary: cloudSummary,
                       actionLabel: 'Restore Cloud Data',
                       actionSub: 'Replaces device data with cloud copy',
-                      onSelect: () => Navigator.of(context).pop(SyncConflictChoice.restoreCloud),
+                      onSelect: () => Navigator.of(
+                        context,
+                      ).pop(SyncConflictChoice.restoreCloud),
                       isRecommended: false,
                     );
 
@@ -124,7 +130,9 @@ class SyncConflictDialog extends StatelessWidget {
                       summary: localSummary,
                       actionLabel: 'Upload Device Data',
                       actionSub: 'Overwrites cloud vault with device data',
-                      onSelect: () => Navigator.of(context).pop(SyncConflictChoice.overwriteCloud),
+                      onSelect: () => Navigator.of(
+                        context,
+                      ).pop(SyncConflictChoice.overwriteCloud),
                       isRecommended: true,
                     );
 
@@ -152,13 +160,18 @@ class SyncConflictDialog extends StatelessWidget {
 
                 // Option 3: Continue Offline Only
                 OutlinedButton.icon(
-                  onPressed: () => Navigator.of(context).pop(SyncConflictChoice.offlineOnly),
+                  onPressed: () =>
+                      Navigator.of(context).pop(SyncConflictChoice.offlineOnly),
                   icon: const Icon(Icons.cloud_off_rounded, size: 18),
                   label: const Text('Keep Using Offline Only'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: colorScheme.onSurface,
-                    side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.3)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    side: BorderSide(
+                      color: colorScheme.outline.withValues(alpha: 0.3),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
@@ -177,7 +190,11 @@ class SyncConflictDialog extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 20),
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.red,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -185,7 +202,9 @@ class SyncConflictDialog extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.red.shade200 : Colors.red.shade900,
+                            color: isDark
+                                ? Colors.red.shade200
+                                : Colors.red.shade900,
                             height: 1.3,
                           ),
                         ),
@@ -245,7 +264,10 @@ class SyncConflictDialog extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -267,7 +289,9 @@ class SyncConflictDialog extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: summary.totalBalance >= 0 ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
+              color: summary.totalBalance >= 0
+                  ? const Color(0xFF2E7D32)
+                  : const Color(0xFFC62828),
             ),
           ),
           const SizedBox(height: 8),
@@ -278,11 +302,19 @@ class SyncConflictDialog extends StatelessWidget {
             children: [
               Text(
                 'Transactions:',
-                style: TextStyle(fontSize: 11, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(
+                    alpha: 0.7,
+                  ),
+                ),
               ),
               Text(
                 '${summary.transactionCount}',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -292,11 +324,19 @@ class SyncConflictDialog extends StatelessWidget {
             children: [
               Text(
                 'Savings Goals:',
-                style: TextStyle(fontSize: 11, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(
+                    alpha: 0.7,
+                  ),
+                ),
               ),
               Text(
                 '${summary.goalsCount}',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -306,11 +346,19 @@ class SyncConflictDialog extends StatelessWidget {
             children: [
               Text(
                 'Last Synced:',
-                style: TextStyle(fontSize: 10, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6)),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(
+                    alpha: 0.6,
+                  ),
+                ),
               ),
               Text(
                 _formatDate(summary.lastModified),
-                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
@@ -324,13 +372,18 @@ class SyncConflictDialog extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: accentColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 elevation: 0,
               ),
               child: Text(
                 actionLabel,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -341,7 +394,9 @@ class SyncConflictDialog extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 9,
-                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                color: theme.textTheme.bodyMedium?.color?.withValues(
+                  alpha: 0.6,
+                ),
               ),
             ),
           ),

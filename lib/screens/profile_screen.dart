@@ -184,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 toUsername: googleUser.email,
                 mergeWithExisting: true,
               );
-              await CloudSyncService.sync(googleUser.email);
+              await CloudSyncService.mixAndUploadData(googleUser.email);
               await AppState.loadAllUserData(googleUser.email);
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -215,7 +215,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               toUsername: googleUser.email,
               mergeWithExisting: false,
             );
-            await CloudSyncService.sync(googleUser.email);
+            await CloudSyncService.mixAndUploadData(googleUser.email);
             await AppState.loadAllUserData(googleUser.email);
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -1348,6 +1348,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   valueListenable: CloudSyncService.isSyncingNotifier,
                                   builder: (context, isSyncing, _) {
                                     final isCloudReady = CloudSyncService.isCloudAvailable;
+                                    final needsReview = CloudSyncService.needsReviewNotifier.value != null;
                                     return ListTile(
                                       leading: Icon(
                                         isCloudReady ? Icons.cloud_done : Icons.cloud_sync,
@@ -1358,7 +1359,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         isSyncing
                                             ? 'Syncing ledger with Google Cloud...'
                                             : (isCloudReady
-                                                ? 'Connected to Project tally-b3652'
+                                                ? (needsReview
+                                                    ? 'Conflicting versions need review'
+                                                    : 'Changes sync automatically in background batches')
                                                 : 'Hybrid offline-first architecture'),
                                         style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12),
                                       ),
@@ -1382,7 +1385,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                 borderRadius: BorderRadius.circular(8),
                                               ),
                                               child: Text(
-                                                isCloudReady ? 'CONNECTED' : 'READY',
+                                                needsReview ? 'REVIEW' : (isCloudReady ? 'CONNECTED' : 'READY'),
                                                 style: TextStyle(
                                                   color: isCloudReady ? Colors.greenAccent : Colors.blue,
                                                   fontSize: 10,

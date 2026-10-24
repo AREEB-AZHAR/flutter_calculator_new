@@ -1,0 +1,14 @@
+Proposed additive LOCAL SQLite checkpoint table; requires owner schema approval.
+No existing rows are deleted or rewritten. No Firestore paths, payload fields or rules change.
+Stores fingerprints of acknowledged/pulled versions to distinguish offline edits from concurrent conflicts.
+
+CREATE TABLE IF NOT EXISTS ledger_sync_baselines (
+  username TEXT NOT NULL,
+  collection TEXT NOT NULL,
+  entity_id TEXT NOT NULL,
+  fingerprint TEXT NOT NULL,
+  PRIMARY KEY (username, collection, entity_id)
+);
+Owner approved this additive local checkpoint table on 25 October 2026.
+Implemented by SqliteLedgerStore.install; idempotence and data preservation
+are covered by background_sync_conflicts_test.dart.

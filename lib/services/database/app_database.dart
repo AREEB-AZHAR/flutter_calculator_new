@@ -15,6 +15,7 @@ import '../../models/saved_account_info.dart';
 import '../biometric_service.dart';
 import 'security_helper.dart';
 import '../ledger_sync.dart';
+import '../sync_metadata.dart';
 import '../atomic_plans.dart';
 
 class AppDatabase {
@@ -140,13 +141,19 @@ class AppDatabase {
 
     // Ensure email column exists on users table
     try {
-      await db.execute('ALTER TABLE users ADD COLUMN email TEXT COLLATE NOCASE');
+      await db.execute(
+        'ALTER TABLE users ADD COLUMN email TEXT COLLATE NOCASE',
+      );
     } catch (_) {}
 
     // Ensure case-insensitive indexes exist for rapid authentication and lookup
     try {
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_users_username_nocase ON users(username COLLATE NOCASE)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_users_email_nocase ON users(email COLLATE NOCASE)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_users_username_nocase ON users(username COLLATE NOCASE)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_users_email_nocase ON users(email COLLATE NOCASE)',
+      );
     } catch (_) {}
 
     // Ensure text_color and theme columns exist for existing databases
@@ -197,7 +204,9 @@ class AppDatabase {
 
     // Ensure index on transactions exists for 100k+ scalability
     try {
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_username_date ON transactions(username, date DESC)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_transactions_username_date ON transactions(username, date DESC)',
+      );
     } catch (_) {}
 
     // --- Enhanced Goals: migrate goals table with new columns ---
@@ -229,10 +238,13 @@ class AppDatabase {
           created_at TEXT NOT NULL
         )
       ''');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_goal_entries_goal ON goal_entries(goal_id)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_goal_entries_user ON goal_entries(username)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_goal_entries_goal ON goal_entries(goal_id)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_goal_entries_user ON goal_entries(username)',
+      );
     } catch (_) {}
-
 
     // Version 2 additions are idempotent for fresh installs and legacy databases.
     final planColumns = await db.rawQuery(
@@ -515,15 +527,27 @@ class AppDatabase {
   }
 
   /// Changes only the verified local vault if its credentials have not changed.
-  Future<bool> updateRecoveredPassword({required String username, required String email,
-      required String expectedHash, required String newPassword}) async {
+  Future<bool> updateRecoveredPassword({
+    required String username,
+    required String email,
+    required String expectedHash,
+    required String newPassword,
+  }) async {
     final db = await database;
     final salt = SecurityHelper.generateSalt();
     // Compare-and-swap exactly the verified local account; never reset all rows
     // matching an email-or-username expression, or a rebound email/account.
-    return await db.update('users', {'password_hash': SecurityHelper.hashPassword(newPassword, salt), 'salt': salt},
-      where: 'username = ? COLLATE NOCASE AND email = ? COLLATE NOCASE AND password_hash = ?',
-      whereArgs: [username, email, expectedHash]) == 1;
+    return await db.update(
+          'users',
+          {
+            'password_hash': SecurityHelper.hashPassword(newPassword, salt),
+            'salt': salt,
+          },
+          where:
+              'username = ? COLLATE NOCASE AND email = ? COLLATE NOCASE AND password_hash = ?',
+          whereArgs: [username, email, expectedHash],
+        ) ==
+        1;
   }
 
   /// Checks if a username or email has existing transactions or goals in the local SQLite database.
@@ -570,22 +594,28 @@ class AppDatabase {
             ? r['display_name'] as String
             : username;
         final photoPath = r['photo_path'] as String?;
-        final primaryColor = (r['primary_color'] as int?) ?? const Color(0xFFE4572E).toARGB32();
+        final primaryColor =
+            (r['primary_color'] as int?) ?? const Color(0xFFE4572E).toARGB32();
         final createdAt = r['created_at'] as String?;
 
-        final isBio = await BiometricService.isBiometricEnabled(username: username);
-        final isGoogle = (email != null && email.contains('@') && username == email);
-
-        result.add(SavedAccountInfo(
+        final isBio = await BiometricService.isBiometricEnabled(
           username: username,
-          email: email,
-          displayName: displayName,
-          photoPath: photoPath,
-          primaryColor: primaryColor,
-          isBiometricEnabled: isBio,
-          isGoogleAccount: isGoogle,
-          createdAt: createdAt,
-        ));
+        );
+        final isGoogle =
+            (email != null && email.contains('@') && username == email);
+
+        result.add(
+          SavedAccountInfo(
+            username: username,
+            email: email,
+            displayName: displayName,
+            photoPath: photoPath,
+            primaryColor: primaryColor,
+            isBiometricEnabled: isBio,
+            isGoogleAccount: isGoogle,
+            createdAt: createdAt,
+          ),
+        );
       }
       return result;
     } catch (e) {
@@ -600,15 +630,61 @@ class AppDatabase {
     try {
       // 1. Cascading SQLite wipe of all records tied to this username
       await db.transaction((txn) async {
-        await txn.delete('users', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
-        await txn.delete('profiles', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
-        await txn.delete('transactions', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
-        await txn.delete('accounts', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
-        await txn.delete('budgets', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
-        await txn.delete('goals', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
-        await txn.delete('goal_entries', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
-        await txn.delete('loans', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
-        await txn.delete('planned_transactions', where: 'username = ? COLLATE NOCASE', whereArgs: [username]);
+        await txn.delete(
+          'users',
+          where: 'username = ? COLLATE NOCASE',
+          whereArgs: [username],
+        );
+        await txn.delete(
+          'profiles',
+          where: 'username = ? COLLATE NOCASE',
+          whereArgs: [username],
+        );
+        await txn.delete(
+          'transactions',
+          where: 'username = ? COLLATE NOCASE',
+          whereArgs: [username],
+        );
+        await txn.delete(
+          'accounts',
+          where: 'username = ? COLLATE NOCASE',
+          whereArgs: [username],
+        );
+        await txn.delete(
+          'budgets',
+          where: 'username = ? COLLATE NOCASE',
+          whereArgs: [username],
+        );
+        await txn.delete(
+          'goals',
+          where: 'username = ? COLLATE NOCASE',
+          whereArgs: [username],
+        );
+        await txn.delete(
+          'goal_entries',
+          where: 'username = ? COLLATE NOCASE',
+          whereArgs: [username],
+        );
+        await txn.delete(
+          'loans',
+          where: 'username = ? COLLATE NOCASE',
+          whereArgs: [username],
+        );
+        await txn.delete(
+          'planned_transactions',
+          where: 'username = ? COLLATE NOCASE',
+          whereArgs: [username],
+        );
+        await txn.delete(
+          'ledger_outbox',
+          where: 'username = ? COLLATE NOCASE',
+          whereArgs: [username],
+        );
+        await txn.delete(
+          'ledger_sync_baselines',
+          where: 'username = ? COLLATE NOCASE',
+          whereArgs: [username],
+        );
       });
 
       // 2. Clear any lingering SharedPreferences caches for this user
@@ -620,7 +696,9 @@ class AppDatabase {
         if (usersStr != null && usersStr.isNotEmpty) {
           try {
             final Map<String, dynamic> legacyUsers = jsonDecode(usersStr);
-            legacyUsers.removeWhere((k, v) => k.toLowerCase() == username.toLowerCase());
+            legacyUsers.removeWhere(
+              (k, v) => k.toLowerCase() == username.toLowerCase(),
+            );
             if (legacyUsers.isEmpty) {
               await prefs.remove('users');
             } else {
@@ -632,11 +710,13 @@ class AppDatabase {
 
         // Biometric / Last login preferences
         final lastUser = prefs.getString('tally_last_logged_in_user');
-        if (lastUser != null && lastUser.toLowerCase() == username.toLowerCase()) {
+        if (lastUser != null &&
+            lastUser.toLowerCase() == username.toLowerCase()) {
           await prefs.remove('tally_last_logged_in_user');
         }
         final bioUser = prefs.getString('tally_biometric_username');
-        if (bioUser != null && bioUser.toLowerCase() == username.toLowerCase()) {
+        if (bioUser != null &&
+            bioUser.toLowerCase() == username.toLowerCase()) {
           await prefs.remove('tally_biometric_username');
           await prefs.setBool('tally_biometric_enabled', false);
         }
@@ -645,7 +725,8 @@ class AppDatabase {
 
         // Google Auth cache
         final googleEmail = prefs.getString('tally_last_google_email');
-        if (googleEmail != null && googleEmail.toLowerCase() == username.toLowerCase()) {
+        if (googleEmail != null &&
+            googleEmail.toLowerCase() == username.toLowerCase()) {
           await prefs.remove('tally_last_google_email');
           await prefs.remove('tally_last_google_name');
         }
@@ -886,8 +967,27 @@ class AppDatabase {
       );
       await txn.delete('budgets', where: 'username = ?', whereArgs: [username]);
       await txn.delete('goals', where: 'username = ?', whereArgs: [username]);
+      await txn.delete(
+        'goal_entries',
+        where: 'username = ?',
+        whereArgs: [username],
+      );
       await txn.delete('loans', where: 'username = ?', whereArgs: [username]);
-      await txn.delete('planned_transactions', where: 'username = ?', whereArgs: [username]);
+      await txn.delete(
+        'planned_transactions',
+        where: 'username = ?',
+        whereArgs: [username],
+      );
+      await txn.delete(
+        'ledger_outbox',
+        where: 'username = ?',
+        whereArgs: [username],
+      );
+      await txn.delete(
+        'ledger_sync_baselines',
+        where: 'username = ?',
+        whereArgs: [username],
+      );
     });
   }
 
@@ -1040,13 +1140,18 @@ class AppDatabase {
     return profile;
   }
 
-  Future<void> saveProfile(UserProfile profile) async {
+  Future<void> saveProfile(UserProfile profile, {bool queueSync = true}) async {
     final db = await database;
-    await db.insert(
-      'profiles',
-      profile.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.transaction((txn) async {
+      await txn.insert(
+        'profiles',
+        profile.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      if (queueSync) {
+        await MetadataSyncStore.enqueue(txn, profile.username, 'profile');
+      }
+    });
   }
 
   // --- TRANSACTIONS ---
@@ -1074,26 +1179,19 @@ class AppDatabase {
   }
 
   /// Fast O(1) single transaction insert or update
-  Future<void> insertTransaction(
-    String username,
-    model.Transaction tx,
-  ) async {
+  Future<void> insertTransaction(String username, model.Transaction tx) async {
     final db = await database;
-    await db.insert(
-      'transactions',
-      {
-        'id': tx.id,
-        'username': username,
-        'title': tx.title,
-        'amount': tx.amount,
-        'date': tx.date.toIso8601String(),
-        'is_income': tx.isIncome ? 1 : 0,
-        'category': tx.category,
-        'account': tx.account,
-        'recurrence': tx.recurrence,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('transactions', {
+      'id': tx.id,
+      'username': username,
+      'title': tx.title,
+      'amount': tx.amount,
+      'date': tx.date.toIso8601String(),
+      'is_income': tx.isIncome ? 1 : 0,
+      'category': tx.category,
+      'account': tx.account,
+      'recurrence': tx.recurrence,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   /// Fast O(1) single transaction deletion by ID
@@ -1158,7 +1256,7 @@ class AppDatabase {
     for (var r in results) {
       map[r['category'] as String] = (r['amount_limit'] as num).toDouble();
     }
-    return map.isNotEmpty
+    return map.isNotEmpty || await _hasSavedMetadata(db, username, 'budgets')
         ? map
         : {
             'Food & Dining': 500.0,
@@ -1179,6 +1277,7 @@ class AppDatabase {
           'amount_limit': entry.value,
         });
       }
+      await MetadataSyncStore.enqueue(txn, username, 'budgets');
     });
   }
 
@@ -1319,7 +1418,11 @@ class AppDatabase {
   /// Soft-delete a goal: archive if completed or >10% progress, else hard-delete.
   Future<void> softDeleteGoal(String username, String goalId) async {
     final db = await database;
-    final results = await db.query('goals', where: 'id = ? AND username = ?', whereArgs: [goalId, username]);
+    final results = await db.query(
+      'goals',
+      where: 'id = ? AND username = ?',
+      whereArgs: [goalId, username],
+    );
     if (results.isEmpty) return;
     final r = results.first;
     final saved = (r['current_amount'] as num).toDouble();
@@ -1328,10 +1431,23 @@ class AppDatabase {
     final progress = target > 0 ? saved / target : 0.0;
 
     if (isCompleted || progress >= 0.10) {
-      await db.update('goals', {'is_archived': 1}, where: 'id = ? AND username = ?', whereArgs: [goalId, username]);
+      await db.update(
+        'goals',
+        {'is_archived': 1},
+        where: 'id = ? AND username = ?',
+        whereArgs: [goalId, username],
+      );
     } else {
-      await db.delete('goals', where: 'id = ? AND username = ?', whereArgs: [goalId, username]);
-      await db.delete('goal_entries', where: 'goal_id = ? AND username = ?', whereArgs: [goalId, username]);
+      await db.delete(
+        'goals',
+        where: 'id = ? AND username = ?',
+        whereArgs: [goalId, username],
+      );
+      await db.delete(
+        'goal_entries',
+        where: 'goal_id = ? AND username = ?',
+        whereArgs: [goalId, username],
+      );
     }
   }
 
@@ -1340,25 +1456,47 @@ class AppDatabase {
   Future<void> permanentlyDeleteGoal(String username, String goalId) async {
     final db = await database;
     await db.transaction((txn) async {
-      await txn.delete('goal_entries', where: 'username = ? AND goal_id = ?', whereArgs: [username, goalId]);
-      await txn.delete('goals', where: 'username = ? AND id = ?', whereArgs: [username, goalId]);
+      await txn.delete(
+        'goal_entries',
+        where: 'username = ? AND goal_id = ?',
+        whereArgs: [username, goalId],
+      );
+      await txn.delete(
+        'goals',
+        where: 'username = ? AND id = ?',
+        whereArgs: [username, goalId],
+      );
     });
   }
 
   /// Update goal status flags (completed, failed, archived).
-  Future<void> updateGoalStatus(String username, String goalId, {bool? isCompleted, bool? isFailed, bool? isArchived}) async {
+  Future<void> updateGoalStatus(
+    String username,
+    String goalId, {
+    bool? isCompleted,
+    bool? isFailed,
+    bool? isArchived,
+  }) async {
     final db = await database;
     final updates = <String, dynamic>{};
     if (isCompleted != null) updates['is_completed'] = isCompleted ? 1 : 0;
     if (isFailed != null) updates['is_failed'] = isFailed ? 1 : 0;
     if (isArchived != null) updates['is_archived'] = isArchived ? 1 : 0;
     if (updates.isNotEmpty) {
-      await db.update('goals', updates, where: 'id = ? AND username = ?', whereArgs: [goalId, username]);
+      await db.update(
+        'goals',
+        updates,
+        where: 'id = ? AND username = ?',
+        whereArgs: [goalId, username],
+      );
     }
   }
 
   // --- GOAL ENTRIES ---
-  Future<List<GoalEntry>> loadGoalEntries(String username, String goalId) async {
+  Future<List<GoalEntry>> loadGoalEntries(
+    String username,
+    String goalId,
+  ) async {
     final db = await database;
     final results = await db.query(
       'goal_entries',
@@ -1366,16 +1504,20 @@ class AppDatabase {
       whereArgs: [goalId, username],
       orderBy: 'date DESC',
     );
-    return results.map((e) => GoalEntry(
-          id: e['id'] as String,
-          goalId: e['goal_id'] as String,
-          amount: (e['amount'] as num).toDouble(),
-          date: DateTime.parse(e['date'] as String),
-          note: e['note'] as String?,
-          createdAt: e['created_at'] != null
-              ? DateTime.parse(e['created_at'] as String)
-              : DateTime.now(),
-        )).toList();
+    return results
+        .map(
+          (e) => GoalEntry(
+            id: e['id'] as String,
+            goalId: e['goal_id'] as String,
+            amount: (e['amount'] as num).toDouble(),
+            date: DateTime.parse(e['date'] as String),
+            note: e['note'] as String?,
+            createdAt: e['created_at'] != null
+                ? DateTime.parse(e['created_at'] as String)
+                : DateTime.now(),
+          ),
+        )
+        .toList();
   }
 
   /// Adds a contribution entry and atomically recalculates the goal's saved total.
@@ -1398,8 +1540,12 @@ class AppDatabase {
         [entry.goalId, username],
       );
       final total = (sumResult.first['total'] as num).toDouble();
-      await txn.update('goals', {'current_amount': total},
-          where: 'id = ? AND username = ?', whereArgs: [entry.goalId, username]);
+      await txn.update(
+        'goals',
+        {'current_amount': total},
+        where: 'id = ? AND username = ?',
+        whereArgs: [entry.goalId, username],
+      );
     });
   }
 
@@ -1407,40 +1553,64 @@ class AppDatabase {
   Future<void> updateGoalEntry(String username, GoalEntry entry) async {
     final db = await database;
     await db.transaction((txn) async {
-      await txn.update('goal_entries', {
-        'amount': entry.amount,
-        'date': entry.date.toIso8601String(),
-        'note': entry.note,
-      }, where: 'id = ? AND username = ?', whereArgs: [entry.id, username]);
+      await txn.update(
+        'goal_entries',
+        {
+          'amount': entry.amount,
+          'date': entry.date.toIso8601String(),
+          'note': entry.note,
+        },
+        where: 'id = ? AND username = ?',
+        whereArgs: [entry.id, username],
+      );
 
       final sumResult = await txn.rawQuery(
         'SELECT COALESCE(SUM(amount), 0) as total FROM goal_entries WHERE goal_id = ? AND username = ?',
         [entry.goalId, username],
       );
       final total = (sumResult.first['total'] as num).toDouble();
-      await txn.update('goals', {'current_amount': total},
-          where: 'id = ? AND username = ?', whereArgs: [entry.goalId, username]);
+      await txn.update(
+        'goals',
+        {'current_amount': total},
+        where: 'id = ? AND username = ?',
+        whereArgs: [entry.goalId, username],
+      );
     });
   }
 
   /// Deletes a contribution entry and recalculates the goal's saved total.
-  Future<void> deleteGoalEntry(String username, String entryId, String goalId) async {
+  Future<void> deleteGoalEntry(
+    String username,
+    String entryId,
+    String goalId,
+  ) async {
     final db = await database;
     await db.transaction((txn) async {
-      await txn.delete('goal_entries', where: 'id = ? AND username = ?', whereArgs: [entryId, username]);
+      await txn.delete(
+        'goal_entries',
+        where: 'id = ? AND username = ?',
+        whereArgs: [entryId, username],
+      );
 
       final sumResult = await txn.rawQuery(
         'SELECT COALESCE(SUM(amount), 0) as total FROM goal_entries WHERE goal_id = ? AND username = ?',
         [goalId, username],
       );
       final total = (sumResult.first['total'] as num).toDouble();
-      await txn.update('goals', {'current_amount': total},
-          where: 'id = ? AND username = ?', whereArgs: [goalId, username]);
+      await txn.update(
+        'goals',
+        {'current_amount': total},
+        where: 'id = ? AND username = ?',
+        whereArgs: [goalId, username],
+      );
     });
   }
 
   /// Deletes a goal entry linked to a transaction if present.
-  Future<void> deleteGoalEntryByTransactionId(String username, String txId) async {
+  Future<void> deleteGoalEntryByTransactionId(
+    String username,
+    String txId,
+  ) async {
     final db = await database;
     final entries = await db.query(
       'goal_entries',
@@ -1453,7 +1623,6 @@ class AppDatabase {
     }
   }
 
-
   // --- ACCOUNTS ---
   Future<List<String>> loadAccounts(String username) async {
     final db = await database;
@@ -1463,7 +1632,7 @@ class AppDatabase {
       whereArgs: [username],
     );
     final list = results.map((r) => r['name'] as String).toList();
-    return list.isNotEmpty
+    return list.isNotEmpty || await _hasSavedMetadata(db, username, 'accounts')
         ? list
         : ['Main', 'Cash', 'Credit Card', 'Digital Wallet'];
   }
@@ -1479,10 +1648,34 @@ class AppDatabase {
       for (var acc in accounts) {
         await txn.insert('accounts', {'username': username, 'name': acc});
       }
+      await MetadataSyncStore.enqueue(txn, username, 'accounts');
     });
   }
 
   // --- FULL SQL EXPORT ---
+  static Future<bool> _hasSavedMetadata(
+    DatabaseExecutor db,
+    String username,
+    String kind,
+  ) async {
+    final rows = await db.rawQuery(
+      '''
+      SELECT 1 FROM ledger_outbox WHERE username = ? AND collection = ? AND entity_id = ?
+      UNION ALL
+      SELECT 1 FROM ledger_sync_baselines WHERE username = ? AND collection = ? AND entity_id = ?
+      LIMIT 1''',
+      [
+        username,
+        MetadataSyncStore.collection,
+        kind,
+        username,
+        MetadataSyncStore.collection,
+        kind,
+      ],
+    );
+    return rows.isNotEmpty;
+  }
+
   Future<String> exportToSql(String username) async {
     final db = await database;
     final buffer = StringBuffer();
@@ -1602,23 +1795,19 @@ class AppDatabase {
 
   Future<void> saveLoan(String username, Loan loan) async {
     final db = await database;
-    await db.insert(
-      'loans',
-      {
-        'id': loan.id,
-        'username': username,
-        'title': loan.title,
-        'person_name': loan.personName,
-        'amount': loan.amount,
-        'due_date': loan.dueDate.toIso8601String(),
-        'type': loan.type,
-        'is_settled': loan.isSettled ? 1 : 0,
-        'notes': loan.notes,
-        'account': loan.account,
-        'created_at': loan.createdAt.toIso8601String(),
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('loans', {
+      'id': loan.id,
+      'username': username,
+      'title': loan.title,
+      'person_name': loan.personName,
+      'amount': loan.amount,
+      'due_date': loan.dueDate.toIso8601String(),
+      'type': loan.type,
+      'is_settled': loan.isSettled ? 1 : 0,
+      'notes': loan.notes,
+      'account': loan.account,
+      'created_at': loan.createdAt.toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> deleteLoan(String username, String loanId) async {
@@ -1630,7 +1819,11 @@ class AppDatabase {
     );
   }
 
-  Future<void> setLoanSettled(String username, String loanId, bool isSettled) async {
+  Future<void> setLoanSettled(
+    String username,
+    String loanId,
+    bool isSettled,
+  ) async {
     final db = await database;
     await db.update(
       'loans',
@@ -1643,7 +1836,9 @@ class AppDatabase {
   // ---------------------------------------------------------------------------
   // Planned / Future Transactions & Recurring Execution
   // ---------------------------------------------------------------------------
-  Future<List<PlannedTransaction>> loadPlannedTransactions(String username) async {
+  Future<List<PlannedTransaction>> loadPlannedTransactions(
+    String username,
+  ) async {
     final db = await database;
     final maps = await db.query(
       'planned_transactions',
@@ -1675,7 +1870,10 @@ class AppDatabase {
     );
   }
 
-  Future<void> markPlannedTransactionProcessed(String username, String planId) async {
+  Future<void> markPlannedTransactionProcessed(
+    String username,
+    String planId,
+  ) async {
     final db = await database;
     await db.update(
       'planned_transactions',
