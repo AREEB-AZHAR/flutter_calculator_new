@@ -1,0 +1,14 @@
+{
+  "baseCommit": "897fd641bc5a98325d988331ad0a01dab176e234",
+  "variant": "Rows B: remove transaction-row explicit and automatic boundaries",
+  "profileApkSha256": "632AAF716CBDD06E74690ACBD0D6F79370C9EED06C66B67E81AFAB5CBA1E4767",
+  "mode": "profile",
+  "version": "1.8.22+32",
+  "runtimeFilesChanged": [
+    "lib/screens/dashboard_screen.dart",
+    "lib/screens/accounts_screen.dart",
+    "lib/screens/all_transactions_screen.dart"
+  ],
+  "unchangedControl": "Insights",
+  "preserved": "Row keys and handlers; scroll physics; chart, ad and section boundaries"
+}

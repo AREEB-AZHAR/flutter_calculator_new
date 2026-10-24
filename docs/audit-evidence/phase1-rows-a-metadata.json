@@ -1,0 +1,19 @@
+{
+  "sourceCommit": "897fd641bc5a98325d988331ad0a01dab176e234",
+  "variant": "Rows A: explicit row boundaries plus automatic SliverChildBuilderDelegate boundaries",
+  "installedProfileApkSha256": "17825d36b8fdd33d5875850fb9002556f058fa6519e6fe26e347263036dbb665",
+  "knownOriginalProfileApkSha256": "17825D36B8FDD33D5875850FB9002556F058FA6519E6FE26E347263036DBB665",
+  "mode": "profile",
+  "screens": [
+    "dashboard",
+    "accounts",
+    "insights",
+    "transactions"
+  ],
+  "intendedRefreshHz": 60,
+  "dashboardOfflineBannerBeforeCapture": false,
+  "androidBatterySaver": "0",
+  "initialBatteryLevel": 19,
+  "initialThermalStatus": 0,
+  "notes": "Fresh current-session baseline; historical captures are not the causal baseline. No runtime edit before baseline. Insights is an unchanged control."
+}

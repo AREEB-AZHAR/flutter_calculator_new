@@ -1,0 +1,21 @@
+diff --git a/lib/screens/all_transactions_screen.dart b/lib/screens/all_transactions_screen.dart
+index cd599c1..963f501 100644
+--- a/lib/screens/all_transactions_screen.dart
++++ b/lib/screens/all_transactions_screen.dart
+@@ -280,7 +280,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
+                         delegate: SliverChildBuilderDelegate(
+                           (ctx, index) {
+                             final tx = filtered[index];
+-                            return RepaintBoundary(
++                            return KeyedSubtree(
+                               key: ValueKey('tx_tile_${tx.id}'),
+                               child: TransactionTile(
+                                 tx: tx,
+@@ -291,6 +291,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
+                             );
+                           },
+                           childCount: filtered.length,
++                          addRepaintBoundaries: false,
+                         ),
+                       ),
+                     ),

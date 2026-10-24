@@ -1,0 +1,8 @@
+00:00 +0: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/.dart_tool/row_boundary_probe_test.dart
+00:00 +0: dashboard: row paint-boundary diagnostic
+dashboard: built rows=5; boundaries between each row and Scrollable=[1, 1, 1, 1, 1]
+00:03 +1: accounts: row paint-boundary diagnostic
+accounts: built rows=13; boundaries between each row and Scrollable=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+00:04 +2: transactions: row paint-boundary diagnostic
+transactions: built rows=14; boundaries between each row and Scrollable=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+00:06 +3: All tests passed!

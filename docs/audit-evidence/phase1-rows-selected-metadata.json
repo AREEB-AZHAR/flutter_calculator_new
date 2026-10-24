@@ -1,0 +1,19 @@
+{
+  "baseCommit": "897fd641bc5a98325d988331ad0a01dab176e234",
+  "selectedProfileApkSha256": "05979DD8453DE472492DD8A3A5686103325A2198C1F128606A2334466971C65D",
+  "sourcePatch": "phase1-rows-selected-source.patch.txt",
+  "adoptedScreen": "Transactions",
+  "revertedScreens": [
+    "Dashboard",
+    "Accounts"
+  ],
+  "profileMode": "AOT profile",
+  "appVersion": "1.8.22+32",
+  "analysis": "clean",
+  "fullFlutterTestsPassed": 251,
+  "structuralFixtureBoundaries": {
+    "dashboard": 2,
+    "accounts": 2,
+    "transactions": 0
+  }
+}

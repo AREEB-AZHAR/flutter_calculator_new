@@ -1,0 +1,71 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {summarizeFrames} from '../scripts/frame_capture_stats.mjs';
+const [prefix, screenList, controlList = ''] = process.argv.slice(2);
+const screens = screenList.split(',');
+const controls = controlList.split(',');
+const root = 'docs/audit-evidence/';
+const read = name => JSON.parse(fs.readFileSync(root+name, 'utf8').replace(/^\uFEFF/, ''));
+const fmt = x => Number.isFinite(x) ? x.toFixed(3) : 'n/a';
+const comparisons = [];
+let capturesValidated = 0;
+const lines = [`# ${prefix} — 24 October 2026`, '',
+  'DEVICE: Redmi Note 13 23129RAA4G | APP: 1.8.22+32 AOT profile | REFRESH: native-verified 60 Hz, 16.666666 ms budget.',
+  'Three captures per screen/configuration. Warmed four slow drags and two flings; dialog routes use their separately documented open/focus/dismiss protocol. Native rate is checked before/after every capture. No average FPS.', '',
+  '| Variant | Screen | Run | Frames | Build p50/p95 ms | Raster p50/p95 ms | Worst build/raster ms | Worst stage ms | Janky % |',
+  '|---|---|---:|---:|---:|---:|---:|---:|---:|'];
+const loaded = {};
+for (const variant of ['a','b']) {
+  loaded[variant] = {};
+  for (const screen of screens) {
+    const file = `${prefix}-${variant}-${screen}-60hz.json`;
+    const doc = read(file);
+    assert.equal(doc.captures.length, 3, file);
+    loaded[variant][screen] = doc;
+    for (const c of doc.captures) {
+      assert.equal(c.mode, 'profile');
+      assert.equal(c.before.versionName, '1.8.22');
+      assert.equal(c.before.versionCode, 32);
+      assert.ok(Math.abs(c.before.surfacePeriodHz - 60) < .01);
+      assert.ok(Math.abs(c.after.surfacePeriodHz - 60) < .01);
+      assert.deepEqual(summarizeFrames(c.frames, {effectiveHz:c.before.surfacePeriodHz}), c.statistics);
+      const s = c.statistics;
+      lines.push(`| ${variant} | ${screen} | ${c.repetition} | ${s.frames} | ${fmt(s.buildMs.p50)}/${fmt(s.buildMs.p95)} | ${fmt(s.rasterMs.p50)}/${fmt(s.rasterMs.p95)} | ${fmt(s.buildMs.worst)}/${fmt(s.rasterMs.worst)} | ${fmt(s.worstStageMs)} | ${fmt(s.jankyPercent)} |`);
+      capturesValidated++;
+    }
+  }
+}
+lines.push('', '## B versus A: positive means improvement', '',
+  'Repetitions are paired by index. Deltas use unrounded numbers; a printed rounded 15.000% is not sufficient to pass. Require the same metric to improve by >=15% in all three repetitions. This threshold is an acceptance rule, not statistical significance.', '',
+  '| Screen | Run | Raster p95 improvement % | Janky-ratio improvement % |', '|---|---:|---:|---:|');
+for (const screen of screens) {
+  const runs = loaded.a[screen].captures.map((c,i) => {
+    const a=c.statistics, b=loaded.b[screen].captures[i].statistics;
+    const rasterP95ImprovementPercent = (1-b.rasterMs.p95/a.rasterMs.p95)*100;
+    const jankyRatioImprovementPercent = a.jankyRatio === 0 ? null : (1-b.jankyRatio/a.jankyRatio)*100;
+    lines.push(`| ${screen} | ${i+1} | ${fmt(rasterP95ImprovementPercent)} | ${fmt(jankyRatioImprovementPercent)} |`);
+    return {run:i+1, baseline:a, variant:b, rasterP95ImprovementPercent, jankyRatioImprovementPercent};
+  });
+  const rasterP95PassAllThree=runs.every(r=>r.rasterP95ImprovementPercent>=15);
+  const jankyRatioPassAllThree=runs.every(r=>r.jankyRatioImprovementPercent!==null && r.jankyRatioImprovementPercent>=15);
+  comparisons.push({screen, unchangedControl:controls.includes(screen), runs, rasterP95PassAllThree, jankyRatioPassAllThree,
+    qualifiesForAdoption:!controls.includes(screen)&&(rasterP95PassAllThree||jankyRatioPassAllThree)});
+}
+const triplet=(c,v,k)=>c.runs.map(r=>`${fmt(r[v][k].p50)}/${fmt(r[v][k].p95)}`).join(', ');
+for (const c of comparisons) {
+  lines.push('', '```text', `PHASE: 1 - ${prefix} (${c.screen}${c.unchangedControl ? ', unchanged control':''})`,
+    'DEVICE: Redmi Note 13 23129RAA4G | APP: 1.8.22+32 profile | REFRESH: 60 Hz native',
+    `BASELINE A: build p50/p95 ${triplet(c,'baseline','buildMs')}; raster p50/p95 ${triplet(c,'baseline','rasterMs')}; janky ${c.runs.map(r=>fmt(r.baseline.jankyPercent)).join(', ')}%`,
+    'CHANGE: One isolated configuration change; see configuration metadata/source patch.',
+    `RESULT B: build p50/p95 ${triplet(c,'variant','buildMs')}; raster p50/p95 ${triplet(c,'variant','rasterMs')}; janky ${c.runs.map(r=>fmt(r.variant.jankyPercent)).join(', ')}% (3 captures)`,
+    `DELTA: raster p95 improvement ${c.runs.map(r=>fmt(r.rasterP95ImprovementPercent)).join(', ')}%; janky improvement ${c.runs.map(r=>fmt(r.jankyRatioImprovementPercent)).join(', ')}%`,
+    `DECISION: ${c.unchangedControl ? 'unchanged control' : c.qualifiesForAdoption ? 'numeric threshold met; final adoption and permissions recorded below' : 'revert: numeric threshold not met'}`,
+    'RISK: Run-to-run variation; sequential configuration order; warm-state/thermal metadata and raw frames retained. No 120 Hz inference.',
+    `FILES: ${prefix}-{a,b}-${c.screen}-60hz.json; source/configuration metadata; validation logs.`, '```');
+}
+const decision={phase:prefix,device:'Redmi Note 13 23129RAA4G',app:'1.8.22+32',mode:'profile',nativeHz:60.0000024000001,
+  capturesValidated,comparisons,allCandidateScreensQualify:comparisons.filter(c=>!c.unchangedControl).every(c=>c.qualifiesForAdoption)};
+fs.writeFileSync(root+prefix+'-decision.json',JSON.stringify(decision,null,2)+'\n');
+fs.writeFileSync(root+prefix+'-report.md',lines.join('\n')+'\n');
+fs.writeFileSync(root+prefix+'-capture-validation.txt',`${capturesValidated} profile captures recomputed exactly from raw frames; 60 Hz before/after; version 1.8.22+32; 3 runs per screen/configuration.\n`);
+console.log(JSON.stringify({capturesValidated,results:comparisons.map(({screen,qualifiesForAdoption,unchangedControl})=>({screen,qualifiesForAdoption,unchangedControl}))}));
