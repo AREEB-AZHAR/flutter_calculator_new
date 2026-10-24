@@ -1,0 +1,10 @@
+PHASE: 0 follow-up — Owner-approved ribbon/layout correctness repair
+DEVICE: Redmi Note 13 23129RAA4G | APP: 1.8.22+32 AOT profile | REFRESH: 60 Hz native surface
+BASELINE: All 3 per-screen build/raster p50/p95, worst stages, frame counts and janky ratios are in phase0-decision.json and PERFORMANCE_BUDGET.md. Ribbon test: 150 px -> 0 px on both screens.
+CHANGE: Independent ribbon PageStorageKeys; owner-approved wrapping/ellipsis fixes for overflowed chart and summary controls.
+RESULT: Ribbon tests: 150 px -> 150 px on both screens; 251 tests passed; analysis clean. Post-repair 3-run FrameTiming summaries and raw frames are in ribbon-layout-{accounts,insights,transaction-dialog}-60hz.json and PERFORMANCE_BUDGET.md.
+DELTA: No isolated raster delta claimed. Accounts/Insights still have raster spikes. Dialog jank 42.045 / 30.233 / 26.966 percent.
+DECISION: adopt correctness repair (owner approval + reproduced regression passing); no performance fix accepted.
+RISK: Narrow-layout wrapping changes card heights. Actual-screen eviction/restoration fixtures cover the affected scroll paths; shared-chart visuals still need broader device/font review. Physical offset numbers were not collected. Promo profile capture unavailable due existing debug-only policy.
+FILES: lib/screens/accounts_screen.dart; lib/screens/insights_screen.dart; lib/widgets/interactive_chart_card.dart; test/ribbon_scroll_storage_test.dart; README.md; docs/PERFORMANCE_BUDGET.md; docs/SCROLL_PERFORMANCE.md; docs/USB_DEVICE_PROFILE.md; sanitized evidence.
+STATUS: Phase 1 causal A/B, watchdog/tier, SurfaceCard migrations and automation gates remain pending. Original OEM Maximum 120 Hz preference restored after captures. No deployment, financial save or version bump.

@@ -291,6 +291,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     return SizedBox(
       height: 38,
       child: ListView.separated(
+        key: const PageStorageKey('insight_section_ribbon'),
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         itemCount: tabs.length,
@@ -570,15 +571,23 @@ class _InsightsScreenState extends State<InsightsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.lightbulb_outline, size: 16, color: Colors.amber),
-                      const SizedBox(width: 6),
-                      Text(
-                        LanguageService.tr('accountant_action_items'),
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: onSurface),
-                      ),
-                    ],
+                  SizedBox(
+                    width: double.infinity,
+                    child: Wrap(
+                      runSpacing: 6,
+                      children: [
+                        const Icon(Icons.lightbulb_outline, size: 16, color: Colors.amber),
+                        const SizedBox(width: 6),
+                        Text(
+                          LanguageService.tr('accountant_action_items'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 8),
                   ...report.accountantKeyActionItems.map(
@@ -1078,24 +1087,33 @@ class _InsightsScreenState extends State<InsightsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.category, color: primary, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    LanguageService.tr('category_spending_budgets'),
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: onSurface),
-                  ),
-                ],
-              ),
-              Text(
-                '${report.categories.length} Categories',
-                style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6)),
-              ),
-            ],
+          SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              runSpacing: 6,
+              alignment: WrapAlignment.spaceBetween,
+              children: [
+                Wrap(
+                  runSpacing: 6,
+                  children: [
+                    Icon(Icons.category, color: primary, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      LanguageService.tr('category_spending_budgets'),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '${report.categories.length} Categories',
+                  style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6)),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           ...report.categories.map((c) {
@@ -1121,81 +1139,122 @@ class _InsightsScreenState extends State<InsightsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(categoryIcons[c.category] ?? Icons.circle, size: 16, color: primary),
-                          const SizedBox(width: 8),
-                          Text(
-                            LanguageService.trCategory(c.category),
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: onSurface),
-                          ),
-                          if (c.hasBudget && c.isOverBudget)
-                            Container(
-                              margin: const EdgeInsets.only(left: 6),
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: Colors.redAccent.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(LanguageService.tr('over_budget_tag'), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.redAccent)),
-                            )
-                          else if (!c.hasBudget)
-                            Container(
-                              margin: const EdgeInsets.only(left: 6),
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: onSurface.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(LanguageService.tr('uncapped'), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: onSurface.withValues(alpha: 0.6))),
-                            ),
-                        ],
-                      ),
-                      if (c.hasBudget)
-                        Text(
-                          '$currency${c.spent.toStringAsFixed(0)} / $currency${c.budget.toStringAsFixed(0)}',
-                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: onSurface),
-                        )
-                      else
-                        Row(
+                  SizedBox(
+                    width: double.infinity,
+                    child: Wrap(
+                      runSpacing: 6,
+                      alignment: WrapAlignment.spaceBetween,
+                      children: [
+                        Wrap(
+                          runSpacing: 6,
                           children: [
-                            Text(
-                              '$currency${c.spent.toStringAsFixed(0)}',
-                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: onSurface),
+                            Icon(
+                              categoryIcons[c.category] ?? Icons.circle,
+                              size: 16,
+                              color: primary,
                             ),
                             const SizedBox(width: 8),
-                            InkWell(
-                              borderRadius: BorderRadius.circular(8),
-                              onTap: () => _showSetLimitDialog(
-                                c.category,
-                                c.suggestedBudget ?? (c.spent > 0 ? c.spent : 200.0),
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: primary.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: primary.withValues(alpha: 0.3)),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.add, size: 11, color: primary),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      LanguageService.tr('set_limit'),
-                                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primary),
-                                    ),
-                                  ],
-                                ),
+                            Text(
+                              LanguageService.trCategory(c.category),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: onSurface,
                               ),
                             ),
+                            if (c.hasBudget && c.isOverBudget)
+                              Container(
+                                margin: const EdgeInsets.only(left: 6),
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: Colors.redAccent.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  LanguageService.tr('over_budget_tag'),
+                                  style: const TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.redAccent,
+                                  ),
+                                ),
+                              )
+                            else if (!c.hasBudget)
+                              Container(
+                                margin: const EdgeInsets.only(left: 6),
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: onSurface.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  LanguageService.tr('uncapped'),
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                    color: onSurface.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
-                    ],
+                        if (c.hasBudget)
+                          Text(
+                            '$currency${c.spent.toStringAsFixed(0)} / $currency${c.budget.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: onSurface,
+                            ),
+                          )
+                        else
+                          Wrap(
+                            runSpacing: 6,
+                            children: [
+                              Text(
+                                '$currency${c.spent.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: onSurface,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              InkWell(
+                                borderRadius: BorderRadius.circular(8),
+                                onTap: () => _showSetLimitDialog(
+                                  c.category,
+                                  c.suggestedBudget ?? (c.spent > 0 ? c.spent : 200.0),
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: primary.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: primary.withValues(alpha: 0.3)),
+                                  ),
+                                  child: Wrap(
+                                    runSpacing: 6,
+
+                                    children: [
+                                      Icon(Icons.add, size: 11, color: primary),
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        LanguageService.tr('set_limit'),
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 6),
                   LinearProgressIndicator(
@@ -1206,36 +1265,45 @@ class _InsightsScreenState extends State<InsightsScreen> {
                     borderRadius: BorderRadius.circular(3),
                   ),
                   const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${c.percentOfTotal.toStringAsFixed(0)}% of total outflows',
-                        style: TextStyle(fontSize: 10.5, color: onSurface.withValues(alpha: 0.55)),
-                      ),
-                      if (c.hasBudget)
+                  SizedBox(
+                    width: double.infinity,
+                    child: Wrap(
+                      runSpacing: 6,
+                      alignment: WrapAlignment.spaceBetween,
+                      children: [
                         Text(
-                          c.remaining >= 0
-                              ? '$currency${c.remaining.toStringAsFixed(0)} remaining'
-                              : '+$currency${c.remaining.abs().toStringAsFixed(0)} over budget',
+                          '${c.percentOfTotal.toStringAsFixed(0)}% of total outflows',
                           style: TextStyle(
                             fontSize: 10.5,
-                            fontWeight: FontWeight.w500,
-                            color: c.remaining >= 0 ? Colors.greenAccent.shade400 : Colors.redAccent,
-                          ),
-                        )
-                      else
-                        Text(
-                          c.suggestedBudget != null
-                              ? 'Suggested limit: $currency${c.suggestedBudget!.toStringAsFixed(0)}'
-                              : 'Flexible envelope',
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w500,
                             color: onSurface.withValues(alpha: 0.55),
                           ),
                         ),
-                    ],
+                        if (c.hasBudget)
+                          Text(
+                            c.remaining >= 0
+                                ? '$currency${c.remaining.toStringAsFixed(0)} remaining'
+                                : '+$currency${c.remaining.abs().toStringAsFixed(0)} over budget',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w500,
+                              color: c.remaining >= 0
+                                  ? Colors.greenAccent.shade400
+                                  : Colors.redAccent,
+                            ),
+                          )
+                        else
+                          Text(
+                            c.suggestedBudget != null
+                                ? 'Suggested limit: $currency${c.suggestedBudget!.toStringAsFixed(0)}'
+                                : 'Flexible envelope',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w500,
+                              color: onSurface.withValues(alpha: 0.55),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -1270,32 +1338,49 @@ class _InsightsScreenState extends State<InsightsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.account_balance_wallet, color: Colors.purpleAccent, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    LanguageService.tr('loans_liabilities_portfolio'),
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: onSurface),
+          SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              runSpacing: 6,
+              alignment: WrapAlignment.spaceBetween,
+              children: [
+                Wrap(
+                  runSpacing: 6,
+                  children: [
+                    const Icon(
+                      Icons.account_balance_wallet,
+                      color: Colors.purpleAccent,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      LanguageService.tr('loans_liabilities_portfolio'),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: dtiColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: dtiColor.withValues(alpha: 0.4)),
                   ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: dtiColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: dtiColor.withValues(alpha: 0.4)),
+                  child: Text(
+                    'DTI: ${loan.debtToIncomeRatio.toStringAsFixed(0)}% · ${loan.dtiStatus}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: dtiColor,
+                    ),
+                  ),
                 ),
-                child: Text(
-                  'DTI: ${loan.debtToIncomeRatio.toStringAsFixed(0)}% · ${loan.dtiStatus}',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: dtiColor),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 14),
           Row(
@@ -1401,31 +1486,44 @@ class _InsightsScreenState extends State<InsightsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.receipt_long, color: Colors.tealAccent, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    LanguageService.tr('tax_return_tracker'),
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: onSurface),
+          SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              runSpacing: 6,
+              alignment: WrapAlignment.spaceBetween,
+              children: [
+                Wrap(
+                  runSpacing: 6,
+                  children: [
+                    const Icon(Icons.receipt_long, color: Colors.tealAccent, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      LanguageService.tr('tax_return_tracker'),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.teal.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  child: Text(
+                    LanguageService.tr('tax_year_2026'),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.tealAccent,
+                    ),
+                  ),
                 ),
-                child: Text(
-                  LanguageService.tr('tax_year_2026'),
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.tealAccent),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           Row(

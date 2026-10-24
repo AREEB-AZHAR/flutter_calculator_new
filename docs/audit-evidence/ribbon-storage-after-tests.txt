@@ -1,0 +1,10 @@
+00:00 +0: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/ribbon_scroll_storage_test.dart
+00:00 +0: (setUpAll)
+00:00 +0: ribbon offset persists independently of wallets_scroll
+wallets_scroll: ribbon evicted=true, saved=150.0
+wallets_scroll: ribbon restored=150.0; expected=150.0
+00:01 +1: ribbon offset persists independently of insights_scroll
+insights_scroll: ribbon evicted=true, saved=150.0
+insights_scroll: ribbon restored=150.0; expected=150.0
+00:01 +2: (tearDownAll)
+00:01 +2: All tests passed!

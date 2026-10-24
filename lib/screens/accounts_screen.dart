@@ -565,12 +565,20 @@ class _AccountsScreenState extends State<AccountsScreen> {
                               children: [
                                 Icon(Icons.account_balance_wallet_outlined, size: 16, color: _activeSegment == 'wallets' ? primaryColor : onSurface.withValues(alpha: 0.6)),
                                 const SizedBox(width: 6),
-                                Text(
-                                  LanguageService.tr('wallets_and_accounts'),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: _activeSegment == 'wallets' ? FontWeight.bold : FontWeight.w500,
-                                    color: _activeSegment == 'wallets' ? onSurface : onSurface.withValues(alpha: 0.6),
+                                Flexible(
+                                  child: Text(
+                                    LanguageService.tr('wallets_and_accounts'),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: _activeSegment == 'wallets'
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                      color: _activeSegment == 'wallets'
+                                          ? onSurface
+                                          : onSurface.withValues(alpha: 0.6),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
@@ -596,12 +604,18 @@ class _AccountsScreenState extends State<AccountsScreen> {
                               children: [
                                 Icon(Icons.handshake_outlined, size: 16, color: _activeSegment == 'loans' ? primaryColor : onSurface.withValues(alpha: 0.6)),
                                 const SizedBox(width: 6),
-                                Text(
-                                  LanguageService.tr('loans_and_debts'),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: _activeSegment == 'loans' ? FontWeight.bold : FontWeight.w500,
-                                    color: _activeSegment == 'loans' ? onSurface : onSurface.withValues(alpha: 0.6),
+                                Flexible(
+                                  child: Text(
+                                    LanguageService.tr('loans_and_debts'),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: _activeSegment == 'loans' ? FontWeight.bold : FontWeight.w500,
+                                      color: _activeSegment == 'loans'
+                                          ? onSurface
+                                          : onSurface.withValues(alpha: 0.6),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
@@ -664,6 +678,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                           height: 140,
                           margin: const EdgeInsets.symmetric(vertical: 16),
                           child: ListView.builder(
+                            key: const PageStorageKey('wallet_account_ribbon'),
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: allDisplayAccounts.length,

@@ -1,0 +1,10 @@
+{
+  "recordedAt": "2026-10-24T06:31:34.7942561+05:00",
+  "oemMaximumSelected": true,
+  "oemStandardSelected": false,
+  "peakRefreshRate": "120",
+  "minRefreshRate": "null",
+  "preferredMode": "User preferred display mode: null",
+  "activeRenderHz": "120.00001",
+  "verification": "OEM UI hierarchy: Maximum selected=true, Standard selected=false; dumpsys display: mActiveRenderFrameRate=120.00001"
+}

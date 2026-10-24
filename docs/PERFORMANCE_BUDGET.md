@@ -93,3 +93,40 @@ The proposed Phase 4 thresholds (raster p95 ≤6 ms, build p95 ≤4 ms, janky ra
 The owner reported sudden horizontal ribbon movement on Accounts and Insights. A phone-width diagnostic reproduced both ribbons resetting from **150 px to 0 px** after their lazy header was evicted by vertical scrolling and recreated. Both unkeyed horizontal lists share the enclosing vertical PageStorage-key hierarchy. The diagnostic intentionally fails its preservation assertion; it is kept outside the default test suite and its source/log are archived, not reported as a passing regression. No evidence yet shows that the selected account or report tab itself changes.
 
 The owner approved assigning independent storage keys. This correctness repair will be applied after the Phase 0 baseline commit and verified before/after, separately from raster optimization. Evidence: [diagnostic log](audit-evidence/phase0-ribbon-diagnostic.txt), [diagnostic source](audit-evidence/phase0-ribbon-probe-test.dart.txt).
+
+## 24 October 2026 — Owner-approved ribbon and layout correctness repair
+
+Accounts and Insights horizontal ribbons now have independent PageStorageKeys. The baseline diagnostic restored **150 → 0 px**; the new [regression tests](../test/ribbon_scroll_storage_test.dart) restore **150 → 150 px** after **1800 px** vertical scrolling evicts the header, on both actual screen widgets. The fixture uses 1000 synthetic transactions at 400 × 800 logical pixels. This measures offset restoration, not selected-account/report changes.
+
+The owner also approved fixing the existing RenderFlex overflows exposed by that fixture. Chart titles/period controls and Insights summary groups can wrap; Accounts segment captions have flexible single-line ellipsis. These changes affect narrow-layout arrangement. No ledger calculation, persistence schema, sync, entitlement or notification code changed. Shared chart layout changes also apply wherever InteractiveChartCard is used.
+
+Validation: [two focused tests, 150 px restored on both screens](audit-evidence/ribbon-storage-after-tests.txt); [251 full-suite tests passed](audit-evidence/ribbon-storage-full-tests.txt); [analysis clean](audit-evidence/ribbon-storage-analysis.txt); [authorized local profile build](audit-evidence/ribbon-layout-profile-build.txt). The profile APK was installed with replacement installation, keeping version 1.8.22+32. No APK or personal screenshot is tracked. Phase 0 captures above remain the pre-repair baseline. This patch is accepted for its regression-test result, not as a measured raster optimization; causal Phase 1 experiments remain pending.
+
+### Post-repair device captures — 24 October 2026
+
+Redmi Note 13 | Tally 1.8.22+32 | AOT profile | native-verified 60 Hz (16.666666 ms). Same scripted four drags and two flings, warmed; all three runs below. These are follow-up observations, not isolated causal A/B results: ribbon keys and approved layout corrections were combined. Accounts run 1 also had a diagnostic screenshot near the capture boundary, so do not use that run to claim a performance delta.
+
+| Screen | Run | Frames | Build p50 / p95 (ms) | Raster p50 / p95 (ms) | Worst build / raster (ms) | Janky |
+|---|---:|---:|---:|---:|---:|---:|
+| accounts | 1 | 355 | 0.643 / 1.658 | 4.119 / 12.346 | 4.025 / 24.111 | 1.69% |
+| accounts | 2 | 378 | 0.66 / 1.749 | 4.12 / 12.148 | 4.026 / 23.797 | 1.852% |
+| accounts | 3 | 423 | 0.757 / 2.085 | 5.87 / 10.673 | 5.933 / 31.913 | 0.946% |
+| insights | 1 | 304 | 0.618 / 1.801 | 4.647 / 12.765 | 3.312 / 24.415 | 2.632% |
+| insights | 2 | 283 | 0.566 / 1.711 | 4.241 / 16.626 | 3.512 / 22.892 | 4.947% |
+| insights | 3 | 306 | 0.61 / 1.921 | 4.299 / 9.998 | 3.062 / 21.447 | 1.307% |
+
+[Accounts raw frames](audit-evidence/ribbon-layout-accounts-60hz.json), [Insights raw frames](audit-evidence/ribbon-layout-insights-60hz.json). Raster tails remain and the proposed performance gate still fails. The correctness repair is retained because the owner approved its visible behavior and the regression tests pass; no >=15% performance gain is asserted.
+
+### Transaction dialog follow-up — 24 October 2026
+
+Protocol: open New Transaction, focus Description, wait for keyboard, dismiss using the barrier; one warm cycle followed by three captures. No text entered or transaction saved. Profile mode, 1.8.22+32, Redmi Note 13, native-verified 60 Hz. A separate private visual check confirmed Description focus and the SwiftKey keyboard; screenshots are not committed. These Flutter timings measure the app surface, not the keyboard process.
+
+| Run | Frames | Build p50 / p95 (ms) | Raster p50 / p95 (ms) | Worst build / raster (ms) | Janky |
+|---|---:|---:|---:|---:|---:|
+| 1 | 88 | 1.407 / 3.374 | 16.486 / 33.512 | 12.012 / 44.273 | 42.045% |
+| 2 | 86 | 1.405 / 4.504 | 12.792 / 26.929 | 14.635 / 43.958 | 30.233% |
+| 3 | 89 | 1.327 / 2.809 | 13.907 / 30.546 | 13.914 / 36.464 | 26.966% |
+
+[Raw dialog captures](audit-evidence/ribbon-layout-transaction-dialog-60hz.json). This interaction has substantially worse raster tails than the six scroll baselines. No before/after dialog optimization or causal diagnosis is claimed. Promo redemption is unavailable in profile under the existing debug-only security policy, so no profile promo benchmark was performed. No entitlement policy was changed.
+
+The phone was restored again after these follow-up captures: OEM Maximum selected, Standard unselected, Android active render rate 120.00001 Hz, system peak 120, min absent, no preferred display-mode override. Ribbon offset preservation remains numerically verified by the widget regressions; no VM-level physical-device offset measurement was taken.

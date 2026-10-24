@@ -135,20 +135,18 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> with Automa
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header: Title, Scope Toggle, and Date Navigator
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      widget.title,
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: onSurface),
-                      overflow: TextOverflow.ellipsis,
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final title = Text(
+                    widget.title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: onSurface,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // Scope Switcher [ Month | Year ]
-                  Container(
+                    overflow: TextOverflow.ellipsis,
+                  );
+                  final scope = Container(
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       color: controlBg,
@@ -161,12 +159,8 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> with Automa
                         _scopeButton('year', LanguageService.tr('scope_year'), onSurface),
                       ],
                     ),
-                  ),
-
-                  const SizedBox(width: 6),
-
-                  // Period Navigator (< Label >)
-                  Container(
+                  );
+                  final period = Container(
                     decoration: BoxDecoration(
                       color: controlBg,
                       borderRadius: BorderRadius.circular(16),
@@ -175,7 +169,11 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> with Automa
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: Icon(Icons.chevron_left, color: onSurface.withValues(alpha: 0.7), size: 18),
+                          icon: Icon(
+                            Icons.chevron_left,
+                            color: onSurface.withValues(alpha: 0.7),
+                            size: 18,
+                          ),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                           onPressed: _prevPeriod,
@@ -184,77 +182,133 @@ class _InteractiveChartCardState extends State<InteractiveChartCard> with Automa
                           _scope == 'year'
                               ? '$_year'
                               : '${_months[_month - 1].substring(0, 3)} $_year',
-                          style: TextStyle(color: onSurface, fontWeight: FontWeight.bold, fontSize: 11),
+                          style: TextStyle(
+                            color: onSurface,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.chevron_right, color: onSurface.withValues(alpha: 0.7), size: 18),
+                          icon: Icon(
+                            Icons.chevron_right,
+                            color: onSurface.withValues(alpha: 0.7),
+                            size: 18,
+                          ),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                           onPressed: _nextPeriod,
                         ),
                       ],
                     ),
-                  ),
-                ],
+                  );
+                  if (constraints.maxWidth < 420) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        title,
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [scope, period],
+                        ),
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: title),
+                      const SizedBox(width: 8),
+                      scope,
+                      const SizedBox(width: 6),
+                      period,
+                    ],
+                  );
+                },
               ),
 
               const SizedBox(height: 12),
 
               // Control Strip: Metric Filter (All / Spend / Income) & Chart Type (Line / Bar / Pie)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Filter Chips
-                  Container(
-                    padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(
-                      color: controlBg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _filterButton('all', LanguageService.tr('all_net'), onSurface),
-                        _filterButton('spend', LanguageService.tr('spend'), onSurface),
-                        _filterButton('income', LanguageService.tr('income'), onSurface),
-                      ],
-                    ),
-                  ),
+              SizedBox(
+                width: double.infinity,
+                child: Wrap(
+                  runSpacing: 6,
+                  alignment: WrapAlignment.spaceBetween,
+                  children: [
+                    // Filter Chips
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: controlBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Wrap(
+                        runSpacing: 6,
 
-                  // Chart View Mode Selector (Line / Bar / Pie)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: controlBg,
-                      borderRadius: BorderRadius.circular(12),
+                        children: [
+                          _filterButton('all', LanguageService.tr('all_net'), onSurface),
+                          _filterButton('spend', LanguageService.tr('spend'), onSurface),
+                          _filterButton('income', LanguageService.tr('income'), onSurface),
+                        ],
+                      ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.show_chart, size: 18, color: _chartType == 'line' ? primaryColor : onSurface.withValues(alpha: 0.38)),
-                          tooltip: LanguageService.tr('line_graph'),
-                          constraints: const BoxConstraints(minWidth: 32, minHeight: 30),
-                          padding: EdgeInsets.zero,
-                          onPressed: () => setState(() => _chartType = 'line'),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.bar_chart_rounded, size: 18, color: _chartType == 'bar' ? primaryColor : onSurface.withValues(alpha: 0.38)),
-                          tooltip: LanguageService.tr('bar_chart'),
-                          constraints: const BoxConstraints(minWidth: 32, minHeight: 30),
-                          padding: EdgeInsets.zero,
-                          onPressed: () => setState(() => _chartType = 'bar'),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.pie_chart_outline, size: 18, color: _chartType == 'pie' ? primaryColor : onSurface.withValues(alpha: 0.38)),
-                          tooltip: LanguageService.tr('pie_chart'),
-                          constraints: const BoxConstraints(minWidth: 32, minHeight: 30),
-                          padding: EdgeInsets.zero,
-                          onPressed: () => setState(() => _chartType = 'pie'),
-                        ),
-                      ],
+
+                    // Chart View Mode Selector (Line / Bar / Pie)
+                    Container(
+                      decoration: BoxDecoration(
+                        color: controlBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Wrap(
+                        runSpacing: 6,
+
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              Icons.show_chart,
+                              size: 18,
+                              color: _chartType == 'line'
+                                  ? primaryColor
+                                  : onSurface.withValues(alpha: 0.38),
+                            ),
+                            tooltip: LanguageService.tr('line_graph'),
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 30),
+                            padding: EdgeInsets.zero,
+                            onPressed: () => setState(() => _chartType = 'line'),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.bar_chart_rounded,
+                              size: 18,
+                              color: _chartType == 'bar'
+                                  ? primaryColor
+                                  : onSurface.withValues(alpha: 0.38),
+                            ),
+                            tooltip: LanguageService.tr('bar_chart'),
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 30),
+                            padding: EdgeInsets.zero,
+                            onPressed: () => setState(() => _chartType = 'bar'),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.pie_chart_outline,
+                              size: 18,
+                              color: _chartType == 'pie'
+                                  ? primaryColor
+                                  : onSurface.withValues(alpha: 0.38),
+                            ),
+                            tooltip: LanguageService.tr('pie_chart'),
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 30),
+                            padding: EdgeInsets.zero,
+                            onPressed: () => setState(() => _chartType = 'pie'),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
 
               const SizedBox(height: 14),
