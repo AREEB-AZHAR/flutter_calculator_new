@@ -1051,10 +1051,10 @@ class MonetizationService {
           children: [
             Icon(Icons.redeem_rounded, color: Colors.amber),
             SizedBox(width: 8),
-            Text(
+            Expanded(child: Text(
               'Redeem Promo Code',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            )),
           ],
         ),
         content: Column(
