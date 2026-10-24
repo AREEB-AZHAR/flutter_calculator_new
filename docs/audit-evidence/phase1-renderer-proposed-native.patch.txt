@@ -14,3 +14,5 @@ Local profile validation is required after application. No release build or publ
 +            android:name="io.flutter.embedding.android.EnableImpeller"
 +            android:value="false" />
      </application>
+
+Final status (24 October 2026): NOT APPLIED. The owner requested the best decision for all user builds; the supported framework default is retained because a single-device, mixed-result comparison does not justify a deprecated global opt-out. See phase1-renderer-final-decision.json. This proposal is retained as historical review evidence only.

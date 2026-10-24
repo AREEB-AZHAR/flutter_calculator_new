@@ -1,0 +1,20 @@
+{
+  "ownerDirection": "Choose best practice for all user builds, not just this phone",
+  "ownerSkiaFeelFeedback": "Clearly better overall at 60 Hz",
+  "finalPolicy": "Keep Flutter supported renderer default; no global opt-out",
+  "nativeProposalApplied": false,
+  "rationale": [
+    "Only one physical device was benchmarked",
+    "Dashboard and Accounts were mixed",
+    "Pinned SDK reports opt-out deprecation",
+    "Several flows improve, but not a universal root-cause fix"
+  ],
+  "rowExperimentRetained": false,
+  "sourceRuntimeMatchesCommit": "897fd64",
+  "finalEngineImpellerEnabled": true,
+  "phoneOriginalRefreshRestoredHz": 120.00001,
+  "benchmarkRefreshHz": 60,
+  "profileCapturesInRendererMatrix": 42,
+  "releaseOr120HzBenchmark": false,
+  "approvalReviewSuperseded": "phase1-renderer-adoption-review.json"
+}

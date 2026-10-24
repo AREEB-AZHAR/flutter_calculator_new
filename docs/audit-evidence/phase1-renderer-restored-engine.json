@@ -1,0 +1,13 @@
+{
+  "utc": "2026-10-24T18:43:01.762Z",
+  "package": "com.areeb.balance_tracker",
+  "processId": 30217,
+  "mode": "profile",
+  "engineExtension": "ext.ui.window.impellerEnabled",
+  "engineImpellerEnabled": true,
+  "renderer": "Impeller",
+  "engineLogs": [
+    "[IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).",
+    "[IMPORTANT:flutter/shell/platform/android/android_context_gl_impeller.cc(104)] Using the Impeller rendering backend (OpenGLES)."
+  ]
+}

@@ -160,3 +160,13 @@ H4 used that same binary for **42 profile captures**, seven flows × two rendere
 Five flows meet a numeric criterion: Insights, Goals, Profile, Transactions and transaction dialog. Dashboard/Accounts do not. Insights raster p95 **16.450/13.998/15.663 → 5.571/5.279/5.188 ms**; dialog jank **25.926/27.160/28.571% → 4/8/0%**. Goals has only 1/1/2 initial janky frames and worsened raster p95 in two runs; its qualifying result is specifically the janky ratio. The owner reported Skia **clearly better overall** at the same 60 Hz, meeting the subjective acceptance alternative. This is evidence that renderer choice contributes in several flows, not proof of a single permanent root cause.
 
 Final original-row source: **251 tests passed**, clean analysis, structural boundary counts **2/2/2**, four capture-math tests passed. Proposed global native configuration is in [the reviewable manifest patch](audit-evidence/phase1-renderer-proposed-native.patch.txt), pending separate owner approval as required by the mission's native-change rule. The SDK warns that Impeller opt-out is deprecated. No release or 120 Hz benchmark was taken; residual jank and proposed Phase 4 gate failures remain. This does not implement watchdog/tier/SurfaceCard/CI phases.
+
+### Final H4 adoption/restoration decision — 24 October 2026
+
+The owner's all-user direction resolves the native proposal: **keep the supported Flutter default**, leave the manifest unchanged. One physical device, mixed results and the pinned engine's deprecation warning are insufficient for a global renderer override. [Final machine-readable decision](audit-evidence/phase1-renderer-final-decision.json); [default engine restored](audit-evidence/phase1-renderer-restored-engine.json); [original phone preference restored](audit-evidence/phase1-renderer-phone-restored.json). The positive five-flow/owner-feel findings remain valid observations for further device testing, not a universal fix. Final runtime code matches pre-experiment 897fd64; all row changes are reverted. **251 tests, three structural probes and four capture-math tests pass; analysis is clean.**
+
+| Measured device | OS | SDK / mode | Measured refresh | Scope | Distribution decision |
+|---|---|---|---|---|---|
+| Redmi Note 13 (23129RAA4G) | Android 15 | Flutter 3.41.3 / AOT profile | Native 60 Hz | 7 renderer flows, 3 repetitions per configuration | Keep framework default; no global opt-out |
+
+Other devices, release builds and 120 Hz performance were not benchmarked. Remaining mission phases, including the watchdog/tier scope and automation gates, are not implemented by these experiments.

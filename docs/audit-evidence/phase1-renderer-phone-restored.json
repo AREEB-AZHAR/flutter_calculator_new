@@ -1,0 +1,14 @@
+{
+  "recordedAt": "2026-10-24T23:43:18.2095684+05:00",
+  "oemMaximumSelected": true,
+  "oemStandardSelected": false,
+  "peakRefreshRate": "120",
+  "minRefreshRate": "null",
+  "preferredMode": "User preferred display mode: null",
+  "activeRenderHz": "120.00001",
+  "appVersion": "1.8.22",
+  "appVersionCode": "32",
+  "restoredProfileApkSha256": "17825D36B8FDD33D5875850FB9002556F058FA6519E6FE26E347263036DBB665",
+  "defaultEngineImpellerEnabled": true,
+  "allOriginalRowBoundariesRestored": true
+}
