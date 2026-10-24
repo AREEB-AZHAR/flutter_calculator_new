@@ -1,0 +1,16 @@
+{
+  "sourceCommit": "0819b9287c056a2ede5193541a3fba727141bd01",
+  "variant": "A: forced BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics())",
+  "profileApkSha256": "17825D36B8FDD33D5875850FB9002556F058FA6519E6FE26E347263036DBB665",
+  "package": "com.areeb.balance_tracker",
+  "version": "1.8.22+32",
+  "mode": "profile",
+  "refreshHz": 60,
+  "protocol": "3 captures per screen, 4 slow drags + 2 flings, warmed",
+  "screens": [
+    "dashboard",
+    "accounts",
+    "insights"
+  ],
+  "notes": "Fresh baseline after ribbon/layout repair. Offline banner observed before baseline; must check state in B. No financial save, selection changes or sync upload/download performed."
+}

@@ -1,0 +1,16 @@
+{
+  "baseCommit": "0819b9287c056a2ede5193541a3fba727141bd01",
+  "variant": "B: platform-default MaterialScrollBehavior physics; getScrollPhysics override removed",
+  "profileApkSha256": "D7F3130A3ED1217030E0BF9DA1011BCA7A38F5B10ADF0F8781CFE202233D6473",
+  "package": "com.areeb.balance_tracker",
+  "version": "1.8.22+32",
+  "mode": "profile",
+  "intendedRefreshHz": 60,
+  "onlyRuntimeFileChanged": "lib/main.dart",
+  "dragDevicesChanged": false,
+  "explicitWidgetPhysicsChanged": false,
+  "nativeOrEntitlementChanges": false,
+  "dashboardOfflineBannerBeforeCapture": false,
+  "offlineBannerAfterLastCapture": false,
+  "ownerFeedback": "only on 60hz it feels okay"
+}

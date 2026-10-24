@@ -1,0 +1,557 @@
+{
+  "phase": "1 H2",
+  "device": "Redmi Note 13 23129RAA4G",
+  "app": "1.8.22+32",
+  "mode": "profile",
+  "nativeRefreshHz": 60.0000024000001,
+  "budgetMs": 16.666666,
+  "comparison": "B versus return A; positive percent means improvement",
+  "decision": "revert",
+  "reason": "No tested screen improves raster p95 or janky ratio by at least 15 percent consistently across all three repetitions. Owner feedback does not explicitly distinguish physics at the same rate.",
+  "initialBaselineExcludedFromCausalComparison": true,
+  "comparisons": [
+    {
+      "screen": "dashboard",
+      "runs": [
+        {
+          "run": 1,
+          "baseline": {
+            "frames": 258,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 120.00000762939453,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.493,
+              "p95": 1.275,
+              "worst": 4.484
+            },
+            "rasterMs": {
+              "p50": 4.526,
+              "p95": 15.872,
+              "worst": 23.669
+            },
+            "worstStageMs": 23.669,
+            "worstTotalSpanMs": 32.117,
+            "jankyFrames": 12,
+            "jankyRatio": 0.046511627906976744,
+            "jankyPercent": 4.651162790697675,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.716,
+              "worst": 517.916
+            }
+          },
+          "variant": {
+            "frames": 225,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 60.000003814697266,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.43,
+              "p95": 1.64,
+              "worst": 1.906
+            },
+            "rasterMs": {
+              "p50": 5.029,
+              "p95": 16.085,
+              "worst": 26.804
+            },
+            "worstStageMs": 26.804,
+            "worstTotalSpanMs": 30.788,
+            "jankyFrames": 11,
+            "jankyRatio": 0.04888888888888889,
+            "jankyPercent": 4.888888888888889,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.724,
+              "worst": 768.443
+            }
+          },
+          "rasterP95ImprovementPercent": -1.342,
+          "jankyRatioImprovementPercent": -5.111
+        },
+        {
+          "run": 2,
+          "baseline": {
+            "frames": 257,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 120.00000762939453,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.483,
+              "p95": 1.105,
+              "worst": 4.128
+            },
+            "rasterMs": {
+              "p50": 4.312,
+              "p95": 17.448,
+              "worst": 25.875
+            },
+            "worstStageMs": 25.875,
+            "worstTotalSpanMs": 41.2,
+            "jankyFrames": 17,
+            "jankyRatio": 0.06614785992217899,
+            "jankyPercent": 6.614785992217899,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.72,
+              "worst": 551.331
+            }
+          },
+          "variant": {
+            "frames": 236,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 60.000003814697266,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.478,
+              "p95": 1.77,
+              "worst": 4.064
+            },
+            "rasterMs": {
+              "p50": 4.556,
+              "p95": 15.837,
+              "worst": 22.631
+            },
+            "worstStageMs": 22.631,
+            "worstTotalSpanMs": 28.641,
+            "jankyFrames": 10,
+            "jankyRatio": 0.0423728813559322,
+            "jankyPercent": 4.23728813559322,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.722,
+              "worst": 801.853
+            }
+          },
+          "rasterP95ImprovementPercent": 9.233,
+          "jankyRatioImprovementPercent": 35.942
+        },
+        {
+          "run": 3,
+          "baseline": {
+            "frames": 259,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 120.00000762939453,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.47,
+              "p95": 1.119,
+              "worst": 4.122
+            },
+            "rasterMs": {
+              "p50": 4.366,
+              "p95": 17.214,
+              "worst": 23.982
+            },
+            "worstStageMs": 23.982,
+            "worstTotalSpanMs": 30.542,
+            "jankyFrames": 14,
+            "jankyRatio": 0.05405405405405406,
+            "jankyPercent": 5.405405405405405,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.724,
+              "worst": 517.905
+            }
+          },
+          "variant": {
+            "frames": 226,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 60.000003814697266,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.462,
+              "p95": 1.644,
+              "worst": 2.049
+            },
+            "rasterMs": {
+              "p50": 5.094,
+              "p95": 13.852,
+              "worst": 24.463
+            },
+            "worstStageMs": 24.463,
+            "worstTotalSpanMs": 32.651,
+            "jankyFrames": 7,
+            "jankyRatio": 0.030973451327433628,
+            "jankyPercent": 3.0973451327433628,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.715,
+              "worst": 801.998
+            }
+          },
+          "rasterP95ImprovementPercent": 19.531,
+          "jankyRatioImprovementPercent": 42.699
+        }
+      ],
+      "rasterP95PassAllThree": false,
+      "jankyRatioPassAllThree": false,
+      "qualifiesForAdoption": false
+    },
+    {
+      "screen": "accounts",
+      "runs": [
+        {
+          "run": 1,
+          "baseline": {
+            "frames": 355,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 120.00000762939453,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.645,
+              "p95": 1.673,
+              "worst": 3.851
+            },
+            "rasterMs": {
+              "p50": 4.055,
+              "p95": 12.045,
+              "worst": 23.615
+            },
+            "worstStageMs": 23.615,
+            "worstTotalSpanMs": 27.418,
+            "jankyFrames": 4,
+            "jankyRatio": 0.011267605633802818,
+            "jankyPercent": 1.1267605633802817,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.712,
+              "worst": 467.807
+            }
+          },
+          "variant": {
+            "frames": 312,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 60.000003814697266,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.632,
+              "p95": 1.732,
+              "worst": 3.891
+            },
+            "rasterMs": {
+              "p50": 4.059,
+              "p95": 14.585,
+              "worst": 25.572
+            },
+            "worstStageMs": 25.572,
+            "worstTotalSpanMs": 28.908,
+            "jankyFrames": 9,
+            "jankyRatio": 0.028846153846153848,
+            "jankyPercent": 2.8846153846153846,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.714,
+              "worst": 451.1
+            }
+          },
+          "rasterP95ImprovementPercent": -21.088,
+          "jankyRatioImprovementPercent": -156.01
+        },
+        {
+          "run": 2,
+          "baseline": {
+            "frames": 354,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 120.00000762939453,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.677,
+              "p95": 1.778,
+              "worst": 4.065
+            },
+            "rasterMs": {
+              "p50": 4.098,
+              "p95": 7.142,
+              "worst": 23.099
+            },
+            "worstStageMs": 23.099,
+            "worstTotalSpanMs": 25.926,
+            "jankyFrames": 5,
+            "jankyRatio": 0.014124293785310734,
+            "jankyPercent": 1.4124293785310735,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.714,
+              "worst": 484.472
+            }
+          },
+          "variant": {
+            "frames": 312,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 60.000003814697266,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.656,
+              "p95": 1.922,
+              "worst": 4.61
+            },
+            "rasterMs": {
+              "p50": 4.143,
+              "p95": 12.786,
+              "worst": 26.358
+            },
+            "worstStageMs": 26.358,
+            "worstTotalSpanMs": 29.465,
+            "jankyFrames": 8,
+            "jankyRatio": 0.02564102564102564,
+            "jankyPercent": 2.564102564102564,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.719,
+              "worst": 467.797
+            }
+          },
+          "rasterP95ImprovementPercent": -79.025,
+          "jankyRatioImprovementPercent": -81.538
+        },
+        {
+          "run": 3,
+          "baseline": {
+            "frames": 382,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 120.00000762939453,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.71,
+              "p95": 1.726,
+              "worst": 3.98
+            },
+            "rasterMs": {
+              "p50": 4.107,
+              "p95": 5.392,
+              "worst": 22.662
+            },
+            "worstStageMs": 22.662,
+            "worstTotalSpanMs": 25.038,
+            "jankyFrames": 3,
+            "jankyRatio": 0.007853403141361256,
+            "jankyPercent": 0.7853403141361256,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.717,
+              "worst": 467.822
+            }
+          },
+          "variant": {
+            "frames": 311,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 60.000003814697266,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.642,
+              "p95": 1.769,
+              "worst": 3.973
+            },
+            "rasterMs": {
+              "p50": 4.045,
+              "p95": 12.158,
+              "worst": 24.709
+            },
+            "worstStageMs": 24.709,
+            "worstTotalSpanMs": 28.023,
+            "jankyFrames": 5,
+            "jankyRatio": 0.01607717041800643,
+            "jankyPercent": 1.607717041800643,
+            "vsyncIntervalMs": {
+              "p50": 16.706,
+              "p95": 16.713,
+              "worst": 451.118
+            }
+          },
+          "rasterP95ImprovementPercent": -125.482,
+          "jankyRatioImprovementPercent": -104.716
+        }
+      ],
+      "rasterP95PassAllThree": false,
+      "jankyRatioPassAllThree": false,
+      "qualifiesForAdoption": false
+    },
+    {
+      "screen": "insights",
+      "runs": [
+        {
+          "run": 1,
+          "baseline": {
+            "frames": 296,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 120.00000762939453,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.601,
+              "p95": 1.694,
+              "worst": 2.969
+            },
+            "rasterMs": {
+              "p50": 4.253,
+              "p95": 14.71,
+              "worst": 22.508
+            },
+            "worstStageMs": 22.508,
+            "worstTotalSpanMs": 30.297,
+            "jankyFrames": 12,
+            "jankyRatio": 0.04054054054054054,
+            "jankyPercent": 4.054054054054054,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.714,
+              "worst": 451.132
+            }
+          },
+          "variant": {
+            "frames": 251,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 60.000003814697266,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.482,
+              "p95": 2.081,
+              "worst": 2.976
+            },
+            "rasterMs": {
+              "p50": 4.476,
+              "p95": 16.521,
+              "worst": 22.348
+            },
+            "worstStageMs": 22.348,
+            "worstTotalSpanMs": 28.415,
+            "jankyFrames": 12,
+            "jankyRatio": 0.04780876494023904,
+            "jankyPercent": 4.780876494023905,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.714,
+              "worst": 551.358
+            }
+          },
+          "rasterP95ImprovementPercent": -12.311,
+          "jankyRatioImprovementPercent": -17.928
+        },
+        {
+          "run": 2,
+          "baseline": {
+            "frames": 281,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 120.00000762939453,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.574,
+              "p95": 1.745,
+              "worst": 3.787
+            },
+            "rasterMs": {
+              "p50": 4.22,
+              "p95": 16.548,
+              "worst": 23.274
+            },
+            "worstStageMs": 23.274,
+            "worstTotalSpanMs": 29.274,
+            "jankyFrames": 13,
+            "jankyRatio": 0.046263345195729534,
+            "jankyPercent": 4.6263345195729535,
+            "vsyncIntervalMs": {
+              "p50": 16.706,
+              "p95": 16.716,
+              "worst": 467.829
+            }
+          },
+          "variant": {
+            "frames": 273,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 60.000003814697266,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.566,
+              "p95": 1.913,
+              "worst": 4.204
+            },
+            "rasterMs": {
+              "p50": 4.757,
+              "p95": 14.51,
+              "worst": 26.424
+            },
+            "worstStageMs": 26.424,
+            "worstTotalSpanMs": 31.731,
+            "jankyFrames": 8,
+            "jankyRatio": 0.029304029304029304,
+            "jankyPercent": 2.93040293040293,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.716,
+              "worst": 568.053
+            }
+          },
+          "rasterP95ImprovementPercent": 12.316,
+          "jankyRatioImprovementPercent": 36.658
+        },
+        {
+          "run": 3,
+          "baseline": {
+            "frames": 307,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 120.00000762939453,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.722,
+              "p95": 1.805,
+              "worst": 3.909
+            },
+            "rasterMs": {
+              "p50": 4.283,
+              "p95": 15.232,
+              "worst": 22.99
+            },
+            "worstStageMs": 22.99,
+            "worstTotalSpanMs": 28.868,
+            "jankyFrames": 13,
+            "jankyRatio": 0.04234527687296417,
+            "jankyPercent": 4.234527687296417,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.716,
+              "worst": 467.792
+            }
+          },
+          "variant": {
+            "frames": 274,
+            "effectiveHz": 60.0000024000001,
+            "reportedDisplayHz": 60.000003814697266,
+            "budgetMs": 16.666666,
+            "buildMs": {
+              "p50": 0.513,
+              "p95": 1.887,
+              "worst": 3.461
+            },
+            "rasterMs": {
+              "p50": 4.46,
+              "p95": 16.954,
+              "worst": 23.695
+            },
+            "worstStageMs": 23.695,
+            "worstTotalSpanMs": 27.939,
+            "jankyFrames": 14,
+            "jankyRatio": 0.051094890510948905,
+            "jankyPercent": 5.109489051094891,
+            "vsyncIntervalMs": {
+              "p50": 16.707,
+              "p95": 16.717,
+              "worst": 551.337
+            }
+          },
+          "rasterP95ImprovementPercent": -11.305,
+          "jankyRatioImprovementPercent": -20.663
+        }
+      ],
+      "rasterP95PassAllThree": false,
+      "jankyRatioPassAllThree": false,
+      "qualifiesForAdoption": false
+    }
+  ],
+  "limitations": [
+    "Connectivity banner only visually checked at configuration boundaries, not every frame",
+    "No 120 Hz capture",
+    "Only Dashboard, Accounts and Insights tested",
+    "No randomized variant order; residual run-to-run variation remains"
+  ]
+}

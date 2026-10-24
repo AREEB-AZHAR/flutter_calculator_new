@@ -1,0 +1,25 @@
+diff --git a/lib/main.dart b/lib/main.dart
+index 08a6485..23cb3b4 100644
+--- a/lib/main.dart
++++ b/lib/main.dart
+@@ -17,8 +17,7 @@ import 'services/state.dart';
+ import 'utils/constants.dart';
+ import 'services/firebase_security_bootstrap.dart';
+
+-/// Custom high-performance scroll behavior enabling buttery smooth 60/120 FPS
+-/// momentum and physics across touchscreens, trackpads, and mouse wheels.
++/// Platform scroll physics with touch, mouse, trackpad and stylus dragging.
+ class AppScrollBehavior extends MaterialScrollBehavior {
+   const AppScrollBehavior();
+
+@@ -30,10 +29,6 @@ class AppScrollBehavior extends MaterialScrollBehavior {
+         PointerDeviceKind.stylus,
+       };
+
+-  @override
+-  ScrollPhysics getScrollPhysics(BuildContext context) {
+-    return const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+-  }
+ }
+
+ void main() async {

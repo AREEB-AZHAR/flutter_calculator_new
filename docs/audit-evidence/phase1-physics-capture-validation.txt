@@ -1,0 +1,2 @@
+27 profile captures validated: 3 variants x 3 screens x 3 runs; raw statistics recompute exactly; package 1.8.22+32; native surface 60 Hz before/after each.
+9 paired deltas validated; no screen qualifies for adoption across all three runs.

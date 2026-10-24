@@ -1,0 +1,44 @@
+import 'dart:ui' show PointerDeviceKind;
+
+import 'package:balance_tracker/main.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+    testWidgets('edge drag follows $platform physics', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(platform: platform),
+          scrollBehavior: const AppScrollBehavior(),
+          home: Scaffold(
+            body: ListView.builder(
+              itemCount: 40,
+              itemExtent: 64,
+              itemBuilder: (_, index) => Text('Row $index'),
+            ),
+          ),
+        ),
+      );
+      final position = tester
+          .state<ScrollableState>(find.byType(Scrollable))
+          .position;
+      final gesture = await tester.startGesture(const Offset(200, 200));
+      await gesture.moveBy(const Offset(0, 150));
+      await tester.pump();
+      if (platform == TargetPlatform.android) {
+        expect(position.pixels, position.minScrollExtent);
+      } else {
+        expect(position.pixels, lessThan(position.minScrollExtent));
+      }
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(const AppScrollBehavior().dragDevices, {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+        PointerDeviceKind.stylus,
+      });
+    });
+  }
+}
