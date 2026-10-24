@@ -1544,3 +1544,10 @@ The output executable will be generated at `build/windows/x64/runner/Release/tal
 - **v1.1.1**:
   - Profile currency picker bugfix, login crash protection, inline loading spinner, and keyboard latency optimization.
 - **v1.0.0**: Initial release with authentication, transactions, and basic dashboard.
+
+
+## 24 October 2026 — Profile-mode control experiment (1.8.22+32)
+
+Phase 0 now has three physical-device **AOT profile** captures per control/screen on the **Redmi Note 13 at native-verified 60 Hz**. Probe B raster p50 was **3.620 / 3.679 / 3.930 ms**, selecting the mission's **marginal-device** branch. Tally Dashboard raster p95 was **14.723 / 17.009 / 15.376 ms**, while its build p95 was **1.289 / 1.288 / 1.335 ms**. These are measurements, not an A/B optimization result; no rendering refactor was adopted. The full three-run matrix for all main tabs and Transactions, measurement commands and pending gates are in [PERFORMANCE_BUDGET.md](docs/PERFORMANCE_BUDGET.md). **249 Flutter tests and four capture-math tests passed; analysis was clean.**
+
+The owner explicitly authorized local profile APK builds/installation for this mission, superseding the earlier no-build restriction for these experiments only. No version bump, deployment, store operation or runtime dependency was added. Phase commits remain local until the owner approves a push.

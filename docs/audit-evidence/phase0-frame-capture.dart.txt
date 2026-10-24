@@ -1,0 +1,72 @@
+import 'dart:convert';
+import 'dart:developer' as developer;
+import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/widgets.dart';
+
+void installCapture({required String app}) {
+  if (!kProfileMode) throw StateError('Phase 0 capture requires profile mode.');
+  WidgetsFlutterBinding.ensureInitialized();
+  var recording = false;
+  var truncated = false;
+  var frames = <List<num>>[];
+  Map<String, Object?> info() {
+    final view = ui.PlatformDispatcher.instance.views.first;
+    return {
+      'app': app,
+      'mode': 'profile',
+      'displayHz': view.display.refreshRate,
+      'physicalWidth': view.physicalSize.width,
+      'physicalHeight': view.physicalSize.height,
+      'devicePixelRatio': view.devicePixelRatio,
+      'truncated': truncated,
+    };
+  }
+
+  SchedulerBinding.instance.addTimingsCallback((timings) {
+    if (!recording) return;
+    final hz = ui.PlatformDispatcher.instance.views.first.display.refreshRate;
+    for (final f in timings) {
+      if (frames.length >= 10000) {
+        truncated = true;
+        break;
+      }
+      frames.add([
+        f.frameNumber,
+        f.timestampInMicroseconds(ui.FramePhase.vsyncStart),
+        f.buildDuration.inMicroseconds,
+        f.rasterDuration.inMicroseconds,
+        f.totalSpan.inMicroseconds,
+        hz,
+      ]);
+    }
+  });
+  for (final action in ['info', 'begin', 'end']) {
+    developer.registerExtension('ext.tallyperf.$action', (
+      method,
+      parameters,
+    ) async {
+      if (action == 'begin') {
+        frames = [];
+        truncated = false;
+        recording = true;
+      }
+      if (action == 'end') recording = false;
+      return developer.ServiceExtensionResponse.result(
+        jsonEncode({
+          ...info(),
+          if (action == 'end') 'frames': frames,
+          'columns': [
+            'frameNumber',
+            'vsyncStartUs',
+            'buildUs',
+            'rasterUs',
+            'totalSpanUs',
+            'displayHz',
+          ],
+        }),
+      );
+    });
+  }
+}

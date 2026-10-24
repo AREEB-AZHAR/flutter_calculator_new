@@ -71,3 +71,8 @@ All **249 Flutter tests passed**, including **19 focused tests**, and static ana
 The phone was no longer connected when final delivery resumed, and the earlier attachment terminal had ended; no further live verification was possible. No APK was built or installed. Real-device checks verified transaction/promo opening, keyboard show/hide, budget-add opening and scrolling across Dashboard, Accounts and Insights. Dialogs were cancelled; no financial record was created, edited or deleted.
 
 For public README screenshots, use a sample-data account and capture the add-budget panel, transaction keyboard layout and promo editor without personal identifiers. Private device screenshots inspected during diagnosis are intentionally not committed.
+
+
+## 24 October 2026 — Correction from physical profile-mode controls
+
+The earlier debug keyboard traces demonstrated background rebuilds and intrinsic layout work; they did **not** establish build time as the cause of the persistent release scrolling symptom. The [new AOT-profile matrix](PERFORMANCE_BUDGET.md) at native-verified 60 Hz shows Dashboard build p95 **1.289 / 1.288 / 1.335 ms**, raster p95 **14.723 / 17.009 / 15.376 ms**, and **3.891 / 8.136 / 4.461%** janky frames. Probe B raster p50 **3.620 / 3.679 / 3.930 ms** selects the marginal-device branch rather than a universal ≥6 ms device floor. These measurements justify testing raster/motion hypotheses; they do not yet identify a single root cause. Local profile builds were explicitly authorized for this new mission; the version remains 1.8.22+32. All original historical evidence above is retained.

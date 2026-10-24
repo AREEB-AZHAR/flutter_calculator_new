@@ -1,0 +1,3 @@
+import 'lib/perf_capture.dart';
+import 'package:balance_tracker/main.dart' as tally;
+void main() { installCapture(app: 'Tally 1.8.22+32'); tally.main(); }

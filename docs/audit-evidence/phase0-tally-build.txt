@@ -1,0 +1,12 @@
+Note: C:\Users\areeb\AppData\Local\Pub\Cache\hosted\pub.dev\cloud_firestore-6.10.0\android\src\main\java\io\flutter\plugins\firebase\firestore\utils\PipelineStageHandlers.java uses unchecked or unsafe operations.
+Running Gradle task 'assembleProfile'...
+Note: Recompile with -Xlint:unchecked for details.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+3 warnings
+Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 30916 bytes (98.1% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+Running Gradle task 'assembleProfile'...                          318.2s
+√ Built build\app\outputs\flutter-apk\app-profile.apk (46.8MB)

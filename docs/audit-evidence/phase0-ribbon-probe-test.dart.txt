@@ -1,0 +1,50 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:balance_tracker/models/transaction.dart';
+import 'package:balance_tracker/screens/accounts_screen.dart';
+import 'package:balance_tracker/screens/insights_screen.dart';
+import 'package:balance_tracker/services/state.dart';
+import 'package:balance_tracker/services/monetization_service.dart';
+
+void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({'tally_tour_accounts_completed': true});
+    AppState.currentUser = null;
+    AppState.transactionsNotifier.value = List.generate(1000, (i) => Transaction(
+      id: '$i', title: 'Sample $i', amount: 1, date: DateTime.now(),
+      isIncome: i.isEven, category: 'Food & Dining', account: i.isEven ? 'Main' : 'Cash'));
+    AppState.accountsNotifier.value = ['Main', 'Cash', 'Credit Card', 'Digital Wallet'];
+    AppState.loansNotifier.value = [];
+    AppState.goalsNotifier.value = [];
+    AppState.budgetsNotifier.value = {'Food & Dining': 100};
+    MonetizationService.resetToLoggedOut();
+    MonetizationService.isProUnlockedNotifier.value = true;
+  });
+  for (final config in [(const AccountsScreen(), 'wallets_scroll'), (const InsightsScreen(), 'insights_scroll')]) {
+    testWidgets('ribbon offset persists independently of ${config.$2}', (tester) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(MaterialApp(home: config.$1));
+      await tester.pumpAndSettle();
+      final horizontal = find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.right);
+      final vertical = find.descendant(of: find.byKey(PageStorageKey(config.$2)),
+        matching: find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down)).first;
+      final ribbon = tester.state<ScrollableState>(horizontal.first).position;
+      ribbon.jumpTo(150);
+      await tester.pumpAndSettle();
+      final saved = ribbon.pixels;
+      final page = tester.state<ScrollableState>(vertical).position;
+      page.jumpTo(1800);
+      await tester.pumpAndSettle();
+      debugPrint('${config.$2}: ribbon evicted=${horizontal.evaluate().isEmpty}, saved=$saved');
+      page.jumpTo(0);
+      await tester.pumpAndSettle();
+      final restored = tester.state<ScrollableState>(horizontal.first).position.pixels;
+      debugPrint('${config.$2}: ribbon restored=$restored; expected=$saved');
+      expect(restored, closeTo(saved, .1));
+    });
+  }
+}
