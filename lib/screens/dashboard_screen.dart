@@ -137,6 +137,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               DropdownButtonFormField<String>(
+                                isExpanded: true,
                                 initialValue: newCat,
                                 dropdownColor: Theme.of(context).colorScheme.surface,
                                 style: TextStyle(color: Theme.of(context).colorScheme.onSurface),

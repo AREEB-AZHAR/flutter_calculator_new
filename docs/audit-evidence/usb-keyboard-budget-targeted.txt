@@ -1,0 +1,65 @@
+00:00 +0: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/keyboard_and_budget_regression_test.dart
+00:00 +0: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/keyboard_and_budget_regression_test.dart: (setUpAll)
+00:00 +0: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/keyboard_and_budget_regression_test.dart: budget category defaults to an available item and adds without changing selection
+00:01 +1: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/keyboard_and_budget_regression_test.dart: all categories budgeted shows a message instead of constructing invalid dropdown
+00:01 +2: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/keyboard_and_budget_regression_test.dart: keyboard insets do not rebuild tab content; root dialogs retain keyboard insets
+00:01 +3: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/keyboard_and_budget_regression_test.dart: transaction form remains scrollable above keyboard on a narrow phone
+00:01 +4: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/keyboard_and_budget_regression_test.dart: promo form fits a narrow phone with keyboard and cancels safely
+00:02 +5: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/keyboard_and_budget_regression_test.dart: (tearDownAll)
+00:02 +5: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart
+00:02 +5: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: (setUpAll)
+00:02 +5: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: FREEVIP hides ads, survives initialization and can be disabled
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:03 +6: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: local profile loads while verification is pending and preserves saved paid palette
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+00:03 +7: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: delayed palette work cannot publish into another account
+NotificationService.cancelAllReminders notice: LateInitializationError: Field '_instance@1325271368' has not been initialized.
+Failed to schedule notification for 9:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 12:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 15:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 18:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+Failed to schedule notification for 21:00: LateInitializationError: Field '_local@595310200' has not been initialized.
+00:03 +8: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: archived goals load with scoped entries; removal survives restart and sync
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:03 +9: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: goal deletion rolls back entry and goal changes together on failure
+00:03 +10: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: 60 and 120 Hz requests persist; unsupported rate falls back safely
+00:03 +11: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: platforms without the display plugin use system control
+00:03 +12: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: settings disables unsupported 120 Hz and enables debug testing controls
+00:04 +13: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: manager exposes an archived goal and requires confirmation to remove it
+00:04 +14: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/login_display_goal_repair_test.dart: (tearDownAll)
+00:04 +14: loading C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart
+00:05 +14: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: (setUpAll)
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:05 +14: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: buildDynamicTheme generates valid contrast across all 9 presets
+00:05 +15: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: InteractiveChartCard renders without errors under Ledger, Paper, and Ink
+00:06 +16: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: AccountsScreen and Loan Tab adapt seamlessly across themes
+00:07 +17: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: PlannedTransactionsSheet renders smoothly in light Paper and dark Ledger
+00:08 +18: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: AllTransactionsScreen search and theme switching without glitches
+00:08 +19: C:/Users/areeb/Desktop/folders/flutter_calculator_new/test/theme_alignment_switching_test.dart: (tearDownAll)
+00:08 +19: All tests passed!

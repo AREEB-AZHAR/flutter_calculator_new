@@ -232,6 +232,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
             ],
             const SizedBox(height: 15),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               // ignore: deprecated_member_use
               value: _category,
               dropdownColor: surface,
@@ -255,7 +256,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                     children: [
                       Icon(categoryIcons[cat], size: 16, color: primary),
                       const SizedBox(width: 8),
-                      Text(LanguageService.trCategory(cat), style: TextStyle(color: onSurface)),
+                      Expanded(child: Text(LanguageService.trCategory(cat), style: TextStyle(color: onSurface), overflow: TextOverflow.ellipsis)),
                     ],
                   ),
                 );
@@ -300,6 +301,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
                     });
                   }
                   return DropdownButtonFormField<String>(
+                    isExpanded: true,
                     initialValue: activeGoals.any((g) => g.id == _selectedGoalId) ? _selectedGoalId : activeGoals.first.id,
                     dropdownColor: surface,
                     style: TextStyle(color: onSurface),
@@ -354,6 +356,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
             ],
             const SizedBox(height: 15),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               // ignore: deprecated_member_use
               value: _account,
               dropdownColor: surface,
@@ -382,6 +385,7 @@ class _TransactionDialogState extends State<_TransactionDialog> {
             ),
             const SizedBox(height: 15),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               // ignore: deprecated_member_use
               value: _recurrence,
               dropdownColor: surface,

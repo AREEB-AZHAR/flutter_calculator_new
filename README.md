@@ -1,5 +1,18 @@
 # 💰 Tally — Smart Personal Finance & Expense Tracker
 
+## USB profiling: keyboard lag and budget crash - 1.8.22+32 (24 October 2026)
+
+Profiled the connected **Redmi Note 13** running the installed **1.8.21+31 debug APK**, using Dart hot reload without building/reinstalling an APK. Transaction editors are created on demand; the demonstrated problem was keyboard insets rebuilding/resizing cached background tabs plus repeated intrinsic form layout. Main tabs now keep a stable size behind dialogs, while root dialog editors still receive keyboard insets. Transaction, promo and add-budget forms use a bounded scrollable layout; narrow dropdowns and promo titles fit their available width.
+
+**Budget crash fixed:** Add Budget now selects from categories that actually remain available, saves that selection without requiring a manual dropdown change, and handles every category already having a budget. The repaired panel opened on the phone and was cancelled without saving changes.
+
+A diagnostic keyboard trace went from **99 background Scaffold builds to zero**; repeated form intrinsic events also fell to zero. Scrolling and promo captures still show occasional debug/JIT stalls, so this is not a claim of guaranteed smooth release FPS. See [device measurements, plan, limitations, architecture and reproduction](docs/USB_DEVICE_PROFILE.md). Hot-reloaded changes last for the current app process; the installed APK was not replaced. **No APK was built.**
+
+**Validation:** all **249 Flutter tests** and **19 focused keyboard/budget/theme tests** passed; static analysis found no issues. Device captures and test logs are linked in the profiling guide.
+
+**Repository workflow:** merge and deliver task commits on **main**, per the owner's instruction. Existing clone/SDK/Firebase setup below remains applicable; no new dependencies or schema migration are required.
+
+
 ## Login, display controls and hidden goals - 1.8.21+31 (24 October 2026)
 
 Local login no longer waits for purchase-server verification or cloud comparison. Production paid access remains locked until verified, and an unavailable server no longer erases a saved premium palette. Cloud comparison starts after the dashboard renders; automatic reconciliation merges safely. Optional reminder refresh runs in the background, no-due recurrence checks skip duplicate work, and goals load in two scoped SQL reads instead of N+1.

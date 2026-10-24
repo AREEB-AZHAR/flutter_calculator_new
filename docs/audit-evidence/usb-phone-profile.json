@@ -1,0 +1,156 @@
+{
+  "device": "Redmi Note 13 (23129RAA4G)",
+  "installedVersion": "1.8.21+31 debug, Dart fixes hot-reloaded",
+  "ledgerRecords": 45,
+  "benchmarkLimit": "Debug JIT; single diagnostic samples, not matched release benchmarks. Instrumented and uninstrumented captures are separate.",
+  "originalTransactionKeyboard": {
+    "instrumentedBuilds": false,
+    "frames": 77,
+    "buildMs": {
+      "p50": 16.532,
+      "p95": 30.208,
+      "max": 57.089
+    },
+    "rasterMs": {
+      "p50": 7.591,
+      "p95": 16.13,
+      "max": 17.774
+    }
+  },
+  "originalInstrumentedKeyboard": {
+    "instrumentedBuilds": true,
+    "frames": 74,
+    "buildMs": {
+      "p50": 17.437,
+      "p95": 30.621,
+      "max": 66.372
+    },
+    "selectedWidgetBuilds": {
+      "Scaffold": 99,
+      "MediaQuery": 1101
+    }
+  },
+  "keyboardIsolationOnly": {
+    "mode": "debug",
+    "phase": "transaction-keyboard-show-hide",
+    "instrumentedBuilds": true,
+    "frames": 69,
+    "buildMs": {
+      "p50": 19.503,
+      "p95": 23.331,
+      "max": 30.335
+    },
+    "rasterMs": {
+      "p50": 6.961,
+      "p95": 9.007,
+      "max": 10.172
+    },
+    "selectedWidgetBuilds": {
+      "MediaQuery": 366,
+      "RenderFlex intrinsics": 71
+    }
+  },
+  "optimizedInstrumentedKeyboard": {
+    "mode": "debug",
+    "phase": "transaction-keyboard-show-hide",
+    "instrumentedBuilds": true,
+    "frames": 87,
+    "buildMs": {
+      "p50": 12.081,
+      "p95": 20.185,
+      "max": 27.159
+    },
+    "rasterMs": {
+      "p50": 7.627,
+      "p95": 15.307,
+      "max": 25.514
+    },
+    "selectedWidgetBuilds": {
+      "Scaffold": 0,
+      "MediaQuery": 342,
+      "RenderFlexIntrinsics": 0
+    }
+  },
+  "optimizedUninstrumentedKeyboard": {
+    "mode": "debug",
+    "phase": "transaction-keyboard-show-hide",
+    "instrumentedBuilds": false,
+    "frames": 78,
+    "buildMs": {
+      "p50": 16.137,
+      "p95": 25.084,
+      "max": 45.907
+    },
+    "rasterMs": {
+      "p50": 6.926,
+      "p95": 8.874,
+      "max": 9.97
+    }
+  },
+  "promoFirstOpenAfterHotReload": {
+    "mode": "debug",
+    "phase": "promo-open-keyboard-show-hide",
+    "instrumentedBuilds": false,
+    "frames": 43,
+    "buildMs": {
+      "p50": 20.941,
+      "p95": 148.857,
+      "max": 204.759
+    },
+    "rasterMs": {
+      "p50": 9.035,
+      "p95": 23.477,
+      "max": 26.717
+    }
+  },
+  "scrollAfterHotReload": [
+    {
+      "screen": "dashboard",
+      "mode": "debug",
+      "instrumentedBuilds": false,
+      "frames": 241,
+      "buildMs": {
+        "p50": 4.874,
+        "p95": 15.296,
+        "max": 85.605
+      },
+      "rasterMs": {
+        "p50": 7.188,
+        "p95": 13.053,
+        "max": 17.188
+      }
+    },
+    {
+      "screen": "accounts",
+      "mode": "debug",
+      "instrumentedBuilds": false,
+      "frames": 314,
+      "buildMs": {
+        "p50": 3.603,
+        "p95": 13.844,
+        "max": 50.891
+      },
+      "rasterMs": {
+        "p50": 7.748,
+        "p95": 11.55,
+        "max": 12.961
+      }
+    },
+    {
+      "screen": "insights",
+      "mode": "debug",
+      "instrumentedBuilds": false,
+      "frames": 345,
+      "buildMs": {
+        "p50": 2.36,
+        "p95": 8.433,
+        "max": 94.883
+      },
+      "rasterMs": {
+        "p50": 9.073,
+        "p95": 12.412,
+        "max": 14.086
+      }
+    }
+  ]
+}
