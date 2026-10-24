@@ -1,0 +1,1 @@
+42 profile captures recomputed exactly from raw frames; 60 Hz before/after; version 1.8.22+32; 3 runs per screen/configuration.

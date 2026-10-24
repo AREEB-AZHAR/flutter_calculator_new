@@ -1,0 +1,3 @@
+Launching C:/Users/areeb/AppData/Local/Temp/tally_floor_probe_20261024/tally_profile_entry.dart on 23129RAA4G in profile mode...
+Installing .dart_tool\phase1-rows-selected-profile.apk...           4.0s
+I/flutter (17873): [IMPORTANT:flutter/shell/common/shell.cc(528)] [Action Required]: Impeller opt-out deprecated.

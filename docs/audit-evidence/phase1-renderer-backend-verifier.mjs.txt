@@ -1,0 +1,30 @@
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import fs from 'node:fs';
+const exec=promisify(execFile);
+const adb='C:/Users/areeb/AppData/Local/Android/Sdk/platform-tools/adb.exe';
+const run=async (...args)=>(await exec(adb,args,{maxBuffer:8*1024*1024})).stdout;
+const pid=(await run('shell','pidof','com.areeb.balance_tracker')).trim().split(' ')[0];
+const logs=await run('logcat','-d','-v','brief','--pid',pid,'-s','flutter');
+const matches=[...logs.matchAll(/The Dart VM service is listening on (http:\/\/127\.0\.0\.1:\d+\/[^\s]+)/g)];
+if(!matches.length) throw new Error('No VM service');
+const uri=new URL(matches.at(-1)[1]);
+const local=(await run('forward','tcp:0',`tcp:${uri.port}`)).trim();
+let ws;
+try {
+  ws=new WebSocket(`ws://127.0.0.1:${local}${uri.pathname}ws`);
+  await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=()=>reject(new Error('VM service unavailable'));});
+  let next=0;const pending=new Map();
+  ws.onmessage=event=>{const m=JSON.parse(event.data);const p=pending.get(m.id);if(p){pending.delete(m.id);clearTimeout(p.timer);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);}};
+  const rpc=(method,params={})=>new Promise((resolve,reject)=>{const id=String(++next);const timer=setTimeout(()=>reject(new Error('RPC timeout')),10000);pending.set(id,{resolve,reject,timer});ws.send(JSON.stringify({jsonrpc:'2.0',id,method,params}));});
+  const vm=await rpc('getVM');const isolateId=(vm.isolates.find(i=>i.name==='main')||vm.isolates[0]).id;
+  const engine=await rpc('ext.ui.window.impellerEnabled',{isolateId});
+  const capture=await rpc('ext.tallyperf.info',{isolateId});
+  if(capture.mode!=='profile') throw new Error('Not profile mode');
+  const record={utc:new Date().toISOString(),package:'com.areeb.balance_tracker',processId:Number(pid),mode:capture.mode,
+    engineExtension:'ext.ui.window.impellerEnabled',engineImpellerEnabled:engine.enabled,
+    renderer:engine.enabled?'Impeller':'Skia (software rendering not requested)',
+    engineLogs:logs.split(/\r?\n/).filter(l=>/Using the .* rendering backend|Impeller opt-out deprecated/.test(l)).map(l=>l.replace(/^.*?\[IMPORTANT:/,'[IMPORTANT:'))};
+  fs.writeFileSync(process.argv[2],JSON.stringify(record,null,2)+'\n');
+  console.log(JSON.stringify(record));
+} finally {ws?.close();await run('forward','--remove',`tcp:${local}`);}

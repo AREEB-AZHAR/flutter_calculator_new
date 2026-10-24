@@ -1,0 +1,8 @@
+{
+  "initialLaunchDdsEnabled": true,
+  "failedWebSocketAttempts": 2,
+  "httpStatus": 200,
+  "ddsRedirectInServiceResponse": true,
+  "frameCapturesProduced": 0,
+  "correction": "--no-dds on both renderer launches"
+}

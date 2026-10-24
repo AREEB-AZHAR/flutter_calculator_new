@@ -1,0 +1,19 @@
+{
+  "numericCriterionMetEveryFlow": false,
+  "numericQualifyingFlows": [
+    "Insights",
+    "Goals",
+    "Profile",
+    "Transactions",
+    "transaction_dialog"
+  ],
+  "mixedFlows": [
+    "Dashboard",
+    "Accounts"
+  ],
+  "ownerFeelConfirmation": "Clearly better overall",
+  "nativeManifestApproval": "pending",
+  "proposedPatch": "phase1-renderer-proposed-native.patch.txt",
+  "softwareRenderingRequested": false,
+  "releaseOr120HzBenchmarked": false
+}

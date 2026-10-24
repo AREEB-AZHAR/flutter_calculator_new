@@ -1,0 +1,69 @@
+Local Flutter SDK engine revision:
+327ed814500baca0480a02f8555aa84a9afe32bf
+
+shell/platform/android/flutter_main.cc SelectedRenderingAPI:
+    const flutter::Settings& settings,
+    int api_level) {
+#if !SLIMPELLER
+  if (settings.enable_software_rendering) {
+    if (settings.enable_impeller) {
+      FML_CHECK(!settings.enable_impeller)
+          << "Impeller does not support software rendering. Either disable "
+             "software rendering or disable impeller.";
+    }
+    return AndroidRenderingAPI::kSoftware;
+  }
+
+  // Debug/Profile only functionality for testing a specific
+  // backend configuration.
+#ifndef FLUTTER_RELEASE
+  if (settings.requested_rendering_backend == "opengles" &&
+      settings.enable_impeller) {
+    return AndroidRenderingAPI::kImpellerOpenGLES;
+  }
+  if (settings.requested_rendering_backend == "vulkan" &&
+      settings.enable_impeller) {
+    return AndroidRenderingAPI::kImpellerVulkan;
+  }
+#endif
+
+  if (settings.enable_impeller &&
+      api_level >= kMinimumAndroidApiLevelForImpeller && !IsVivante()) {
+    return AndroidRenderingAPI::kImpellerAutoselect;
+  }
+
+  return AndroidRenderingAPI::kSkiaOpenGLES;
+#else
+  return AndroidRenderingAPI::kImpellerAutoselect;
+#endif  // !SLIMPELLER
+}
+
+}  // namespace flutter
+
+shell/common/shell.cc opt-out acknowledgement condition:
+  FML_CHECK(!settings.enable_software_rendering || !settings.enable_impeller)
+      << "Software rendering is incompatible with Impeller.";
+  if (!settings.enable_impeller && settings.warn_on_impeller_opt_out) {
+    FML_LOG(IMPORTANT) <<  //
+        R"warn([Action Required]: Impeller opt-out deprecated.
+    The application opted out of Impeller by either using the
+    `--no-enable-impeller` flag or the
+    `io.flutter.embedding.android.EnableImpeller` `AndroidManifest.xml` entry.
+    These options are going to go away in an upcoming Flutter release. Remove
+    the explicit opt-out. If you need to opt-out, please report a bug describing
+    the issue.
+
+    https://github.com/flutter/flutter/issues/new?template=02_bug.yml
+)warn";
+  }
+  FML_CHECK(vm_) << "Must have access to VM to create a shell.";
+
+dart:ui natives.dart read-only engine query:
+Future<developer.ServiceExtensionResponse> _getImpellerEnabled(
+  String method,
+  Map<String, String> parameters,
+) async {
+  return developer.ServiceExtensionResponse.result(
+    json.encode(<String, Object>{'type': 'Success', 'enabled': _impellerEnabled}),
+  );
+}

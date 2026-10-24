@@ -1,0 +1,12 @@
+{
+  "utc": "2026-10-24T18:27:07.278Z",
+  "package": "com.areeb.balance_tracker",
+  "processId": 17873,
+  "mode": "profile",
+  "engineExtension": "ext.ui.window.impellerEnabled",
+  "engineImpellerEnabled": false,
+  "renderer": "Skia (software rendering not requested)",
+  "engineLogs": [
+    "[IMPORTANT:flutter/shell/common/shell.cc(528)] [Action Required]: Impeller opt-out deprecated."
+  ]
+}

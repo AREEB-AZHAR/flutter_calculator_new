@@ -1,0 +1,23 @@
+{
+  "sourceCommit": "09ade478ad17dc713ef3803e5509a82377fab1dd",
+  "variant": "Renderer A: default Impeller",
+  "prebuiltProfileApkSha256": "05979DD8453DE472492DD8A3A5686103325A2198C1F128606A2334466971C65D",
+  "launch": "flutter run --profile --no-pub --no-resident --no-dds -d <device> --use-application-binary=<selected.apk> -t <measurement-entry>",
+  "mode": "profile",
+  "version": "1.8.22+32",
+  "runtimeSourceChangesDuringRendererComparison": false,
+  "intendedRefreshHz": 60,
+  "proxyEnabled": false,
+  "backendEvidence": "phase1-renderer-a-launch.txt",
+  "screens": [
+    "dashboard",
+    "accounts",
+    "insights",
+    "goals",
+    "profile",
+    "transactions",
+    "transaction_dialog"
+  ],
+  "dartSourceSha256": "A39341A7AB991062E7BDB410C2DE8306624407D621F9CD9BDC165B83C0112621",
+  "dashboardOfflineBannerBeforeCapture": false
+}

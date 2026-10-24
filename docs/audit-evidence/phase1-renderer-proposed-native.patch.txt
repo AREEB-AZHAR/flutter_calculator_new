@@ -1,0 +1,16 @@
+Proposed only; requires owner approval before applying to Android configuration.
+Would make future Android builds use Skia by default on this pinned Flutter SDK.
+Local profile validation is required after application. No release build or publication.
+
+--- a/android/app/src/main/AndroidManifest.xml
++++ b/android/app/src/main/AndroidManifest.xml
+@@
+         <meta-data
+             android:name="flutterEmbedding"
+             android:value="2" />
++        <!-- Temporary measured workaround; recheck when upgrading Flutter.
++             See docs/PERFORMANCE_BUDGET.md, 24 October 2026 renderer A/B. -->
++        <meta-data
++            android:name="io.flutter.embedding.android.EnableImpeller"
++            android:value="false" />
+     </application>

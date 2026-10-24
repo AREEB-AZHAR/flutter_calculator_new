@@ -1,0 +1,4 @@
+Launching C:/Users/areeb/AppData/Local/Temp/tally_floor_probe_20261024/tally_profile_entry.dart on 23129RAA4G in profile mode...
+Installing .dart_tool\phase1-rows-selected-profile.apk...           3.4s
+I/flutter ( 9614): [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
+I/flutter ( 9614): [IMPORTANT:flutter/shell/platform/android/android_context_gl_impeller.cc(104)] Using the Impeller rendering backend (OpenGLES).

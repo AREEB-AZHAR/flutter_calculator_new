@@ -1,0 +1,7 @@
+{
+  "prebuiltApkMatches": true,
+  "actualInstalledSha256": "05979dd8453de472492dd8a3a5686103325a2198c1f128606a2334466971c65d",
+  "sourceCommitOfComparedBinary": "09ade478ad17dc713ef3803e5509a82377fab1dd",
+  "finalWorkingTreeRowPolicy": "Original boundaries restored after selected-build non-replication",
+  "sameBinaryInBothRendererConfigurations": true
+}

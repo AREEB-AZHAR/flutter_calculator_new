@@ -280,7 +280,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                         delegate: SliverChildBuilderDelegate(
                           (ctx, index) {
                             final tx = filtered[index];
-                            return KeyedSubtree(
+                            return RepaintBoundary(
                               key: ValueKey('tx_tile_${tx.id}'),
                               child: TransactionTile(
                                 tx: tx,
@@ -291,7 +291,6 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                             );
                           },
                           childCount: filtered.length,
-                          addRepaintBoundaries: false,
                         ),
                       ),
                     ),
