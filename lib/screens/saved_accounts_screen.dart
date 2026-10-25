@@ -81,8 +81,8 @@ class _SavedAccountsScreenState extends State<SavedAccountsScreen> {
         final googleUser = await GoogleAuthService.signIn(context);
         if (googleUser != null && mounted) {
           BiometricService.isExplicitLogout = false;
-          await BiometricService.syncUserSession(googleUser.email);
-          await AppState.loadAllUserData(googleUser.email);
+          await BiometricService.syncUserSession(googleUser.username);
+          await AppState.loadAllUserData(googleUser.username);
           if (!mounted) return;
           Navigator.pushAndRemoveUntil(
             context,

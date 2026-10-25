@@ -1,10 +1,10 @@
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
-import '../services/password_recovery_service.dart';
+import '../services/firebase_account_service.dart';
 
+/// Firebase's hosted reset page owns verification and the new password.
 class PasswordRecoveryDialog extends StatefulWidget {
   final String initialEmail;
-  final PasswordRecoveryService? service;
+  final FirebaseAccountService? service;
   const PasswordRecoveryDialog({
     super.key,
     this.initialEmail = '',
@@ -15,50 +15,28 @@ class PasswordRecoveryDialog extends StatefulWidget {
 }
 
 class _PasswordRecoveryDialogState extends State<PasswordRecoveryDialog> {
-  late final PasswordRecoveryService _service =
-      widget.service ?? PasswordRecoveryService();
-  late final TextEditingController _email = TextEditingController(
-    text: widget.initialEmail,
-  );
-  final _code = TextEditingController();
-  final _password = TextEditingController();
-  final _confirmation = TextEditingController();
-  bool _sent = false;
+  late final _email = TextEditingController(text: widget.initialEmail);
   bool _busy = false;
+  bool _sent = false;
   String? _error;
   @override
   void dispose() {
-    _service.cancel();
-    for (final controller in [_email, _code, _password, _confirmation]) {
-      controller.dispose();
-    }
+    _email.dispose();
     super.dispose();
   }
 
-  Future<void> _run(
-    Future<void> Function() work, {
-    bool sendsCode = false,
-  }) async {
+  Future<void> _send() async {
+    if (_busy) return;
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
-      await work();
-      if (!mounted) return;
-      if (sendsCode) {
-        setState(() => _sent = true);
-      } else {
-        Navigator.of(context).pop(_email.text.trim());
-      }
+      await (widget.service ?? FirebaseAccountService.instance)
+          .sendPasswordReset(_email.text);
+      if (mounted) setState(() => _sent = true);
     } catch (error) {
-      if (!mounted) return;
-      setState(
-        () => _error = error is FirebaseFunctionsException
-            ? (error.message ??
-                  'Recovery is unavailable. Please try again later.')
-            : error.toString().replaceFirst('Bad state: ', ''),
-      );
+      if (mounted) setState(() => _error = accountAuthError(error));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -66,13 +44,13 @@ class _PasswordRecoveryDialogState extends State<PasswordRecoveryDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Recover local vault password'),
+    title: const Text('Reset Firebase password'),
     content: SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text(
-            'This changes the local vault password on this device. Your Google account password is unchanged.',
+            'Firebase sends a secure reset link. Open it in your browser, set your new password, then return to Tally to sign in. Your Google password is unchanged.',
           ),
           const SizedBox(height: 12),
           TextField(
@@ -80,63 +58,21 @@ class _PasswordRecoveryDialogState extends State<PasswordRecoveryDialog> {
             controller: _email,
             enabled: !_busy && !_sent,
             keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(labelText: 'Registered email'),
+            decoration: const InputDecoration(
+              labelText: 'Account email or saved username',
+            ),
           ),
-          if (_sent) ...[
+          const SizedBox(height: 12),
+          const Text(
+            'An older local-only vault must be migrated using its local password first. Resetting Firebase cannot change an unmigrated local password or recover unsynced data.',
+          ),
+          if (_sent)
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
+              padding: EdgeInsets.only(top: 12),
               child: Text(
-                'A six-digit code was sent. It expires in 10 minutes and can be used once.',
+                'If this email has a Firebase password account, a reset link has been sent. Check your inbox and spam folder.',
               ),
             ),
-            TextField(
-              key: const Key('recovery_code'),
-              controller: _code,
-              enabled: !_busy,
-              keyboardType: TextInputType.number,
-              maxLength: 6,
-              decoration: const InputDecoration(labelText: 'Email code'),
-            ),
-            TextField(
-              key: const Key('recovery_password'),
-              controller: _password,
-              enabled: !_busy,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'New password'),
-            ),
-            TextField(
-              key: const Key('recovery_confirmation'),
-              controller: _confirmation,
-              enabled: !_busy,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Confirm password'),
-            ),
-            const Text(
-              'Use at least 8 characters with uppercase, lowercase, a number and a special character.',
-            ),
-            TextButton(
-              onPressed: _busy
-                  ? null
-                  : () => _run(
-                      () => _service.begin(_email.text),
-                      sendsCode: true,
-                    ),
-              child: const Text('Resend code'),
-            ),
-            TextButton(
-              onPressed: _busy
-                  ? null
-                  : () {
-                      _service.cancel();
-                      setState(() {
-                        _sent = false;
-                        _error = null;
-                        _code.clear();
-                      });
-                    },
-              child: const Text('Change email'),
-            ),
-          ],
           if (_error != null)
             Text(
               _error!,
@@ -148,25 +84,22 @@ class _PasswordRecoveryDialogState extends State<PasswordRecoveryDialog> {
     ),
     actions: [
       TextButton(
-        onPressed: () => Navigator.of(context).pop(),
+        onPressed: _busy ? null : () => Navigator.pop(context),
         child: const Text('Cancel'),
       ),
       FilledButton(
         key: const Key('recovery_submit'),
         onPressed: _busy
             ? null
-            : () => _run(
-                _sent
-                    ? () => _service.complete(
-                        _code.text,
-                        _password.text,
-                        _confirmation.text,
-                      )
-                    : () => _service.begin(_email.text),
-                sendsCode: !_sent,
-              ),
+            : _sent
+            ? () => Navigator.pop(context, _email.text.trim())
+            : _send,
         child: Text(
-          _busy ? 'Please wait…' : (_sent ? 'Verify and reset' : 'Send code'),
+          _busy
+              ? 'Please wait…'
+              : _sent
+              ? 'Return to sign in'
+              : 'Send reset link',
         ),
       ),
     ],

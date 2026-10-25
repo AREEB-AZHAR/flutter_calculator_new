@@ -159,11 +159,10 @@ class CloudSyncService {
     final fbUser = FirebaseAuth.instance.currentUser;
     if (fbUser == null) return false;
     final currentAppUser = AppState.currentUser;
-    // Strictly isolate cloud sync to the authenticated Google/Firebase user.
-    // If the active app user is a local password user or differs from the Firebase account, prevent sync bleed.
+    // A verified Firebase UID must match the durable local vault binding.
+    // A legacy username need not equal the Firebase email.
     if (currentAppUser == null || currentAppUser.isEmpty) return false;
-    if (fbUser.email == null ||
-        fbUser.email!.toLowerCase() != currentAppUser.toLowerCase()) {
+    if (!fbUser.emailVerified || AppState.firebaseUid != fbUser.uid) {
       return false;
     }
     return true;
@@ -409,8 +408,7 @@ class CloudSyncService {
   static void Function()? _sessionGuard(String username) {
     if (!isCloudAvailable || AppState.currentUser != username) return null;
     final user = FirebaseAuth.instance.currentUser!;
-    if (user.email == null ||
-        user.email!.toLowerCase() != username.toLowerCase()) {
+    if (!user.emailVerified || AppState.firebaseUid != user.uid) {
       return null;
     }
     final uid = user.uid;

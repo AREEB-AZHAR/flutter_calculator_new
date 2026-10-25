@@ -6,6 +6,7 @@ import '../services/state.dart';
 import '../services/database/app_database.dart';
 import '../services/biometric_service.dart';
 import '../services/google_auth_service.dart';
+import '../services/firebase_account_service.dart';
 import '../services/connectivity_service.dart';
 import '../services/language_service.dart';
 import '../widgets/new_user_setup_dialog.dart';
@@ -14,7 +15,8 @@ import '../utils/password_validator.dart';
 import '../widgets/tally_brand_painters.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final FirebaseAccountService? auth;
+  const LoginScreen({super.key, this.auth});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -168,17 +170,17 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       final googleUser = await GoogleAuthService.signIn(context);
       if (googleUser != null) {
         BiometricService.isExplicitLogout = false;
-        await BiometricService.syncUserSession(googleUser.email);
-        await AppState.loadAllUserData(googleUser.email);
+        await BiometricService.syncUserSession(googleUser.username);
+        await AppState.loadAllUserData(googleUser.username);
 
         // 3. First-time onboarding setup
-        final profile = await AppDatabase.instance.loadProfile(googleUser.email);
+        final profile = await AppDatabase.instance.loadProfile(googleUser.username);
         final isBrandNew = profile.displayName == googleUser.displayName &&
             AppState.transactionsNotifier.value.isEmpty &&
             AppState.goalsNotifier.value.isEmpty;
 
         if (isBrandNew && mounted) {
-          await NewUserSetupDialog.show(context, username: googleUser.email);
+          await NewUserSetupDialog.show(context, username: googleUser.username);
         }
 
         if (!mounted) return;
@@ -305,6 +307,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
 
   Future<void> _submit() async {
+    if (_isLoading) return;
     FocusScope.of(context).unfocus();
     final identifier = _usernameCtrl.text.trim();
     final password = _passwordCtrl.text;
@@ -321,10 +324,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       });
 
       try {
-        final success = await AppDatabase.instance.authenticateUser(identifier, password);
-        if (success) {
+        final canonicalUsername = await _firebaseSignIn(identifier, password);
+        if (canonicalUsername != null) {
           BiometricService.isExplicitLogout = false;
-          final canonicalUsername = await AppDatabase.instance.getUsernameForIdentifier(identifier) ?? identifier;
           await BiometricService.syncUserSession(canonicalUsername);
           await AppState.loadAllUserData(canonicalUsername);
 
@@ -343,14 +345,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         } else {
           if (!mounted) return;
           setState(() {
-            _error = 'Invalid email/username or password';
+            if (_error.isEmpty) _error = 'Sign-in canceled. Your saved data is unchanged.';
             _isLoading = false;
           });
         }
       } catch (e) {
         if (!mounted) return;
         setState(() {
-          _error = 'An error occurred during authentication. Please try again.';
+          _error = accountAuthError(e);
           _isLoading = false;
         });
       }
@@ -388,12 +390,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       });
 
       try {
-        final registered = await AppDatabase.instance.registerUser(
-          username: username,
-          password: password,
-          email: email,
-        );
-        if (registered) {
+        final registeredUsername = await (widget.auth ?? FirebaseAccountService.instance).register(username, email, password);
+        if (registeredUsername.isNotEmpty) {
           BiometricService.isExplicitLogout = false;
           await BiometricService.syncUserSession(username);
           await AppState.loadAllUserData(username);
@@ -421,7 +419,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       } catch (e) {
         if (!mounted) return;
         setState(() {
-          _error = 'An error occurred during account creation. Please try again.';
+          _isLogin = e is FirebaseEmailVerificationRequired ? true : _isLogin;
+          _error = accountAuthError(e);
           _isLoading = false;
         });
       }
@@ -434,7 +433,63 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     if (email == null || !mounted) return;
     _usernameCtrl.text = email;
     _passwordCtrl.clear();
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Local vault password updated. Sign in with your new password.')));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Check your email for the Firebase reset link, then sign in with your new password.')));
+  }
+
+  Future<String?> _firebaseSignIn(String identifier, String password) async {
+    String? legacyPassword;
+    String? migrationEmail;
+    String? migrationPassword;
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await (widget.auth ?? FirebaseAccountService.instance).signIn(identifier, password,
+          legacyPassword: legacyPassword, migrationEmail: migrationEmail, migrationPassword: migrationPassword);
+      } on LocalVaultProofRequired catch (error) {
+        legacyPassword = await _migrationInput(error.toString(), 'Previous local password', secret: true);
+        if (legacyPassword == null) return null;
+      } on MigrationEmailRequired catch (error) {
+        migrationEmail = await _migrationInput(error.toString(), 'Email you own');
+        if (migrationEmail == null) return null;
+      } on MigrationPasswordRequired catch (error) {
+        migrationPassword = await _migrationInput(error.toString(), 'New Firebase password', secret: true);
+        if (migrationPassword == null) return null;
+        _passwordCtrl.text = migrationPassword;
+      } on FirebaseEmailVerificationRequired {
+        if (mounted) {
+          setState(() => _error = const FirebaseEmailVerificationRequired().toString());
+          await showDialog<void>(context: context, builder: (ctx) => AlertDialog(
+            title: const Text('Verify your email'),
+            content: Text(const FirebaseEmailVerificationRequired().toString()),
+            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+              FilledButton(onPressed: () async {
+                try {
+                  await (widget.auth ?? FirebaseAccountService.instance).resendVerification();
+                  if (ctx.mounted) Navigator.pop(ctx);
+                } catch (error) {
+                  if (mounted) setState(() => _error = accountAuthError(error));
+                  if (ctx.mounted) Navigator.pop(ctx);
+                }
+              }, child: const Text('Resend verification'))],
+          ));
+        }
+        return null;
+      }
+    }
+    return null;
+  }
+
+  Future<String?> _migrationInput(String explanation, String label, {bool secret = false}) async {
+    if (!mounted) return null;
+    final controller = TextEditingController();
+    final result = await showDialog<String>(context: context, builder: (ctx) => AlertDialog(
+      title: const Text('Migrate saved account'),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [Text(explanation),
+        TextField(controller: controller, obscureText: secret, decoration: InputDecoration(labelText: label))]),
+      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+        FilledButton(onPressed: () => Navigator.pop(ctx, controller.text), child: const Text('Continue'))],
+    ));
+    Future<void>.delayed(const Duration(seconds: 1), controller.dispose);
+    return result;
   }
 
   Widget _buildPasswordRequirements(String password, ThemeData theme) {

@@ -14,6 +14,7 @@ import '../services/tour_service.dart';
 import '../services/monetization_service.dart';
 import '../services/ad_service.dart';
 import '../services/google_auth_service.dart';
+import '../services/firebase_account_service.dart';
 import '../services/cloud_sync_service.dart';
 import '../services/language_service.dart';
 import '../services/app_version.dart';
@@ -119,131 +120,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _linkGoogleAccount() async {
+    final username = AppState.currentUser;
+    if (username == null) return;
     try {
-      final googleUser = await GoogleAuthService.signIn(context);
-      if (googleUser != null && mounted) {
-        final previousUser = AppState.currentUser;
-        if (previousUser != null && previousUser != googleUser.email) {
-          final hasCloud = await CloudSyncService.hasCloudData(googleUser.id);
-          final hasLocal = await AppDatabase.instance.hasUserData(googleUser.email);
-
-          // Register or ensure Google user profile exists in database
-          await AppDatabase.instance.authenticateOrRegisterGoogleUser(
-            email: googleUser.email,
-            displayName: googleUser.displayName,
-            photoUrl: googleUser.photoUrl,
-          );
-
-          if (hasCloud || hasLocal) {
-            if (!mounted) return;
-            // Existing data detected for this Google account: ask user for their preference
-            final choice = await showDialog<String>(
-              context: context,
-              barrierDismissible: false,
-              builder: (ctx) => AlertDialog(
-                backgroundColor: Theme.of(ctx).colorScheme.surface,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                title: const Row(
-                  children: [
-                    Icon(Icons.cloud_sync_rounded, color: Colors.blueAccent, size: 28),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Existing Data Detected',
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-                content: Text(
-                  'We found existing cloud or ledger data connected to ${googleUser.email}.\n\n'
-                  'Would you like to migrate & merge your local "$previousUser" records into this Google Account, or use the existing Google Account data as-is?',
-                  style: TextStyle(
-                    fontSize: 13,
-                    height: 1.4,
-                    color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.8),
-                  ),
-                ),
-                actions: [
-                  OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx, 'use_google'),
-                    child: const Text('Use Google Data As-Is'),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.primary),
-                    onPressed: () => Navigator.pop(ctx, 'merge'),
-                    child: const Text('Migrate & Merge Data', style: TextStyle(color: Colors.white)),
-                  ),
-                ],
-              ),
-            );
-
-            if (choice == 'merge') {
-              await AppDatabase.instance.migrateAndMergeUserData(
-                fromUsername: previousUser,
-                toUsername: googleUser.email,
-                mergeWithExisting: true,
-              );
-              await CloudSyncService.mixAndUploadData(googleUser.email);
-              await AppState.loadAllUserData(googleUser.email);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('🎉 Merged "$previousUser" records into ${googleUser.email}!'),
-                    backgroundColor: Colors.teal,
-                  ),
-                );
-              }
-            } else {
-              // 'use_google' - Clean up local user account since user switched to Google
-              await AppDatabase.instance.deleteLocalUser(previousUser);
-              await CloudSyncService.sync(googleUser.email);
-              await AppState.loadAllUserData(googleUser.email);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Switched to ${googleUser.email} existing cloud ledger (local account cleaned up).'),
-                    backgroundColor: Colors.blueAccent,
-                  ),
-                );
-              }
-            }
-          } else {
-            // No existing Google data: seamlessly migrate local data directly!
-            await AppDatabase.instance.migrateAndMergeUserData(
-              fromUsername: previousUser,
-              toUsername: googleUser.email,
-              mergeWithExisting: false,
-            );
-            await CloudSyncService.mixAndUploadData(googleUser.email);
-            await AppState.loadAllUserData(googleUser.email);
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('🎉 Local data migrated & bound to ${googleUser.email}!'),
-                  backgroundColor: Colors.teal,
-                ),
-              );
-            }
-          }
-        } else {
-          await AppState.loadAllUserData(googleUser.email);
-        }
-
-        if (mounted) setState(() => _emailFuture = null);
+      final identity = await AppDatabase.instance.firebaseIdentity(username);
+      if (identity != null && !CloudSyncService.isCloudAvailable) {
+        throw StateError('Sign in to this Firebase account again before linking Google.');
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Google binding failed: $e'), backgroundColor: Colors.redAccent),
-        );
+      if (!mounted) return;
+      final googleUser = await GoogleAuthService.signIn(context, linkToCurrent: identity != null);
+      if (googleUser == null || !mounted || AppState.currentUser != username) return;
+      if (googleUser.username != username) {
+        throw StateError('This is a different Google vault. Your original vault is preserved. Sign out to switch accounts.');
       }
+      await AppState.loadAllUserData(googleUser.username);
+      CloudSyncService.requestBackgroundSync(googleUser.username);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Google sign-in linked to the same Firebase account. Your vault is unchanged.')));
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(accountAuthError(error))));
     }
   }
 
   Future<void> _promptBindEmail() async {
     final currentUsername = AppState.currentUser;
     if (currentUsername == null) return;
+    if (await AppDatabase.instance.firebaseIdentity(currentUsername) != null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('This email is managed by Firebase Authentication. Password reset uses the same verified email.')));
+      }
+      return;
+    }
 
     final currentEmail = await AppDatabase.instance.getUserEmail(currentUsername);
     final emailCtrl = TextEditingController(text: currentEmail ?? '');
@@ -438,21 +346,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               final messenger = ScaffoldMessenger.of(context);
               if (AppState.currentUser == null) return;
 
-              final success = await AppDatabase.instance.changePassword(
-                AppState.currentUser!,
-                currentPassword,
-                newPassword,
-              );
-
-              if (success) {
+              try {
+                await FirebaseAccountService.instance.changePassword(
+                  AppState.currentUser!, currentPassword, newPassword);
+                if (!ctx.mounted) return;
                 nav.pop();
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('Password changed successfully')),
-                );
-              } else {
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('Incorrect current password')),
-                );
+                messenger.showSnackBar(const SnackBar(content: Text('Firebase password changed successfully')));
+              } catch (error) {
+                messenger.showSnackBar(SnackBar(content: Text(accountAuthError(error))));
               }
             },
             style: ElevatedButton.styleFrom(

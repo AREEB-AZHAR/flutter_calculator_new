@@ -78,7 +78,7 @@ class MonetizationService {
     }
     final user = FirebaseAuth.instance.currentUser;
     if (user == null ||
-        user.email?.toLowerCase() != _activeUsername!.toLowerCase()) {
+        user.uid != AppState.firebaseUid) {
       return null;
     }
     return PurchaseSession(

@@ -8,6 +8,7 @@ import 'package:balance_tracker/services/purchase_backend.dart';
 import 'package:balance_tracker/services/in_app_purchase_service.dart';
 import 'package:balance_tracker/services/monetization_service.dart';
 import 'package:balance_tracker/services/password_recovery_service.dart';
+import 'package:balance_tracker/services/firebase_account_service.dart';
 import 'package:balance_tracker/services/database/app_database.dart';
 import 'package:balance_tracker/services/state.dart';
 import 'package:balance_tracker/screens/premium_screen.dart';
@@ -49,9 +50,9 @@ class FakeRecoveryBackend implements RecoveryBackend {
   }
 }
 
-class DeliveryFailureRecoveryService extends PasswordRecoveryService {
+class DeliveryFailureRecoveryService extends FirebaseAccountService {
   @override
-  Future<void> begin(String email) async {
+  Future<void> sendPasswordReset(String email) async {
     throw StateError('Email delivery unavailable');
   }
 }

@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-26",
+  "project": "tally-b3652",
+  "action": "one owner-approved PASSWORD_RESET email request",
+  "recipient": "owner-approved mailbox (omitted)",
+  "password_changed": false,
+  "delivery_confirmed": true,
+  "http_status": 200,
+  "accepted": true,
+  "delivery_evidence": "Owner confirmed email arrived; reset link/code was not shared or opened by agent."
+}

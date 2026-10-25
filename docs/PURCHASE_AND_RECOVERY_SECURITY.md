@@ -123,3 +123,17 @@ Use Node 22 for these commands; the host installation may differ. The emulator t
 Evidence: [Flutter suite](audit-evidence/payment-flutter-full-tests.txt), [analysis](audit-evidence/payment-analyze.txt), [server unit tests](audit-evidence/payment-server-unit-tests.txt), [Firestore emulator tests](audit-evidence/payment-emulator-tests.txt), [npm audit](audit-evidence/payment-npm-audit.json), [live configuration inspection failure](audit-evidence/payment-firebase-config-check.txt).
 
 For rollback, restore reviewed rules/backend source and redeploy with the same explicit project. Do not restore client-writable entitlements or the client-code email relay. Keep old verified token ownership records when rolling back to avoid replay and lost restore history. Existing debug signing and release-hardening findings still need attention before store distribution.
+
+## 26 October 2026 — Firebase Auth recovery supersedes the local-code flow
+
+The current app's email/password authentication and recovery UI now use Firebase
+Authentication. The earlier sections remain a historical record of the custom
+local-password recovery implementation; deploying its email/recovery Functions
+and configuring their SMTP secrets are no longer prerequisites for the current
+app reset flow. Purchase verification still has its own deployment requirements.
+
+[Firebase account migration and recovery](FIREBASE_AUTH_MIGRATION.md) documents
+verified-email gating, preserving each local vault, linking Google credentials,
+server password changes, offline limitations and gradual migration. A reset email
+was sent with owner approval and its arrival was confirmed; its link was not
+opened and no password was changed. This does not prove new native client flows.

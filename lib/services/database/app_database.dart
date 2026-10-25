@@ -258,6 +258,15 @@ class AppDatabase {
       }
     }
     await SqliteLedgerStore.install(db);
+    await db.execute('''CREATE TABLE IF NOT EXISTS firebase_identities (
+      username TEXT PRIMARY KEY COLLATE NOCASE,
+      firebase_uid TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL COLLATE NOCASE,
+      provider TEXT NOT NULL)''');
+    await db.execute('''CREATE TRIGGER IF NOT EXISTS firebase_identity_cleanup
+      AFTER DELETE ON users BEGIN
+        DELETE FROM firebase_identities WHERE username = OLD.username COLLATE NOCASE;
+      END''');
     await _migrateLegacyPrefs(db);
     return db;
   }
@@ -359,6 +368,120 @@ class AppDatabase {
   }
 
   // --- AUTHENTICATION ---
+  Future<Map<String, Object?>?> firebaseIdentity(String username) async {
+    final db = await database;
+    final rows = await db.query(
+      'firebase_identities',
+      where: 'username = ? COLLATE NOCASE',
+      whereArgs: [username],
+    );
+    return rows.isEmpty ? null : rows.single;
+  }
+
+  Future<String?> firebaseUsernameForUid(String uid) async {
+    final db = await database;
+    final rows = await db.query(
+      'firebase_identities',
+      where: 'firebase_uid = ?',
+      whereArgs: [uid],
+    );
+    return rows.isEmpty ? null : rows.single['username'] as String;
+  }
+
+  /// Attach identity without renaming, merging or deleting any ledger records.
+  Future<void> attachFirebaseIdentity({
+    required String username,
+    required String uid,
+    required String email,
+    required String provider,
+    String? expectedLegacyHash,
+    required void Function() checkSession,
+  }) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      checkSession();
+      final bindings = await txn.query(
+        'firebase_identities',
+        where: 'username = ? COLLATE NOCASE OR firebase_uid = ?',
+        whereArgs: [username, uid],
+      );
+      if (bindings.any(
+        (r) =>
+            r['firebase_uid'] != uid ||
+            (r['username'] as String).toLowerCase() != username.toLowerCase() ||
+            (r['email'] as String).toLowerCase() != email.toLowerCase(),
+      )) {
+        throw StateError(
+          'A different Firebase identity is already attached. No data was moved.',
+        );
+      }
+      final users = await txn.query(
+        'users',
+        where: 'username = ? COLLATE NOCASE',
+        whereArgs: [username],
+      );
+      final sameEmail = await txn.query(
+        'users',
+        where: 'email = ? COLLATE NOCASE AND username != ? COLLATE NOCASE',
+        whereArgs: [email, username],
+      );
+      if (sameEmail.isNotEmpty) {
+        throw StateError('Email is already attached to another local vault.');
+      }
+      if (users.isNotEmpty) {
+        final user = users.single;
+        if (bindings.isEmpty &&
+            (expectedLegacyHash == null ||
+                user['password_hash'] != expectedLegacyHash)) {
+          throw StateError(
+            'Local credentials changed during migration. Sign in again.',
+          );
+        }
+        final oldEmail = user['email'] as String?;
+        if (oldEmail != null &&
+            oldEmail.isNotEmpty &&
+            oldEmail.toLowerCase() != email.toLowerCase()) {
+          throw StateError('The bound local email changed during migration.');
+        }
+        await txn.update(
+          'users',
+          {
+            'email': email.toLowerCase(),
+            'password_hash': 'FIREBASE_AUTH_ONLY',
+            'salt': '',
+          },
+          where: 'username = ? COLLATE NOCASE',
+          whereArgs: [username],
+        );
+      } else {
+        if (expectedLegacyHash != null) {
+          throw StateError('The local vault was removed during migration.');
+        }
+        await txn.insert('users', {
+          'username': username,
+          'email': email.toLowerCase(),
+          'password_hash': 'FIREBASE_AUTH_ONLY',
+          'salt': '',
+          'created_at': DateTime.now().toIso8601String(),
+        });
+        await txn.insert(
+          'profiles',
+          UserProfile(username: username, displayName: username).toMap(),
+        );
+        for (final name in ['Main', 'Cash', 'Credit Card', 'Digital Wallet']) {
+          await txn.insert('accounts', {'username': username, 'name': name});
+        }
+      }
+      await txn.insert('firebase_identities', {
+        'username': username,
+        'firebase_uid': uid,
+        'email': email.toLowerCase(),
+        'provider': provider,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      checkSession();
+    });
+  }
+
   Future<bool> registerUser({
     required String username,
     required String password,
@@ -439,6 +562,9 @@ class AppDatabase {
     if (results.isEmpty) return false;
 
     final user = results.first;
+    if (await firebaseIdentity(user['username'] as String) != null) {
+      return false;
+    }
     final salt = user['salt'] as String;
     final expectedHash = user['password_hash'] as String;
 
@@ -479,6 +605,9 @@ class AppDatabase {
 
   /// Binds or updates a recovery email address for a user.
   Future<bool> bindEmailToUser(String username, String email) async {
+    if (await firebaseIdentity(username) != null) {
+      throw StateError('This email is managed by Firebase Authentication.');
+    }
     final db = await database;
     final cleanEmail = email.trim().toLowerCase();
     final cleanUsername = username.trim();
@@ -512,6 +641,11 @@ class AppDatabase {
 
   /// Updates a user's password using their bound email address (for password recovery).
   Future<bool> updatePasswordByEmail(String email, String newPassword) async {
+    final local = await getUserByEmail(email);
+    if (local != null &&
+        await firebaseIdentity(local['username'] as String) != null) {
+      return false;
+    }
     final db = await database;
     final cleanEmail = email.trim();
     final newSalt = SecurityHelper.generateSalt();
@@ -533,6 +667,7 @@ class AppDatabase {
     required String expectedHash,
     required String newPassword,
   }) async {
+    if (await firebaseIdentity(username) != null) return false;
     final db = await database;
     final salt = SecurityHelper.generateSalt();
     // Compare-and-swap exactly the verified local account; never reset all rows
@@ -578,11 +713,13 @@ class AppDatabase {
           u.username,
           u.email,
           u.created_at,
+          f.provider AS auth_provider,
           p.display_name,
           p.photo_path,
           p.primary_color
         FROM users u
         LEFT JOIN profiles p ON u.username = p.username
+        LEFT JOIN firebase_identities f ON u.username = f.username COLLATE NOCASE
         ORDER BY u.id DESC
       ''');
 
@@ -601,8 +738,9 @@ class AppDatabase {
         final isBio = await BiometricService.isBiometricEnabled(
           username: username,
         );
-        final isGoogle =
-            (email != null && email.contains('@') && username == email);
+        final isGoogle = r['auth_provider'] != null
+            ? r['auth_provider'] == 'google'
+            : (email != null && email.contains('@') && username == email);
 
         result.add(
           SavedAccountInfo(

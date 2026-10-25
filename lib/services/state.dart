@@ -21,12 +21,14 @@ import '../screens/dashboard_screen.dart';
 
 class AppState {
   static String? _currentUser;
+  static String? firebaseUid;
   static int _sessionGeneration = 0;
   static int get sessionGeneration => _sessionGeneration;
   static String? get currentUser => _currentUser;
   static set currentUser(String? value) {
     if (_currentUser != value) {
       _sessionGeneration++;
+      firebaseUid = null;
       CloudSyncService.stopBackgroundSync();
     }
     _currentUser = value;
@@ -249,6 +251,10 @@ class AppState {
     bool sameSession() =>
         currentUser == username && generation == sessionGeneration;
     final db = AppDatabase.instance;
+
+    final identity = await db.firebaseIdentity(username);
+    if (!sameSession()) return;
+    firebaseUid = identity?['firebase_uid'] as String?;
 
     // 1. Load monetization entitlements strictly scoped to this user
     await MonetizationService.loadUserEntitlements(username);

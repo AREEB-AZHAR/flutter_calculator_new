@@ -10,18 +10,24 @@ import '../firebase_options.dart';
 import 'state.dart';
 import 'firebase_security_bootstrap.dart';
 import 'database/app_database.dart';
+import 'firebase_account_service.dart';
+import 'auth_session_barrier.dart';
+import 'biometric_service.dart';
 
 class GoogleUserData {
   final String id;
   final String email;
   final String displayName;
   final String? photoUrl;
+  final String? localUsername;
+  String get username => localUsername ?? email;
 
   const GoogleUserData({
     required this.id,
     required this.email,
     required this.displayName,
     this.photoUrl,
+    this.localUsername,
   });
 }
 
@@ -31,11 +37,14 @@ class GoogleAuthService {
 
   // Pre-extracted Android Debug Keystore Fingerprints for Firebase Console
   static const String androidPackageName = 'com.areeb.balance_tracker';
-  static const String androidSha1 = 'B7:71:9D:F2:CA:FE:82:46:4A:B9:91:40:59:C1:72:0B:8E:96:BD:CB';
-  static const String androidSha256 = '82:E4:2C:AE:78:94:99:F4:F9:7D:3A:8B:16:D9:CB:F9:71:5D:F5:0A:A7:D4:77:E8:FF:1E:67:6C:41:21:EA:99';
+  static const String androidSha1 =
+      'B7:71:9D:F2:CA:FE:82:46:4A:B9:91:40:59:C1:72:0B:8E:96:BD:CB';
+  static const String androidSha256 =
+      '82:E4:2C:AE:78:94:99:F4:F9:7D:3A:8B:16:D9:CB:F9:71:5D:F5:0A:A7:D4:77:E8:FF:1E:67:6C:41:21:EA:99';
 
   // OAuth 2.0 Web Client ID from Firebase Console / google-services.json
-  static const String androidServerClientId = '494819662703-ijqfkem5b7ndiq6iq49arhlefrc65qn2.apps.googleusercontent.com';
+  static const String androidServerClientId =
+      '494819662703-ijqfkem5b7ndiq6iq49arhlefrc65qn2.apps.googleusercontent.com';
   static bool _isGoogleSignInInitialized = false;
 
   /// Ensures GoogleSignIn is initialized with the serverClientId on Android
@@ -55,8 +64,11 @@ class GoogleAuthService {
 
   /// Checks if the currently active user in AppState is bound to a Google Account.
   static bool get isCurrentGoogleUser {
-    final user = AppState.currentUser;
-    return user != null && user.contains('@');
+    if (Firebase.apps.isEmpty) return false;
+    final user = FirebaseAuth.instance.currentUser;
+    return user != null &&
+        user.uid == AppState.firebaseUid &&
+        user.providerData.any((p) => p.providerId == 'google.com');
   }
 
   /// Retrieves the saved Google email from preferences if available.
@@ -71,7 +83,14 @@ class GoogleAuthService {
 
   /// Initiates authentic Google Sign-In powered by Firebase Authentication
   /// across Android, iOS, Web, and Windows desktop.
-  static Future<GoogleUserData?> signIn(BuildContext context) async {
+  static Future<GoogleUserData?> signIn(
+    BuildContext context, {
+    bool linkToCurrent = false,
+  }) async {
+    await AuthSessionBarrier.pendingSignOut;
+    if (!context.mounted) return null;
+    final unlockedVault = AppState.currentUser;
+    final unlockGeneration = AppState.sessionGeneration;
     GoogleUserData? googleUser;
 
     // Ensure Firebase config is loaded
@@ -98,7 +117,11 @@ class GoogleAuthService {
           final credential = GoogleAuthProvider.credential(
             idToken: gAuth.idToken,
           );
-          final userCred = await FirebaseAuth.instance.signInWithCredential(credential);
+          final userCred = linkToCurrent
+              ? await FirebaseAuth.instance.currentUser!.linkWithCredential(
+                  credential,
+                )
+              : await FirebaseAuth.instance.signInWithCredential(credential);
           final fbUser = userCred.user;
           if (fbUser != null && fbUser.email != null) {
             googleUser = GoogleUserData(
@@ -115,9 +138,19 @@ class GoogleAuthService {
           googleProvider.addScope('profile');
           final UserCredential userCred;
           if (kIsWeb) {
-            userCred = await FirebaseAuth.instance.signInWithPopup(googleProvider);
+            userCred = linkToCurrent
+                ? await FirebaseAuth.instance.currentUser!.linkWithPopup(
+                    googleProvider,
+                  )
+                : await FirebaseAuth.instance.signInWithPopup(googleProvider);
           } else {
-            userCred = await FirebaseAuth.instance.signInWithProvider(googleProvider);
+            userCred = linkToCurrent
+                ? await FirebaseAuth.instance.currentUser!.linkWithProvider(
+                    googleProvider,
+                  )
+                : await FirebaseAuth.instance.signInWithProvider(
+                    googleProvider,
+                  );
           }
           final fbUser = userCred.user;
           if (fbUser != null && fbUser.email != null) {
@@ -131,7 +164,9 @@ class GoogleAuthService {
         }
       } catch (e) {
         debugPrint('Firebase Google Sign-In error: $e');
-        final isCanceled = e is GoogleSignInException && e.code == GoogleSignInExceptionCode.canceled;
+        final isCanceled =
+            e is GoogleSignInException &&
+            e.code == GoogleSignInExceptionCode.canceled;
         if (!isCanceled && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -149,12 +184,94 @@ class GoogleAuthService {
     }
 
     if (googleUser != null) {
-      // 3. Bind to SQLite Database
-      await AppDatabase.instance.authenticateOrRegisterGoogleUser(
+      final service = FirebaseAccountService.instance;
+      final account = service.backend.current!;
+      final local = await AppDatabase.instance.getUserByEmail(googleUser.email);
+      final oldGoogleEmail = await getSavedGoogleEmail();
+      final historicGoogleVault =
+          local?['username'] == googleUser.email &&
+          oldGoogleEmail?.toLowerCase() == googleUser.email.toLowerCase();
+      String username;
+      try {
+        username = await service.acceptGoogle(
+          account,
+          historicGoogleVault: historicGoogleVault,
+          localUnlockProven:
+              unlockedVault != null &&
+              local?['username'] == unlockedVault &&
+              AppState.currentUser == unlockedVault &&
+              AppState.sessionGeneration == unlockGeneration,
+        );
+      } on LocalVaultProofRequired catch (proof) {
+        if (!context.mounted) return null;
+        final enrolled = await BiometricService.isBiometricEnabled(
+          username: proof.username,
+        );
+        if (enrolled &&
+            await BiometricService.authenticate(
+              reason: 'Unlock ${proof.username} to attach its saved vault',
+            )) {
+          username = await service.acceptGoogle(
+            account,
+            localUnlockProven: true,
+          );
+        } else {
+          if (!context.mounted) return null;
+          final controller = TextEditingController();
+          final password = await showDialog<String>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Preserve your existing vault'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(proof.toString()),
+                  TextField(
+                    controller: controller,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Previous local password',
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(ctx, controller.text),
+                  child: const Text('Attach vault'),
+                ),
+              ],
+            ),
+          );
+          // The dialog route retains its controller until its exit animation ends.
+          Future<void>.delayed(const Duration(seconds: 1), controller.dispose);
+          if (password == null) return null;
+          username = await service.acceptGoogle(
+            account,
+            localPassword: password,
+          );
+        }
+      }
+      googleUser = GoogleUserData(
+        id: googleUser.id,
         email: googleUser.email,
         displayName: googleUser.displayName,
         photoUrl: googleUser.photoUrl,
+        localUsername: username,
       );
+      if (local == null) {
+        final profile = await AppDatabase.instance.loadProfile(username);
+        await AppDatabase.instance.saveProfile(
+          profile.copyWith(
+            displayName: googleUser.displayName,
+            photoPath: googleUser.photoUrl,
+          ),
+        );
+      }
 
       // Save preference for quick account switching
       try {
@@ -170,7 +287,14 @@ class GoogleAuthService {
   }
 
   /// Signs out of the Google and Firebase session
-  static Future<void> signOut() async {
+  static Future<void> signOut() {
+    final previous = AuthSessionBarrier.pendingSignOut;
+    return AuthSessionBarrier.pendingSignOut = previous.then(
+      (_) => _signOutNow(),
+    );
+  }
+
+  static Future<void> _signOutNow() async {
     try {
       if (Firebase.apps.isNotEmpty) {
         await FirebaseAuth.instance.signOut();
@@ -183,14 +307,20 @@ class GoogleAuthService {
 
   /// Authentic Firebase Configuration modal allowing instant setup
   /// with pre-extracted SHA-1, package name, and input fields.
-  static Future<GoogleUserData?> _showFirebaseSetupModal(BuildContext context) async {
+  static Future<GoogleUserData?> _showFirebaseSetupModal(
+    BuildContext context,
+  ) async {
     final theme = Theme.of(context);
     final surface = theme.colorScheme.surface;
     final onSurface = theme.colorScheme.onSurface;
     final primary = theme.colorScheme.primary;
 
-    final apiKeyCtrl = TextEditingController(text: DefaultFirebaseOptions.apiKey);
-    final projectIdCtrl = TextEditingController(text: DefaultFirebaseOptions.projectId);
+    final apiKeyCtrl = TextEditingController(
+      text: DefaultFirebaseOptions.apiKey,
+    );
+    final projectIdCtrl = TextEditingController(
+      text: DefaultFirebaseOptions.projectId,
+    );
     final appIdCtrl = TextEditingController(text: DefaultFirebaseOptions.appId);
 
     if (!context.mounted) return null;
@@ -205,7 +335,10 @@ class GoogleAuthService {
             surfaceTintColor: Colors.transparent,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
-              side: BorderSide(color: onSurface.withValues(alpha: 0.12), width: 1.2),
+              side: BorderSide(
+                color: onSurface.withValues(alpha: 0.12),
+                width: 1.2,
+              ),
             ),
             titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
             contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
@@ -219,7 +352,10 @@ class GoogleAuthService {
                     shape: BoxShape.circle,
                     color: Colors.white,
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 4,
+                      ),
                     ],
                   ),
                   child: Center(
@@ -289,7 +425,11 @@ class GoogleAuthService {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.vpn_key_rounded, size: 16, color: primary),
+                            Icon(
+                              Icons.vpn_key_rounded,
+                              size: 16,
+                              color: primary,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'Your App Fingerprints (Copy for Firebase):',
@@ -337,8 +477,13 @@ class GoogleAuthService {
                       labelText: 'Project ID',
                       hintText: 'e.g. tally-finance-app',
                       prefixIcon: const Icon(Icons.folder_outlined, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -349,8 +494,13 @@ class GoogleAuthService {
                       labelText: 'Web API Key',
                       hintText: 'AIzaSy...',
                       prefixIcon: const Icon(Icons.key, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -361,19 +511,31 @@ class GoogleAuthService {
                       labelText: 'App ID (Optional)',
                       hintText: '1:123456789:web:abcdef',
                       prefixIcon: const Icon(Icons.apps_rounded, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Icon(Icons.info_outline_rounded, size: 14, color: onSurface.withValues(alpha: 0.5)),
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 14,
+                        color: onSurface.withValues(alpha: 0.5),
+                      ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           'Found in Firebase Console > Project Settings > General.',
-                          style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.55)),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: onSurface.withValues(alpha: 0.55),
+                          ),
                         ),
                       ),
                     ],
@@ -384,7 +546,10 @@ class GoogleAuthService {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: Text('Cancel', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: onSurface.withValues(alpha: 0.6)),
+                ),
               ),
               ElevatedButton.icon(
                 icon: const Icon(Icons.check_circle_outline, size: 16),
@@ -392,7 +557,9 @@ class GoogleAuthService {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,
                   foregroundColor: theme.colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 onPressed: () async {
                   final newApiKey = apiKeyCtrl.text.trim();
@@ -402,7 +569,9 @@ class GoogleAuthService {
                   if (newApiKey.isEmpty || newProjectId.isEmpty) {
                     ScaffoldMessenger.of(ctx).showSnackBar(
                       const SnackBar(
-                        content: Text('Please enter both Project ID and Web API Key.'),
+                        content: Text(
+                          'Please enter both Project ID and Web API Key.',
+                        ),
                         backgroundColor: Colors.redAccent,
                       ),
                     );

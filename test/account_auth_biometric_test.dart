@@ -1,3 +1,5 @@
+import 'package:balance_tracker/services/firebase_account_service.dart';
+import 'helpers/fake_account_backend.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -191,8 +193,8 @@ void main() {
       expect(await BiometricService.getSavedBiometricUser(), equals('OldAccount'));
 
       await tester.pumpWidget(
-        const MaterialApp(
-          home: LoginScreen(),
+        MaterialApp(
+          home: LoginScreen(auth: FirebaseAccountService(backend: FakeAccountBackend()..verifyOnCreate = true)),
         ),
       );
       await tester.pumpAndSettle();

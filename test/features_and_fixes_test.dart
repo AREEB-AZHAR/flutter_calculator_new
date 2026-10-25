@@ -290,12 +290,12 @@ void main() {
     await MonetizationService.resetPurchases();
   });
 
-  test('GoogleAuthService: detects Google email bindings', () {
+  test('GoogleAuthService: an email-shaped username is not proof of Google authentication', () {
     AppState.currentUser = 'user123';
     expect(GoogleAuthService.isCurrentGoogleUser, false);
 
     AppState.currentUser = 'areeb.finance@gmail.com';
-    expect(GoogleAuthService.isCurrentGoogleUser, true);
+    expect(GoogleAuthService.isCurrentGoogleUser, false);
 
     AppState.currentUser = null;
     expect(GoogleAuthService.isCurrentGoogleUser, false);
