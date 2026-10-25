@@ -1,0 +1,117 @@
+// Collect a measurement-only entry point's FrameTimings. No VM URI is persisted.
+// Usage: node scripts/capture_profile_frames.mjs <package> <route> <output.json> <expectedHz>
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {writeFile} from 'node:fs/promises';
+import {summarizeFrames} from '../../scripts/frame_capture_stats.mjs';
+
+const exec = promisify(execFile);
+const adb = process.env.ANDROID_ADB || 'C:/Users/areeb/AppData/Local/Android/Sdk/platform-tools/adb.exe';
+const [pkg, route, output, expected, adMode] = process.argv.slice(2);
+if (!['native','placeholder'].includes(adMode)) throw new Error('Expected native or placeholder adMode');
+if (!pkg || !route || !output || !expected) throw new Error('Expected package, route, output and effective Hz');
+if (!/^[a-zA-Z0-9_.]+$/.test(pkg)) throw new Error('Invalid package identifier');
+const shell = async (...args) => (await exec(adb, ['shell', ...args], {maxBuffer: 8 * 1024 * 1024})).stdout;
+const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+let ws;
+let forwarded;
+let rpc;
+
+async function metadata() {
+  const packageInfo = await shell('dumpsys', 'package', pkg);
+  const display = await shell('dumpsys', 'display');
+  const panel = display.match(/DisplayDeviceInfo\{"Built-in Screen"[^\n]*renderFrameRate ([\d.]+)/);
+  const layers = (await shell('dumpsys', 'SurfaceFlinger', '--list')).split(/\r?\n/);
+  const surface = layers.find(s => s.includes(pkg) && s.includes('(BLAST)'))?.match(/SurfaceView\[[a-zA-Z0-9_./]+\]\(BLAST\)#\d+/)?.[0];
+  let period = null;
+  // adb shell invokes a remote shell even with local execFile arguments. The
+  // allowlisted surface contains parentheses, so quote it for that remote shell.
+  if (surface) period = Number((await shell('dumpsys', 'SurfaceFlinger', '--latency', `'${surface}'`)).split(/\r?\n/)[0]);
+  const battery = await shell('dumpsys', 'battery');
+  const thermal = await shell('dumpsys', 'thermalservice');
+  return {utc: new Date().toISOString(), deviceModel: (await shell('getprop', 'ro.product.model')).trim(),
+    androidVersion: (await shell('getprop', 'ro.build.version.release')).trim(),
+    package: pkg, versionName: packageInfo.match(/versionName=(\S+)/)?.[1],
+    versionCode: Number(packageInfo.match(/versionCode=(\d+)/)?.[1]),
+    debuggable: /flags=\[[^\]\n]*\bDEBUGGABLE\b/.test(packageInfo),
+    panelRenderHz: panel ? Number(panel[1]) : null,
+    surfacePeriodNs: Number.isFinite(period) && period > 0 ? period : null,
+    surfacePeriodHz: period > 0 ? 1e9 / period : null,
+    batteryTemperatureC: Number(battery.match(/temperature:\s*(\d+)/)?.[1]) / 10,
+    thermalStatus: Number(thermal.match(/Thermal Status:\s*(\d+)/i)?.[1])};
+}
+
+async function gestures() {
+  if (route === 'transaction_dialog' || route === 'promo_dialog') {
+    await shell('input', 'tap', ...(route === 'transaction_dialog' ? ['960', '1935'] : ['360', '1550']));
+    await pause(700);
+    if (route === 'transaction_dialog') await shell('input', 'tap', '430', '550');
+    await pause(1500);
+    // Cancel through the dialog barrier. Two blind Back presses can exit the
+    // Activity if the IME was not shown, invalidating later repetitions.
+    await shell('input', 'tap', '20', '500');
+    await pause(800);
+    return;
+  }
+  // Fixed 1080x2400-device protocol: four slow drags, then two flings.
+  for (const [y1, y2, ms, settle] of [
+    [1800, 720, 600, 350], [720, 1800, 600, 350],
+    [1800, 720, 600, 350], [720, 1800, 600, 350],
+    [1800, 720, 100, 1200], [720, 1800, 100, 1800],
+  ]) {
+    await shell('input', 'swipe', '540', String(y1), '540', String(y2), String(ms));
+    await pause(settle);
+  }
+}
+
+try {
+  const pid = (await shell('pidof', pkg)).trim().split(' ')[0];
+  if (!pid) throw new Error('Target app is not running');
+  const logs = (await exec(adb, ['logcat', '-d', '-v', 'brief', '--pid', pid, '-s', 'flutter'], {maxBuffer: 8 * 1024 * 1024})).stdout;
+  const matches = [...logs.matchAll(/The Dart VM service is listening on (http:\/\/127\.0\.0\.1:\d+\/[^\s]+)/g)];
+  if (!matches.length) throw new Error('No profile VM service announced for target process');
+  const deviceUri = new URL(matches.at(-1)[1]);
+  forwarded = (await exec(adb, ['forward', 'tcp:0', `tcp:${deviceUri.port}`])).stdout.trim();
+  const uri = `ws://127.0.0.1:${forwarded}${deviceUri.pathname}ws`;
+  ws = new WebSocket(uri);
+  await new Promise((resolve, reject) => { ws.onopen = resolve; ws.onerror = () => reject(new Error('VM service connection failed')); });
+  let id = 0;
+  const pending = new Map();
+  ws.onmessage = event => {
+    const message = JSON.parse(event.data);
+    const work = pending.get(message.id);
+    if (work) { pending.delete(message.id); clearTimeout(work.timeout); message.error ? work.reject(new Error(message.error.message)) : work.resolve(message.result); }
+  };
+  rpc = (method, params = {}) => new Promise((resolve, reject) => {
+    const key = String(++id);
+    const timeout = setTimeout(() => { pending.delete(key); reject(new Error(`RPC timeout: ${method}`)); }, 20000);
+    pending.set(key, {resolve, reject, timeout});
+    ws.send(JSON.stringify({jsonrpc: '2.0', id: key, method, params}));
+  });
+  const vm = await rpc('getVM');
+  const isolateId = (vm.isolates.find(i => i.name === 'main') || vm.isolates[0]).id;
+  const extension = async action => {
+    const response = await rpc(`ext.tallyperf.${action}`, {isolateId});
+    return typeof response === 'string' ? JSON.parse(response) : response;
+  };
+  const iso = await rpc('getIsolate',{isolateId});
+  const ref=iso.libraries.find(l=>l.uri.endsWith('/services/display_rate_service.dart'));
+  if(!ref) throw new Error('No display-rate library');
+  const lib=await rpc('getObject',{isolateId,objectId:ref.id});
+  const clsRef=lib.classes.find(c=>c.name==='DisplayRateService');
+  const cls=await rpc('getObject',{isolateId,objectId:clsRef.id});
+  const field=cls.fields.find(f=>f.name==='preference');
+  const fullField=await rpc('getObject',{isolateId,objectId:field.id});
+  const valueRef=fullField.staticValue ?? fullField.value;
+  if(!valueRef) {console.log(JSON.stringify({fieldKeys:Object.keys(fullField)}));}
+  else {
+    const value=await rpc('getObject',{isolateId,objectId:valueRef.id});
+    const current=value.fields.find(f=>f.decl.name==='_value');
+    const result={utc:new Date().toISOString(),preference:current?.value.valueAsString};
+    await writeFile(output,JSON.stringify(result,null,2)+'\n');
+    console.log(JSON.stringify(result));
+  }
+} finally {
+  ws?.close();
+  if(forwarded) await exec(adb,['forward','--remove',`tcp:${forwarded}`]).catch(()=>{});
+}

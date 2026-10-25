@@ -1,0 +1,28 @@
+--- a/android/app/src/main/kotlin/com/areeb/balance_tracker/MainActivity.kt
++++ b/android/app/src/main/kotlin/com/areeb/balance_tracker/MainActivity.kt
+@@ -23,15 +23,18 @@
+                     @Suppress("DEPRECATION")
+                     val currentDisplay = if (Build.VERSION.SDK_INT >= 30) display else windowManager.defaultDisplay
+                     val mode = currentDisplay?.mode
+-                    val rates = currentDisplay?.supportedModes?.filter {
++                    val modes = currentDisplay?.supportedModes?.filter {
+                         mode != null && it.physicalWidth == mode.physicalWidth && it.physicalHeight == mode.physicalHeight
+-                    }?.map { it.refreshRate } ?: emptyList()
+-                    val selected = rates.minByOrNull { kotlin.math.abs(it - requested.toFloat()) }
+-                    val accepted = requested == 0 || (selected != null && kotlin.math.abs(selected - requested) < 1.0f)
++                    } ?: emptyList()
++                    val rates = modes.map { it.refreshRate }
++                    val selected = modes.minByOrNull { kotlin.math.abs(it.refreshRate - requested.toFloat()) }
++                    val accepted = requested == 0 || (selected != null && kotlin.math.abs(selected.refreshRate - requested) < 1.0f)
+                     val attributes = window.attributes
+-                    // A rate hint preserves the display resolution. The OS retains
+-                    // thermal/battery/user-policy control over the actual rate.
+-                    attributes.preferredRefreshRate = if (requested == 0 || !accepted) 0f else selected!!
++                    // Request the supported same-resolution mode, not only a hint.
++                    // System/unsupported clears both requests. Android still controls
++                    // actual presentation under thermal, battery and OEM policies.
++                    attributes.preferredDisplayModeId = if (requested == 0 || !accepted) 0 else selected!!.modeId
++                    attributes.preferredRefreshRate = if (requested == 0 || !accepted) 0f else selected!!.refreshRate
+                     window.attributes = attributes
+                     result.success(mapOf("accepted" to accepted,
+                         "supported" to rates.map { kotlin.math.round(it).toInt() }.distinct(),

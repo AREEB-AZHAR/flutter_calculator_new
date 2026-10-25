@@ -1,0 +1,3 @@
+PASS: 99 profile captures, 54827 raw frames; all summaries exactly reproduce.
+Thermal 0 before/after: 69; constrained: 30.
+No average FPS; surface-budget jank and sampled vsync deltas are distinct metrics.

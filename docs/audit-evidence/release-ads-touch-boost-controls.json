@@ -1,0 +1,93 @@
+[
+  {
+    "selection": "system",
+    "ui": [
+      {
+        "label": "System",
+        "selected": "true"
+      },
+      {
+        "label": "60 Hz",
+        "selected": "false"
+      },
+      {
+        "label": "120 Hz",
+        "selected": "false"
+      }
+    ],
+    "mainWindowAttributes": [
+      "mAttrs={(0,0)(fillxfill) sim={adjust=resize} layoutInDisplayCutoutMode=always disableCutout=false pkg = com.areeb.balance_tracker adpkg = null ty=BASE_APPLICATION fmt=TRANSLUCENT wanim=0x1030001",
+      "frameRateBoostOnTouch=true"
+    ],
+    "physicalHz": 120.00001,
+    "thermalStatus": 3
+  },
+  {
+    "selection": "120",
+    "ui": [
+      {
+        "label": "System",
+        "selected": "false"
+      },
+      {
+        "label": "60 Hz",
+        "selected": "false"
+      },
+      {
+        "label": "120 Hz",
+        "selected": "true"
+      }
+    ],
+    "mainWindowAttributes": [
+      "mAttrs={(0,0)(fillxfill) sim={adjust=resize} layoutInDisplayCutoutMode=always disableCutout=false pkg = com.areeb.balance_tracker adpkg = null ty=BASE_APPLICATION fmt=TRANSLUCENT wanim=0x1030001 preferredRefreshRate=120.00001 preferredDisplayMode=1",
+      "frameRateBoostOnTouch=true"
+    ],
+    "physicalHz": 120.00001,
+    "thermalStatus": 3
+  },
+  {
+    "selection": "60",
+    "ui": [
+      {
+        "label": "System",
+        "selected": "false"
+      },
+      {
+        "label": "60 Hz",
+        "selected": "true"
+      },
+      {
+        "label": "120 Hz",
+        "selected": "false"
+      }
+    ],
+    "mainWindowAttributes": [
+      "mAttrs={(0,0)(fillxfill) sim={adjust=resize} layoutInDisplayCutoutMode=always disableCutout=false pkg = com.areeb.balance_tracker adpkg = null ty=BASE_APPLICATION fmt=TRANSLUCENT wanim=0x1030001 preferredRefreshRate=60.000004 preferredDisplayMode=3"
+    ],
+    "physicalHz": 120.00001,
+    "thermalStatus": 3
+  },
+  {
+    "selection": "restore-original-120",
+    "ui": [
+      {
+        "label": "System",
+        "selected": "false"
+      },
+      {
+        "label": "60 Hz",
+        "selected": "false"
+      },
+      {
+        "label": "120 Hz",
+        "selected": "true"
+      }
+    ],
+    "mainWindowAttributes": [
+      "mAttrs={(0,0)(fillxfill) sim={adjust=resize} layoutInDisplayCutoutMode=always disableCutout=false pkg = com.areeb.balance_tracker adpkg = null ty=BASE_APPLICATION fmt=TRANSLUCENT wanim=0x1030001 preferredRefreshRate=120.00001 preferredDisplayMode=1",
+      "frameRateBoostOnTouch=true"
+    ],
+    "physicalHz": 120.00001,
+    "thermalStatus": 3
+  }
+]

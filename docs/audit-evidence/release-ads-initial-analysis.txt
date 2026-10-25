@@ -1,0 +1,5 @@
+Analyzing flutter_calculator_new...                             
+
+warning - The member 'developmentOverride' can only be used within 'package:balance_tracker/services/purchase_backend.dart' or a test - build\perf-private\capture_main.dart:11:26 - invalid_use_of_visible_for_testing_member
+
+1 issue found. (ran in 101.8s)

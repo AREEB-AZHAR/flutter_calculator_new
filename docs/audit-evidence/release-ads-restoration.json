@@ -1,0 +1,21 @@
+{
+  "utc": "2026-10-25T21:59:07.885075+00:00",
+  "package": "com.areeb.balance_tracker",
+  "restoredApkSha256": "930099d01f5a86bf68ac5d89c73f920c40c783a8c8ef19859ef69425c82401bb",
+  "matchesOriginalRelease": true,
+  "versionName": "1.8.22",
+  "versionCode": 32,
+  "debuggable": false,
+  "osSettings": {
+    "peak_refresh_rate": "120",
+    "min_refresh_rate": "null",
+    "user_refresh_rate": "120",
+    "miui_refresh_rate": "120"
+  },
+  "globalPreferredDisplayMode": "User preferred display mode: null",
+  "savedAppPreferenceBeforeRestoringApk": 120,
+  "dataHandling": "install -r; no uninstall or data clear; saved 120 selection verified in candidate UI immediately before replacement",
+  "screen": "left asleep to cool; biometric security is preserved",
+  "finalPanelHz": 120.00001,
+  "finalActivity": "Original release launched; biometric authentication remains owner-controlled."
+}

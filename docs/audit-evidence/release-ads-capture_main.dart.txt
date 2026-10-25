@@ -1,0 +1,39 @@
+import 'dart:convert';
+import 'dart:developer' as developer;
+import 'package:flutter/widgets.dart';
+import 'package:balance_tracker/main.dart' as tally;
+import 'package:balance_tracker/services/state.dart';
+import 'package:balance_tracker/services/monetization_service.dart';
+import 'perf_capture.dart';
+import 'package:balance_tracker/widgets/ad_banner_widget.dart';
+import 'package:balance_tracker/services/purchase_backend.dart';
+void main() {
+  PurchaseSecurityPolicy.developmentOverride = false;
+  installCapture(app: 'Tally 1.8.22+32 native-ad view A/B');
+  developer.registerExtension('ext.tallyperf.route', (method, args) async {
+    final index = {'dashboard':0,'insights':1,'goals':2,'accounts':3,'profile':4}[args['route']];
+    if(index != null) AppState.activeTabNotifier.value = index;
+    return developer.ServiceExtensionResponse.result(jsonEncode({'tab':AppState.activeTabNotifier.value}));
+  });
+  developer.registerExtension('ext.tallyperf.admode', (method,args) async {
+    AdBannerWidget.profilePlaceholderAds.value = args['mode']=='placeholder';
+    return developer.ServiceExtensionResponse.result(jsonEncode({'placeholder':AdBannerWidget.profilePlaceholderAds.value}));
+  });
+  developer.registerExtension('ext.tallyperf.adstate', (method,args) async {
+    var views=0, activeViews=0, labels=0, activeLabels=0;
+    void visit(Element e, bool active) {
+      final w=e.widget;
+      if(w is TickerMode && !w.enabled) active=false;
+      if(w.runtimeType.toString()=='AdWidget') {views++;if(active) activeViews++;}
+      if(w is Text && w.data=='Google Mobile Ads') {labels++;if(active) activeLabels++;}
+      e.visitChildren((child)=>visit(child,active));
+    }
+    final root=WidgetsBinding.instance.rootElement;
+    if(root!=null) visit(root,true);
+    return developer.ServiceExtensionResponse.result(jsonEncode({'tab':AppState.activeTabNotifier.value,
+      'adFree':MonetizationService.isAdFree,'nativeAdWidgets':views,'activeTabNativeAdWidgets':activeViews,
+      'loadedBannerLabels':labels,'activeTabLoadedBannerLabels':activeLabels,
+      'placeholderMode':AdBannerWidget.profilePlaceholderAds.value}));
+  });
+  tally.main();
+}

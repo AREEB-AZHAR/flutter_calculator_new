@@ -1,0 +1,5 @@
+13 Window{88323f9 u0 com.areeb.balance_tracker/com.google.android.gms.ads.AdActivity}:
+    mAttrs={(0,0)(fillxfill) sim={adjust=resize forwardNavigation} layoutInDisplayCutoutMode=always disableCutout=false pkg = com.areeb.balance_tracker adpkg = null ty=BASE_APPLICATION fmt=TRANSPARENT wanim=0x1030000
+      frameRateBoostOnTouch=true
+14 Window{35adfb1 u0 com.areeb.balance_tracker/com.areeb.balance_tracker.MainActivityLedger}:
+    mAttrs={(0,0)(fillxfill) sim={adjust=resize} layoutInDisplayCutoutMode=always disableCutout=false pkg = com.areeb.balance_tracker adpkg = null ty=BASE_APPLICATION fmt=TRANSLUCENT wanim=0x1030001 preferredRefreshRate=60.000004 preferredDisplayMode=3

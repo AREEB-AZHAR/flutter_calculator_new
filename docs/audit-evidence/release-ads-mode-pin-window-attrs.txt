@@ -1,0 +1,3 @@
+    mAttrs={(0,0)(fillxfill) sim={adjust=resize} layoutInDisplayCutoutMode=always disableCutout=false pkg = com.areeb.balance_tracker adpkg = null ty=BASE_APPLICATION fmt=TRANSLUCENT wanim=0x1030001 preferredRefreshRate=60.000004 preferredDisplayMode=3
+      fl=LAYOUT_IN_SCREEN LAYOUT_INSET_DECOR SPLIT_TOUCH HARDWARE_ACCELERATED DRAWS_SYSTEM_BAR_BACKGROUNDS
+      frameRateBoostOnTouch=true

@@ -1,0 +1,20 @@
+{
+  "capturedUtc": "2026-10-25T21:05:00.297111+00:00",
+  "device": "23129RAA4G",
+  "android": "15",
+  "package": "com.areeb.balance_tracker",
+  "versionName": "1.8.22",
+  "versionCode": 32,
+  "debuggable": false,
+  "physicalRenderHz": 120.00001,
+  "originalPeakPreference": "120",
+  "originalMinPreference": "null",
+  "installedApkSha256": "930099d01f5a86bf68ac5d89c73f920c40c783a8c8ef19859ef69425c82401bb",
+  "localReleaseApkMatchesInstalled": true,
+  "nativeGoogleTestBannerVisuallyConfirmed": true,
+  "notes": [
+    "Release native window counters are not Flutter build/raster metrics.",
+    "Initial Perfetto trace has negative-timestamp health warnings; exclude it from causal results.",
+    "Private screenshots and original APK remain outside Git."
+  ]
+}

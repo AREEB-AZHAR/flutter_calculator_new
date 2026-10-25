@@ -1,0 +1,12 @@
+✔ nearest-rank quantiles preserve source ordering (2.6905ms)
+✔ jank uses max stage and the measured refresh budget, not stage sum (0.8671ms)
+✔ mixed rates, invalid rows and empty captures are rejected (2.9934ms)
+✔ verified native surface rate overrides a stale Flutter display rate (7.4444ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 289.3397

@@ -1,0 +1,8 @@
+{
+  "stableComparisonStatus": "diverged",
+  "aheadBy": 95,
+  "behindBy": 1448,
+  "mergeCommit": "3964e0e4e92162d03850c233db0210553b7d344c",
+  "url": "https://github.com/flutter/flutter/compare/3964e0e4e92162d03850c233db0210553b7d344c...stable",
+  "mergedAt": "2026-10-02T01:33:59Z"
+}

@@ -170,3 +170,18 @@ The owner's all-user direction resolves the native proposal: **keep the supporte
 | Redmi Note 13 (23129RAA4G) | Android 15 | Flutter 3.41.3 / AOT profile | Native 60 Hz | 7 renderer flows, 3 repetitions per configuration | Keep framework default; no global opt-out |
 
 Other devices, release builds and 120 Hz performance were not benchmarked. Remaining mission phases, including the watchdog/tier scope and automation gates, are not implemented by these experiments.
+
+
+## 26 October 2026 — Release-ad and refresh-control follow-up
+
+[Full physical-device profile report](audit-evidence/release-ads-report.md), [all raw-linked capture rows](audit-evidence/release-ads-capture-inventory.md) and [original release restoration](audit-evidence/release-ads-restoration.json). Redmi Note 13 / Android 15 / Tally 1.8.22+32 / Flutter 3.41.3, AOT profile at native-verified 60 and 120 Hz, separated by rate. Native banners add raster cost on Dashboard, Accounts and Goals, but removing their views does not resolve all-screen stutter. Profile and transaction-dialog stalls remain. Prior build-focused changes and passing correctness tests did not demonstrate release smoothness; raster cost is measured independently here.
+
+The owner-approved mode-ID and Android-15 touch-boost candidates were both reverted. Window requests were correct but did not produce the requested physical 60 Hz rate on this OEM configuration. Later captures reached severe thermal status 3; retain them as constrained observations, not adoption proof. System/60/120 control checks and all three timing runs per candidate are archived. Surface refresh, app cadence and sampled frame intervals are distinct; do not infer a successful rate pin from a request or a 16.7 ms sampled interval alone.
+
+Temporary ad-view instrumentation is archived as text and removed from production code. The original non-debuggable release APK and original refresh preferences were restored without clearing data. No global renderer override, SDK upgrade, runtime dependency, schema, entitlement, production ad change, version bump or push was adopted. Clean renderer controls and an independently verified upstream engine fix are the next route to an all-user solution; the wider watchdog/tier/rendering/gate phases remain pending.
+
+
+**Cooled renderer follow-up (26 October):** the standalone list A/B was repeated at **thermal status 0, actual 120 Hz, AOT profile, Redmi Note 13**. Verified Impeller raster p95 **8.765 / 9.047 / 8.916 ms**, jank **27.778 / 27.842 / 28.618%**; verified Skia **2.876 / 4.980 / 3.003 ms**, jank **0 / 0.469 / 0%**. This confirms a renderer contribution independent of Tally/ad views and rejects an unavoidable hardware-only limit for that list. It does not certify all Tally screens or justify a global deprecated renderer opt-out. Full raw frames, build/raster percentiles, worst frames and decisions are in the investigation report and capture inventory linked above.
+
+
+Validation for this investigation: **306 Flutter tests passed**, **clean `flutter analyze --no-pub`**, **four capture-math tests passed**. The reproducible command `node scripts/report_release_ad_captures.mjs` checks all **99 captures / 54,827 raw frames**, regenerates the inventory and separates **69 thermal-0** captures from **30 constrained** captures. Correctness tests do not certify smoothness. Changes are committed locally on `main`; no push or accepted production performance fix is claimed.

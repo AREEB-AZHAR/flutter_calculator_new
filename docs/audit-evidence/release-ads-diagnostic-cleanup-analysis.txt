@@ -1,0 +1,7 @@
+Analyzing flutter_calculator_new...                             
+
+  error - The getter 'profilePlaceholderAds' isn't defined for the type 'AdBannerWidget' - build\perf-private\capture_main.dart:20:20 - undefined_getter
+  error - The getter 'profilePlaceholderAds' isn't defined for the type 'AdBannerWidget' - build\perf-private\capture_main.dart:21:95 - undefined_getter
+  error - The getter 'profilePlaceholderAds' isn't defined for the type 'AdBannerWidget' - build\perf-private\capture_main.dart:37:40 - undefined_getter
+
+3 issues found. (ran in 27.6s)

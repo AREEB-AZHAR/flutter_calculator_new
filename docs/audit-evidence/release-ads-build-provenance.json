@@ -1,0 +1,24 @@
+{
+  "toolchain": {
+    "frameworkVersion": "3.41.3",
+    "channel": "stable",
+    "repositoryUrl": "https://github.com/flutter/flutter.git",
+    "frameworkRevision": "48c32af0345e9ad5747f78ddce828c7f795f7159",
+    "frameworkCommitDate": "2026-02-27 17:09:06 -0500",
+    "engineRevision": "327ed814500baca0480a02f8555aa84a9afe32bf",
+    "engineCommitDate": "2026-02-27 15:19:48.000Z",
+    "engineContentHash": "14e407f99287c74c73a9a055680e7c9341773f6e",
+    "engineBuildDate": "2026-02-27 20:43:05.510",
+    "dartSdkVersion": "3.11.1",
+    "devToolsVersion": "2.54.1",
+    "flutterVersion": "3.41.3"
+  },
+  "probeEngineArm64Sha256": "d42cfe4e7f60cfad84dd3db00661e7d99db4caa2162621d14d65ba3b4448b9b7",
+  "tallyProfileEngineArm64Sha256": "d42cfe4e7f60cfad84dd3db00661e7d99db4caa2162621d14d65ba3b4448b9b7",
+  "sameEngine": true,
+  "profileApks": {
+    "profile-ad-ab.apk": "5dc396211e4860bbf81f579366fde6d23e754e8a3258aa77c41f3a4b0d7a0703",
+    "profile-mode-pin.apk": "ed2511903179dbe06bce778badd206fa5c510f5655d3b82b9392cf1840097e6f",
+    "profile-touch-boost.apk": "b234601a14ee56e42c4ea33eeec81eedd52e150f32879fa9120c07c01d2067af"
+  }
+}

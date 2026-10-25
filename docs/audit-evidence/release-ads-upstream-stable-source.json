@@ -1,0 +1,10 @@
+{
+  "stableVersion": null,
+  "stableDate": null,
+  "sourceUrl": "https://raw.githubusercontent.com/flutter/flutter/stable/engine/src/flutter/impeller/renderer/backend/gles/render_pass_gles.cc",
+  "note": "Absence of this class alone does not prove absence of an equivalent cherry-picked fix; direct code/engine validation is still required.",
+  "stableHash": "737ba8f885dc774b53b442759999a312c9461e4e",
+  "sourceHasRenderPassStateCache": false,
+  "checkedUtc": "2026-10-25T22:06:23.2285159Z",
+  "releaseMetadataStatus": "Official storage metadata requests returned NoSuchKey; stable version remains unverified."
+}
