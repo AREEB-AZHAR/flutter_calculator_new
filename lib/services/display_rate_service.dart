@@ -17,8 +17,8 @@ class DisplayRateService with WidgetsBindingObserver {
       _observing = true;
     }
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getInt('tally_display_rate') ?? 0;
-    preference.value = [0, 60, 120].contains(saved) ? saved : 0;
+    final saved = prefs.getInt('tally_display_rate') ?? 60;
+    preference.value = [60, 120, 0].contains(saved) ? saved : 60;
     await setPreference(preference.value);
   }
 

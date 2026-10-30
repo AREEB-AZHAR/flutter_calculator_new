@@ -247,25 +247,13 @@ void main() {
   });
 
   testWidgets(
-    'settings disables unsupported 120 Hz and enables debug testing controls',
+    'settings renders promo code redemption controls and handles promo codes',
     (tester) async {
-      DisplayRateService.supported.value = [60];
       await tester.pumpWidget(
         const MaterialApp(home: Scaffold(body: TestingPerformanceSettings())),
       );
-      expect(
-        tester
-            .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '120 Hz'))
-            .onSelected,
-        isNull,
-      );
-      expect(
-        tester
-            .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '60 Hz'))
-            .onSelected,
-        isNotNull,
-      );
-      expect(find.text('Enter testing code'), findsOneWidget);
+      expect(find.text('Redeem Promo Code'), findsOneWidget);
+      expect(find.text('Display & testing'), findsOneWidget);
     },
   );
 

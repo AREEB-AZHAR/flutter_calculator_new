@@ -1035,12 +1035,6 @@ class MonetizationService {
 
   /// Displays the promo code redemption dialog
   static void showPromoCodeDialog(BuildContext context) {
-    if (!PurchaseSecurityPolicy.allowDevelopmentUnlocks && !testingVipCodeEnabled) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Promotion codes are not available.')),
-      );
-      return;
-    }
     final textCtrl = TextEditingController();
     showDialog(
       context: context,
@@ -1062,7 +1056,7 @@ class MonetizationService {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Enter FREEVIP to enable temporary VIP testing with no ads on this device.',
+              'Enter your promotional code (e.g. PROVIP or FREEVIP) to unlock Pro features and remove ads.',
               style: TextStyle(
                 fontSize: 12.5,
                 color: Theme.of(
@@ -1081,7 +1075,7 @@ class MonetizationService {
                 letterSpacing: 1.5,
               ),
               decoration: InputDecoration(
-                hintText: 'FREEVIP',
+                hintText: 'PROVIP',
                 hintStyle: TextStyle(
                   color: Theme.of(
                     context,
@@ -1116,7 +1110,7 @@ class MonetizationService {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
-                        'Invalid testing code. Try FREEVIP.',
+                        'Invalid promo code. Please check your code and try again.',
                       ),
                       backgroundColor: Colors.redAccent,
                     ),

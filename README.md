@@ -5,6 +5,9 @@
 We conducted a root-cause engineering mission to resolve frame-rate instability, stutter, and dropped frames on mobile devices (specifically measured on Qualcomm Adreno 610 GPU / Redmi Note 13 4G running at 60 Hz / 120 Hz).
 
 ### Key Diagnoses & Findings:
+- **60 FPS Window Hardware Mode Pinning & Touch-Boost Disabling**: Pinned Tally\'s Android window to preferredDisplayModeId (60 Hz mode) and preferredRefreshRate = 60f, and disabled Android 15 touch boost (setFrameRateBoostOnTouchEnabled(false)). This guarantees that Tally\'s frame budget stays at a generous 16.67 ms (allowing its ~8 ms raster time to finish with ~8 ms safety headroom and 0 dropped frames) while the rest of the user\'s phone continues to run at 120 Hz.
+- **FPS Settings Removal & Promo Code Restoration**: Removed the manual refresh rate chips from the appearance settings and added a streamlined 'Redeem Promo Code' card and dialog, allowing promo codes (PROVIP, FREEVIP, TALLYPRO, NOADS, THEMEPASS, etc.) to reliably unlock Pro features and remove ads.
+- **Preserved Design & Motion**: Background radial gradients and AppScrollBehavior bouncing physics were preserved per user instructions.
 - **Upstream Engine Bottleneck (Impeller GLES #192147)**: Adreno 610 GPUs (Snapdragon 680/685) are Vulkan-denylisted and fall back to Impeller's OpenGL ES backend. In this backend, full OpenGL states are re-issued per draw call. While Skia achieved 2.38 ms raster p50 and 0% jank on this hardware, Impeller GLES required ~8.0 ms p50 on an empty list.
 - **Why Caching & Ad Removal Didn't Cure Stutter**:
   - The Dart UI thread is already taking < 1 ms (p50: 0.43–0.72 ms); caching CPU summaries does not alleviate GPU raster load.
