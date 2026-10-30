@@ -145,16 +145,16 @@ class _MainNavScreenState extends State<MainNavScreen>
             children: [
               const OfflineBanner(),
               Expanded(
-                child: IndexedStack(
-                  index: currentIndex,
-                  children: List.generate(5, (i) {
-                    return RepaintBoundary(
-                      child: TickerMode(
+                child: RepaintBoundary(
+                  child: IndexedStack(
+                    index: currentIndex,
+                    children: List.generate(5, (i) {
+                      return TickerMode(
                         enabled: i == currentIndex,
                         child: _cachedScreens[i] ?? const SizedBox.shrink(),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
+                  ),
                 ),
               ),
             ],

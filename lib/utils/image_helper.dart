@@ -3,6 +3,28 @@ import 'package:flutter/material.dart';
 
 /// Helper utility for managing profile images and network vs. local file resolution.
 class ImageHelper {
+  static final Map<String, bool> _fileExistenceCache = {};
+
+  /// Checks whether [path] exists on disk, caching the result to avoid repeated synchronous I/O during builds.
+  static bool cachedFileExists(String path) {
+    return _fileExistenceCache.putIfAbsent(path, () {
+      try {
+        return File(path).existsSync();
+      } catch (_) {
+        return false;
+      }
+    });
+  }
+
+  /// Clears or invalidates a path from the file existence cache.
+  static void invalidateCache([String? path]) {
+    if (path == null) {
+      _fileExistenceCache.clear();
+    } else {
+      _fileExistenceCache.remove(path);
+    }
+  }
+
   /// Checks whether [path] is a web/cloud network URL (http/https).
   static bool isNetworkImage(String? path) {
     if (path == null) return false;
@@ -21,9 +43,8 @@ class ImageHelper {
       return NetworkImage(path);
     }
     try {
-      final file = File(path);
-      if (file.existsSync()) {
-        return FileImage(file);
+      if (cachedFileExists(path)) {
+        return FileImage(File(path));
       }
     } catch (_) {}
     return AssetImage(fallbackAsset);
@@ -38,9 +59,8 @@ ImageProvider? getProfileImageProvider(String? photoPath) {
     return NetworkImage(path);
   }
   try {
-    final file = File(path);
-    if (file.existsSync()) {
-      return FileImage(file);
+    if (ImageHelper.cachedFileExists(path)) {
+      return FileImage(File(path));
     }
   } catch (_) {}
   return null;

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import '../models/transaction.dart';
@@ -136,11 +137,11 @@ class MonthChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(MonthChartPainter oldDelegate) {
-    return oldDelegate.transactions != transactions ||
-        oldDelegate.year != year ||
+    return oldDelegate.year != year ||
         oldDelegate.month != month ||
         oldDelegate.filter != filter ||
-        oldDelegate.lineColor != lineColor;
+        oldDelegate.lineColor != lineColor ||
+        !listEquals(oldDelegate.transactions, transactions);
   }
 }
 
@@ -271,12 +272,12 @@ class DonutChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(DonutChartPainter oldDelegate) {
     return oldDelegate.total != total ||
-        oldDelegate.segments != segments ||
         oldDelegate.currencySymbol != currencySymbol ||
         oldDelegate.textColor != textColor ||
         oldDelegate.subtextColor != subtextColor ||
-        oldDelegate.palette != palette ||
-        oldDelegate.emptyColor != emptyColor;
+        oldDelegate.emptyColor != emptyColor ||
+        !mapEquals(oldDelegate.segments, segments) ||
+        !listEquals(oldDelegate.palette, palette);
   }
 }
 
@@ -460,13 +461,13 @@ class BarChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(BarChartPainter oldDelegate) {
-    return oldDelegate.monthlyValues != monthlyValues ||
-        oldDelegate.barColor != barColor ||
+    return oldDelegate.barColor != barColor ||
         oldDelegate.secondaryColor != secondaryColor ||
         oldDelegate.textColor != textColor ||
         oldDelegate.selectedMonth != selectedMonth ||
         oldDelegate.currencySymbol != currencySymbol ||
-        oldDelegate.customLabels != customLabels;
+        !listEquals(oldDelegate.customLabels, customLabels) ||
+        !listEquals(oldDelegate.monthlyValues, monthlyValues);
   }
 }
 
@@ -578,12 +579,12 @@ class YearlyLineChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(YearlyLineChartPainter oldDelegate) {
-    return oldDelegate.monthlyValues != monthlyValues ||
-        oldDelegate.lineColor != lineColor ||
+    return oldDelegate.lineColor != lineColor ||
         oldDelegate.secondaryColor != secondaryColor ||
         oldDelegate.textColor != textColor ||
         oldDelegate.selectedMonth != selectedMonth ||
-        oldDelegate.emptyColor != emptyColor;
+        oldDelegate.emptyColor != emptyColor ||
+        !listEquals(oldDelegate.monthlyValues, monthlyValues);
   }
 }
 

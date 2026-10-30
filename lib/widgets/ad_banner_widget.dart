@@ -115,9 +115,9 @@ class _AdBannerWidgetState extends State<AdBannerWidget> with AutomaticKeepAlive
                   border: Border.all(color: onSurface.withValues(alpha: 0.12), width: 1),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
                     ),
                   ],
                 ),
@@ -205,9 +205,9 @@ class _AdBannerWidgetState extends State<AdBannerWidget> with AutomaticKeepAlive
                   border: Border.all(color: onSurface.withValues(alpha: 0.14), width: 1.2),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: isLarge ? 12 : 8,
-                      offset: const Offset(0, 3),
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
                     ),
                   ],
                 ),

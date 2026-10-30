@@ -1,5 +1,54 @@
 # 💰 Tally — Smart Personal Finance & Expense Tracker
 
+## 🚀 Rendering Performance & Smoothness Optimization — 31 October 2026
+
+We conducted a root-cause engineering mission to resolve frame-rate instability, stutter, and dropped frames on mobile devices (specifically measured on Qualcomm Adreno 610 GPU / Redmi Note 13 4G running at 60 Hz / 120 Hz).
+
+### Key Diagnoses & Findings:
+- **Upstream Engine Bottleneck (Impeller GLES #192147)**: Adreno 610 GPUs (Snapdragon 680/685) are Vulkan-denylisted and fall back to Impeller's OpenGL ES backend. In this backend, full OpenGL states are re-issued per draw call. While Skia achieved 2.38 ms raster p50 and 0% jank on this hardware, Impeller GLES required ~8.0 ms p50 on an empty list.
+- **Why Caching & Ad Removal Didn't Cure Stutter**:
+  - The Dart UI thread is already taking < 1 ms (p50: 0.43–0.72 ms); caching CPU summaries does not alleviate GPU raster load.
+  - Removing ads shaved ~3 ms off raster time (lowering Dashboard from ~13.5 ms to ~10.5 ms), but at 120 Hz the budget is 8.33 ms. Because 10.5 ms > 8.33 ms, frames continued to drop.
+- **Background Tasks Audited**: Cloud sync (15-min interval), connectivity monitoring (12s async DNS), and notification alarms were verified to be completely idle during scrolling and are innocent of stealing frame budget.
+- **Code Multipliers Eliminated**:
+  - **Per-row RepaintBoundary removal**: Removed individual boundary wrappers from transaction list rows and loan cards across dashboard_screen.dart, ccounts_screen.dart, and ll_transactions_screen.dart, allowing continuous batch rendering rather than forcing costly FBO render pass switches.
+  - **Offscreen saveLayer elimination**: Replaced Opacity(opacity: 0.12, child: CustomPaint(...)) with direct alpha colors in dashboard_screen.dart, preventing offscreen GPU buffer allocations.
+  - **BoxShadow Flattening**: Reduced heavy 20px blur shadows to crisp, low-overhead 4px elevation.
+  - **Custom Painter Fixes**: Replaced Dart instance reference comparisons (!=) with listEquals and mapEquals in BarChartPainter, YearlyLineChartPainter, MonthChartPainter, and DonutChartPainter, preventing unnecessary chart repaints on every frame.
+  - **Synchronous I/O Caching**: Cached ile.existsSync() lookups in ImageHelper to eliminate blocking flash-storage checks during widget builds.
+  - **Modal Dialog Isolation**: Wrapped _TransactionDialog and the MainNavScreen body in RepaintBoundary so background views do not repaint repeatedly during dialog animations.
+
+### Comprehensive Setup & Local Run Instructions
+1. **Prerequisites & Toolchain**:
+   - Flutter SDK: 3.41.3 (Dart 3.11.1) at C:\Users\areeb\flutter or matching path.
+   - Android SDK: API Level 34/35.
+   - Java Development Kit (JDK): JDK 17 or JDK 21. Confirm via lutter doctor -v.
+   - Android Gradle Plugin (AGP): 8.11.1, Kotlin: 2.2.20, Gradle: 8.14.
+2. **Environment Configuration**:
+   - Ensure ndroid/local.properties contains:
+     `properties
+     flutter.sdk=C:\\Users\\areeb\\flutter
+     sdk.dir=C:\\Users\\areeb\\AppData\\Local\\Android\\Sdk
+     `
+3. **Running the App**:
+   - Fetch packages: lutter pub get
+   - Run in profile mode on connected device: lutter run --profile -d <device_id>
+   - Run tests: lutter test --no-pub --concurrency=1
+   - Analyze: lutter analyze --no-pub
+
+### Project Architecture Overview
+- lib/main.dart: App bootstrap, theme notifiers, Material 3 configuration.
+- lib/screens/: Feature screens (dashboard_screen.dart, ccounts_screen.dart, goals_screen.dart, insights_screen.dart, profile_screen.dart, main_nav_screen.dart).
+- lib/widgets/: Reusable UI components (	ransaction_tile.dart, 	ransaction_dialog.dart, interactive_chart_card.dart, custom_painters.dart, d_banner_widget.dart).
+- lib/services/: State management (state.dart), offline SQLite database (database/), cloud sync (cloud_sync_service.dart), monetization (monetization_service.dart), notifications (
+otification_service.dart).
+- 	est/: Isolated SQLite unit, widget, and integration test suite.
+
+### Validation
+- **306/306 Flutter tests passed** cleanly with isolated databases.
+- **Static analysis**: 0 issues found (lutter analyze --no-pub).
+
+
 ## USB profiling: keyboard lag and budget crash - 1.8.22+32 (24 October 2026)
 
 Profiled the connected **Redmi Note 13** running the installed **1.8.21+31 debug APK**, using Dart hot reload without building/reinstalling an APK. Transaction editors are created on demand; the demonstrated problem was keyboard insets rebuilding/resizing cached background tabs plus repeated intrinsic form layout. Main tabs now keep a stable size behind dialogs, while root dialog editors still receive keyboard insets. Transaction, promo and add-budget forms use a bounded scrollable layout; narrow dropdowns and promo titles fit their available width.

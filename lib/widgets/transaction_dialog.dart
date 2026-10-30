@@ -13,7 +13,9 @@ import '../services/language_service.dart';
 Future<void> showTransactionDialog(BuildContext context, {Transaction? existingTx}) async {
   await showDialog(
     context: context,
-    builder: (ctx) => _TransactionDialog(existingTx: existingTx),
+    builder: (ctx) => RepaintBoundary(
+      child: _TransactionDialog(existingTx: existingTx),
+    ),
   );
 }
 

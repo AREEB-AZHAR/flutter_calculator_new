@@ -810,14 +810,12 @@ class _AccountsScreenState extends State<AccountsScreen> {
                           delegate: SliverChildBuilderDelegate(
                             (ctx, index) {
                               final tx = filteredTxs[index];
-                              return RepaintBoundary(
+                              return TransactionTile(
                                 key: ValueKey('acc_tx_${tx.id}'),
-                                child: TransactionTile(
-                                  tx: tx,
-                                  currency: currentCurrency,
-                                  onTap: () => showTransactionDialog(context, existingTx: tx),
-                                  onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
-                                ),
+                                tx: tx,
+                                currency: currentCurrency,
+                                onTap: () => showTransactionDialog(context, existingTx: tx),
+                                onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
                               );
                             },
                             childCount: filteredTxs.length,
@@ -1059,10 +1057,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       delegate: SliverChildBuilderDelegate(
                         (ctx, i) {
                           final loan = filteredLoans[i];
-                          return RepaintBoundary(
-                            key: ValueKey('loan_${loan.id}'),
-                            child: _buildLoanCard(loan, currency, theme, onSurface),
-                          );
+                          return _buildLoanCard(loan, currency, theme, onSurface);
                         },
                         childCount: filteredLoans.length,
                       ),

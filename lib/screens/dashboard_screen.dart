@@ -510,9 +510,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
                               ),
                             ],
                           ),
@@ -523,15 +523,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                 right: -15,
                                 top: -15,
                                 child: IgnorePointer(
-                                  child: Opacity(
-                                    opacity: 0.12,
-                                    child: CustomPaint(
-                                      size: const Size(130, 130),
-                                      painter: TallyIconPainter(
-                                        bgColor: Colors.transparent,
-                                        strokeColor: Theme.of(context).colorScheme.onSurface,
-                                        slashColor: Theme.of(context).colorScheme.primary,
-                                      ),
+                                  child: CustomPaint(
+                                    size: const Size(130, 130),
+                                    painter: TallyIconPainter(
+                                      bgColor: Colors.transparent,
+                                      strokeColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
+                                      slashColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                                     ),
                                   ),
                                 ),
@@ -827,13 +824,11 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: Column(
                             children: transactions.take(5).map((tx) {
-                              return RepaintBoundary(
-                                child: TransactionTile(
-                                  tx: tx,
-                                  currency: currentCurrency,
-                                  onTap: () => showTransactionDialog(context, existingTx: tx),
-                                  onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
-                                ),
+                              return TransactionTile(
+                                tx: tx,
+                                currency: currentCurrency,
+                                onTap: () => showTransactionDialog(context, existingTx: tx),
+                                onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
                               );
                             }).toList(),
                           ),

@@ -280,14 +280,12 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                         delegate: SliverChildBuilderDelegate(
                           (ctx, index) {
                             final tx = filtered[index];
-                            return RepaintBoundary(
+                            return TransactionTile(
                               key: ValueKey('tx_tile_${tx.id}'),
-                              child: TransactionTile(
-                                tx: tx,
-                                currency: currentCurrency,
-                                onTap: () => showTransactionDialog(context, existingTx: tx),
-                                onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
-                              ),
+                              tx: tx,
+                              currency: currentCurrency,
+                              onTap: () => showTransactionDialog(context, existingTx: tx),
+                              onDelete: () => AppState.deleteTransactionWithUndo(context, tx),
                             );
                           },
                           childCount: filtered.length,
