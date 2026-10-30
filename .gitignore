@@ -56,8 +56,38 @@ npm-debug.log*
 !.env.example
 !.env.local.example
 
-
 # Local Firebase emulator output
 **/firestore-debug.log
 **/ui-debug.log
 **/firebase-debug.log
+
+# Android & iOS Signing Keys, Keystores & Local Properties
+**/local.properties
+**/key.properties
+**/*.jks
+**/*.keystore
+**/*.key
+**/*.pem
+**/*.p12
+**/*.cer
+**/*.mobileprovision
+**/AuthKey_*.p8
+
+# Cloud & Service Account Secrets
+**/*service-account*.json
+**/*firebase-adminsdk*.json
+**/secrets.json
+**/secret-*.json
+**/*.secret
+
+# SQLite Databases & Dumps
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# Diagnostics & internal prompts
+docs/ANTIGRAVITY_PERF_PROMPT.md
+docs/audit-evidence/*private*
+build/perf-private/
