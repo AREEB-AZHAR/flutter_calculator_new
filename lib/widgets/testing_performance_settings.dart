@@ -6,8 +6,13 @@ class TestingPerformanceSettings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-    elevation: 2,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    elevation: 0,
+    shadowColor: Colors.transparent,
+    surfaceTintColor: Colors.transparent,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+      side: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12)),
+    ),
     child: Padding(
       padding: const EdgeInsets.all(16),
       child: Column(

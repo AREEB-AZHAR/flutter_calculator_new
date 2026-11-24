@@ -443,10 +443,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (ctx) => AnimatedBuilder(
+      elevation: 0,
+      clipBehavior: Clip.none,
+      builder: (ctx) => RepaintBoundary(
+        child: AnimatedBuilder(
         animation: Listenable.merge([
           AppState.themeNameNotifier,
           AppState.customPrimaryColorNotifier,
@@ -473,8 +473,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             data: activeTheme,
             child: Material(
               color: surface,
+              elevation: 0,
+              shadowColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              clipBehavior: Clip.antiAlias,
+              clipBehavior: Clip.hardEdge,
               child: StatefulBuilder(
                 builder: (ctx, setSheetState) {
                   return DraggableScrollableSheet(
@@ -1358,6 +1361,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         },
       ),
+      ),
     );
   }
 
@@ -1392,14 +1396,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: BoxDecoration(
                   color: isSelected ? primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: primary.withValues(alpha: 0.35),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
+                  border: isSelected
+                      ? Border.all(color: primary.withValues(alpha: 0.4))
                       : null,
                 ),
                 child: Row(
@@ -2609,13 +2607,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                border: Border.all(color: onSurface.withValues(alpha: 0.12)),
               ),
               child: CustomPaint(
                 painter: TallyIconPainter(

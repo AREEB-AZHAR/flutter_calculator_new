@@ -317,15 +317,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 border: Border.all(
                   color: isSelected ? primary : onSurface.withValues(alpha: 0.14),
                 ),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: primary.withValues(alpha: 0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
+                // Zero blur shadow for smooth 120 Hz scrolling
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -755,26 +747,35 @@ class _InsightsScreenState extends State<InsightsScreen> {
           ),
           const SizedBox(height: 12),
           // Multi-colored bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: SizedBox(
-              height: 10,
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: max(1, r.needsPercent.round()),
-                    child: Container(color: Colors.blueAccent),
+          SizedBox(
+            height: 10,
+            child: Row(
+              children: [
+                Expanded(
+                  flex: max(1, r.needsPercent.round()),
+                  child: const DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.blueAccent,
+                      borderRadius: BorderRadius.horizontal(left: Radius.circular(6)),
+                    ),
+                    child: SizedBox.expand(),
                   ),
-                  Expanded(
-                    flex: max(1, r.wantsPercent.round()),
-                    child: Container(color: Colors.orangeAccent),
+                ),
+                Expanded(
+                  flex: max(1, r.wantsPercent.round()),
+                  child: const ColoredBox(color: Colors.orangeAccent, child: SizedBox.expand()),
+                ),
+                Expanded(
+                  flex: max(1, r.savingsPercent.round()),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.greenAccent.shade400,
+                      borderRadius: const BorderRadius.horizontal(right: Radius.circular(6)),
+                    ),
+                    child: const SizedBox.expand(),
                   ),
-                  Expanded(
-                    flex: max(1, r.savingsPercent.round()),
-                    child: Container(color: Colors.greenAccent.shade400),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 12),
