@@ -670,16 +670,16 @@ class _AccountsScreenState extends State<AccountsScreen> {
                 return CustomScrollView(
                   key: const PageStorageKey('wallets_scroll'),
                   physics: const AlwaysScrollableScrollPhysics(),
-                  cacheExtent: 500,
+                  scrollCacheExtent: const ScrollCacheExtent.pixels(500),
                   slivers: [
                     LazySectionSliver(sections: [
-                      (context) => RepaintBoundary(
-                        child: Container(
+                      (context) => Container(
                           height: 140,
                           margin: const EdgeInsets.symmetric(vertical: 16),
                           child: ListView.builder(
                             key: const PageStorageKey('wallet_account_ribbon'),
                             scrollDirection: Axis.horizontal,
+                            addRepaintBoundaries: false,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: allDisplayAccounts.length,
                           itemBuilder: (ctx, idx) {
@@ -768,14 +768,11 @@ class _AccountsScreenState extends State<AccountsScreen> {
                           },
                         ),
                       ),
-                    ),
                       (context) => Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: RepaintBoundary(
-                          child: InteractiveChartCard(
-                            transactions: filteredTxs,
-                            title: _selectedAccount == 'Overall' ? LanguageService.tr('overall_flow_and_analytics') : '${LanguageService.tr('analytics_prefix')}: $_selectedAccount',
-                          ),
+                        child: InteractiveChartCard(
+                          transactions: filteredTxs,
+                          title: _selectedAccount == 'Overall' ? LanguageService.tr('overall_flow_and_analytics') : '${LanguageService.tr('analytics_prefix')}: $_selectedAccount',
                         ),
                       ),
                       (context) => RepaintBoundary(
@@ -819,6 +816,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                               );
                             },
                             childCount: filteredTxs.length,
+                            addRepaintBoundaries: false,
                           ),
                         ),
                       ),
@@ -858,11 +856,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
             return CustomScrollView(
               key: const PageStorageKey('loans_scroll'),
               physics: const AlwaysScrollableScrollPhysics(),
-              cacheExtent: 500,
+              scrollCacheExtent: const ScrollCacheExtent.pixels(500),
               slivers: [
                     LazySectionSliver(sections: [
-                      (context) => RepaintBoundary(
-                    child: Padding(
+                      (context) => Padding(
                       padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                       child: Container(
                         padding: const EdgeInsets.all(18),
@@ -974,7 +971,6 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       ),
                     ),
                   ),
-                ),
                       (context) => SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1060,6 +1056,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                           return _buildLoanCard(loan, currency, theme, onSurface);
                         },
                         childCount: filteredLoans.length,
+                        addRepaintBoundaries: false,
                       ),
                     ),
                   ),

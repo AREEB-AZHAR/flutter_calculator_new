@@ -21,6 +21,10 @@ class FormDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Dialog(
     backgroundColor: backgroundColor,
+    elevation: 0,
+    shadowColor: Colors.transparent,
+    surfaceTintColor: Colors.transparent,
+    insetAnimationDuration: Duration.zero,
     shape: shape,
     child: SizedBox(
       width: 420,

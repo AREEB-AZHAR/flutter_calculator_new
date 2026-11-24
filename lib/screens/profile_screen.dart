@@ -471,11 +471,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           return Theme(
             data: activeTheme,
-            child: Container(
-              decoration: BoxDecoration(
-                color: surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              ),
+            child: Material(
+              color: surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              clipBehavior: Clip.antiAlias,
               child: StatefulBuilder(
                 builder: (ctx, setSheetState) {
                   return DraggableScrollableSheet(
@@ -1899,13 +1898,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(22),
-                      boxShadow: [
-                        BoxShadow(
-                          color: (isPro ? Colors.teal : primaryColor).withValues(alpha: 0.25),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      border: Border.all(
+                        color: (isPro ? Colors.tealAccent : Colors.white).withValues(alpha: 0.18),
+                      ),
                     ),
                     child: Row(
                       children: [

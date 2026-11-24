@@ -409,6 +409,24 @@ class BarChartPainter extends CustomPainter {
       ..strokeWidth = 1.0;
     canvas.drawLine(Offset(0, chartHeight), Offset(size.width, chartHeight), baseLinePaint);
 
+    final chartBounds = Rect.fromLTWH(0, 0, size.width, max(1.0, chartHeight));
+    final defaultBarPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [barColor, barColor.withValues(alpha: 0.6)],
+      ).createShader(chartBounds)
+      ..style = PaintingStyle.fill;
+    final selectedBarPaint = selectedMonth != null
+        ? (Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [secondaryColor, barColor.withValues(alpha: 0.9)],
+          ).createShader(chartBounds)
+          ..style = PaintingStyle.fill)
+        : defaultBarPaint;
+
     for (int i = 0; i < barCount; i++) {
       final val = monthlyValues[i];
       final isCurrent = selectedMonth != null && selectedMonth == (i + 1);
@@ -424,18 +442,7 @@ class BarChartPainter extends CustomPainter {
         const Radius.circular(4),
       );
 
-      final barPaint = Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            isCurrent ? secondaryColor : barColor,
-            barColor.withValues(alpha: isCurrent ? 0.9 : 0.6),
-          ],
-        ).createShader(barRect.outerRect)
-        ..style = PaintingStyle.fill;
-
-      canvas.drawRRect(barRect, barPaint);
+      canvas.drawRRect(barRect, isCurrent ? selectedBarPaint : defaultBarPaint);
 
       // Label below bar
       final effectiveLabels = customLabels ?? _monthLabels;

@@ -85,7 +85,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
               return CustomScrollView(
                 key: const PageStorageKey('transactions_scroll'),
                 physics: const AlwaysScrollableScrollPhysics(),
-                cacheExtent: 500,
+                scrollCacheExtent: const ScrollCacheExtent.pixels(500),
                 slivers: [
                   LazySectionSliver(sections: [
                         // Search Bar
@@ -289,6 +289,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                             );
                           },
                           childCount: filtered.length,
+                          addRepaintBoundaries: false,
                         ),
                       ),
                     ),

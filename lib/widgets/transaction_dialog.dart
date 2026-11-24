@@ -11,11 +11,17 @@ import 'form_dialog.dart';
 import '../services/language_service.dart';
 
 Future<void> showTransactionDialog(BuildContext context, {Transaction? existingTx}) async {
-  await showDialog(
+  await showGeneralDialog<void>(
     context: context,
-    builder: (ctx) => RepaintBoundary(
+    barrierDismissible: true,
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    barrierColor: Colors.black54,
+    transitionDuration: const Duration(milliseconds: 120),
+    pageBuilder: (ctx, animation, secondaryAnimation) => RepaintBoundary(
       child: _TransactionDialog(existingTx: existingTx),
     ),
+    transitionBuilder: (ctx, animation, secondaryAnimation, child) =>
+        FadeTransition(opacity: animation, child: child),
   );
 }
 

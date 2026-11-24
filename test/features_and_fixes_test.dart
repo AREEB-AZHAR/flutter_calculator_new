@@ -125,7 +125,7 @@ void main() {
         id: 'tx_today',
         title: 'Lunch',
         amount: 25.0,
-        date: DateTime(2026, 9, 24),
+        date: DateTime.now(),
         isIncome: false,
         category: 'Food & Dining',
         account: 'Main',

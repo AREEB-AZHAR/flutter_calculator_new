@@ -223,38 +223,38 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                 key: const PageStorageKey('insights_scroll'),
                                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                                 sections: [
-                                    (context) => RepaintBoundary(child: _buildHorizonSelector(theme)),
+                                    (context) => _buildHorizonSelector(theme),
                                     (context) => const SizedBox(height: 12),
-                                    (context) => RepaintBoundary(child: _buildPeriodNavigator(theme, report)),
+                                    (context) => _buildPeriodNavigator(theme, report),
                                     (context) => const SizedBox(height: 12),
                                     (context) => _buildInsightSubTabBar(theme),
                                     (context) => const SizedBox(height: 14),
 
                                     // Tab: Overview / All
                                     if (_activeInsightTab == 'all' || _activeInsightTab == 'overview') ...[
-                                      (context) => RepaintBoundary(child: _buildAccountantBriefCard(theme, report)),
+                                      (context) => _buildAccountantBriefCard(theme, report),
                                       (context) => const SizedBox(height: 16),
-                                      (context) => RepaintBoundary(child: _buildSavingsVaultAndGoalsCard(theme, report, currentCurrency)),
+                                      (context) => _buildSavingsVaultAndGoalsCard(theme, report, currentCurrency),
                                       (context) => const SizedBox(height: 16),
-                                      (context) => RepaintBoundary(child: _buildVelocitySummaryGrid(theme, report, currentCurrency)),
+                                      (context) => _buildVelocitySummaryGrid(theme, report, currentCurrency),
                                       (context) => const SizedBox(height: 20),
                                     ],
 
                                     // Tab: Budget & Debts / All
                                     if (_activeInsightTab == 'all' || _activeInsightTab == 'planning') ...[
-                                      (context) => RepaintBoundary(child: _build503020PlanningCard(theme, report, currentCurrency)),
+                                      (context) => _build503020PlanningCard(theme, report, currentCurrency),
                                       (context) => const SizedBox(height: 20),
-                                      (context) => RepaintBoundary(child: _buildCategoryMatrix(theme, report, currentCurrency)),
+                                      (context) => _buildCategoryMatrix(theme, report, currentCurrency),
                                       (context) => const SizedBox(height: 20),
-                                      (context) => RepaintBoundary(child: _buildLoansAndDebtCard(theme, report, currentCurrency)),
+                                      (context) => _buildLoansAndDebtCard(theme, report, currentCurrency),
                                       (context) => const SizedBox(height: 20),
                                     ],
 
                                     // Tab: Tax & Liquidity / All
                                     if (_activeInsightTab == 'all' || _activeInsightTab == 'tax') ...[
-                                      (context) => RepaintBoundary(child: _buildTaxIntelligenceCard(theme, report, currentCurrency)),
+                                      (context) => _buildTaxIntelligenceCard(theme, report, currentCurrency),
                                       (context) => const SizedBox(height: 20),
-                                      (context) => RepaintBoundary(child: _buildPaymentTypeCard(theme, report, currentCurrency)),
+                                      (context) => _buildPaymentTypeCard(theme, report, currentCurrency),
                                       (context) => const SizedBox(height: 32),
                                     ],
                                   ],
@@ -384,14 +384,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 decoration: BoxDecoration(
                   color: isSelected ? primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: primary.withValues(alpha: 0.35),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          )
-                        ]
+                  border: isSelected
+                      ? Border.all(color: primary.withValues(alpha: 0.4))
                       : null,
                 ),
                 child: Center(
@@ -485,13 +479,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: primary.withValues(alpha: 0.25)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        // Crisp border surface (zero blur shadow for high fill-rate GPUs)
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1683,13 +1671,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 colors: [Color(0xFFF59E0B), Color(0xFFEF4444), Color(0xFF8B5CF6)],
               ),
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              // Zero blur shadow for smooth scrolling
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
@@ -1749,13 +1731,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
               color: surface,
               borderRadius: BorderRadius.circular(22),
               border: Border.all(color: onSurface.withValues(alpha: 0.12)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+              // Zero blur shadow for smooth scrolling
             ),
             child: Column(
               children: [

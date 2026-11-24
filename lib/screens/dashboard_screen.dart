@@ -33,12 +33,15 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
   late AnimationController _animController;
+  late Animation<Offset> _slideAnimation;
   final _balanceCache = LiquidBalanceCache();
   
   @override
   void initState() {
     super.initState();
-    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, -0.08), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic));
     if (!DashboardScreen.hasAnimatedIntro) {
       DashboardScreen.hasAnimatedIntro = true;
       _animController.forward();
@@ -485,13 +488,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                   key: const PageStorageKey('dashboard_scroll'),
                   sections: [
                     (context) => const SizedBox(height: 10),
-                    (context) => SlideTransition(
-                      position: Tween<Offset>(begin: const Offset(0, -0.1), end: Offset.zero)
-                          .animate(CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic)),
-                      child: Padding(
+                    (context) {
+                      final card = Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: RepaintBoundary(
-                          child: Container(
+                        child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
@@ -565,14 +565,11 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                             ),
                                           ],
                                         ),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(10),
-                                          child: CustomPaint(
-                                            painter: TallyIconPainter(
-                                              bgColor: Theme.of(context).scaffoldBackgroundColor,
-                                              strokeColor: Theme.of(context).colorScheme.secondary,
-                                              slashColor: Theme.of(context).colorScheme.primary,
-                                            ),
+                                        child: CustomPaint(
+                                          painter: TallyIconPainter(
+                                            bgColor: Theme.of(context).scaffoldBackgroundColor,
+                                            strokeColor: Theme.of(context).colorScheme.secondary,
+                                            slashColor: Theme.of(context).colorScheme.primary,
                                           ),
                                         ),
                                       ),
@@ -689,13 +686,14 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                             ],
                           ),
                         ),
-                      ),
-                    ),
-                    ),
+                      );
+                      return _animController.isCompleted
+                          ? card
+                          : SlideTransition(position: _slideAnimation, child: card);
+                    },
                     
                     (context) => const SizedBox(height: 20),
-                    (context) => RepaintBoundary(
-                      child: Padding(
+                    (context) => Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -761,15 +759,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                           ],
                         ),
                       ),
-                    ),
                     (context) => const SizedBox(height: 20),
                     (context) => Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: RepaintBoundary(
-                        child: InteractiveChartCard(
-                          transactions: transactions,
-                          title: LanguageService.tr('financial_flow_title'),
-                        ),
+                      child: InteractiveChartCard(
+                        transactions: transactions,
+                        title: LanguageService.tr('financial_flow_title'),
                       ),
                     ),
 

@@ -1,5 +1,46 @@
 # 💰 Tally — Smart Personal Finance & Expense Tracker
 
+## ⚡ Native 120 Hz Smoothness Breakthrough — Flutter 3.50.1 & GPU Pipeline Audit (24 November 2026)
+
+Upgraded the Flutter engine from **3.41.3** (Feb 2026) to **3.50.1 (Dart 3.14.0)** — picking up upstream Impeller OpenGL ES state deduplication (**PR #193427 / RenderPassStateCache**) and **Hybrid Composition++** — updated **57 dependencies** (including google_mobile_ads 9.2.0 and sqflite 2.4.6), migrated Android Gradle to **Gradle 9.5.0 / AGP 9.3.1 / Kotlin 2.4.20** with right-sized JVM memory settings, and eliminated remaining app-side GPU raster bottlenecks.
+
+### Measured Results on Redmi Note 13 (Adreno 610, Native 120 Hz / 8.33 ms Budget, Thermal Status 0, AOT Profile, Verified Impeller OpenGLES)
+
+| Screen | Oct 26 Baseline (Flutter 3.41.3) Raster p95 | **Nov 24 Result (Flutter 3.50.1 + Stage 2) Raster p50 / p95** | **120 Hz Janky Ratio (3 runs)** |
+| --- | --- | --- | --- |
+| **Dashboard** | 13.25 / 13.66 / 13.52 ms (~82% jank) | **3.79 ms** / **8.21 / 8.06 / 6.28 ms** | **1.82% / 1.83% / 0.56%** |
+| **Accounts** | 12.74 / 12.64 / 12.87 ms | **3.55 ms** / **3.96 / 3.79 / 4.04 ms** | **0.68% / 0.00% / 0.21%** |
+| **Profile** | 9.62 / 9.66 / 9.79 ms | **3.63 ms** / **4.06 / 4.62 / 4.15 ms** | **0.00% / 0.00% / 0.14%** |
+| **Goals** | 13.77 / 12.90 / 13.35 ms | **3.25–3.72 ms** / **8.93 / 9.03 / 5.63 ms** | **9.29% / 18.66% / 0.18%** |
+| **Insights** | 8.57 / 8.60 / 8.62 ms | **4.30–5.02 ms** / **8.60 / 8.19 / 8.67 ms** | **10.01% / 3.50% / 9.74%** |
+| **Transaction Dialog (IME open)** | 21.76 / 20.34 / 20.52 ms | **11.56–11.91 ms** / **22.01 / 22.00 / 17.96 ms** | **85.1% / 91.2% / 85.1%** (residual IME + barrier overdraw) |
+
+Raw thermal-0 captures are archived in docs/audit-evidence/flutter350-*-120hz.json and documented in [docs/PERFORMANCE_BUDGET.md](docs/PERFORMANCE_BUDGET.md).
+
+### Key Engineering Changes
+- **Flutter 3.50.1 + Android Build Toolchain**: Upgraded to Flutter **3.50.1** / Dart **3.14.0**, **Gradle 9.5.0**, **AGP 9.3.1**, **Kotlin 2.4.20**, proguard-android-optimize.txt, and tuned ndroid/gradle.properties (-Xmx2560m, org.gradle.workers.max=2) for reliable builds on 8 GB hosts.
+- **Disabled Implicit Per-Item RepaintBoundary Layers**: Added ddRepaintBoundaries: false on LazySectionList, LazySectionSliver, ccounts_screen.dart, ll_transactions_screen.dart, and goals_screen.dart, and removed 15+ redundant static/nested RepaintBoundary wrappers so scroll content batches cleanly.
+- **Active-Tab-Only Native AdWidget Composition**: Updated AdBannerWidget to detach the live Android AdWidget platform view whenever TickerMode.of(context) is false (hidden tabs), ensuring at most one live native ad view composites at any time without reloading ads on return.
+- **Chart, Shadow, Clip & Sync-I/O Cleanup**: Hoisted BarChartPainter's 12 per-bar LinearGradient.createShader() calls into 1–2 shared Paints; replaced remaining blurred shadows (lurRadius >= 8) and ClipRRect progress wrappers (goals_screen.dart, dashboard_screen.dart); cached SlideTransition animation on Dashboard; replaced raw File.existsSync() in saved_accounts_screen.dart with ImageHelper.cachedFileExists; updated profile_screen.dart's settings sheet container to Material for Flutter 3.50 ink-splash compliance.
+- **Dialog & Window Cleanup**: Removed Dialog(elevation: 6) blur shadow and 100 ms AnimatedPadding fighting Android's IME in FormDialog, switched showTransactionDialog to a crisp 120 ms FadeTransition, and removed the Xiaomi-ignored 60 Hz window override from MainActivity.kt.
+- **Instrumentation & Regression Guardrails**: Added lib/widgets/surface_card.dart, opt-in lib/perf/frame_watchdog.dart (--dart-define=ENABLE_PERF_WATCHDOG=true), unit tests in 	est/frame_watchdog_test.dart, and the static gate scripts/perf_guard.ps1.
+
+### Updated Local Setup & Verification Commands
+1. **Toolchain**: Flutter **3.50.1** / Dart **3.14.0**, JDK **17/21**, Android SDK **36**, Gradle **9.5.0**, AGP **9.3.1**, Kotlin **2.4.20**.
+2. **Local Properties**: Ensure untracked ndroid/local.properties sets your local lutter.sdk and sdk.dir.
+3. **Firebase / Google Sign-In**: Place your project's ndroid/app/google-services.json, sync lib/firebase_options.dart via lutterfire configure, and match ndroidServerClientId in lib/services/google_auth_service.dart to your OAuth Web Client ID (client_type: 3).
+4. **Verify**:
+   `powershell
+   flutter pub get
+   pwsh -File scripts/perf_guard.ps1
+   flutter analyze --no-pub --no-fatal-infos
+   flutter test --no-pub --concurrency=1
+   flutter run --profile -d <device_id>
+   `
+
+**Validation**: **309/309 Flutter tests passed**, scripts/perf_guard.ps1 passed (**0 violations**), and lutter analyze --no-pub --no-fatal-infos reported **0 errors/warnings**.
+
+
 ## 🚀 Rendering Performance & Smoothness Optimization — 31 October 2026
 
 We conducted a root-cause engineering mission to resolve frame-rate instability, stutter, and dropped frames on mobile devices (specifically measured on Qualcomm Adreno 610 GPU / Redmi Note 13 4G running at 60 Hz / 120 Hz).

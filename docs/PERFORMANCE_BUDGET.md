@@ -185,3 +185,37 @@ Temporary ad-view instrumentation is archived as text and removed from productio
 
 
 Validation for this investigation: **306 Flutter tests passed**, **clean `flutter analyze --no-pub`**, **four capture-math tests passed**. The reproducible command `node scripts/report_release_ad_captures.mjs` checks all **99 captures / 54,827 raw frames**, regenerates the inventory and separates **69 thermal-0** captures from **30 constrained** captures. Correctness tests do not certify smoothness. Changes are committed locally on `main`; no push or accepted production performance fix is claimed.
+
+
+## 24 November 2026 — Flutter 3.50.1 upgrade + Stage 2 GPU optimizations (120 Hz verified)
+
+Upgraded toolchain from **Flutter 3.41.3** to **Flutter 3.50.1 / Dart 3.14.0** (engine 4d35714800, containing upstream Impeller GLES state-deduplication PR #193427 / RenderPassStateCache and Hybrid Composition++), upgraded 57 dependencies (google_mobile_ads 9.2.0, sqflite 2.4.6), migrated Android Gradle to **Gradle 9.5.0 / AGP 9.3.1 / Kotlin 2.4.20**, reverted the Xiaomi-ignored 60 Hz window override in MainActivity.kt, and applied app-side GPU pruning (ddRepaintBoundaries: false on list/sliver builders, active-tab-only AdWidget attachment via TickerMode, BarChartPainter shared gradient shader, FormDialog levation: 0 + insetAnimationDuration: Duration.zero, blurred shadow removal, SurfaceCard, FrameWatchdog, and scripts/perf_guard.ps1).
+
+Device: **Redmi Note 13 (23129RAA4G)**, Android 15, 1080×2400, Adreno 610. **AOT profile**, native-verified **120.000005 Hz** (**8.333 ms** budget), **Impeller OpenGLES** verified in logcat, **Thermal Status 0** before and after every single capture (**31.5–32.1°C**). Identical scripted gesture protocol (1 warm pass + 3 repetitions of 4×600 ms drags + 2×100 ms flings; dialog open/focus/dismiss).
+
+| Screen | Run | Frames | Build p50 / p95 (ms) | Raster p50 / p95 (ms) | Worst stage (ms) | Janky % (120 Hz) | Thermal |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| Dashboard | 1 | 716 | 1.492 / 1.763 | 3.793 / 8.213 | 11.108 | 1.816% | T0→0 |
+| Dashboard | 2 | 712 | 1.491 / 1.753 | 3.792 / 8.056 | 9.745 | 1.826% | T0→0 |
+| Dashboard | 3 | 713 | 1.511 / 1.894 | 3.796 / 6.282 | 9.567 | 0.561% | T0→0 |
+| Accounts | 1 | 876 | 1.240 / 1.696 | 3.551 / 3.964 | 9.638 | 0.685% | T0→0 |
+| Accounts | 2 | 879 | 1.200 / 1.651 | 3.548 / 3.785 | 6.181 | 0.000% | T0→0 |
+| Accounts | 3 | 975 | 1.216 / 1.709 | 3.566 / 4.037 | 10.813 | 0.205% | T0→0 |
+| Profile | 1 | 711 | 1.066 / 1.384 | 3.629 / 4.056 | 7.692 | 0.000% | T0→0 |
+| Profile | 2 | 705 | 1.056 / 1.411 | 3.638 / 4.617 | 8.022 | 0.000% | T0→0 |
+| Profile | 3 | 706 | 1.066 / 1.393 | 3.645 / 4.145 | 9.132 | 0.142% | T0→0 |
+| Goals | 1 | 506 | 0.436 / 1.119 | 3.249 / 8.928 | 25.468 | 9.289% | T0→0 |
+| Goals | 2 | 686 | 0.599 / 1.149 | 3.717 / 9.031 | 11.168 | 18.659% | T0→0 |
+| Goals | 3 | 541 | 0.522 / 0.961 | 3.342 / 5.627 | 8.701 | 0.185% | T0→0 |
+| Insights | 1 | 739 | 1.412 / 1.982 | 4.799 / 8.597 | 10.042 | 10.014% | T0→0 |
+| Insights | 2 | 743 | 1.343 / 1.775 | 4.295 / 8.192 | 9.042 | 3.499% | T0→0 |
+| Insights | 3 | 739 | 1.355 / 2.029 | 5.020 / 8.667 | 13.658 | 9.743% | T0→0 |
+| Transaction dialog | 1 | 134 | 1.384 / 3.280 | 11.557 / 22.005 | 24.160 | 85.075% | T0→0 |
+| Transaction dialog | 2 | 137 | 1.259 / 2.892 | 11.913 / 21.996 | 39.194 | 91.241% | T0→0 |
+| Transaction dialog | 3 | 134 | 1.279 / 3.127 | 11.661 / 17.964 | 24.866 | 85.075% | T0→0 |
+
+Evidence: [Dashboard](audit-evidence/flutter350-dashboard-120hz.json), [Accounts](audit-evidence/flutter350-accounts-120hz.json), [Profile](audit-evidence/flutter350-profile-120hz.json), [Goals](audit-evidence/flutter350-goals-120hz.json), [Insights](audit-evidence/flutter350-insights-120hz.json), [Transaction dialog](audit-evidence/flutter350-transaction_dialog-120hz.json).
+
+**Summary**: Dashboard, Accounts, and Profile now sustain native **120 FPS** (median vsync interval **8.353 ms**, Accounts/Profile **0.00–0.68% jank**, Dashboard jank cut from **80–86% → 0.56–1.83%**). After these captures, goals_screen.dart received an additional pass removing ClipRRect around LinearProgressIndicator and setting ddRepaintBoundaries: false on its slivers. Residual hotspot: 	ransaction_dialog during Android IME keyboard slide-in under djustResize + full-screen translucent barrier overdraw (candidate future improvement: full-screen opaque route for New/Edit Transaction instead of translucent showGeneralDialog over Dashboard).
+
+Validation: **309/309 Flutter tests passed**, scripts/perf_guard.ps1 passed (**0 violations**), lutter analyze --no-pub --no-fatal-infos clean (**0 errors/warnings**).

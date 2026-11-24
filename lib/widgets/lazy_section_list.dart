@@ -18,6 +18,7 @@ class LazySectionList extends StatelessWidget {
     controller: controller,
     padding: padding,
     physics: const AlwaysScrollableScrollPhysics(),
+    addRepaintBoundaries: false,
     itemCount: sections.length,
     itemBuilder: (context, index) => sections[index](context),
   );
@@ -29,6 +30,7 @@ class LazySectionSliver extends StatelessWidget {
   const LazySectionSliver({super.key, required this.sections});
   @override
   Widget build(BuildContext context) => SliverList.builder(
+    addRepaintBoundaries: false,
     itemCount: sections.length,
     itemBuilder: (context, index) => sections[index](context),
   );

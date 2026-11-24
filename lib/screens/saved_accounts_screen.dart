@@ -6,6 +6,7 @@ import '../services/biometric_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/state.dart';
 import '../services/language_service.dart';
+import '../utils/image_helper.dart';
 import 'main_nav_screen.dart';
 
 /// Dedicated Saved Accounts Screen on Lock Screen.
@@ -157,11 +158,10 @@ class _SavedAccountsScreenState extends State<SavedAccountsScreen> {
           backgroundColor: Color(account.primaryColor).withValues(alpha: 0.2),
         );
       } else {
-        final f = File(account.photoPath!);
-        if (f.existsSync()) {
+        if (ImageHelper.cachedFileExists(account.photoPath!)) {
           return CircleAvatar(
             radius: 26,
-            backgroundImage: FileImage(f),
+            backgroundImage: FileImage(File(account.photoPath!)),
             backgroundColor: Color(account.primaryColor).withValues(alpha: 0.2),
           );
         }

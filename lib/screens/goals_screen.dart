@@ -727,6 +727,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
                         sliver: SliverList.list(
+                          addRepaintBoundaries: false,
                           children: [
                             _buildVaultSummary(context, goals, currentCurrency),
                             const SizedBox(height: 16),
@@ -753,6 +754,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         sliver: SliverList.builder(
+                          addRepaintBoundaries: false,
                           itemCount: activeGoals.length,
                           itemBuilder: (context, index) {
                             final goal = activeGoals[index];
@@ -784,6 +786,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                         SliverPadding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           sliver: SliverList.builder(
+                            addRepaintBoundaries: false,
                             itemCount: endedGoals.length,
                             itemBuilder: (context, index) {
                               final goal = endedGoals[index];
@@ -1008,16 +1011,14 @@ class _GoalsScreenState extends State<GoalsScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: goal.progress,
-                backgroundColor: onSurface.withValues(alpha: 0.1),
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  goal.isCompleted ? Colors.greenAccent : (goal.isFailed ? Colors.redAccent : primary),
-                ),
-                minHeight: 8,
+            LinearProgressIndicator(
+              value: goal.progress,
+              backgroundColor: onSurface.withValues(alpha: 0.1),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                goal.isCompleted ? Colors.greenAccent : (goal.isFailed ? Colors.redAccent : primary),
               ),
+              minHeight: 8,
+              borderRadius: BorderRadius.circular(4),
             ),
             const SizedBox(height: 6),
             Text('${(goal.progress * 100).toStringAsFixed(0)}% ${LanguageService.tr('completed')}', style: TextStyle(color: onSurface.withValues(alpha: 0.4), fontSize: 12)),

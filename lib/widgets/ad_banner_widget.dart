@@ -184,7 +184,9 @@ class _AdBannerWidgetState extends State<AdBannerWidget> with AutomaticKeepAlive
                     SizedBox(
                       width: _bannerAd!.size.width.toDouble(),
                       height: _bannerAd!.size.height.toDouble(),
-                      child: AdWidget(ad: _bannerAd!),
+                      child: TickerMode.of(context)
+                          ? AdWidget(ad: _bannerAd!)
+                          : const SizedBox.shrink(),
                     ),
                   ],
                 ),

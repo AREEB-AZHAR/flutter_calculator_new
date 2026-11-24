@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:async';
 import 'services/display_rate_service.dart';
+import 'perf/frame_watchdog.dart';
 import 'dart:ui' show PointerDeviceKind;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -73,6 +74,7 @@ void main() async {
   // Load saved theme settings so SplashScreen and LoginScreen immediately boot with the user's chosen theme
   await AppState.initGlobalTheme();
 
+  FrameWatchdog.install();
   runApp(const TallyApp());
   unawaited(DisplayRateService.instance.initialize());
 }
