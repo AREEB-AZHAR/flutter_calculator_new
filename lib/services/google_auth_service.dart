@@ -44,7 +44,7 @@ class GoogleAuthService {
 
   // OAuth 2.0 Web Client ID from Firebase Console / google-services.json
   static const String androidServerClientId =
-      '494819662703-g607tjs0qcnt6kmhi7jjdfu8bou2qhum.apps.googleusercontent.com';
+      '494819662703-6s5n67eefcir9j597rhq56ffgpequb4d.apps.googleusercontent.com';
   static bool _isGoogleSignInInitialized = false;
 
   /// Ensures GoogleSignIn is initialized with the serverClientId on Android
